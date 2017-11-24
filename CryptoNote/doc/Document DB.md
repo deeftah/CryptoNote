@@ -39,3 +39,4 @@ Un document est un ***ensemble d'items***,
     - un JSON (`Singleton` et `Item`),
     - un `String` opaque (`RawSingleton` et `RawItem`), typiquement l'encodage en base 64 d'un vecteur d'octets.
 
+A suivre ...
