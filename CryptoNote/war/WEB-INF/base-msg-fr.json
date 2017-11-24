@@ -1,0 +1,131 @@
+{
+
+"BDOCUMENTCLASS0":"Tentative d''enrigistrement d''une classe de Document vide",
+"BDOCUMENTCLASS1":"Tentative d''enrigistrement d''une classe de Document [{0}] n''étendant pas Document",
+"BDOCUMENTCLASS2":"Classe de Document non enregistrée [{0}]",
+"BDOCUMENTCLASS3":"Classe d''Item [{0}] non statique pour le document [{1}]",
+"BDOCUMENTCLASS4":"Document [{0}], Item [{1}] : champ indexé [{2}] de classe non autorisée",
+"BDOCUMENTCLASS5":"Tentative d''enrigistrement de deux classes de Document ayant même nom [{0}] [{1}]",
+"BDOCUMENTCLASS6":"Classe de Document non instantiable [{0}]",
+"BDOCUMENTCLASS7":"Classe de IsyncFilter de Document non instantiable [{0}]",
+"BDOCUMENTCLASS9":"Classe de document [{0}] : constructeur non accessible",
+"BDOCUMENTCLASS10":"Classe d''item [{0}] : constructeur non accessible",
+"BDOCUMENTITEM":"Classe d''item [{0}] non instantiable",
+"BITEMJSONPARSE":"JSON mal formé pour l'''item [{0}]",
+
+"BITEMDETACHED":"Méthode non applicable à un item non attaché à un document (class {0})",
+"BITEMATTACHED":"Méthode non applicable à un item attaché à un document (class {0})",
+"BITEMSTATUSDEL":"Méthode interdite sur un item / document supprimé [{0}]",
+"BITEMSINGL":"Méthode interdite sur un item singleton  [{0}]",
+"BITEMSRAW":"Méthode interdite sur un item raw  [{0}]",
+"BITEMSNRAW":"Méthode interdite sur un item non raw  [{0}]",
+"BITEMCLASS":"Classe d''item [{0}] inconnue",
+"BITEMCLASSCOL":"Classe d''item collection [{0}] inconnue",
+
+
+
+
+"ST0":"en création", 
+"ST1":"actif", 
+"ST2":"zombie", 
+"ST3":"résilié (en cours)", 
+"ST4":"résilié", 
+"ST5":"inconnu",
+
+"RA0":"lecture/écriture",
+"RA1":"lecture/destruction",
+"RA2":"lecture seulement",
+"RA3": "bloqué",
+"RA4": "N/A",
+
+"MC0":"404 non trouvé",
+"MC1":"incohérence applicative", 
+"MC2":"bug", 
+"MC3":"exception inattendue", 
+"MC4":"build retardée", 
+"MC5":"contention sur les données", 
+"MC6":"espace off", 
+"MC7":"session non autorisée",
+
+"XRESSOURCEBUILDJS":"Ressource build.js non trouvée ou mal formée",
+"XRESSOURCEURL":"Ressource /WEB-INF/config.json : url absente ou vide ou incorrecte",
+"XRESSOURCECLASS":"Classe [{0}] non trouvée ou sans constructeur par défaut",
+"XDBACCESSTEST":"Test d'accès à [z] {0} : [{1}]",
+"XDBPROVIDERFAILURE":"Echec d''instanciation du dbProvider",
+
+"BBUG":"Bug",
+"BEXECSYNCSPARSE":"Opération [{0}] : syncs non parsable",
+"CONTENTION":"Opération [{0}] : trop forte contention sur la base de données. Réessayer plus tard",
+"ODOMAINOFF":"Serveur en maintenance : [{0}]. Réessayer plus tard",
+"BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
+"SQM":"Opération requérant un privilège de Queue Manager [{0}]",
+"SADMINOP":"Opération requérant une clé d''administrateur",
+	
+"BHEADERJSONPARSE":"JSON mal formé pour le header du document [{0}]",
+"BDSTATEJSONPARSE":"JSON mal formé pour le DState [{0}]",
+	
+"BGDSTATEJSONPARSE":"JSON mal formé pour le GDState [{0}]",
+	
+"BDOCUMENTRO":"Méthode interdite sur un document [{0}] en lecture seule",
+"ADOCINE":"Document inexistant [{0}]",
+"BEMPTYBLOB":"blobStore sans blob pour [{0}] [{1}]",
+"BMIMEBLOB":"blobStore sans mime pour [{0}] [{1}]",
+"BKEYBLOB":"blobStore sans nom pour [{0}]",
+	
+	
+"BDOCUMENTIDCLASS6":"Document [{0}] mal identifié : groupid null/vide",
+"BDOCUMENTIDCLASS7":"Document [{0}] mal identifié : docid null/vide",
+"BDOCUMENTIDCLASS8":"Document [{0}] mal identifié : groupid [{1}] invalide ou trop long (32c)",
+"BDOCUMENTIDCLASS9":"Document [{0}] mal identifié : docid [{1}] invalide ou trop long (200c)",
+"BDOCUMENTIDCLASS10":"Document  mal identifié : classe [{0}] ne correspondant pas à celle d''un document",
+"BDOCUMENTIDCLASS11":"Document  mal identifié : id null ou vide",
+"BDOCUMENTIDCLASS12":"Document  mal identifié : id [{0}] ne respectant pas la syntaxe \"groupid/docid@classname\"",
+	
+"BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
+	
+"BMAILPARAM":"Paramètres du mail incorrects : [{0}]",
+"BMAILNOMAILER":"Paramètres du mail incorrects : [{0}]",
+"XMAILHTTP":"Echec d''envoi (HTTP) du mail : [{0}]",
+"XMAILJAVAMAIL":"Echec d''envoi (JAVAMAIL) du mail : [{0}]",
+"BMAILTYPE":"Paramètres du mail incorrects. url : [{0}]",
+	
+"ANSUNKNOWN":"Espace de noms [{0}] non reconnu",
+"ANSZRES":"Ressource de nom [{0}] sans valeur par défaut dans l'application",
+"ANSEMPTY":"Pas de fichier joint",
+"ANSBADNS":"Opération uniquement accessible depuis l''espace de noms [{0}] (pas depuis [{1}])",
+"ANSSRVCFG":"Paramètre srvcfg de la configuration [{0}] non parsable",
+
+"BBADOPERATION2":"Opération [{0}] : classe n''étendant pas Operation",
+"BBADOPERATION0":"Opération [{0}] inconnue",
+"BBADOPERATION1":"Opération [{0}] : param non parsable",
+"XGZIPEXC":"Opération [{0}] : gzip du résultat en erreur",
+"XUNGZIPEXC":"Opération [{0}] : ungzip de l''attachement [{0}] en erreur",
+
+"SQMKEY":"Clé d''accès au Queue Manager non reconnue",
+"BQMJSONTI":"Erreur de syntaxe sur TaskInfo json :[{0}]",
+"BQMOP":"Queue Manager : opération [{0}] inconnue",
+"XQMPOST":"Queue Manager : post [{0}] ",
+
+"X0":"Exception inattendue",
+"X1":"URL d'opération incorrecte, op absent : [{0}]",
+"XMAXTIME":"Dépassement du temps maximum d'exécution pour l''opération : [{0}]",
+"DBUILD":"Version d''application [{0}] incompatible avec celle du serveur [{1}]",
+
+"XFILE0":"Erreur I/O sur [{0}]",
+	
+"XDSCFG":"Erreur de syntaxe dans /WEB-INF/dbconfig.json",
+"XDS0":"Echec Datastore - opération [{0}] - namespace  [{1}] - détail [{2}]",
+"XDSGZIP":"GZIP de l''entité [{0}]",
+"XDSUNGZIP":"UNGZIP de l''entité [{0}]",
+"XDSENQUE":"Echec de la mise en queue de task [{0} - {1}]",
+"APHOTOFAILURE":"Echec du redimmensionnement de l''image",
+"XBLOBDS0":"Echec de stockage du blob [{0}]",
+"XBLOBDS1":"Echec de lecture du blob [{0}]",
+"XBLOBDS2":"Echec de desctruction du blob [{0}]",
+
+"XSQL0":"Echec SQL - opération [{0}] - namespace  [{1}] - sql [{2}]",
+"XSQLCFG":"Erreur de syntaxe dans /WEB-INF/dbconfig.json",
+"XSQLDS":"Datasource pour le namespace [{0}] non initialisable",
+
+"RIEN":"rien"
+}
