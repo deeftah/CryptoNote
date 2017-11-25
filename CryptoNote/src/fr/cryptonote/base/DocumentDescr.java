@@ -71,6 +71,7 @@ public class DocumentDescr {
 	}
 	
 	public static class ItemDescr {
+		private DocumentDescr docDescr;
 		private String name;
 		private Class<?> clazz;
 		private IndexedField[] indexedFields;
@@ -78,6 +79,7 @@ public class DocumentDescr {
 		private boolean isRaw = false;
 		private boolean isSingleton = false;
 		
+		public DocumentDescr docDescr() { return docDescr; };
 		public String name() { return name; }
 		public Class<?> clazz() { return clazz; }
 		
@@ -102,6 +104,7 @@ public class DocumentDescr {
 		public BItem newItem(String json, String info) throws AppException {
 			if (isRaw() || json == null || json.length() == 0)
 				try { return isP() ? new Document.P() : (BItem)constructor.newInstance();
+				// un item P n'a pas de contenu en soi. Le BItem d'un P n'a aucun intérêt
 				} catch(Exception e) { throw new AppException(e, "BDOCUMENTITEM", info); }
 			else
 				try { return (BItem)JSON.fromJson(json, clazz);
@@ -207,6 +210,7 @@ public class DocumentDescr {
 			if (!Modifier.isStatic(cl.getModifiers()))
 				throw new AppException("BDOCUMENTCLASS3", n, dd.name);
 			ItemDescr itd = new ItemDescr();
+			itd.docDescr = dd;
 			
 			if (Document.Singleton.class.isAssignableFrom(cl)) {
 				itd.isSingleton = true;

@@ -4,6 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import fr.cryptonote.provider.DBProvider;
+
 public class ExecContext {
 	private static TimeZone timezone;
 	private static SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.FRANCE);
@@ -17,4 +19,6 @@ public class ExecContext {
 	
 	private int phase;
 	public int phase() {return phase; }
+	
+	public DBProvider dbProvider() { return null; }
 }

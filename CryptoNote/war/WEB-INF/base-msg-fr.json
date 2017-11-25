@@ -21,6 +21,10 @@
 "BITEMSNRAW":"Méthode interdite sur un item non raw  [{0}]",
 "BITEMCLASS":"Classe d''item [{0}] inconnue",
 "BITEMCLASSCOL":"Classe d''item collection [{0}] inconnue",
+"BDOCUMENTRO":"Méthode [{1}].[{0}] interdite sur un document [{2}] en lecture seule",
+"BEMPTYBLOB":"blobStore sans blob pour [{0}] [{1}]",
+"BMIMEBLOB":"blobStore sans mime pour [{0}] [{1}]",
+"BKEYBLOB":"blobStore sans nom pour [{0}]",
 
 
 
@@ -66,7 +70,6 @@
 	
 "BGDSTATEJSONPARSE":"JSON mal formé pour le GDState [{0}]",
 	
-"BDOCUMENTRO":"Méthode interdite sur un document [{0}] en lecture seule",
 "ADOCINE":"Document inexistant [{0}]",
 "BEMPTYBLOB":"blobStore sans blob pour [{0}] [{1}]",
 "BMIMEBLOB":"blobStore sans mime pour [{0}] [{1}]",

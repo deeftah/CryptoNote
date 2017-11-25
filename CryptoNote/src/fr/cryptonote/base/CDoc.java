@@ -10,17 +10,30 @@ import fr.cryptonote.base.DocumentDescr.ItemDescr;
 public class CDoc {
 	
 	// zombie : document créé et détruit dans la même opération
-	public enum Status {unchanged, modified, created, recreated, deleted, shortlived};	
+	/*
+	 *- `unchanged` : aucun item n'a changé sur le document qui existait avant le début de l'opération.
+	 *- `modified` : le document existait avant le début de l'opération et un ou des items ont été créés / modifiés / supprimés.
+	 *- `created` : le document n'existait pas et il a été créé par un `getOrNew()`. Il n'a pas forcément d'items.
+	 *- `recreated` : le document existait et a été recréé par la méthode `recreate()`. 
+	 * Sa date-heure de création n'est pas la même qu'au début de l'opération et son contenu a complètement été purgé par la suppression survenue avant sa recréation.
+	 *- `deleted` : le document existait mais a été supprimé par l'opération.
+	 *- `shortlived` : le document n'existait pas, a été créé par un `getOrNew()` et a été supprimé ensuite au cours de l'opération.
+	 *- `oldtrace` : pour un item seulement : était supprimé avant l'opération et n'a pas été recréé.
+	 */
+	
+	public enum Status {unchanged, modified, created, recreated, deleted, shortlived, oldtrace};	
 	public static final int nbStatus = Status.values().length;
 
 	/********************************************************************************/
 	private Document.Id id;
 	private long version;
 	private long ctime;
+	private long dtime;
 
 	Document.Id id() { return id; }
 	public long version() { return version; }
 	public long ctime() { return ctime; }
+	public long dtime() { return dtime; }
 
 	private Status status;
 	public Status status() { return status; };
@@ -298,6 +311,7 @@ public class CDoc {
 				ci.descr = descr;
 				ci.cdoc = this;
 				sings.put(descr.name(), ci);
+				return ci;
 			}
 		} else {
 			HashMap<String,CItem> cis = colls.get(descr.name());
@@ -310,7 +324,17 @@ public class CDoc {
 				ci.cdoc = this;
 				ci.key = key;
 				cis.put(key, ci);
+				return ci;
 			}
+		}
+		// ci existait mais il n'a peut-être pas de contenu réel (deleted oldtrace shortlived).
+		Status st = status();
+		if (st == Status.deleted || st == Status.oldtrace || st == Status.deleted) {
+			if (newIfNotExisting) {
+				ci.deleted = false;
+				return ci;
+			} else
+				return null;
 		}
 		return ci;
 	}
@@ -358,13 +382,14 @@ public class CDoc {
 		private transient ItemDescr descr;
 		transient BItem bitem;
 		
-		private long version;
-		private String key;
-		private String value;
-		private String nvalue;
-		private int size;
-		private String sha;
-		private String nsha;
+		private long version;	// version d'un item qui existait avant (value != null) ou une trace de suppression (value == null)
+		private String key;		// key d'un item, null pour un singleton
+		private String value; 	// contenu avant. null pour une trace de suppression ou un item nouvellement créé
+		private String nvalue; 	// nouveau contenu. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
+		private int size;		// taille du blob
+		private String sha;		// sha du blob
+		private String nsha;	// sha du blob après changement
+		private boolean deleted;// a subi une suppression.
 		
 		public ItemDescr descr() { return descr; }
 		public long version() { return version; }
@@ -373,29 +398,45 @@ public class CDoc {
 		public String sha() { return sha; }
 		public String nsha() { return nsha; }
 				
+		/*
+		 *- `unchanged` : l'item existait avant le début de l'opération, existe toujours et n'a pas changé.
+		 *- `modified` : l'item existait avant le début de l'opération, existe toujours mais a changé.
+		 *- `created` : l'item n'existait pas (même en trace de suppression) et a été créé par un `getOrNew()`.
+		 *- `recreated` : l'item n'existait pas mais avait une trace de suppression et a été recréé par un `getOrNew()`. 
+		 *- `deleted` : l'item existait mais a été supprimé par l'opération.
+		 *- `shortlived` : l'item n'existait pas, a été créé par un `getOrNew()` et a été supprimé ensuite au cours de l'opération.
+		 *- `oldtrace` : l'item était supprimé avant l'opération (avait une trace de suppression) et n'a pas été recréé.
+		 */
+
 		public Status status(){
 			if (version == 0) return nvalue == null ? Status.shortlived : Status.created;
-			return value == null ? Status.deleted : (nvalue == null ? Status.unchanged : Status.modified);
+			if (value == null) return nvalue == null ? Status.oldtrace : Status.recreated;
+			return nvalue == null ? (deleted ? Status.deleted : Status.unchanged) : Status.modified;
 		}
 		
 		public int v1() {
 			Status st = status();
-			if (st == Status.deleted || st == Status.shortlived) return 0;
+			if (st == Status.deleted || st == Status.shortlived || st == Status.oldtrace) return 0;
 			return (nvalue != null ? nvalue.length() : (value != null ? value.length() : 0)) + (key != null ? key.length() : 0);
 		}
 
 		public int v2() {
 			if (!descr.isP()) return 0;
 			Status st = status();
-			if (st == Status.deleted || st == Status.shortlived) return 0;
+			if (st == Status.deleted || st == Status.shortlived || st == Status.oldtrace) return 0;
 			return size;
 		}
 
-		public String toString() { return (cdoc != null ? cdoc.id().toString() : "?id?") + "#" + descr.name() + (descr.isSingleton() || key == null ? "" :  key); }
-		
-		public ArrayList<Index> indexes() throws AppException {
-			return descr.indexes(cvalue());
+		public boolean hasValue() throws AppException {
+			Status s = status();
+			return s == Status.created || s == Status.recreated || s == Status.unchanged || s == Status.modified;
 		}
+
+		public String toString() { 
+			return descr().docDescr().name() + "." + (cdoc != null ? cdoc.id().docid() : "") + "#" + descr.name() + (descr.isSingleton() || key == null ? "" :  "." + key); 
+		}
+		
+		public ArrayList<Index> indexes() throws AppException {	return descr.indexes(cvalue()); }
 		
 		CItem copy(CDoc cd){
 			CItem c = new CItem();
@@ -408,30 +449,20 @@ public class CDoc {
 			c.sha = sha;
 			c.size = size;
 			c.nsha = nsha;
+			c.deleted = deleted;
 			return c;
 		}
 		
 		void check(boolean singl, boolean raw) throws AppException {
 			Status st = status();
-			if (st == Status.deleted || st == Status.shortlived) throw new AppException("BITEMSTATUSDEL", toString());
+			if (st == Status.deleted || st == Status.shortlived || st == Status.oldtrace) throw new AppException("BITEMSTATUSDEL", toString());
 			if (singl && descr.isSingleton()) throw new AppException("BITEMSINGL", toString());
 			if (raw && descr.isRaw()) throw new AppException("BITEMSRAW", toString());			
 		}
-		
-		void key(String k) throws AppException{
-			if (k == null) k = "";
-			check(true, false);
-			HashMap<String,CItem> cis = cdoc.colls.get(descr.name());
-			if (cis != null){
-				cis.remove(key);
-				key = k;
-				cis.put(key,  this);
-			}
-		}
-		
-		void delete() throws AppException {	check(false, false); value = null;	}
+				
+		void delete() throws AppException {	check(false, false); value = null;	deleted = true; }
 
-		void deleteBlob() throws AppException{
+		void deleteBlob() throws AppException {
 			check(true, true);
 			value = null;
 			nsha = null;

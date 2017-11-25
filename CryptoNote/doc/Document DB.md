@@ -41,6 +41,27 @@ Un document est un ***ensemble d'items***,
     - un `String` opaque (`RawSingleton` et `RawItem`), typiquement l'encodage en base 64 d'un vecteur d'octets.
 - un **contenu `null`** indique un item détruit, sa version indiquant quelle opération l'a détruit. Un item détruit peut rester connu en tant que tel pendant un certain temps afin de permettre la synchronisation rapide du contenu du document avec un contenu distant, puis être finalement physiquement purgé.
 
+##### Items JSON
+Leurs propriétés peuvent être : 
+- d'un des types primitifs : `long, int, double, boolean` ; 
+- d'une classe interne `?` ou des `Map<String,?>` ou des `Collection<?>` où les classes `?` elles-même peuvent avoir le même type de propriétés. 
+
+> ***Remarque :*** les noms des classes de Document et d'Item dans un document doivent être le plus court possible afin de réduire la taille des index et clés en stockage.
+
+**Sérialisation en JSON** : les propriétés `transient` ne sont pas sérialisées et les propriétés ayant une valeur `null` non plus (sauf en tant que valeurs à l'intérieur d'une `Map` ou `Collection`).
+
+##### Pièces jointes attachés à un document
+Il est possible d'attacher à un document des pièces jointes par des items de classe prédéfinie `Document.P` mémorisant pour chaque pièce jointe (une suite d'octets) :
+- `key` : sa clé d'accès (comme pour tout item) ;
+- `mime` : son type mime (qui n'est pas contrôlé) le cas échéant comportant une extension quand le fichier a été gzippé / crypté (`.g` `.c` `.g` `.gc` ou rien);
+- `size` : sa taille en octets ;
+- `sha` : son digest `SHA 256`.
+
+Le stockage des pièces jointes bénéficie de la même cohérence temporelle que les items avec les détails suivants :
+- le volume des fichiers eux-mêmes est décompté en tant que `v2` (secondaire) et non `v1`. Selon les fournisseurs d'infrastructure le coût du stockage peut être bien inférieur en espace secondaire qu'en espace primaire.;
+- quand des documents ont des pièces jointes ayant le même contenu (même `sha`) elles ne sont stockées qu'une fois mais décomptés en v2 autant de fois que cités dans les items P;
+- une pièce jointe ayant été modifié (donc ayant désormais un `sha` différent) reste accessible *un certain temps* sous son ancien `sha` (s'il est demandé par son `sha` et non sa clé).  Ceci facilite l'exportation cohérente à une version donnée d'un document et de ses pièces jointes, même quand elle est volumineuse en raison de la taille des pièces jointes. Des exportations incrémentales de documents peuvent être effectuées à coût réseau minimal en évitant le re-transfert de pièces jointes déjà détenues à distance.
+
 ### Mémoires persistante de référence et cache
 Il n'existe qu'une **mémoire persistante de référence** (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.
 
