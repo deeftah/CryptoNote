@@ -1,0 +1,1693 @@
+<html>
+<head>
+	<title>Markdown Edit Preview</title>
+	<!-- Must have base tag with id of "base-tag-id" -->
+	<base id="base-tag-id">
+	<!-- Don't delete this X-UA tag. The browser control behaves like IE8 otherwise -->
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<style type="text/css">
+		body { font-family: arial, 'segoe ui', sans-serif; line-height: 1.4; padding-left: 12pt; font-size: 12pt; }
+		code { white-space: pre }
+		ul, ol { padding: 8pt; }
+		h1, h2, h3, h4, h5, h6 { font-family: arial, cambria, serif; }
+		blockquote { padding: 0 12pt; color: #777; border-left: 3pt solid #ddd;  }
+		table{ display: block; width: 100%; overflow: auto; word-break: normal; word-break: keep-all; border-collapse: collapse;  }
+		table th{ font-weight: bold; background-color: #f8f8f8; }
+		table th, #content table td{ padding: 6px 13px; border: 1px solid #ddd; }
+		table tr{ background-color: #fff; border-top: 1px solid #ccc; page-break-inside: avoid; }
+	</style>
+	<style type="text/css">
+		._sprite{ background-image: url('emoji-sprite.png'); } 
+		._sprite{ background-color: transparent; background-repeat: no-repeat; display: inline-block; zoom:0.39; vertical-align: middle; }
+		._shipit{ width: 75px; height: 75px; background-position: 0 -27520px; }
+		._0023-20e3{ width: 64px; height: 64px; background-position: 0 -27456px; }
+		._0030-20e3{ width: 64px; height: 64px; background-position: -64px 0; }
+		._0031-20e3{ width: 64px; height: 64px; background-position: -64px -64px; }
+		._0032-20e3{ width: 64px; height: 64px; background-position: 0 -27392px; }
+		._0033-20e3{ width: 64px; height: 64px; background-position: -64px -128px; }
+		._0034-20e3{ width: 64px; height: 64px; background-position: 0 -27328px; }
+		._0035-20e3{ width: 64px; height: 64px; background-position: -64px -192px; }
+		._0036-20e3{ width: 64px; height: 64px; background-position: 0 -27264px; }
+		._0037-20e3{ width: 64px; height: 64px; background-position: -64px -256px; }
+		._0038-20e3{ width: 64px; height: 64px; background-position: 0 -27200px; }
+		._0039-20e3{ width: 64px; height: 64px; background-position: -64px -320px; }
+		._00a9{ width: 64px; height: 64px; background-position: 0 -27136px; }
+		._00ae{ width: 64px; height: 64px; background-position: -64px -384px; }
+		._1f004{ width: 64px; height: 64px; background-position: 0 -27072px; }
+		._1f0cf{ width: 64px; height: 64px; background-position: -64px -448px; }
+		._1f170{ width: 64px; height: 64px; background-position: 0 -27008px; }
+		._1f171{ width: 64px; height: 64px; background-position: -64px -512px; }
+		._1f17e{ width: 64px; height: 64px; background-position: 0 -26944px; }
+		._1f17f{ width: 64px; height: 64px; background-position: -64px -576px; }
+		._1f18e{ width: 64px; height: 64px; background-position: 0 -26880px; }
+		._1f191{ width: 64px; height: 64px; background-position: -64px -640px; }
+		._1f192{ width: 64px; height: 64px; background-position: 0 -26816px; }
+		._1f193{ width: 64px; height: 64px; background-position: -64px -704px; }
+		._1f194{ width: 64px; height: 64px; background-position: 0 -26752px; }
+		._1f195{ width: 64px; height: 64px; background-position: -64px -768px; }
+		._1f196{ width: 64px; height: 64px; background-position: 0 -26688px; }
+		._1f197{ width: 64px; height: 64px; background-position: -64px -832px; }
+		._1f198{ width: 64px; height: 64px; background-position: 0 -26624px; }
+		._1f199{ width: 64px; height: 64px; background-position: -64px -896px; }
+		._1f19a{ width: 64px; height: 64px; background-position: 0 -26560px; }
+		._1f1e8-1f1f3{ width: 64px; height: 64px; background-position: -64px -960px; }
+		._1f1e9-1f1ea{ width: 64px; height: 64px; background-position: 0 -26496px; }
+		._1f1ea-1f1f8{ width: 64px; height: 64px; background-position: -64px -1024px; }
+		._1f1eb-1f1f7{ width: 64px; height: 64px; background-position: 0 -26432px; }
+		._1f1ec-1f1e7{ width: 64px; height: 64px; background-position: -64px -1088px; }
+		._1f1ee-1f1f9{ width: 64px; height: 64px; background-position: 0 -26368px; }
+		._1f1ef-1f1f5{ width: 64px; height: 64px; background-position: -64px -1152px; }
+		._1f1f0-1f1f7{ width: 64px; height: 64px; background-position: 0 -26304px; }
+		._1f1f7-1f1fa{ width: 64px; height: 64px; background-position: -64px -1216px; }
+		._1f1fa-1f1f8{ width: 64px; height: 64px; background-position: 0 -26240px; }
+		._1f201{ width: 64px; height: 64px; background-position: -64px -1280px; }
+		._1f202{ width: 64px; height: 64px; background-position: 0 -26176px; }
+		._1f21a{ width: 64px; height: 64px; background-position: -64px -1344px; }
+		._1f22f{ width: 64px; height: 64px; background-position: 0 -26112px; }
+		._1f232{ width: 64px; height: 64px; background-position: -64px -1408px; }
+		._1f233{ width: 64px; height: 64px; background-position: 0 -26048px; }
+		._1f234{ width: 64px; height: 64px; background-position: -64px -1472px; }
+		._1f235{ width: 64px; height: 64px; background-position: 0 -25984px; }
+		._1f236{ width: 64px; height: 64px; background-position: -64px -1536px; }
+		._1f237{ width: 64px; height: 64px; background-position: 0 -25920px; }
+		._1f238{ width: 64px; height: 64px; background-position: -64px -1600px; }
+		._1f239{ width: 64px; height: 64px; background-position: 0 -25856px; }
+		._1f23a{ width: 64px; height: 64px; background-position: -64px -1664px; }
+		._1f250{ width: 64px; height: 64px; background-position: 0 -25792px; }
+		._1f251{ width: 64px; height: 64px; background-position: -64px -1728px; }
+		._1f300{ width: 64px; height: 64px; background-position: 0 -25728px; }
+		._1f301{ width: 64px; height: 64px; background-position: -64px -1792px; }
+		._1f302{ width: 64px; height: 64px; background-position: 0 -25664px; }
+		._1f303{ width: 64px; height: 64px; background-position: -64px -1856px; }
+		._1f304{ width: 64px; height: 64px; background-position: 0 -25600px; }
+		._1f305{ width: 64px; height: 64px; background-position: -64px -1920px; }
+		._1f306{ width: 64px; height: 64px; background-position: 0 -25536px; }
+		._1f307{ width: 64px; height: 64px; background-position: -64px -1984px; }
+		._1f308{ width: 64px; height: 64px; background-position: 0 -25472px; }
+		._1f309{ width: 64px; height: 64px; background-position: -64px -2048px; }
+		._1f30a{ width: 64px; height: 64px; background-position: 0 -25408px; }
+		._1f30b{ width: 64px; height: 64px; background-position: -64px -2112px; }
+		._1f30c{ width: 64px; height: 64px; background-position: 0 -25344px; }
+		._1f30d{ width: 64px; height: 64px; background-position: -64px -2176px; }
+		._1f30e{ width: 64px; height: 64px; background-position: 0 -25280px; }
+		._1f30f{ width: 64px; height: 64px; background-position: -64px -2240px; }
+		._1f310{ width: 64px; height: 64px; background-position: 0 -25216px; }
+		._1f311{ width: 64px; height: 64px; background-position: -64px -2304px; }
+		._1f312{ width: 64px; height: 64px; background-position: 0 -25152px; }
+		._1f313{ width: 64px; height: 64px; background-position: -64px -2368px; }
+		._1f314{ width: 64px; height: 64px; background-position: 0 -25088px; }
+		._1f315{ width: 64px; height: 64px; background-position: -64px -2432px; }
+		._1f316{ width: 64px; height: 64px; background-position: 0 -25024px; }
+		._1f317{ width: 64px; height: 64px; background-position: -64px -2496px; }
+		._1f318{ width: 64px; height: 64px; background-position: 0 -24960px; }
+		._1f319{ width: 64px; height: 64px; background-position: -64px -2560px; }
+		._1f31a{ width: 64px; height: 64px; background-position: 0 -24896px; }
+		._1f31b{ width: 64px; height: 64px; background-position: -64px -2624px; }
+		._1f31c{ width: 64px; height: 64px; background-position: 0 -24832px; }
+		._1f31d{ width: 64px; height: 64px; background-position: -64px -2688px; }
+		._1f31e{ width: 64px; height: 64px; background-position: 0 -24768px; }
+		._1f31f{ width: 64px; height: 64px; background-position: -64px -2752px; }
+		._1f320{ width: 64px; height: 64px; background-position: 0 -24704px; }
+		._1f330{ width: 64px; height: 64px; background-position: -64px -2816px; }
+		._1f331{ width: 64px; height: 64px; background-position: 0 -24640px; }
+		._1f332{ width: 64px; height: 64px; background-position: -64px -2880px; }
+		._1f333{ width: 64px; height: 64px; background-position: 0 -24576px; }
+		._1f334{ width: 64px; height: 64px; background-position: -64px -2944px; }
+		._1f335{ width: 64px; height: 64px; background-position: 0 -24512px; }
+		._1f337{ width: 64px; height: 64px; background-position: -64px -3008px; }
+		._1f338{ width: 64px; height: 64px; background-position: 0 -24448px; }
+		._1f339{ width: 64px; height: 64px; background-position: -64px -3072px; }
+		._1f33a{ width: 64px; height: 64px; background-position: 0 -24384px; }
+		._1f33b{ width: 64px; height: 64px; background-position: -64px -3136px; }
+		._1f33c{ width: 64px; height: 64px; background-position: 0 -24320px; }
+		._1f33d{ width: 64px; height: 64px; background-position: -64px -3200px; }
+		._1f33e{ width: 64px; height: 64px; background-position: 0 -24256px; }
+		._1f33f{ width: 64px; height: 64px; background-position: -64px -3264px; }
+		._1f340{ width: 64px; height: 64px; background-position: 0 -24192px; }
+		._1f341{ width: 64px; height: 64px; background-position: -64px -3328px; }
+		._1f342{ width: 64px; height: 64px; background-position: 0 -24128px; }
+		._1f343{ width: 64px; height: 64px; background-position: -64px -3392px; }
+		._1f344{ width: 64px; height: 64px; background-position: 0 -24064px; }
+		._1f345{ width: 64px; height: 64px; background-position: -64px -3456px; }
+		._1f346{ width: 64px; height: 64px; background-position: 0 -24000px; }
+		._1f347{ width: 64px; height: 64px; background-position: -64px -3520px; }
+		._1f348{ width: 64px; height: 64px; background-position: 0 -23936px; }
+		._1f349{ width: 64px; height: 64px; background-position: -64px -3584px; }
+		._1f34a{ width: 64px; height: 64px; background-position: 0 -23872px; }
+		._1f34b{ width: 64px; height: 64px; background-position: -64px -3648px; }
+		._1f34c{ width: 64px; height: 64px; background-position: 0 -23808px; }
+		._1f34d{ width: 64px; height: 64px; background-position: -64px -3712px; }
+		._1f34e{ width: 64px; height: 64px; background-position: 0 -23744px; }
+		._1f34f{ width: 64px; height: 64px; background-position: -64px -3776px; }
+		._1f350{ width: 64px; height: 64px; background-position: 0 -23680px; }
+		._1f351{ width: 64px; height: 64px; background-position: -64px -3840px; }
+		._1f352{ width: 64px; height: 64px; background-position: 0 -23616px; }
+		._1f353{ width: 64px; height: 64px; background-position: -64px -3904px; }
+		._1f354{ width: 64px; height: 64px; background-position: 0 -23552px; }
+		._1f355{ width: 64px; height: 64px; background-position: -64px -3968px; }
+		._1f356{ width: 64px; height: 64px; background-position: 0 -23488px; }
+		._1f357{ width: 64px; height: 64px; background-position: -64px -4032px; }
+		._1f358{ width: 64px; height: 64px; background-position: 0 -23424px; }
+		._1f359{ width: 64px; height: 64px; background-position: -64px -4096px; }
+		._1f35a{ width: 64px; height: 64px; background-position: 0 -23360px; }
+		._1f35b{ width: 64px; height: 64px; background-position: -64px -4160px; }
+		._1f35c{ width: 64px; height: 64px; background-position: 0 -23296px; }
+		._1f35d{ width: 64px; height: 64px; background-position: -64px -4224px; }
+		._1f35e{ width: 64px; height: 64px; background-position: 0 -23232px; }
+		._1f35f{ width: 64px; height: 64px; background-position: -64px -4288px; }
+		._1f360{ width: 64px; height: 64px; background-position: 0 -23168px; }
+		._1f361{ width: 64px; height: 64px; background-position: -64px -4352px; }
+		._1f362{ width: 64px; height: 64px; background-position: 0 -23104px; }
+		._1f363{ width: 64px; height: 64px; background-position: -64px -4416px; }
+		._1f364{ width: 64px; height: 64px; background-position: 0 -23040px; }
+		._1f365{ width: 64px; height: 64px; background-position: -64px -4480px; }
+		._1f366{ width: 64px; height: 64px; background-position: 0 -22976px; }
+		._1f367{ width: 64px; height: 64px; background-position: -64px -4544px; }
+		._1f368{ width: 64px; height: 64px; background-position: 0 -22912px; }
+		._1f369{ width: 64px; height: 64px; background-position: -64px -4608px; }
+		._1f36a{ width: 64px; height: 64px; background-position: 0 -22848px; }
+		._1f36b{ width: 64px; height: 64px; background-position: -64px -4672px; }
+		._1f36c{ width: 64px; height: 64px; background-position: 0 -22784px; }
+		._1f36d{ width: 64px; height: 64px; background-position: -64px -4736px; }
+		._1f36e{ width: 64px; height: 64px; background-position: 0 -22720px; }
+		._1f36f{ width: 64px; height: 64px; background-position: -64px -4800px; }
+		._1f370{ width: 64px; height: 64px; background-position: 0 -22656px; }
+		._1f371{ width: 64px; height: 64px; background-position: -64px -4864px; }
+		._1f372{ width: 64px; height: 64px; background-position: 0 -22592px; }
+		._1f373{ width: 64px; height: 64px; background-position: -64px -4928px; }
+		._1f374{ width: 64px; height: 64px; background-position: 0 -22528px; }
+		._1f375{ width: 64px; height: 64px; background-position: -64px -4992px; }
+		._1f376{ width: 64px; height: 64px; background-position: 0 -22464px; }
+		._1f377{ width: 64px; height: 64px; background-position: -64px -5056px; }
+		._1f378{ width: 64px; height: 64px; background-position: 0 -22400px; }
+		._1f379{ width: 64px; height: 64px; background-position: -64px -5120px; }
+		._1f37a{ width: 64px; height: 64px; background-position: 0 -22336px; }
+		._1f37b{ width: 64px; height: 64px; background-position: -64px -5184px; }
+		._1f37c{ width: 64px; height: 64px; background-position: 0 -22272px; }
+		._1f380{ width: 64px; height: 64px; background-position: -64px -5248px; }
+		._1f381{ width: 64px; height: 64px; background-position: 0 -22208px; }
+		._1f382{ width: 64px; height: 64px; background-position: -64px -5312px; }
+		._1f383{ width: 64px; height: 64px; background-position: 0 -22144px; }
+		._1f384{ width: 64px; height: 64px; background-position: -64px -5376px; }
+		._1f385{ width: 64px; height: 64px; background-position: 0 -22080px; }
+		._1f386{ width: 64px; height: 64px; background-position: -64px -5440px; }
+		._1f387{ width: 64px; height: 64px; background-position: 0 -22016px; }
+		._1f388{ width: 64px; height: 64px; background-position: -64px -5504px; }
+		._1f389{ width: 64px; height: 64px; background-position: 0 -21952px; }
+		._1f38a{ width: 64px; height: 64px; background-position: -64px -5568px; }
+		._1f38b{ width: 64px; height: 64px; background-position: 0 -21888px; }
+		._1f38c{ width: 64px; height: 64px; background-position: -64px -5632px; }
+		._1f38d{ width: 64px; height: 64px; background-position: 0 -21824px; }
+		._1f38e{ width: 64px; height: 64px; background-position: -64px -5696px; }
+		._1f38f{ width: 64px; height: 64px; background-position: 0 -21760px; }
+		._1f390{ width: 64px; height: 64px; background-position: -64px -5760px; }
+		._1f391{ width: 64px; height: 64px; background-position: 0 -21696px; }
+		._1f392{ width: 64px; height: 64px; background-position: -64px -5824px; }
+		._1f393{ width: 64px; height: 64px; background-position: 0 -21632px; }
+		._1f3a0{ width: 64px; height: 64px; background-position: -64px -5888px; }
+		._1f3a1{ width: 64px; height: 64px; background-position: 0 -21568px; }
+		._1f3a2{ width: 64px; height: 64px; background-position: -64px -5952px; }
+		._1f3a3{ width: 64px; height: 64px; background-position: 0 -21504px; }
+		._1f3a4{ width: 64px; height: 64px; background-position: -64px -6016px; }
+		._1f3a5{ width: 64px; height: 64px; background-position: 0 -21440px; }
+		._1f3a6{ width: 64px; height: 64px; background-position: -64px -6080px; }
+		._1f3a7{ width: 64px; height: 64px; background-position: 0 -21376px; }
+		._1f3a8{ width: 64px; height: 64px; background-position: -64px -6144px; }
+		._1f3a9{ width: 64px; height: 64px; background-position: 0 -21312px; }
+		._1f3aa{ width: 64px; height: 64px; background-position: -64px -6208px; }
+		._1f3ab{ width: 64px; height: 64px; background-position: 0 -21248px; }
+		._1f3ac{ width: 64px; height: 64px; background-position: -64px -6272px; }
+		._1f3ad{ width: 64px; height: 64px; background-position: 0 -21184px; }
+		._1f3ae{ width: 64px; height: 64px; background-position: -64px -6336px; }
+		._1f3af{ width: 64px; height: 64px; background-position: 0 -21120px; }
+		._1f3b0{ width: 64px; height: 64px; background-position: -64px -6400px; }
+		._1f3b1{ width: 64px; height: 64px; background-position: 0 -21056px; }
+		._1f3b2{ width: 64px; height: 64px; background-position: -64px -6464px; }
+		._1f3b3{ width: 64px; height: 64px; background-position: 0 -20992px; }
+		._1f3b4{ width: 64px; height: 64px; background-position: -64px -6528px; }
+		._1f3b5{ width: 64px; height: 64px; background-position: 0 -20928px; }
+		._1f3b6{ width: 64px; height: 64px; background-position: -64px -6592px; }
+		._1f3b7{ width: 64px; height: 64px; background-position: 0 -20864px; }
+		._1f3b8{ width: 64px; height: 64px; background-position: -64px -6656px; }
+		._1f3b9{ width: 64px; height: 64px; background-position: 0 -20800px; }
+		._1f3ba{ width: 64px; height: 64px; background-position: -64px -6720px; }
+		._1f3bb{ width: 64px; height: 64px; background-position: 0 -20736px; }
+		._1f3bc{ width: 64px; height: 64px; background-position: -64px -6784px; }
+		._1f3bd{ width: 64px; height: 64px; background-position: 0 -20672px; }
+		._1f3be{ width: 64px; height: 64px; background-position: -64px -6848px; }
+		._1f3bf{ width: 64px; height: 64px; background-position: 0 -20608px; }
+		._1f3c0{ width: 64px; height: 64px; background-position: -64px -6912px; }
+		._1f3c1{ width: 64px; height: 64px; background-position: 0 -20544px; }
+		._1f3c2{ width: 64px; height: 64px; background-position: -64px -6976px; }
+		._1f3c3{ width: 64px; height: 64px; background-position: 0 -20480px; }
+		._1f3c4{ width: 64px; height: 64px; background-position: -64px -7040px; }
+		._1f3c6{ width: 64px; height: 64px; background-position: 0 -20416px; }
+		._1f3c7{ width: 64px; height: 64px; background-position: -64px -7104px; }
+		._1f3c8{ width: 64px; height: 64px; background-position: 0 -20352px; }
+		._1f3c9{ width: 64px; height: 64px; background-position: -64px -7168px; }
+		._1f3ca{ width: 64px; height: 64px; background-position: 0 -20288px; }
+		._1f3e0{ width: 64px; height: 64px; background-position: -64px -7232px; }
+		._1f3e1{ width: 64px; height: 64px; background-position: 0 -20224px; }
+		._1f3e2{ width: 64px; height: 64px; background-position: -64px -7296px; }
+		._1f3e3{ width: 64px; height: 64px; background-position: 0 -20160px; }
+		._1f3e4{ width: 64px; height: 64px; background-position: -64px -7360px; }
+		._1f3e5{ width: 64px; height: 64px; background-position: 0 -20096px; }
+		._1f3e6{ width: 64px; height: 64px; background-position: -64px -7424px; }
+		._1f3e7{ width: 64px; height: 64px; background-position: 0 -20032px; }
+		._1f3e8{ width: 64px; height: 64px; background-position: -64px -7488px; }
+		._1f3e9{ width: 64px; height: 64px; background-position: 0 -19968px; }
+		._1f3ea{ width: 64px; height: 64px; background-position: -64px -7552px; }
+		._1f3eb{ width: 64px; height: 64px; background-position: 0 -19904px; }
+		._1f3ec{ width: 64px; height: 64px; background-position: -64px -7616px; }
+		._1f3ed{ width: 64px; height: 64px; background-position: 0 -19840px; }
+		._1f3ee{ width: 64px; height: 64px; background-position: -64px -7680px; }
+		._1f3ef{ width: 64px; height: 64px; background-position: 0 -19776px; }
+		._1f3f0{ width: 64px; height: 64px; background-position: -64px -7744px; }
+		._1f400{ width: 64px; height: 64px; background-position: 0 -19712px; }
+		._1f401{ width: 64px; height: 64px; background-position: -64px -7808px; }
+		._1f402{ width: 64px; height: 64px; background-position: 0 -19648px; }
+		._1f403{ width: 64px; height: 64px; background-position: -64px -7872px; }
+		._1f404{ width: 64px; height: 64px; background-position: 0 -19584px; }
+		._1f405{ width: 64px; height: 64px; background-position: -64px -7936px; }
+		._1f406{ width: 64px; height: 64px; background-position: 0 -19520px; }
+		._1f407{ width: 64px; height: 64px; background-position: -64px -8000px; }
+		._1f408{ width: 64px; height: 64px; background-position: 0 -19456px; }
+		._1f409{ width: 64px; height: 64px; background-position: -64px -8064px; }
+		._1f40a{ width: 64px; height: 64px; background-position: 0 -19392px; }
+		._1f40b{ width: 64px; height: 64px; background-position: -64px -8128px; }
+		._1f40c{ width: 64px; height: 64px; background-position: 0 -19328px; }
+		._1f40d{ width: 64px; height: 64px; background-position: -64px -8192px; }
+		._1f40e{ width: 64px; height: 64px; background-position: 0 -19264px; }
+		._1f40f{ width: 64px; height: 64px; background-position: -64px -8256px; }
+		._1f410{ width: 64px; height: 64px; background-position: 0 -19200px; }
+		._1f411{ width: 64px; height: 64px; background-position: -64px -8320px; }
+		._1f412{ width: 64px; height: 64px; background-position: 0 -19136px; }
+		._1f413{ width: 64px; height: 64px; background-position: -64px -8384px; }
+		._1f414{ width: 64px; height: 64px; background-position: 0 -19072px; }
+		._1f415{ width: 64px; height: 64px; background-position: -64px -8448px; }
+		._1f416{ width: 64px; height: 64px; background-position: 0 -19008px; }
+		._1f417{ width: 64px; height: 64px; background-position: -64px -8512px; }
+		._1f418{ width: 64px; height: 64px; background-position: 0 -18944px; }
+		._1f419{ width: 64px; height: 64px; background-position: -64px -8576px; }
+		._1f41a{ width: 64px; height: 64px; background-position: 0 -18880px; }
+		._1f41b{ width: 64px; height: 64px; background-position: -64px -8640px; }
+		._1f41c{ width: 64px; height: 64px; background-position: 0 -18816px; }
+		._1f41d{ width: 64px; height: 64px; background-position: -64px -8704px; }
+		._1f41e{ width: 64px; height: 64px; background-position: 0 -18752px; }
+		._1f41f{ width: 64px; height: 64px; background-position: -64px -8768px; }
+		._1f420{ width: 64px; height: 64px; background-position: 0 -18688px; }
+		._1f421{ width: 64px; height: 64px; background-position: -64px -8832px; }
+		._1f422{ width: 64px; height: 64px; background-position: 0 -18624px; }
+		._1f423{ width: 64px; height: 64px; background-position: -64px -8896px; }
+		._1f424{ width: 64px; height: 64px; background-position: 0 -18560px; }
+		._1f425{ width: 64px; height: 64px; background-position: -64px -8960px; }
+		._1f426{ width: 64px; height: 64px; background-position: 0 -18496px; }
+		._1f427{ width: 64px; height: 64px; background-position: -64px -9024px; }
+		._1f428{ width: 64px; height: 64px; background-position: 0 -18432px; }
+		._1f429{ width: 64px; height: 64px; background-position: -64px -9088px; }
+		._1f42a{ width: 64px; height: 64px; background-position: 0 -18368px; }
+		._1f42b{ width: 64px; height: 64px; background-position: -64px -9152px; }
+		._1f42c{ width: 64px; height: 64px; background-position: 0 -18304px; }
+		._1f42d{ width: 64px; height: 64px; background-position: -64px -9216px; }
+		._1f42e{ width: 64px; height: 64px; background-position: 0 -18240px; }
+		._1f42f{ width: 64px; height: 64px; background-position: -64px -9280px; }
+		._1f430{ width: 64px; height: 64px; background-position: 0 -18176px; }
+		._1f431{ width: 64px; height: 64px; background-position: -64px -9344px; }
+		._1f432{ width: 64px; height: 64px; background-position: 0 -18112px; }
+		._1f433{ width: 64px; height: 64px; background-position: -64px -9408px; }
+		._1f434{ width: 64px; height: 64px; background-position: 0 -18048px; }
+		._1f435{ width: 64px; height: 64px; background-position: -64px -9472px; }
+		._1f436{ width: 64px; height: 64px; background-position: 0 -17984px; }
+		._1f437{ width: 64px; height: 64px; background-position: -64px -9536px; }
+		._1f438{ width: 64px; height: 64px; background-position: 0 -17920px; }
+		._1f439{ width: 64px; height: 64px; background-position: -64px -9600px; }
+		._1f43a{ width: 64px; height: 64px; background-position: 0 -17856px; }
+		._1f43b{ width: 64px; height: 64px; background-position: -64px -9664px; }
+		._1f43c{ width: 64px; height: 64px; background-position: 0 -17792px; }
+		._1f43d{ width: 64px; height: 64px; background-position: -64px -9728px; }
+		._1f43e{ width: 64px; height: 64px; background-position: 0 -17728px; }
+		._1f440{ width: 64px; height: 64px; background-position: -64px -9792px; }
+		._1f442{ width: 64px; height: 64px; background-position: 0 -17664px; }
+		._1f443{ width: 64px; height: 64px; background-position: -64px -9856px; }
+		._1f444{ width: 64px; height: 64px; background-position: 0 -17600px; }
+		._1f445{ width: 64px; height: 64px; background-position: -64px -9920px; }
+		._1f446{ width: 64px; height: 64px; background-position: 0 -17536px; }
+		._1f447{ width: 64px; height: 64px; background-position: -64px -9984px; }
+		._1f448{ width: 64px; height: 64px; background-position: 0 -17472px; }
+		._1f449{ width: 64px; height: 64px; background-position: -64px -10048px; }
+		._1f44a{ width: 64px; height: 64px; background-position: 0 -17408px; }
+		._1f44b{ width: 64px; height: 64px; background-position: -64px -10112px; }
+		._1f44c{ width: 64px; height: 64px; background-position: 0 -17344px; }
+		._1f44d{ width: 64px; height: 64px; background-position: -64px -10176px; }
+		._1f44e{ width: 64px; height: 64px; background-position: 0 -17280px; }
+		._1f44f{ width: 64px; height: 64px; background-position: -64px -10240px; }
+		._1f450{ width: 64px; height: 64px; background-position: 0 -17216px; }
+		._1f451{ width: 64px; height: 64px; background-position: -64px -10304px; }
+		._1f452{ width: 64px; height: 64px; background-position: 0 -17152px; }
+		._1f453{ width: 64px; height: 64px; background-position: -64px -10368px; }
+		._1f454{ width: 64px; height: 64px; background-position: 0 -17088px; }
+		._1f455{ width: 64px; height: 64px; background-position: -64px -10432px; }
+		._1f456{ width: 64px; height: 64px; background-position: 0 -17024px; }
+		._1f457{ width: 64px; height: 64px; background-position: -64px -10496px; }
+		._1f458{ width: 64px; height: 64px; background-position: 0 -16960px; }
+		._1f459{ width: 64px; height: 64px; background-position: -64px -10560px; }
+		._1f45a{ width: 64px; height: 64px; background-position: 0 -16896px; }
+		._1f45b{ width: 64px; height: 64px; background-position: -64px -10624px; }
+		._1f45c{ width: 64px; height: 64px; background-position: 0 -16832px; }
+		._1f45d{ width: 64px; height: 64px; background-position: -64px -10688px; }
+		._1f45e{ width: 64px; height: 64px; background-position: 0 -16768px; }
+		._1f45f{ width: 64px; height: 64px; background-position: -64px -10752px; }
+		._1f460{ width: 64px; height: 64px; background-position: 0 -16704px; }
+		._1f461{ width: 64px; height: 64px; background-position: -64px -10816px; }
+		._1f462{ width: 64px; height: 64px; background-position: 0 -16640px; }
+		._1f463{ width: 64px; height: 64px; background-position: -64px -10880px; }
+		._1f464{ width: 64px; height: 64px; background-position: 0 -16576px; }
+		._1f465{ width: 64px; height: 64px; background-position: -64px -10944px; }
+		._1f466{ width: 64px; height: 64px; background-position: 0 -16512px; }
+		._1f467{ width: 64px; height: 64px; background-position: -64px -11008px; }
+		._1f468{ width: 64px; height: 64px; background-position: 0 -16448px; }
+		._1f469{ width: 64px; height: 64px; background-position: -64px -11072px; }
+		._1f46a{ width: 64px; height: 64px; background-position: 0 -16384px; }
+		._1f46b{ width: 64px; height: 64px; background-position: -64px -11136px; }
+		._1f46c{ width: 64px; height: 64px; background-position: 0 -16320px; }
+		._1f46d{ width: 64px; height: 64px; background-position: -64px -11200px; }
+		._1f46e{ width: 64px; height: 64px; background-position: 0 -16256px; }
+		._1f46f{ width: 64px; height: 64px; background-position: -64px -11264px; }
+		._1f470{ width: 64px; height: 64px; background-position: 0 -16192px; }
+		._1f471{ width: 64px; height: 64px; background-position: -64px -11328px; }
+		._1f472{ width: 64px; height: 64px; background-position: 0 -16128px; }
+		._1f473{ width: 64px; height: 64px; background-position: -64px -11392px; }
+		._1f474{ width: 64px; height: 64px; background-position: 0 -16064px; }
+		._1f475{ width: 64px; height: 64px; background-position: -64px -11456px; }
+		._1f476{ width: 64px; height: 64px; background-position: 0 -16000px; }
+		._1f477{ width: 64px; height: 64px; background-position: -64px -11520px; }
+		._1f478{ width: 64px; height: 64px; background-position: 0 -15936px; }
+		._1f479{ width: 64px; height: 64px; background-position: -64px -11584px; }
+		._1f47a{ width: 64px; height: 64px; background-position: 0 -15872px; }
+		._1f47b{ width: 64px; height: 64px; background-position: -64px -11648px; }
+		._1f47c{ width: 64px; height: 64px; background-position: 0 -15808px; }
+		._1f47d{ width: 64px; height: 64px; background-position: -64px -11712px; }
+		._1f47e{ width: 64px; height: 64px; background-position: 0 -15744px; }
+		._1f47f{ width: 64px; height: 64px; background-position: -64px -11776px; }
+		._1f480{ width: 64px; height: 64px; background-position: 0 -15680px; }
+		._1f481{ width: 64px; height: 64px; background-position: -64px -11840px; }
+		._1f482{ width: 64px; height: 64px; background-position: 0 -15616px; }
+		._1f483{ width: 64px; height: 64px; background-position: -64px -11904px; }
+		._1f484{ width: 64px; height: 64px; background-position: 0 -15552px; }
+		._1f485{ width: 64px; height: 64px; background-position: -64px -11968px; }
+		._1f486{ width: 64px; height: 64px; background-position: 0 -15488px; }
+		._1f487{ width: 64px; height: 64px; background-position: -64px -12032px; }
+		._1f488{ width: 64px; height: 64px; background-position: 0 -15424px; }
+		._1f489{ width: 64px; height: 64px; background-position: -64px -12096px; }
+		._1f48a{ width: 64px; height: 64px; background-position: 0 -15360px; }
+		._1f48b{ width: 64px; height: 64px; background-position: -64px -12160px; }
+		._1f48c{ width: 64px; height: 64px; background-position: 0 -15296px; }
+		._1f48d{ width: 64px; height: 64px; background-position: -64px -12224px; }
+		._1f48e{ width: 64px; height: 64px; background-position: 0 -15232px; }
+		._1f48f{ width: 64px; height: 64px; background-position: -64px -12288px; }
+		._1f490{ width: 64px; height: 64px; background-position: 0 -15168px; }
+		._1f491{ width: 64px; height: 64px; background-position: -64px -12352px; }
+		._1f492{ width: 64px; height: 64px; background-position: 0 -15104px; }
+		._1f493{ width: 64px; height: 64px; background-position: -64px -12416px; }
+		._1f494{ width: 64px; height: 64px; background-position: 0 -15040px; }
+		._1f495{ width: 64px; height: 64px; background-position: -64px -12480px; }
+		._1f496{ width: 64px; height: 64px; background-position: 0 -14976px; }
+		._1f497{ width: 64px; height: 64px; background-position: -64px -12544px; }
+		._1f498{ width: 64px; height: 64px; background-position: 0 -14912px; }
+		._1f499{ width: 64px; height: 64px; background-position: -64px -12608px; }
+		._1f49a{ width: 64px; height: 64px; background-position: 0 -14848px; }
+		._1f49b{ width: 64px; height: 64px; background-position: -64px -12672px; }
+		._1f49c{ width: 64px; height: 64px; background-position: 0 -14784px; }
+		._1f49d{ width: 64px; height: 64px; background-position: -64px -12736px; }
+		._1f49e{ width: 64px; height: 64px; background-position: 0 -14720px; }
+		._1f49f{ width: 64px; height: 64px; background-position: -64px -12800px; }
+		._1f4a0{ width: 64px; height: 64px; background-position: 0 -14656px; }
+		._1f4a1{ width: 64px; height: 64px; background-position: -64px -12864px; }
+		._1f4a2{ width: 64px; height: 64px; background-position: 0 -14592px; }
+		._1f4a3{ width: 64px; height: 64px; background-position: -64px -12928px; }
+		._1f4a4{ width: 64px; height: 64px; background-position: 0 -14528px; }
+		._1f4a5{ width: 64px; height: 64px; background-position: -64px -12992px; }
+		._1f4a6{ width: 64px; height: 64px; background-position: 0 -14464px; }
+		._1f4a7{ width: 64px; height: 64px; background-position: -64px -13056px; }
+		._1f4a8{ width: 64px; height: 64px; background-position: 0 -14400px; }
+		._1f4a9{ width: 64px; height: 64px; background-position: -64px -13120px; }
+		._1f4aa{ width: 64px; height: 64px; background-position: 0 -14336px; }
+		._1f4ab{ width: 64px; height: 64px; background-position: -64px -13184px; }
+		._1f4ac{ width: 64px; height: 64px; background-position: 0 -14272px; }
+		._1f4ad{ width: 64px; height: 64px; background-position: -64px -13248px; }
+		._1f4ae{ width: 64px; height: 64px; background-position: 0 -14208px; }
+		._1f4af{ width: 64px; height: 64px; background-position: -64px -13312px; }
+		._1f4b0{ width: 64px; height: 64px; background-position: 0 -14144px; }
+		._1f4b1{ width: 64px; height: 64px; background-position: -64px -13376px; }
+		._1f4b2{ width: 64px; height: 64px; background-position: 0 -14080px; }
+		._1f4b3{ width: 64px; height: 64px; background-position: -64px -13440px; }
+		._1f4b4{ width: 64px; height: 64px; background-position: 0 -14016px; }
+		._1f4b5{ width: 64px; height: 64px; background-position: -64px -13504px; }
+		._1f4b6{ width: 64px; height: 64px; background-position: 0 -13952px; }
+		._1f4b7{ width: 64px; height: 64px; background-position: -64px -13568px; }
+		._1f4b8{ width: 64px; height: 64px; background-position: 0 -13888px; }
+		._1f4b9{ width: 64px; height: 64px; background-position: -64px -13632px; }
+		._1f4ba{ width: 64px; height: 64px; background-position: 0 -13824px; }
+		._1f4bb{ width: 64px; height: 64px; background-position: -64px -13696px; }
+		._1f4bc{ width: 64px; height: 64px; background-position: 0 -13760px; }
+		._1f4bd{ width: 64px; height: 64px; background-position: -64px -13760px; }
+		._1f4be{ width: 64px; height: 64px; background-position: 0 -13696px; }
+		._1f4bf{ width: 64px; height: 64px; background-position: -64px -13824px; }
+		._1f4c0{ width: 64px; height: 64px; background-position: 0 -13632px; }
+		._1f4c1{ width: 64px; height: 64px; background-position: -64px -13888px; }
+		._1f4c2{ width: 64px; height: 64px; background-position: 0 -13568px; }
+		._1f4c3{ width: 64px; height: 64px; background-position: -64px -13952px; }
+		._1f4c4{ width: 64px; height: 64px; background-position: 0 -13504px; }
+		._1f4c5{ width: 64px; height: 64px; background-position: -64px -14016px; }
+		._1f4c6{ width: 64px; height: 64px; background-position: 0 -13440px; }
+		._1f4c7{ width: 64px; height: 64px; background-position: -64px -14080px; }
+		._1f4c8{ width: 64px; height: 64px; background-position: 0 -13376px; }
+		._1f4c9{ width: 64px; height: 64px; background-position: -64px -14144px; }
+		._1f4ca{ width: 64px; height: 64px; background-position: 0 -13312px; }
+		._1f4cb{ width: 64px; height: 64px; background-position: -64px -14208px; }
+		._1f4cc{ width: 64px; height: 64px; background-position: 0 -13248px; }
+		._1f4cd{ width: 64px; height: 64px; background-position: -64px -14272px; }
+		._1f4ce{ width: 64px; height: 64px; background-position: 0 -13184px; }
+		._1f4cf{ width: 64px; height: 64px; background-position: -64px -14336px; }
+		._1f4d0{ width: 64px; height: 64px; background-position: 0 -13120px; }
+		._1f4d1{ width: 64px; height: 64px; background-position: -64px -14400px; }
+		._1f4d2{ width: 64px; height: 64px; background-position: 0 -13056px; }
+		._1f4d3{ width: 64px; height: 64px; background-position: -64px -14464px; }
+		._1f4d4{ width: 64px; height: 64px; background-position: 0 -12992px; }
+		._1f4d5{ width: 64px; height: 64px; background-position: -64px -14528px; }
+		._1f4d6{ width: 64px; height: 64px; background-position: 0 -12928px; }
+		._1f4d7{ width: 64px; height: 64px; background-position: -64px -14592px; }
+		._1f4d8{ width: 64px; height: 64px; background-position: 0 -12864px; }
+		._1f4d9{ width: 64px; height: 64px; background-position: -64px -14656px; }
+		._1f4da{ width: 64px; height: 64px; background-position: 0 -12800px; }
+		._1f4db{ width: 64px; height: 64px; background-position: -64px -14720px; }
+		._1f4dc{ width: 64px; height: 64px; background-position: 0 -12736px; }
+		._1f4dd{ width: 64px; height: 64px; background-position: -64px -14784px; }
+		._1f4de{ width: 64px; height: 64px; background-position: 0 -12672px; }
+		._1f4df{ width: 64px; height: 64px; background-position: -64px -14848px; }
+		._1f4e0{ width: 64px; height: 64px; background-position: 0 -12608px; }
+		._1f4e1{ width: 64px; height: 64px; background-position: -64px -14912px; }
+		._1f4e2{ width: 64px; height: 64px; background-position: 0 -12544px; }
+		._1f4e3{ width: 64px; height: 64px; background-position: -64px -14976px; }
+		._1f4e4{ width: 64px; height: 64px; background-position: 0 -12480px; }
+		._1f4e5{ width: 64px; height: 64px; background-position: -64px -15040px; }
+		._1f4e6{ width: 64px; height: 64px; background-position: 0 -12416px; }
+		._1f4e7{ width: 64px; height: 64px; background-position: -64px -15104px; }
+		._1f4e8{ width: 64px; height: 64px; background-position: 0 -12352px; }
+		._1f4e9{ width: 64px; height: 64px; background-position: -64px -15168px; }
+		._1f4ea{ width: 64px; height: 64px; background-position: 0 -12288px; }
+		._1f4eb{ width: 64px; height: 64px; background-position: -64px -15232px; }
+		._1f4ec{ width: 64px; height: 64px; background-position: 0 -12224px; }
+		._1f4ed{ width: 64px; height: 64px; background-position: -64px -15296px; }
+		._1f4ee{ width: 64px; height: 64px; background-position: 0 -12160px; }
+		._1f4ef{ width: 64px; height: 64px; background-position: -64px -15360px; }
+		._1f4f0{ width: 64px; height: 64px; background-position: 0 -12096px; }
+		._1f4f1{ width: 64px; height: 64px; background-position: -64px -15424px; }
+		._1f4f2{ width: 64px; height: 64px; background-position: 0 -12032px; }
+		._1f4f3{ width: 64px; height: 64px; background-position: -64px -15488px; }
+		._1f4f4{ width: 64px; height: 64px; background-position: 0 -11968px; }
+		._1f4f5{ width: 64px; height: 64px; background-position: -64px -15552px; }
+		._1f4f6{ width: 64px; height: 64px; background-position: 0 -11904px; }
+		._1f4f7{ width: 64px; height: 64px; background-position: -64px -15616px; }
+		._1f4f9{ width: 64px; height: 64px; background-position: 0 -11840px; }
+		._1f4fa{ width: 64px; height: 64px; background-position: -64px -15680px; }
+		._1f4fb{ width: 64px; height: 64px; background-position: 0 -11776px; }
+		._1f4fc{ width: 64px; height: 64px; background-position: -64px -15744px; }
+		._1f500{ width: 64px; height: 64px; background-position: 0 -11712px; }
+		._1f501{ width: 64px; height: 64px; background-position: -64px -15808px; }
+		._1f502{ width: 64px; height: 64px; background-position: 0 -11648px; }
+		._1f503{ width: 64px; height: 64px; background-position: -64px -15872px; }
+		._1f504{ width: 64px; height: 64px; background-position: 0 -11584px; }
+		._1f505{ width: 64px; height: 64px; background-position: -64px -15936px; }
+		._1f506{ width: 64px; height: 64px; background-position: 0 -11520px; }
+		._1f507{ width: 64px; height: 64px; background-position: -64px -16000px; }
+		._1f508{ width: 64px; height: 64px; background-position: 0 -11456px; }
+		._1f509{ width: 64px; height: 64px; background-position: -64px -16064px; }
+		._1f50a{ width: 64px; height: 64px; background-position: 0 -11392px; }
+		._1f50b{ width: 64px; height: 64px; background-position: -64px -16128px; }
+		._1f50c{ width: 64px; height: 64px; background-position: 0 -11328px; }
+		._1f50d{ width: 64px; height: 64px; background-position: -64px -16192px; }
+		._1f50e{ width: 64px; height: 64px; background-position: 0 -11264px; }
+		._1f50f{ width: 64px; height: 64px; background-position: -64px -16256px; }
+		._1f510{ width: 64px; height: 64px; background-position: 0 -11200px; }
+		._1f511{ width: 64px; height: 64px; background-position: -64px -16320px; }
+		._1f512{ width: 64px; height: 64px; background-position: 0 -11136px; }
+		._1f513{ width: 64px; height: 64px; background-position: -64px -16384px; }
+		._1f514{ width: 64px; height: 64px; background-position: 0 -11072px; }
+		._1f515{ width: 64px; height: 64px; background-position: -64px -16448px; }
+		._1f516{ width: 64px; height: 64px; background-position: 0 -11008px; }
+		._1f517{ width: 64px; height: 64px; background-position: -64px -16512px; }
+		._1f518{ width: 64px; height: 64px; background-position: 0 -10944px; }
+		._1f519{ width: 64px; height: 64px; background-position: -64px -16576px; }
+		._1f51a{ width: 64px; height: 64px; background-position: 0 -10880px; }
+		._1f51b{ width: 64px; height: 64px; background-position: -64px -16640px; }
+		._1f51c{ width: 64px; height: 64px; background-position: 0 -10816px; }
+		._1f51d{ width: 64px; height: 64px; background-position: -64px -16704px; }
+		._1f51e{ width: 64px; height: 64px; background-position: 0 -10752px; }
+		._1f51f{ width: 64px; height: 64px; background-position: -64px -16768px; }
+		._1f520{ width: 64px; height: 64px; background-position: 0 -10688px; }
+		._1f521{ width: 64px; height: 64px; background-position: -64px -16832px; }
+		._1f522{ width: 64px; height: 64px; background-position: 0 -10624px; }
+		._1f523{ width: 64px; height: 64px; background-position: -64px -16896px; }
+		._1f524{ width: 64px; height: 64px; background-position: 0 -10560px; }
+		._1f525{ width: 64px; height: 64px; background-position: -64px -16960px; }
+		._1f526{ width: 64px; height: 64px; background-position: 0 -10496px; }
+		._1f527{ width: 64px; height: 64px; background-position: -64px -17024px; }
+		._1f528{ width: 64px; height: 64px; background-position: 0 -10432px; }
+		._1f529{ width: 64px; height: 64px; background-position: -64px -17088px; }
+		._1f52a{ width: 64px; height: 64px; background-position: 0 -10368px; }
+		._1f52b{ width: 64px; height: 64px; background-position: -64px -17152px; }
+		._1f52c{ width: 64px; height: 64px; background-position: 0 -10304px; }
+		._1f52d{ width: 64px; height: 64px; background-position: -64px -17216px; }
+		._1f52e{ width: 64px; height: 64px; background-position: 0 -10240px; }
+		._1f52f{ width: 64px; height: 64px; background-position: -64px -17280px; }
+		._1f530{ width: 64px; height: 64px; background-position: 0 -10176px; }
+		._1f531{ width: 64px; height: 64px; background-position: -64px -17344px; }
+		._1f532{ width: 64px; height: 64px; background-position: 0 -10112px; }
+		._1f533{ width: 64px; height: 64px; background-position: -64px -17408px; }
+		._1f534{ width: 64px; height: 64px; background-position: 0 -10048px; }
+		._1f535{ width: 64px; height: 64px; background-position: -64px -17472px; }
+		._1f536{ width: 64px; height: 64px; background-position: 0 -9984px; }
+		._1f537{ width: 64px; height: 64px; background-position: -64px -17536px; }
+		._1f538{ width: 64px; height: 64px; background-position: 0 -9920px; }
+		._1f539{ width: 64px; height: 64px; background-position: -64px -17600px; }
+		._1f53a{ width: 64px; height: 64px; background-position: 0 -9856px; }
+		._1f53b{ width: 64px; height: 64px; background-position: -64px -17664px; }
+		._1f53c{ width: 64px; height: 64px; background-position: 0 -9792px; }
+		._1f53d{ width: 64px; height: 64px; background-position: -64px -17728px; }
+		._1f550{ width: 64px; height: 64px; background-position: 0 -9728px; }
+		._1f551{ width: 64px; height: 64px; background-position: -64px -17792px; }
+		._1f552{ width: 64px; height: 64px; background-position: 0 -9664px; }
+		._1f553{ width: 64px; height: 64px; background-position: -64px -17856px; }
+		._1f554{ width: 64px; height: 64px; background-position: 0 -9600px; }
+		._1f555{ width: 64px; height: 64px; background-position: -64px -17920px; }
+		._1f556{ width: 64px; height: 64px; background-position: 0 -9536px; }
+		._1f557{ width: 64px; height: 64px; background-position: -64px -17984px; }
+		._1f558{ width: 64px; height: 64px; background-position: 0 -9472px; }
+		._1f559{ width: 64px; height: 64px; background-position: -64px -18048px; }
+		._1f55a{ width: 64px; height: 64px; background-position: 0 -9408px; }
+		._1f55b{ width: 64px; height: 64px; background-position: -64px -18112px; }
+		._1f55c{ width: 64px; height: 64px; background-position: 0 -9344px; }
+		._1f55d{ width: 64px; height: 64px; background-position: -64px -18176px; }
+		._1f55e{ width: 64px; height: 64px; background-position: 0 -9280px; }
+		._1f55f{ width: 64px; height: 64px; background-position: -64px -18240px; }
+		._1f560{ width: 64px; height: 64px; background-position: 0 -9216px; }
+		._1f561{ width: 64px; height: 64px; background-position: -64px -18304px; }
+		._1f562{ width: 64px; height: 64px; background-position: 0 -9152px; }
+		._1f563{ width: 64px; height: 64px; background-position: -64px -18368px; }
+		._1f564{ width: 64px; height: 64px; background-position: 0 -9088px; }
+		._1f565{ width: 64px; height: 64px; background-position: -64px -18432px; }
+		._1f566{ width: 64px; height: 64px; background-position: 0 -9024px; }
+		._1f567{ width: 64px; height: 64px; background-position: -64px -18496px; }
+		._1f5fb{ width: 64px; height: 64px; background-position: 0 -8960px; }
+		._1f5fc{ width: 64px; height: 64px; background-position: -64px -18560px; }
+		._1f5fd{ width: 64px; height: 64px; background-position: 0 -8896px; }
+		._1f5fe{ width: 64px; height: 64px; background-position: -64px -18624px; }
+		._1f5ff{ width: 64px; height: 64px; background-position: 0 -8832px; }
+		._1f600{ width: 64px; height: 64px; background-position: -64px -18688px; }
+		._1f601{ width: 64px; height: 64px; background-position: 0 -8768px; }
+		._1f602{ width: 64px; height: 64px; background-position: -64px -18752px; }
+		._1f603{ width: 64px; height: 64px; background-position: 0 -8704px; }
+		._1f604{ width: 64px; height: 64px; background-position: -64px -18816px; }
+		._1f605{ width: 64px; height: 64px; background-position: 0 -8640px; }
+		._1f606{ width: 64px; height: 64px; background-position: -64px -18880px; }
+		._1f607{ width: 64px; height: 64px; background-position: 0 -8576px; }
+		._1f608{ width: 64px; height: 64px; background-position: -64px -18944px; }
+		._1f609{ width: 64px; height: 64px; background-position: 0 -8512px; }
+		._1f60a{ width: 64px; height: 64px; background-position: -64px -19008px; }
+		._1f60b{ width: 64px; height: 64px; background-position: 0 -8448px; }
+		._1f60c{ width: 64px; height: 64px; background-position: -64px -19072px; }
+		._1f60d{ width: 64px; height: 64px; background-position: 0 -8384px; }
+		._1f60e{ width: 64px; height: 64px; background-position: -64px -19136px; }
+		._1f60f{ width: 64px; height: 64px; background-position: 0 -8320px; }
+		._1f610{ width: 64px; height: 64px; background-position: -64px -19200px; }
+		._1f611{ width: 64px; height: 64px; background-position: 0 -8256px; }
+		._1f612{ width: 64px; height: 64px; background-position: -64px -19264px; }
+		._1f613{ width: 64px; height: 64px; background-position: 0 -8192px; }
+		._1f614{ width: 64px; height: 64px; background-position: -64px -19328px; }
+		._1f615{ width: 64px; height: 64px; background-position: 0 -8128px; }
+		._1f616{ width: 64px; height: 64px; background-position: -64px -19392px; }
+		._1f617{ width: 64px; height: 64px; background-position: 0 -8064px; }
+		._1f618{ width: 64px; height: 64px; background-position: -64px -19456px; }
+		._1f619{ width: 64px; height: 64px; background-position: 0 -8000px; }
+		._1f61a{ width: 64px; height: 64px; background-position: -64px -19520px; }
+		._1f61b{ width: 64px; height: 64px; background-position: 0 -7936px; }
+		._1f61c{ width: 64px; height: 64px; background-position: -64px -19584px; }
+		._1f61d{ width: 64px; height: 64px; background-position: 0 -7872px; }
+		._1f61e{ width: 64px; height: 64px; background-position: -64px -19648px; }
+		._1f61f{ width: 64px; height: 64px; background-position: 0 -7808px; }
+		._1f620{ width: 64px; height: 64px; background-position: -64px -19712px; }
+		._1f621{ width: 64px; height: 64px; background-position: 0 -7744px; }
+		._1f622{ width: 64px; height: 64px; background-position: -64px -19776px; }
+		._1f623{ width: 64px; height: 64px; background-position: 0 -7680px; }
+		._1f624{ width: 64px; height: 64px; background-position: -64px -19840px; }
+		._1f625{ width: 64px; height: 64px; background-position: 0 -7616px; }
+		._1f626{ width: 64px; height: 64px; background-position: -64px -19904px; }
+		._1f627{ width: 64px; height: 64px; background-position: 0 -7552px; }
+		._1f628{ width: 64px; height: 64px; background-position: -64px -19968px; }
+		._1f629{ width: 64px; height: 64px; background-position: 0 -7488px; }
+		._1f62a{ width: 64px; height: 64px; background-position: -64px -20032px; }
+		._1f62b{ width: 64px; height: 64px; background-position: 0 -7424px; }
+		._1f62c{ width: 64px; height: 64px; background-position: -64px -20096px; }
+		._1f62d{ width: 64px; height: 64px; background-position: 0 -7360px; }
+		._1f62e{ width: 64px; height: 64px; background-position: -64px -20160px; }
+		._1f62f{ width: 64px; height: 64px; background-position: 0 -7296px; }
+		._1f630{ width: 64px; height: 64px; background-position: -64px -20224px; }
+		._1f631{ width: 64px; height: 64px; background-position: 0 -7232px; }
+		._1f632{ width: 64px; height: 64px; background-position: -64px -20288px; }
+		._1f633{ width: 64px; height: 64px; background-position: 0 -7168px; }
+		._1f634{ width: 64px; height: 64px; background-position: -64px -20352px; }
+		._1f635{ width: 64px; height: 64px; background-position: 0 -7104px; }
+		._1f636{ width: 64px; height: 64px; background-position: -64px -20416px; }
+		._1f637{ width: 64px; height: 64px; background-position: 0 -7040px; }
+		._1f638{ width: 64px; height: 64px; background-position: -64px -20480px; }
+		._1f639{ width: 64px; height: 64px; background-position: 0 -6976px; }
+		._1f63a{ width: 64px; height: 64px; background-position: -64px -20544px; }
+		._1f63b{ width: 64px; height: 64px; background-position: 0 -6912px; }
+		._1f63c{ width: 64px; height: 64px; background-position: -64px -20608px; }
+		._1f63d{ width: 64px; height: 64px; background-position: 0 -6848px; }
+		._1f63e{ width: 64px; height: 64px; background-position: -64px -20672px; }
+		._1f63f{ width: 64px; height: 64px; background-position: 0 -6784px; }
+		._1f640{ width: 64px; height: 64px; background-position: -64px -20736px; }
+		._1f645{ width: 64px; height: 64px; background-position: 0 -6720px; }
+		._1f646{ width: 64px; height: 64px; background-position: -64px -20800px; }
+		._1f647{ width: 64px; height: 64px; background-position: 0 -6656px; }
+		._1f648{ width: 64px; height: 64px; background-position: -64px -20864px; }
+		._1f649{ width: 64px; height: 64px; background-position: 0 -6592px; }
+		._1f64a{ width: 64px; height: 64px; background-position: -64px -20928px; }
+		._1f64b{ width: 64px; height: 64px; background-position: 0 -6528px; }
+		._1f64c{ width: 64px; height: 64px; background-position: -64px -20992px; }
+		._1f64d{ width: 64px; height: 64px; background-position: 0 -6464px; }
+		._1f64e{ width: 64px; height: 64px; background-position: -64px -21056px; }
+		._1f64f{ width: 64px; height: 64px; background-position: 0 -6400px; }
+		._1f680{ width: 64px; height: 64px; background-position: -64px -21120px; }
+		._1f681{ width: 64px; height: 64px; background-position: 0 -6336px; }
+		._1f682{ width: 64px; height: 64px; background-position: -64px -21184px; }
+		._1f683{ width: 64px; height: 64px; background-position: 0 -6272px; }
+		._1f684{ width: 64px; height: 64px; background-position: -64px -21248px; }
+		._1f685{ width: 64px; height: 64px; background-position: 0 -6208px; }
+		._1f686{ width: 64px; height: 64px; background-position: -64px -21312px; }
+		._1f687{ width: 64px; height: 64px; background-position: 0 -6144px; }
+		._1f688{ width: 64px; height: 64px; background-position: -64px -21376px; }
+		._1f689{ width: 64px; height: 64px; background-position: 0 -6080px; }
+		._1f68a{ width: 64px; height: 64px; background-position: -64px -21440px; }
+		._1f68b{ width: 64px; height: 64px; background-position: 0 -6016px; }
+		._1f68c{ width: 64px; height: 64px; background-position: -64px -21504px; }
+		._1f68d{ width: 64px; height: 64px; background-position: 0 -5952px; }
+		._1f68e{ width: 64px; height: 64px; background-position: -64px -21568px; }
+		._1f68f{ width: 64px; height: 64px; background-position: 0 -5888px; }
+		._1f690{ width: 64px; height: 64px; background-position: -64px -21632px; }
+		._1f691{ width: 64px; height: 64px; background-position: 0 -5824px; }
+		._1f692{ width: 64px; height: 64px; background-position: -64px -21696px; }
+		._1f693{ width: 64px; height: 64px; background-position: 0 -5760px; }
+		._1f694{ width: 64px; height: 64px; background-position: -64px -21760px; }
+		._1f695{ width: 64px; height: 64px; background-position: 0 -5696px; }
+		._1f696{ width: 64px; height: 64px; background-position: -64px -21824px; }
+		._1f697{ width: 64px; height: 64px; background-position: 0 -5632px; }
+		._1f698{ width: 64px; height: 64px; background-position: -64px -21888px; }
+		._1f699{ width: 64px; height: 64px; background-position: 0 -5568px; }
+		._1f69a{ width: 64px; height: 64px; background-position: -64px -21952px; }
+		._1f69b{ width: 64px; height: 64px; background-position: 0 -5504px; }
+		._1f69c{ width: 64px; height: 64px; background-position: -64px -22016px; }
+		._1f69d{ width: 64px; height: 64px; background-position: 0 -5440px; }
+		._1f69e{ width: 64px; height: 64px; background-position: -64px -22080px; }
+		._1f69f{ width: 64px; height: 64px; background-position: 0 -5376px; }
+		._1f6a0{ width: 64px; height: 64px; background-position: -64px -22144px; }
+		._1f6a1{ width: 64px; height: 64px; background-position: 0 -5312px; }
+		._1f6a2{ width: 64px; height: 64px; background-position: -64px -22208px; }
+		._1f6a3{ width: 64px; height: 64px; background-position: 0 -5248px; }
+		._1f6a4{ width: 64px; height: 64px; background-position: -64px -22272px; }
+		._1f6a5{ width: 64px; height: 64px; background-position: 0 -5184px; }
+		._1f6a6{ width: 64px; height: 64px; background-position: -64px -22336px; }
+		._1f6a7{ width: 64px; height: 64px; background-position: 0 -5120px; }
+		._1f6a8{ width: 64px; height: 64px; background-position: -64px -22400px; }
+		._1f6a9{ width: 64px; height: 64px; background-position: 0 -5056px; }
+		._1f6aa{ width: 64px; height: 64px; background-position: -64px -22464px; }
+		._1f6ab{ width: 64px; height: 64px; background-position: 0 -4992px; }
+		._1f6ac{ width: 64px; height: 64px; background-position: -64px -22528px; }
+		._1f6ad{ width: 64px; height: 64px; background-position: 0 -4928px; }
+		._1f6ae{ width: 64px; height: 64px; background-position: -64px -22592px; }
+		._1f6af{ width: 64px; height: 64px; background-position: 0 -4864px; }
+		._1f6b0{ width: 64px; height: 64px; background-position: -64px -22656px; }
+		._1f6b1{ width: 64px; height: 64px; background-position: 0 -4800px; }
+		._1f6b2{ width: 64px; height: 64px; background-position: -64px -22720px; }
+		._1f6b3{ width: 64px; height: 64px; background-position: 0 -4736px; }
+		._1f6b4{ width: 64px; height: 64px; background-position: -64px -22784px; }
+		._1f6b5{ width: 64px; height: 64px; background-position: 0 -4672px; }
+		._1f6b6{ width: 64px; height: 64px; background-position: -64px -22848px; }
+		._1f6b7{ width: 64px; height: 64px; background-position: 0 -4608px; }
+		._1f6b8{ width: 64px; height: 64px; background-position: -64px -22912px; }
+		._1f6b9{ width: 64px; height: 64px; background-position: 0 -4544px; }
+		._1f6ba{ width: 64px; height: 64px; background-position: -64px -22976px; }
+		._1f6bb{ width: 64px; height: 64px; background-position: 0 -4480px; }
+		._1f6bc{ width: 64px; height: 64px; background-position: -64px -23040px; }
+		._1f6bd{ width: 64px; height: 64px; background-position: 0 -4416px; }
+		._1f6be{ width: 64px; height: 64px; background-position: -64px -23104px; }
+		._1f6bf{ width: 64px; height: 64px; background-position: 0 -4352px; }
+		._1f6c0{ width: 64px; height: 64px; background-position: -64px -23168px; }
+		._1f6c1{ width: 64px; height: 64px; background-position: 0 -4288px; }
+		._1f6c2{ width: 64px; height: 64px; background-position: -64px -23232px; }
+		._1f6c3{ width: 64px; height: 64px; background-position: 0 -4224px; }
+		._1f6c4{ width: 64px; height: 64px; background-position: -64px -23296px; }
+		._1f6c5{ width: 64px; height: 64px; background-position: 0 -4160px; }
+		._203c{ width: 64px; height: 64px; background-position: -64px -23360px; }
+		._2049{ width: 64px; height: 64px; background-position: 0 -4096px; }
+		._2122{ width: 64px; height: 64px; background-position: -64px -23424px; }
+		._2139{ width: 64px; height: 64px; background-position: 0 -4032px; }
+		._2194{ width: 64px; height: 64px; background-position: -64px -23488px; }
+		._2195{ width: 64px; height: 64px; background-position: 0 -3968px; }
+		._2196{ width: 64px; height: 64px; background-position: -64px -23552px; }
+		._2197{ width: 64px; height: 64px; background-position: 0 -3904px; }
+		._2198{ width: 64px; height: 64px; background-position: -64px -23616px; }
+		._2199{ width: 64px; height: 64px; background-position: 0 -3840px; }
+		._21a9{ width: 64px; height: 64px; background-position: -64px -23680px; }
+		._21aa{ width: 64px; height: 64px; background-position: 0 -3776px; }
+		._231a{ width: 64px; height: 64px; background-position: -64px -23744px; }
+		._231b{ width: 64px; height: 64px; background-position: 0 -3712px; }
+		._23e9{ width: 64px; height: 64px; background-position: -64px -23808px; }
+		._23ea{ width: 64px; height: 64px; background-position: 0 -3648px; }
+		._23eb{ width: 64px; height: 64px; background-position: -64px -23872px; }
+		._23ec{ width: 64px; height: 64px; background-position: 0 -3584px; }
+		._23f0{ width: 64px; height: 64px; background-position: -64px -23936px; }
+		._23f3{ width: 64px; height: 64px; background-position: 0 -3520px; }
+		._24c2{ width: 64px; height: 64px; background-position: -64px -24000px; }
+		._25aa{ width: 64px; height: 64px; background-position: 0 -3456px; }
+		._25ab{ width: 64px; height: 64px; background-position: -64px -24064px; }
+		._25b6{ width: 64px; height: 64px; background-position: 0 -3392px; }
+		._25c0{ width: 64px; height: 64px; background-position: -64px -24128px; }
+		._25fb{ width: 64px; height: 64px; background-position: 0 -3328px; }
+		._25fc{ width: 64px; height: 64px; background-position: -64px -24192px; }
+		._25fd{ width: 64px; height: 64px; background-position: 0 -3264px; }
+		._25fe{ width: 64px; height: 64px; background-position: -64px -24256px; }
+		._2600{ width: 64px; height: 64px; background-position: 0 -3200px; }
+		._2601{ width: 64px; height: 64px; background-position: -64px -24320px; }
+		._260e{ width: 64px; height: 64px; background-position: 0 -3136px; }
+		._2611{ width: 64px; height: 64px; background-position: -64px -24384px; }
+		._2614{ width: 64px; height: 64px; background-position: 0 -3072px; }
+		._2615{ width: 64px; height: 64px; background-position: -64px -24448px; }
+		._261d{ width: 64px; height: 64px; background-position: 0 -3008px; }
+		._263a{ width: 64px; height: 64px; background-position: -64px -24512px; }
+		._2648{ width: 64px; height: 64px; background-position: 0 -2944px; }
+		._2649{ width: 64px; height: 64px; background-position: -64px -24576px; }
+		._264a{ width: 64px; height: 64px; background-position: 0 -2880px; }
+		._264b{ width: 64px; height: 64px; background-position: -64px -24640px; }
+		._264c{ width: 64px; height: 64px; background-position: 0 -2816px; }
+		._264d{ width: 64px; height: 64px; background-position: -64px -24704px; }
+		._264e{ width: 64px; height: 64px; background-position: 0 -2752px; }
+		._264f{ width: 64px; height: 64px; background-position: -64px -24768px; }
+		._2650{ width: 64px; height: 64px; background-position: 0 -2688px; }
+		._2651{ width: 64px; height: 64px; background-position: -64px -24832px; }
+		._2652{ width: 64px; height: 64px; background-position: 0 -2624px; }
+		._2653{ width: 64px; height: 64px; background-position: -64px -24896px; }
+		._2660{ width: 64px; height: 64px; background-position: 0 -2560px; }
+		._2663{ width: 64px; height: 64px; background-position: -64px -24960px; }
+		._2665{ width: 64px; height: 64px; background-position: 0 -2496px; }
+		._2666{ width: 64px; height: 64px; background-position: -64px -25024px; }
+		._2668{ width: 64px; height: 64px; background-position: 0 -2432px; }
+		._267b{ width: 64px; height: 64px; background-position: -64px -25088px; }
+		._267f{ width: 64px; height: 64px; background-position: 0 -2368px; }
+		._2693{ width: 64px; height: 64px; background-position: -64px -25152px; }
+		._26a0{ width: 64px; height: 64px; background-position: 0 -2304px; }
+		._26a1{ width: 64px; height: 64px; background-position: -64px -25216px; }
+		._26aa{ width: 64px; height: 64px; background-position: 0 -2240px; }
+		._26ab{ width: 64px; height: 64px; background-position: -64px -25280px; }
+		._26bd{ width: 64px; height: 64px; background-position: 0 -2176px; }
+		._26be{ width: 64px; height: 64px; background-position: -64px -25344px; }
+		._26c4{ width: 64px; height: 64px; background-position: 0 -2112px; }
+		._26c5{ width: 64px; height: 64px; background-position: -64px -25408px; }
+		._26ce{ width: 64px; height: 64px; background-position: 0 -2048px; }
+		._26d4{ width: 64px; height: 64px; background-position: -64px -25472px; }
+		._26ea{ width: 64px; height: 64px; background-position: 0 -1984px; }
+		._26f2{ width: 64px; height: 64px; background-position: -64px -25536px; }
+		._26f3{ width: 64px; height: 64px; background-position: 0 -1920px; }
+		._26f5{ width: 64px; height: 64px; background-position: -64px -25600px; }
+		._26fa{ width: 64px; height: 64px; background-position: 0 -1856px; }
+		._26fd{ width: 64px; height: 64px; background-position: -64px -25664px; }
+		._2702{ width: 64px; height: 64px; background-position: 0 -1792px; }
+		._2705{ width: 64px; height: 64px; background-position: -64px -25728px; }
+		._2708{ width: 64px; height: 64px; background-position: 0 -1728px; }
+		._2709{ width: 64px; height: 64px; background-position: -64px -25792px; }
+		._270a{ width: 64px; height: 64px; background-position: 0 -1664px; }
+		._270b{ width: 64px; height: 64px; background-position: -64px -25856px; }
+		._270c{ width: 64px; height: 64px; background-position: 0 -1600px; }
+		._270f{ width: 64px; height: 64px; background-position: -64px -25920px; }
+		._2712{ width: 64px; height: 64px; background-position: 0 -1536px; }
+		._2714{ width: 64px; height: 64px; background-position: -64px -25984px; }
+		._2716{ width: 64px; height: 64px; background-position: 0 -1472px; }
+		._2728{ width: 64px; height: 64px; background-position: -64px -26048px; }
+		._2733{ width: 64px; height: 64px; background-position: 0 -1408px; }
+		._2734{ width: 64px; height: 64px; background-position: -64px -26112px; }
+		._2744{ width: 64px; height: 64px; background-position: 0 -1344px; }
+		._2747{ width: 64px; height: 64px; background-position: -64px -26176px; }
+		._274c{ width: 64px; height: 64px; background-position: 0 -1280px; }
+		._274e{ width: 64px; height: 64px; background-position: -64px -26240px; }
+		._2753{ width: 64px; height: 64px; background-position: 0 -1216px; }
+		._2754{ width: 64px; height: 64px; background-position: -64px -26304px; }
+		._2755{ width: 64px; height: 64px; background-position: 0 -1152px; }
+		._2757{ width: 64px; height: 64px; background-position: -64px -26368px; }
+		._2764{ width: 64px; height: 64px; background-position: 0 -1088px; }
+		._2795{ width: 64px; height: 64px; background-position: -64px -26432px; }
+		._2796{ width: 64px; height: 64px; background-position: 0 -1024px; }
+		._2797{ width: 64px; height: 64px; background-position: -64px -26496px; }
+		._27a1{ width: 64px; height: 64px; background-position: 0 -960px; }
+		._27b0{ width: 64px; height: 64px; background-position: -64px -26560px; }
+		._27bf{ width: 64px; height: 64px; background-position: 0 -896px; }
+		._2934{ width: 64px; height: 64px; background-position: -64px -26624px; }
+		._2935{ width: 64px; height: 64px; background-position: 0 -832px; }
+		._2b05{ width: 64px; height: 64px; background-position: -64px -26688px; }
+		._2b06{ width: 64px; height: 64px; background-position: 0 -768px; }
+		._2b07{ width: 64px; height: 64px; background-position: -64px -26752px; }
+		._2b1b{ width: 64px; height: 64px; background-position: 0 -704px; }
+		._2b1c{ width: 64px; height: 64px; background-position: -64px -26816px; }
+		._2b50{ width: 64px; height: 64px; background-position: 0 -640px; }
+		._2b55{ width: 64px; height: 64px; background-position: -64px -26880px; }
+		._3030{ width: 64px; height: 64px; background-position: 0 -576px; }
+		._303d{ width: 64px; height: 64px; background-position: -64px -26944px; }
+		._3297{ width: 64px; height: 64px; background-position: 0 -512px; }
+		._3299{ width: 64px; height: 64px; background-position: -64px -27008px; }
+		._bowtie{ width: 64px; height: 64px; background-position: 0 -448px; }
+		._feelsgood{ width: 64px; height: 64px; background-position: -64px -27072px; }
+		._finnadie{ width: 64px; height: 64px; background-position: 0 -384px; }
+		._fu{ width: 64px; height: 64px; background-position: -64px -27136px; }
+		._goberserk{ width: 64px; height: 64px; background-position: 0 -320px; }
+		._godmode{ width: 64px; height: 64px; background-position: -64px -27200px; }
+		._hurtrealbad{ width: 64px; height: 64px; background-position: 0 -256px; }
+		._metal{ width: 64px; height: 64px; background-position: -64px -27264px; }
+		._neckbeard{ width: 64px; height: 64px; background-position: 0 -192px; }
+		._octocat{ width: 64px; height: 64px; background-position: -64px -27328px; }
+		._rage1{ width: 64px; height: 64px; background-position: 0 -128px; }
+		._rage2{ width: 64px; height: 64px; background-position: -64px -27392px; }
+		._rage3{ width: 64px; height: 64px; background-position: 0 -64px; }
+		._rage4{ width: 64px; height: 64px; background-position: -64px -27456px; }
+		._suspect{ width: 64px; height: 64px; background-position: 0 0; }
+		._trollface{ width: 64px; height: 64px; background-position: -75px -27520px; }
+	</style>
+	
+	<!-- 
+    Change code block syntax highlighting styles by commenting out the 
+	  default MDE sytle and uncommenting one of the styles below.
+	  Works only with GitHub Markdown engine
+	-->
+	
+	<!-- Default MDE syntax style -->
+	<style type="text/css">
+		code { font-family: consolas, monospace; background-color: #f7f7f7; padding: .2pt; border-radius: 2pt; line-height: 1.3; }
+		pre { background-color: transparent; }
+		pre code { font-size: 95%; padding: 12pt; display: block; border-radius: 2pt; }
+	</style>
+	
+	<!-- pygments -->
+	<!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code > span.dt { color: #902000; } /* DataType */
+    code > span.dv { color: #40a070; } /* DecVal */
+    code > span.bn { color: #40a070; } /* BaseN */
+    code > span.fl { color: #40a070; } /* Float */
+    code > span.ch { color: #4070a0; } /* Char */
+    code > span.st { color: #4070a0; } /* String */
+    code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code > span.ot { color: #007020; } /* Other */
+    code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code > span.fu { color: #06287e; } /* Function */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    code > span.cn { color: #880000; } /* Constant */
+    code > span.sc { color: #4070a0; } /* SpecialChar */
+    code > span.vs { color: #4070a0; } /* VerbatimString */
+    code > span.ss { color: #bb6688; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { color: #19177c; } /* Variable */
+    code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code > span.op { color: #666666; } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #bc7a00; } /* Preprocessor */
+    code > span.at { color: #7d9029; } /* Attribute */
+    code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- kate -->
+  <!--
+    <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #dddddd; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { font-weight: bold; } /* Keyword */
+    code > span.dt { color: #800000; } /* DataType */
+    code > span.dv { color: #0000ff; } /* DecVal */
+    code > span.bn { color: #0000ff; } /* BaseN */
+    code > span.fl { color: #800080; } /* Float */
+    code > span.ch { color: #ff00ff; } /* Char */
+    code > span.st { color: #dd0000; } /* String */
+    code > span.co { color: #808080; font-style: italic; } /* Comment */
+    code > span.al { color: #00ff00; font-weight: bold; } /* Alert */
+    code > span.fu { color: #000080; } /* Function */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #ff0000; font-weight: bold; } /* Warning */
+    code > span.cn { color: #000000; } /* Constant */
+    code > span.sc { color: #ff00ff; } /* SpecialChar */
+    code > span.vs { color: #dd0000; } /* VerbatimString */
+    code > span.ss { color: #dd0000; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #808080; font-style: italic; } /* Documentation */
+    code > span.an { color: #808080; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #808080; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #808080; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- monochrome -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { font-weight: bold; } /* Keyword */
+    code > span.dt { text-decoration: underline; } /* DataType */
+    code > span.co { font-style: italic; } /* Comment */
+    code > span.al { font-weight: bold; } /* Alert */
+    code > span.er { font-weight: bold; } /* Error */
+    code > span.wa { font-style: italic; } /* Warning */
+    code > span.cf { font-weight: bold; } /* ControlFlow */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.do { font-style: italic; } /* Documentation */
+    code > span.an { font-style: italic; } /* Annotation */
+    code > span.cv { font-style: italic; } /* CommentVar */
+    code > span.in { font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- expresso -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #2a211c; color: #bdae9d; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #2a211c; color: #bdae9d; border-right: 1px solid #bdae9d; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { color: #bdae9d; background-color: #2a211c; }
+    code > span.kw { color: #43a8ed; font-weight: bold; } /* Keyword */
+    code > span.dt { text-decoration: underline; } /* DataType */
+    code > span.dv { color: #44aa43; } /* DecVal */
+    code > span.bn { color: #44aa43; } /* BaseN */
+    code > span.fl { color: #44aa43; } /* Float */
+    code > span.ch { color: #049b0a; } /* Char */
+    code > span.st { color: #049b0a; } /* String */
+    code > span.co { color: #0066ff; font-style: italic; } /* Comment */
+    code > span.al { color: #ffff00; } /* Alert */
+    code > span.fu { color: #ff9358; font-weight: bold; } /* Function */
+    code > span.er { color: #ffff00; font-weight: bold; } /* Error */
+    code > span.wa { color: #ffff00; font-weight: bold; } /* Warning */
+    code > span.cn { } /* Constant */
+    code > span.sc { color: #049b0a; } /* SpecialChar */
+    code > span.vs { color: #049b0a; } /* VerbatimString */
+    code > span.ss { color: #049b0a; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #43a8ed; font-weight: bold; } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #0066ff; font-style: italic; } /* Documentation */
+    code > span.an { color: #0066ff; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.co { color: #0066ff; font-weight: bold; font-style: italic; } /* Comment */
+    code > span.in { color: #0066ff; font-weight: bold; font-style: italic; } /* Information */
+  </style>  
+  -->
+  
+  <!-- zenburn -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #303030; color: #cccccc; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { color: #cccccc; background-color: #303030; }
+    code > span.kw { color: #f0dfaf; } /* Keyword */
+    code > span.dt { color: #dfdfbf; } /* DataType */
+    code > span.dv { color: #dcdccc; } /* DecVal */
+    code > span.bn { color: #dca3a3; } /* BaseN */
+    code > span.fl { color: #c0bed1; } /* Float */
+    code > span.ch { color: #dca3a3; } /* Char */
+    code > span.st { color: #cc9393; } /* String */
+    code > span.co { color: #7f9f7f; } /* Comment */
+    code > span.ot { color: #efef8f; } /* Other */
+    code > span.al { color: #ffcfaf; } /* Alert */
+    code > span.fu { color: #efef8f; } /* Function */
+    code > span.er { color: #c3bf9f; } /* Error */
+    code > span.wa { color: #7f9f7f; font-weight: bold; } /* Warning */
+    code > span.cn { color: #dca3a3; font-weight: bold; } /* Constant */
+    code > span.sc { color: #dca3a3; } /* SpecialChar */
+    code > span.vs { color: #cc9393; } /* VerbatimString */
+    code > span.ss { color: #cc9393; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #f0dfaf; } /* ControlFlow */
+    code > span.op { color: #f0efd0; } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #ffcfaf; font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #7f9f7f; } /* Documentation */
+    code > span.an { color: #7f9f7f; font-weight: bold; } /* Annotation */
+    code > span.cv { color: #7f9f7f; font-weight: bold; } /* CommentVar */
+    code > span.in { color: #7f9f7f; font-weight: bold; } /* Information */
+  </style>
+  -->
+  
+  <!-- haddock -->
+  <!--
+   <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { color: #0000ff; } /* Keyword */
+    code > span.ch { color: #008080; } /* Char */
+    code > span.st { color: #008080; } /* String */
+    code > span.co { color: #008000; } /* Comment */
+    code > span.ot { color: #ff4000; } /* Other */
+    code > span.al { color: #ff0000; } /* Alert */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #008000; font-weight: bold; } /* Warning */
+    code > span.cn { } /* Constant */
+    code > span.sc { color: #008080; } /* SpecialChar */
+    code > span.vs { color: #008080; } /* VerbatimString */
+    code > span.ss { color: #008080; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #0000ff; } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #ff4000; } /* Preprocessor */
+    code > span.do { color: #008000; } /* Documentation */
+    code > span.an { color: #008000; } /* Annotation */
+    code > span.cv { color: #008000; } /* CommentVar */
+    code > span.at { } /* Attribute */
+    code > span.in { color: #008000; } /* Information */
+  </style>
+  -->
+  
+  <!-- tango -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #f8f8f8; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { background-color: #f8f8f8; }
+    code > span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+    code > span.dt { color: #204a87; } /* DataType */
+    code > span.dv { color: #0000cf; } /* DecVal */
+    code > span.bn { color: #0000cf; } /* BaseN */
+    code > span.fl { color: #0000cf; } /* Float */
+    code > span.ch { color: #4e9a06; } /* Char */
+    code > span.st { color: #4e9a06; } /* String */
+    code > span.co { color: #8f5902; font-style: italic; } /* Comment */
+    code > span.ot { color: #8f5902; } /* Other */
+    code > span.al { color: #ef2929; } /* Alert */
+    code > span.fu { color: #000000; } /* Function */
+    code > span.er { color: #a40000; font-weight: bold; } /* Error */
+    code > span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+    code > span.cn { color: #000000; } /* Constant */
+    code > span.sc { color: #000000; } /* SpecialChar */
+    code > span.vs { color: #4e9a06; } /* VerbatimString */
+    code > span.ss { color: #4e9a06; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { color: #000000; } /* Variable */
+    code > span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+    code > span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+    code > span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+    code > span.ex { } /* Extension */
+    code > span.at { color: #c4a000; } /* Attribute */
+    code > span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+    code > span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+  </style>  
+  -->
+<style>
+ #content {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      color: black;
+      font-family: "Roboto", Arial, sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.3rem;
+      word-wrap: break-word;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+ h1,h2,h3,h4,h5,h6 {
+      font-family: "Roboto", Arial, sans-serif;
+      font-weight: bold;
+      color: #777;
+    }
+
+ h1 {
+      margin: 1.6em -0.5rem 0.5rem -0.5rem;
+      padding: 0.3rem 0.5em;
+      font-size: 1.6em;
+      background-color: rgb(240,240,240);
+      border-top: 3px solid rgb(200,200,200);
+    }
+
+ h2 {
+      margin: 1.5em -0.5rem 0.5rem -0.5em;
+      padding: 0.3rem 0.5em;
+      background-color: rgb(240,240,240);
+      font-size: 1.5em;
+    }
+
+ h3 {
+      margin-top: 1.3em;
+      margin-bottom: 0.3em;
+      padding-top: 0.2em;
+      padding-bottom: 0.2em;
+      font-size: 1.3em;
+    }
+
+ h4 {
+      margin-top: 1.2em;
+      margin-bottom: 0.2em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1.2em;
+    }
+
+ h5 {
+      margin-top: 1.1em;
+      margin-bottom: 0.1em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1.1em;
+    }
+
+ h6 {
+      margin-top: 1.1em;
+      margin-bottom: 0.1em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1em;
+    }
+
+ ul, ol {
+      padding: 0;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+ ol ol, ul ol {
+      list-style-type: lower-roman;
+    }
+
+ ul ul ol, ul ol ol, ol ul ol, ol ol ol {
+      list-style-type: lower-alpha;
+    }
+
+ blockquote, ul, ol, dl, table, pre {
+      margin-top: 0;
+      margin-bottom: 0.5em;
+    }
+
+ hr {
+      height: 4px;
+      padding: 0;
+      margin: 16px 0;
+      background-color: #e7e7e7;
+      border: 0 none;
+    }
+
+ ul, ol {
+      padding-left: 2em;
+    }
+
+ ul ul, ul ol, ol ol, ol ul {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+ li>p {
+      margin-top: 16px;
+    }
+
+ blockquote { background-color: rgb(240,240,240); margin: 1em 0; padding: 0.2em 0.5em; border-left:0.4em solid rgb(180,180,180); }
+ 
+ code { background-color: rgb(240,240,240); padding: 0 3px; font-family: "Roboto Mono", "Courier new", monospace; font-size:1em;}
+
+ table, th, td { border: 1px solid rgb(200,200,200); border-collapse: collapse; padding:0.5em; }
+
+ p {font-size:1em; margin:0.5em 0;}
+
+ em {color:#cc0000!important; }
+</style>
+  </head>
+<body>
+<!-- Content goes here. The div must have an id of "content" -->
+<div id="content"><h1>Document DB</h1>
+<p>La base du stockage persistant est de considéré des documents ayant une identification et une version.<br>
+La mise en œuvre est considérée sous deux environnements :</p>
+<ul>
+<li>DS/GAE : Google App Engine (servlets Java) et son datastore.</li>
+<li>PG/SQL : serveurs de servlets Java avec une base de données SQL, en l'occurrence PostgreSQL (PG).</li>
+</ul>
+<h1>Espaces de noms (namespaces)</h1>
+<p>Pour une instance donnée par son URL, l'application apparaît comme N applications <strong>de logiciel identique</strong> travaillant chacune sur <strong>son propre espace de données</strong> indépendant des autres et identifié par un nom court.<br>
+Un espace spécifique, par défaut <code>&quot;z&quot;</code> (mais la configuration peut lui donner un autre code) est dédié à la gestion de la configuration des espaces de données. Cette configuration consiste en :</p>
+<ul>
+<li>quelques paramètres élémentaires techniques ;</li>
+<li>quelques fichiers de ressources utilisables en particulier depuis le Web.</li>
+</ul>
+<p>Avec un déploiement sur R-DBMS chaque espace correspond à une base de données : l'espace <code>z</code> peut au choix être hébergé par un autre ou disposer de sa (très petite) base dédiée.<br>
+Avec un déploiement GAE Datastore, chaque espace correspond à un <code>namespace</code>.</p>
+<p>Chaque espace étant a priori considéré comme étanche aux autres, voire ignorant de leur existence pour les utilisateurs, tout ce qui suit se rapporte à un seul espace.<br>
+Une section de l'API est dédiée à la description,</p>
+<ul>
+<li>des quelques actions spécifiques à l'espace <strong>z</strong>;</li>
+<li>des quelques possibilités offertes à un espace pour consulter les données des autres avec des restrictions significatives.</li>
+</ul>
+<p>Le nombre d'espaces peut être de <strong><em>quelques dizaines au plus</em></strong> (limite raisonnable des R-DBMS), l'administration pouvant s'avérer délicate au delà.<br>
+C'est un moyen important pour augmenter le débit global et permettre des migrations d'espaces d'un hébergeur vers un autre.</p>
+<h1>Documents et items</h1>
+<p>Le stockage de données apparaît comme un ensemble de <strong><em>documents</em></strong> :</p>
+<ul>
+<li>un document a une <strong>classe</strong> qui en Java étend la classe <code>Document</code>.</li>
+<li>un document est <strong>identifié</strong> par un <code>String</code> nommé par la suite <code>docid</code>.</li>
+<li>un document a une <strong>version</strong>, une date-heure en millisecondes UTC sous forme d'un <code>long</code> lisible (171128094052123) et croissante dans le temps : la version est la date-heure de la dernière opération ayant mis à jour le document.</li>
+<li>un document a une <strong>date-heure de création <code>ctime</code></strong> : un document peut être détruit et recréé plus tard avec un même <code>docid</code> : <code>ctime</code> permet à une mémoire externe retardée de savoir si elle détient une version retardée de la même vie du document (dont le contenu peut être valable en partie) ou une version d'une vie antérieure (dont le contenu est totalement obsolète).</li>
+<li>un document à une <strong><code>dtime</code></strong> qui est la date-heure au delà de laquelle le document a gardé la trace des items détruits (voir la gestion des mémoires persistante et cache).</li>
+</ul>
+<h3>Items</h3>
+<p>Un document est un <strong><em>ensemble d'items</em></strong>,</p>
+<ul>
+<li>ayant une <strong>classe</strong> d'item qui en Java correspond à une sous classe statique de la classe du document et qui étend la classe <code>Document.BItem</code> et plus spécifiquement <code>Item</code> <code>RawItem</code> <code>Singleton</code> <code>RawSingleton</code> qui étendent <code>BItem</code>.</li>
+<li>un item <code>Singleton</code> existe en une occurrence au plus dans son document.</li>
+<li>un item <code>Item</code> existe en 0 à N occurrences identifiées par un <code>String</code> nommé par la suite <code>key</code> avec la seule contrainte d'une longueur maximale de 255.</li>
+<li>un item a une <strong>version</strong> (date-heure de l'opération qui a mis à jour le document).</li>
+<li>un item a un <strong>contenu</strong> <code>String</code> qui peut être,
+<ul>
+<li>un JSON (<code>Singleton</code> et <code>Item</code>),</li>
+<li>un <code>String</code> opaque (<code>RawSingleton</code> et <code>RawItem</code>), typiquement l'encodage en base 64 d'un vecteur d'octets.</li>
+</ul>
+</li>
+<li>un <strong>contenu <code>null</code></strong> indique un item détruit, sa version indiquant quelle opération l'a détruit. Un item détruit peut rester connu en tant que tel pendant un certain temps afin de permettre la synchronisation rapide du contenu du document avec un contenu distant, puis être finalement physiquement purgé.</li>
+</ul>
+<h3>Mémoires persistante de référence et cache</h3>
+<p>Il n'existe qu'une <strong>mémoire persistante de référence</strong> (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.</p>
+<p>Il existe de nombreuses <strong>mémoires caches</strong> de documents, qui sont toujours potentiellement retardées (dispose d'une version antérieure) par rapport à la référence persistante :</p>
+<ul>
+<li>une en mémoire <em>memcached</em> <em>commune à tous les serveurs du pool</em> servant les opérations : elle est optionnelle et sans intérêt pour un pool d'un seul serveur.</li>
+<li>une <em>volatile dans chaque serveur du pool</em> servant les opérations.</li>
+<li>dans les <em>sessions externes clientes</em>:
+<ul>
+<li>une mémoire volatile dans la session tant qu'elle est active.</li>
+<li>éventuellement une mémoire persistante locale survivant aux interruptions de sessions.</li>
+</ul>
+</li>
+</ul>
+<p>L'objectif est de permettre de remettre à un niveau plus récent <code>vr</code> (le dernier pour simplifier) un exemplaire d'un document <code>d</code> datée <code>v</code> en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.<br>
+La mise à jour d'une mémoire cache depuis l'exemplaire de référence d'un document <code>d</code> est <em>un document de mise à niveau</em> plus ou moins complet établi selon les principes suivants :</p>
+<ul>
+<li>si l'exemplaire en cache a une <code>ctime</code> inférieure à celle de référence, son contenu en cache est à remplacer en totalité totalement par le document de mise à niveau qui contient une copie complète de celui de référence.</li>
+<li>sinon l'exemplaire en cache contient :
+<ul>
+<li>des items inchangés, toujours existants en référence avec la même version : ils ne figurent pas dans le document de remise à niveau.</li>
+<li>des items qui ont changés, toujours existants en référence avec une version plus récentes : ils figurent dans le document de remise à niveau avec leur nouveau contenu.</li>
+<li>des items qui existent en mémoire cache mais plus en référence : ils devront être détruits ou conservés avec un contenu vide (marqués détruits) dans la mémoire cache. Voir les cas 1 et 2 ci-dessous.</li>
+</ul>
+</li>
+</ul>
+<p>Un exemplaire dans une mémoire cache contient,</p>
+<ul>
+<li>tous les items existants (ayant un contenu) avec leur version;</li>
+<li>tous les items détruits (sans contenu) avec leur version de destruction, <em>postérieurement à la date-heure <code>dtime</code> du document</em>.</li>
+</ul>
+<p>La mémoire cache à remettre à niveau contient un exemplaire de <code>d</code> de version <code>v</code> et de <code>dtime</code> <code>dt</code>.<br>
+La mémoire source de la remise à niveau contient un exemplaire de <code>d</code> de version <code>vr</code> et de <code>dtime</code> <code>dtr</code>.<br>
+En plus des données <code>vr</code> et <code>dtr</code>, que contient le document de mise à niveau ?</p>
+<h5>Cas 1 : <code>v</code> est postérieure ou égale à <code>dtr</code>.</h5>
+<p>La source contient tous les items détruits depuis <code>v</code> :</p>
+<ul>
+<li>le document de mise à niveau inclus les items détruits postérieurement à <code>v</code> avec un contenu <code>null</code> et leurs version de destruction.</li>
+<li>les autres items sont inclus avec un contenu et une version si leur version est postérieure à <code>v</code> (ils ont changé).</li>
+<li>les items inchangés depuis v ne sont pas inclus.</li>
+</ul>
+<p>Dans ce cas un item sans contenu est un item détruit et un item présent dans le cache et absent du document de remise à niveau est inchangé.</p>
+<p>La mise à niveau de la mémoire cache par le document de mise à niveau transmis consiste à :</p>
+<ul>
+<li>inscrire <code>vr</code> comme nouvelle version du cache.</li>
+<li>inscrire la plus récente de la <code>dtime</code> actuelle <code>dt</code> et <code>dtr</code> comme nouvelle <code>dtime</code> du cache (les items détruits antérieurement n'étant pas connus).</li>
+<li>les items <em>sans</em> contenu du document de remise à niveau sont inscrits dans le cache avec un contenu vide et leur version.</li>
+<li>les items <em>avec</em> contenu du document de remise à niveau écrasent ceux du cache ou les insèrent quand ils n'y étaient pas.</li>
+<li>la nouvelle <code>dtime</code> du cache peut aussi être avancée entre sa nouvelle valeur et la nouvelle version pour éviter de garder trop d'items détruits : le cache purge tous les items sans contenu de version antérieure à la nouvelle <code>dtime</code>.</li>
+</ul>
+<p>Le cache peut lui-même servir de référence pour créer un document de remise à niveau d'un autre cache plus retardé.</p>
+<h5>Cas 2 : <code>v</code> est antérieure à <code>dtr</code>.</h5>
+<p>La référence ne contient pas tous les items détruits depuis <code>v</code> mais seulement depuis <code>dtr</code>. Si le cache détient un item <code>x</code> détruit entre <code>v</code> et <code>dtr</code>, le document de remise à niveau ne peut pas le savoir.</p>
+<p>Le document de remise à niveau contient en plus de <code>vr</code> et <code>dtr</code> une <strong>liste des clés des items existants</strong>.</p>
+<p>Dans ce cas un item sans contenu reste toujours un item détruit et un item absent est,</p>
+<ul>
+<li>soit inchangé s'il figure dans la liste des existants,</li>
+<li>soit détruit avant <code>dtr</code> dans le cas contraire et à purger du cache.</li>
+</ul>
+<p>La mise à niveau s'effectue de manière identique au cas 1 mais comporte une phase supplémentaire de purge de tous les items existants en cache et absents de la liste des existants et de la liste des items détruits depuis <code>dtr</code>.</p>
+<h1>Opérations</h1>
+<p>Une opération est une succession d'actions de lecture, d'écriture (création / modification / suppression) de documents et d'items de documents et de calculs sur ces données :</p>
+<ul>
+<li><strong>une opération est &quot;atomique&quot;</strong> vis à vis de la mise à jour des documents, tous mis à jour et datés du même instant ou aucun.</li>
+<li><strong>une opération est &quot;isolée&quot;</strong> et travaille sur tous les groupes de documents accédés comme si elle était seule le faire.</li>
+<li><strong>une opération peut retourner un résultat</strong> ou aucun. Ce résultat peut être :
+<ul>
+<li>n'importe quel <strong>contenu binaire</strong> ayant un type mime.</li>
+<li>le couple, a) d'un <strong>résultat structuré</strong> sous forme d'un objet JSON, b) d'une <strong>liste de synchronisations</strong> donnant tous les changements opérés depuis une version donnée sur les documents que le demandeur de l'opération avait cité à des fins de synchronisation.</li>
+</ul>
+</li>
+<li><strong>une opération peut se terminer prématurément en exception</strong>, technique ou métier, bug détecté ou situation inattendue ...</li>
+<li>Une opération a trois date-heures :
+<ul>
+<li>souvent mais pas toujours, une <em>date-heure d'opération</em> <code>dhop</code> qui est celle de la session ayant invoqué l'opération.</li>
+<li>une <em>date heure de début</em>, horloge du début du traitement. Si dhop existe elle doit être pas trop inférieure ou égale à celle-ci mais jamais supérieure. Les horloges des sessions doivent être à peu synchronisées sur celle du serveur;</li>
+<li>une <strong>date-heure de validation</strong>, non connue au cours du traitement, et qui marque la <strong>version</strong> de tous les documents et de leurs items ayant été créés, modifiés, ou détruits au cours de l'opération.</li>
+</ul>
+</li>
+</ul>
+<p>Une opération est initiée par l'arrivée d'une requête externe HTTPS le cas échéant émise par le <em>Queue Manager</em> gérant des requêtes différées mises en file d'attente.</p>
+<p>Une opération est matérialisée par un objet <code>operation</code> d'une classe étendant <code>Operation</code> et ayant deux méthodes <code>work()</code> et <code>afterwork()</code>, l'étape <em>validation</em> intervenant entre elles:</p>
+<ul>
+<li><code>work()</code> : cette méthode lit les arguments de la requête qui l'a initiée, effectue les traitements nécessaires et consigne le résultat éventuel dans la variable <code>result</code> de l'opération.</li>
+<li>à la fin de <code>work()</code> l'étape de <strong>validation</strong> vérifie la consistance temporelle des documents utilisés au cours du traitement et le cas échéant rend persistant les documents créés / modifiés / supprimés au cours de <code>work()</code> : la validation peut échouer en cas d'inconsistance temporelle des documents et/ou de problèmes de contention sur la base de données ;</li>
+<li><code>afterWork()</code> : cette méthode est exécutée après la validation et peut le cas échéant modifier le résultat pour y intégrer la valeur de la version -la date-heure de validation de l'opération désormais connue. En général et par défaut elle ne fait rien.</li>
+</ul>
+<p>En cas d'exception au cours du traitement, un nouvel objet <code>operation</code> est recréé et le cycle <strong><code>work()</code> -&gt; validation-&gt;  <code>afterwork()</code></strong> est relancé (après un certain délai, au plus 3 fois et pas pour toutes les exceptions).</p>
+<h5>Estampilles d'un document et de ses items : classe <code>Stamp</code></h5>
+<p>Les estampilles sont des nombres de la forme <code>AAMMJJhhmmssmmm</code> soit la date en année mois jour heure minute seconde milliseconde en UTC (du XXIième siècle) :</p>
+<ul>
+<li><code>Stamp.minStamp</code> : première milliseconde du siècle,</li>
+<li><code>Stamp.maxStamp</code> : dernière milliseconde du siècle.</li>
+</ul>
+<p>Par exemple : <code>160714223045697</code> (le 14 juillet 2016 à 22:30:45 et 697 ms).<br>
+La classe <code>Stamp</code> dont les objets sont immuables permet de créer et manipuler ces estampilles et de les convertir en <code>epoch</code> nombre de millisecondes écoulées depuis le 1/1/1970.</p>
+<blockquote>
+<p>Un document <em>existe</em> dès lorsqu'il a une estampille de création et une version : il peut être vide (n'avoir aucun item). Les estampilles étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.</p>
+</blockquote>
+<blockquote>
+<p>Une opération peut créer / modifier / supprimer plusieurs documents : ces documents, et leurs items, portent comme version l'estampille de validation de l'opération ce qui permet de déterminer après coup si plusieurs modifications ont été portées exactement par la même opération.</p>
+</blockquote>
+<blockquote>
+<p>Vues d'un document toutes les estampilles de validation des opérations sont distinctes et croissantes dans le temps. Deux opérations strictement parallèles et n'ayant pas modifié les mêmes documents peuvent avoir une même estampille de validation : la chronologie réelle entre elles est indécidable mais ne peut pas avoir d'impact sur la logique métier.</p>
+</blockquote>
+<h1>Cohérence temporelle entre documents</h1>
+<p><strong>Dans sa phase <code>work()</code></strong> une opération qui souhaite modifier un document, ou s'assurer qu'il ne changera pas au cours du traitement, le demande avec <em>une tolérance temporelle de 0 seconde</em> (l'état le plus récent possible) :</p>
+<ul>
+<li>ceci autorise l'opération à modifier le document, ce qu'elle n'est <em>pas</em> obligé de faire.</li>
+<li>ceci garantit qu'au cours du traitement c'est exactement ce même objet document qui sera vu / modifié, même s'il est demandé plusieurs fois et que sa référence n'a pas été conservée dans des variables.</li>
+</ul>
+<p>Si l'opération demande un document avec une tolérance temporelle supérieure à 0 (1 seconde, 30 secondes, etc.) elle récupère une version (disponible le cas échéant en cache) avec une fraîcheur compatible avec l'exigence : le document est en lecture seule dans l'opération.</p>
+<p><strong>La validation d'une opération</strong> s'opère selon les étapes suivantes :</p>
+<ul>
+<li><strong>elle s'assure</strong> (en les verrouillant effectivement sur le stockage persistant) que tous les documents demandés avec une tolérance 0 (qu'ils aient été modifiés ou non) <strong>n'ont pas changé de version</strong> par rapport à celle de l'exemplaire utilisé en traitement ;</li>
+<li><strong>elle détermine sa propre version</strong>: c'est la date-heure courante mais toujours garantie supérieure d'au moins une milliseconde à la plus tardive des versions des documents à tolérance 0 ;</li>
+<li><strong>elle valide définitivement le stockage des contenus</strong> des documents créés / modifies / supprimes au cours du traitement et de leurs items.</li>
+<li><strong>elle libère les verrouillages</strong> sur les documents qui étaient verrouillés par le <code>commit()</code> technique du stockage persistant.</li>
+</ul>
+<blockquote>
+<p>Si un document a évolué entre la phase de traitement et la validation, l'opération subit une exception : la validation s'interrompt, libère les verrous et l'opération est recyclée. Elle prendra alors la dernière version du / des documents ayant provoqué cette exception.
+Le nombre de recyclages est limité et un certain temps est laissé entre chaque cycle : in fine l'opération peut sortir définitivement en erreur du fait d'un excès de contention d'accès sur les documents persistants.</p>
+</blockquote>
+<p>Ce mode de gestion <em>optimiste</em> table sur le fait que les opérations vont travailler sur peu de documents (il y a une limite autoritaire à 32). Elle optimise aussi la connaissance entre plusieurs instances de serveurs des dernières versions des documents et rend la gestion des caches locales à chaque instance plus efficientes.</p>
+<h5>Consistance structurelle entre plusieurs documents : documents verrous</h5>
+<p>Parfois un groupe de documents doit être considéré comme immobile dès lors qu'une opération travaille sur l'un deux :</p>
+<ul>
+<li>par exemple pour effectuer des arrêtés comptables exactement synchronisés sur les documents du groupe et enregistrer dans un document un agrégat de décomptes provenant de documents du groupe.</li>
+<li>dans ce cas il faut déterminer un document représentatif du groupe (le cas échéant avec un singleton quasi vide) et s'astreindre à le demander avec une tolérance 0 dans toutes les opérations portant sur un des documents du groupe.</li>
+</ul>
+<h3>Opérations de mise à jour et synchronisations</h3>
+<p>Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents du même groupe ou non.</p>
+<p>En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une <strong><em>synchronisation</em></strong> qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session ayant émis la requête a cité &quot;à synchroniser&quot; (avec la version et le <code>dtime</code> détenus pour chacun).<br>
+Une session peut ainsi effectuer des actions de mises à jour et récupérer toutes les conséquences de ces actions sur les documents dont elle détient une copie (plus ou moins retardée).</p>
+<p><strong>Une opération de mise à jour doit être idempotente</strong> : l'exécuter plusieurs fois successivement doit laisser l'ensemble des documents dans le même état qu'une exécution unique ce qui exige le cas échéant de détecter que la mise à jour a déjà été faite ou qu'elle peut être faite plusieurs fois sans dommage pour la logique métier.<br>
+L'utilisation de la date-heure d'opération <code>dhop</code> permet souvent de mémoriser qu'une opération de la session a déjà été effectuée et éviter de la refaire.</p>
+<p><strong><em>Une opération de mise à jour peut retourner un résultat</em></strong> : du fait de l'idempotence le traitement doit retourner le même résultat qu'elle ait procédé effectivement à la mise à jour ou constaté qu'elle avait déjà été faite.</p>
+<h3>Opérations de reporting</h3>
+<p>Elles ont pour objectif de retourner un résultat construit depuis des documents stockés.</p>
+<p>Des exécutions successives donnent usuellement des résultats différents, l'état des documents stockés ayant évolué.<br>
+Le résultat d'une opération de reporting peut avoir n'importe quelle forme : <em>JSON, image, html</em>, etc.</p>
+<p>Si une opération de reporting retourne un résultat en JSON, elle <em>peut</em> être suivie d'une synchronisation.</p>
+<h1>Exceptions</h1>
+<p>Opérations et synchronisations retournent une <strong><em>exception</em></strong> en cas d'échec aboutissant à un status HTTP 400 (404 pour les N).</p>
+<h3>Codes MAJOR / MINOR</h3>
+<p>La première lettre du code <strong>MINOR</strong> de l'exception définit son code <strong>MAJOR</strong> (1 à 7) :</p>
+<ul>
+<li>1 : <strong><em>A - métier</em></strong> : les conditions fonctionnelles sont non satisfaisantes sur le contenu des documents vis à vis des paramètres de l'opération. Recommencer l'opération avec les mêmes paramètres a de fortes chances de provoquer la même exception ...  sauf si les données sur le serveur ont évolué favorablement depuis, typiquement du fait d'une requête émise par une autre session depuis la requête initiale.</li>
+<li>1 : <strong><em>N - ressource inexistante</em></strong> : l'opération a demandé typiquement le contenu d'une pièce jointe inexistante (404).</li>
+<li>2 : <strong><em>B - bug</em></strong> : l'application <em>a rencontré et bien détecté</em> une conjonction des valeurs de données qui n'auraient jamais dû exister (selon le développeur). Recommencer l'opération avec les mêmes paramètres a des chances de provoquer la même exception, sauf si les données sur le serveur ont évolué depuis de sorte que cette conjonction non prévue n'apparaisse plus (chance ... relative, c'est un incident non reproductible et peut-être difficile à corriger).</li>
+<li>3 : <strong><em>X - inattendue</em></strong> : l'application <em>a rencontré une exception inattendue</em> (par exemple des valeurs incohérentes et non détectées en tant que telle) qui peut être la conséquence d'une indisponibilité ou du système ou du matériel (I/O, réseau, contention sur les données, famine de mémoire ...). Recommencer l'opération un peu plus tard avec les mêmes paramètres peut ne pas faire apparaître la même exception si elle résultait d'un problème ponctuel ou d'une surcharge système ayant disparu depuis. Mais ce peut être aussi un bug non détecté par l'application en tant que bug.</li>
+<li>4 : <strong><em>D - version retardée</em></strong> : la session requérante peut (et sauf exception le fait) transmettre avec sa requête l'identification de sa build. Si le serveur a une build plus avancée pour éviter des incidents de gestion liés à cette discordance il émet une exception de ce type.</li>
+<li>5 : <strong><em>C - contention sur les données</em></strong> : l'opération trop longue n'arrive pas à s'exécuter avec un ensemble de documents cohérents temporellement entre eux. Malgré plusieurs tentatives l'échec de la validation d'une opération réapparaît.</li>
+<li>6 : <strong><em>O - domaine off</em></strong> : une opération de maintenance technique a fermé le service temporairement. Un message plus détaillé peut donner plus d'informations sur les raisons de cette fermeture et perspective de réouverture.</li>
+<li>7 : <strong><em>S - non autorisée</em></strong> : la session a joint des identifiant / clé d'authentification / autorisation ... n'autorisant pas l'exécution de l'opération. Il s'agit soit d'une session dont l'autorisation a expiré ou  a été supprimée par l'administrateur ou d'une tentative d'intrusion.</li>
+</ul>
+<h3>Phase de traitement</h3>
+<p>Une exception embarque la phase de ce traitement où elle a été levée et permet de déterminer si oui ou non le traitement a été exécuté et/ou validé :</p>
+<ul>
+<li>phase 0 : avant début de l'opération.</li>
+<li>phase 1 : au cours de l'opération (<code>work()</code>).</li>
+<li>phase 2 : durant la <em>validation</em> de l'opération.</li>
+<li>phase 3 : au cours de la phase <code>afterwork()</code> de l'opération.</li>
+<li>phase 4 : durant la synchronisation postérieure à l'opération.</li>
+<li>phase 5 : durant l'envoi du résultat.</li>
+</ul>
+<p>Une requête HTTP peut également retourner des codes d'incident autres :</p>
+<ul>
+<li>avant envoi de la requête ;</li>
+<li>des codes HTTP 0 ou 500 émis par le frontal ou le conteneur de l'application, dépassement de temps etc.</li>
+<li>après retour de la requête sur l'interprétation du résultat retourné.</li>
+</ul>
+<h1>Tâches : opérations différées</h1>
+<p>Certains traitements peuvent être constitués d'une séquence, possiblement longue, d'opérations. D'autres sont à lancer périodiquement.<br>
+Comme une opération doit avoir un temps d'exécution réduit et surtout ne pas accéder à trop de documents en tolérance 0, ces traitements s'exécutent sous la forme d'une suite d'opérations distinctes et différées.<br>
+Par ailleurs une opération <em>principale</em> peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations <code>secondaires</code> différées par rapport à l'opération principale.</p>
+<p>Le <strong>Queue Manager</strong> est un ensemble de threads chargés d'envoyer des requêtes HTTP correspondant aux opérations différées inscrites et d'en récupérer le status d'exécution. Le Queue Manager est une session utilisatrice un peu spéciale dans la mesure où,</p>
+<ul>
+<li>elle n'a que faire d'un quelconque résultat ! il n'y pas d'humain pour en interpréter le résultat.</li>
+<li>elle doit gérer les erreurs d'exécution des opérations, ce qu'un humain effectue derrière une session interactive,
+<ul>
+<li>en relançant les traitements tombés en exception : si la cause était fugitive, ça s'arrangera tout seul. Typiquement un lapse de temps croissant est laissé entre les relances afin de contourner un éventuel problème de contention sur les données ou une indisponibilité technique un peu longue ;</li>
+<li>alerter un administrateur technique par e-mail si un traitement échoue à sa n-ième relance : l'administrateur pourra ainsi :
+<ul>
+<li>remédier à la cause fonctionnelle du souci si possible puis remettre la tâche en exécution.</li>
+<li>renoncer définitivement à celle-ci en ayant apprécié les conséquences fonctionnelles de cet abandon.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Document associé à une opération différée</h3>
+<p>Un document est à créer avec pour fonction de contenir les données / paramètres nécessaires à l’exécution d'une ou d'une succession d'opérations <strong>différées</strong>.<br>
+La classe d'un tel document est comme les autres mais contient une classe interne statique <code>Task</code> qui étend <code>Operation</code> et qui définit le traitement à appliquer au document-paramètre.</p>
+<h3>Principe d'exécution</h3>
+<p>Une opération principale qui veut déclencher une exécution différée procède ainsi :</p>
+<ul>
+<li>elle stocke les paramètres d'exécution dans un document ayant une ID <code>id1</code>. La seule ID est parfois suffisante pour porter les quelques paramètres nécessaires à l'exécution différée et dans ce cas le document correspondant n'est pas créé.</li>
+<li>elle déclare qu'une opération différée doit s'exécuter avec cette ID <code>id1</code> au plus tôt à une date-heure dite <code>nextStart</code>. Cette opération récupérera en paramètre d'entrée (dans son URL) l'ID <code>id1</code> : cette ID comporte un nom de classe de document ayant une classe interne <code>Task</code> étendant <code>Operation</code> dont la méthode <code>work()</code> lira le cas échéant le document correspondant (ou se contentera de l'ID).</li>
+<li>une opération peut déclarer plusieurs exécutions différées (5 au plus).</li>
+<li>les opérations différées ne sont effectivement lancées qu'après la validation de l'opération et bénéficient de la sécurité de celle-ci (inscription pour lancement validée ou non).</li>
+</ul>
+<p>Une opération différée est  comme les autres opérations avec quelques nuances :</p>
+<ul>
+<li>elle ne retourne aucun résultat, n'effectue pas de calcul de synchronisation, et n'a pas de phase <code>afterwork()</code> : elle ne fait <em>que</em> des mises à jour de documents dans sa phase <code>work()</code>.</li>
+<li>elle peut inscrire des opérations différées et en particulier se réinscrire elle-même.</li>
+<li>elle bénéficie d'un quota de temps plus long pour son exécution.</li>
+<li>elle peut itérer plusieurs cycles <strong><code>work()</code> / validation</strong>. au cours de la même requête HTTPS initiale (voir ci-dessous).</li>
+<li>elle est en charge de détruire, ou non, le / les documents contenant ses paramètres d'exécution : ceux-ci peuvent tout aussi bien servir de compte-rendu après traitement si la logique métier le prévoit.</li>
+</ul>
+<h3>Relance sur exception : retry</h3>
+<p>Une tâche qui se termine en exception (ne retourne pas un status 200) est traitée par le Queue Manager :</p>
+<ul>
+<li>le compteur <code>retry</code> de la tâche est incrémenté de 1.</li>
+<li>le texte de retour (l'exception le cas échéant accompagnée de traces accumulées au cours de l'exécution) est mémorisé pour être lisible par un administrateur.</li>
+<li>l'exécution est relancée plus tard : le délai augmente avec l'indice de <code>retry</code>.</li>
+<li>au delà d'un certain nombre de <code>retry</code> la tâche est différée jusqu'à la fin du siècle laissant l'administrateur agir pour en changer la date de relance et/ou la supprimer, voire effectuer les opérations requises pour une relance efficace.</li>
+</ul>
+<h3>Redemande de la même tâche</h3>
+<p>Si le document contenant les paramètres d'exécution est mis à jour au cours d'une tâche et que corrélativement la même ID est inscrite à nouveau en exécution différée, cette tâche donne l'impression d'itérer en épuisant sa liste d'objets à traiter.<br>
+En supposant qu'une exception intervienne,</p>
+<ul>
+<li>le document modifié ne sera pas validé (donc sera inchangé),</li>
+<li>la demande d'inscription de la nouvelle tâche ne sera pas validée non plus,</li>
+<li>la tâche précédente sera bel et bien relancée.</li>
+</ul>
+<h3>L'objet <code>taskCheckPoint</code></h3>
+<p>Une opération différée reçoit en entrée un <code>Object</code> dans sa propriété <code>taskCheckpoint</code> :</p>
+<ul>
+<li>au début cet objet est <code>null</code>.</li>
+<li>après validation de l'opération
+<ul>
+<li>si cet objet est toujours <code>null</code>, l'opération se termine.</li>
+<li>si cet objet n'est pas <code>null</code> : un nouveau cycle s'effectue. Un nouvel objet <code>Operation</code> est créé et sa méthode <code>work()</code> appelée. Les paramètres d'entrée de la requête sont identiques mais son objet <code>tasckCheckpoint</code> n'est pas <code>null</code> mais contient celui laissé lors de la validation précédente.</li>
+</ul>
+</li>
+</ul>
+<p><strong><em>Exemple d'utilisation</em></strong><br>
+Un document contient une liste d'organisations à traiter.<br>
+Chaque exécution de <code>work()</code> traite une organisation et l'enlève de la liste :</p>
+<ul>
+<li>si la liste est vide le document est détruit et le <code>taskCheckpoint</code> est mis à <code>null</code>.</li>
+<li>sinon le compteur d'organisations traitées est incrémenté de 1 dans le <code>taskCheckpoint</code>. Ainsi après validation de l'opération une nouvelle opération dans la même requête repart immédiatement en phase <code>work()</code>.</li>
+<li>si ce compteur atteint 100 par exemple, l'exécution d'une opération de même ID est demandée pour dans une minute et l'objet <code>taskCheckPoint</code> est mis à <code>null</code>.</li>
+</ul>
+<p>Ceci est un moyen d'assurer une reprise de traitement organisation par organisation tout en évitant à la fois, a) des requêtes HTTP trop courtes, b) de trop mobiliser les ressources au profit d'une tâche de fond au détriment des tâches de front.</p>
+<h3>La classe <code>Cron</code></h3>
+<p>Une tâche peut être périodique : à la fin d'une exécution, une nouvelle tâche est inscrite pour exécution ultérieure.<br>
+Par exemple une tâche mensuelle prévue le 2 du mois à 3h30, sera inscrite dès sa fin d'exécution pour le 2 du mois suivant à 3h30.<br>
+Une tâche peut <em>calculer</em> cette date-heure de prochaine relance mais peut aussi utiliser la classe <code>Cron</code> qui depuis un court texte calcule la prochaine échéance en fonction de la date-heure courante, du moins dans les cas usuels.</p>
+<p><code>Cron</code> gère une période qui peut être :</p>
+<ul>
+<li>Y : annuelle,</li>
+<li>M : mensuelle,</li>
+<li>W : hebdomadaire,</li>
+<li>D : journalière,</li>
+<li>H : horaire.</li>
+</ul>
+<p><strong><em>Exemples :</em></strong></p>
+<ul>
+<li><code>H25</code> : soit cette même heure à 25 minutes s'il est moins de 25, soit l'heure suivante à 25 minutes ;</li>
+<li><code>D0425</code> : soit aujourd'hui à 4h25 s'il est moins de 4h25, soit le jour calendaire suivant à 4h25 ;</li>
+<li><code>W30425</code> : soit aujourd'hui si c'est un mercredi et qu'il moins de 4h25, soit le mercredi qui suit à 4h25 ;</li>
+<li><code>M100425</code> : soit le 10 de ce mois si on est avant le 10 à 4h25, soit le 10 du mois suivant à 4h25 ;</li>
+<li><code>Y11100425</code> : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.</li>
+</ul>
+<p>Normalement un traitement dont la <code>nextStart</code> a été calculée depuis <code>Cron</code> avec le paramètre <code>D0425</code> n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le <code>Cron</code>.</p>
+<h1>Propagations différées d'items</h1>
+<p>Une opération ne doit travailler que sur peu de documents : si elle doit par exemple notifier 200 autres documents d'un nouvel état (par exemple propager un changement de tarif et faire recalculer des commandes en cours) elle doit opérer par une tâche différée.</p>
+<p>Par ailleurs dans une opération l'unité d'accès est le document :</p>
+<ul>
+<li>c'est un avantage de pouvoir effectuer un traitement sur un agrégat significatif de données en mémoire ;</li>
+<li>c'est un inconvénient quand il s'agit d'insérer / remplacer un unique item d'un document. Il est extrait en totalité du stockage, mis en totalité en cache où finalement il occupe de l'espace sans bénéfice.</li>
+</ul>
+<p>Dans bien des cas le traitement sur un autre document que celui principal de l'opération consiste à :</p>
+<ul>
+<li>notifier d'autres documents d'un changement d'état : ça se fait par un item dédié dans les documents cibles redondant (fonctionnellement) avec un item du document origine.</li>
+<li>notifier de la survenue d'événements portant sur le document origine et impactant des documents cibles nombreux : des items de notifications sont insérés (et le cas échéant marqués obsolètes en cas d'effacement de l'événement).</li>
+</ul>
+<p>Une opération peut définir, en sus des quelques documents à valider, une liste d'items différés portant sur un nombre possiblement important de dossiers cibles :</p>
+<ul>
+<li>la validation de l'opération enregistre une tâche générique dont le document reprend cette liste ;</li>
+<li>la tâche est lancée après la validation.</li>
+</ul>
+<p>Cette tâche épuise les documents de la liste et à raison d'une exécution d'opération pour chaque document et pour chaque item cité pour ce document :</p>
+<ul>
+<li>si l'item n'existait pas il est inséré sans aucun traitement ni contrôle.</li>
+<li>si l'item existait il est remplacé.</li>
+<li>cette opération a une date-heure, les items insérés / remplacés portent cette version, laquelle n'a rien à voir avec la version de l'opération origine de cette propagation.</li>
+</ul>
+<h3>Propriété de <code>cas</code></h3>
+<p>Ce comportement de base comporte un risque : les traitements étant différés, un remplacement plus récent d'un item pourrait être écrasé par un remplacement / insertion plus ancien.<br>
+Afin d'éviter ce souci, les items ainsi remplaçables disposent d'une propriété nommée <code>cas</code> qui est un <code>long</code> (en général une estampille) : le remplacement n'intervient que si le cas dans l'item stocké est inférieur au cas de l'item remplaçant.</p>
+<p>Dans la liste des items d'insertion / remplacement la valeur de la propriété <code>cas</code> :</p>
+<ul>
+<li>soit est fixée par la logique fonctionnelle;</li>
+<li>soit est fixée à la date-heure de l'opération source, inconnue au moment du traitement mais connue au moment de l'inscription de la tâche.</li>
+</ul>
+<blockquote>
+<p>La gestion des propagation différées présente l'avantage de ne pas requérir la montée en cache d'un document complet (mais d'en profiter s'il y est). C'est la couche de stockage basse qui gère ainsi cette fonctionnalité qui n'est pas techniquement faisable depuis une opération standard métier.</p>
+</blockquote>
+<h1>Identification / authentification</h1>
+<p>Ce service est géré au niveau de l'application : chaque requête est autonome des précédentes et il n'y a pas de concept de session dans le serveur.<br>
+Chaque requête peut être porteuse de propriétés, par exemple <code>account</code> et <code>key</code>, où,</p>
+<ul>
+<li><code>account</code> : identifie un compte,</li>
+<li><code>key</code> : donne le mot de passe, tout autre élément d'authentification, un jeton de session etc.</li>
+</ul>
+<p>Des opérations de login peuvent être écrites pour identifier des sessions d'utilisation avec un utilisateur identifié par le login qui déclare (ou retrouve) une session puis des requêtes qui ne font que référencer des sessions déclarées.</p>
+<h1>Indexation et recherche de documents</h1>
+<p>L'objectif de l'indexation est de pouvoir effectuer une recherche de tous les identifiants des documents d'une classe donnée,</p>
+<ul>
+<li><strong><em>dont l'identifiant est éventuellement contraint</em></strong>,</li>
+<li><strong><em>dont au moins un item d'une classe donnée a une valeur de propriété satisfaisant au critère de sélection</em></strong>.</li>
+</ul>
+<p>Un second type de recherche utilisant l'indexation consiste à obtenir, non plus seulement l'identifiant d'un document mais le contenu des items (dont leur <code>key</code> et identifiant du document).</p>
+<p>Par exemple si un item <code>Adr</code> contient un <code>codePostal</code> et une <em>collection</em> d'adresses <code>email</code>, obtenir la liste des identifiants des documents ayant un item <code>Adr</code> dont le <code>codePostal</code> est compris entre <code>94000</code> et <code>94999</code> et ayant au moins une adresse <code>email</code> <code>toto@gmail.com</code>.</p>
+<h3>Déclaration des propriétés indexées</h3>
+<p>Dans la classe d'un Item quelques propriétés peuvent avoir une annotation <code>@IndexedField</code>. Le type de ces propriétés est l'un des suivants <code>String long int double String[] long[] int[] double[]</code>.</p>
+<h4>Mise en œuvre en R-DBMS</h4>
+<p>Il faut déclarer une table portant le nom <code>Item_docClass_itemClass</code> héritant de la table <code>Item</code> et y déclarer les propriétés indexées sous le même nom que dans la classe Java et avec le même type.<br>
+Il faut ensuite déclarer un (ou plusieurs) index sur ces propriétés, index contenant en tête la (ou les) propriétés indexées puis les colonnes identifiantes du document et de l'item.</p>
+<h4>Mise en œuvre en GAE Datastore</h4>
+<p>L'entité des items est <code>docClass</code> : il faut déclarer des index sur les noms des propriétés indexées ( <code>itemClass_propName</code>).</p>
+<h4>Conditions sur les valeurs des identifiants et propriétés</h4>
+<p>Une condition est déclarée par un objet immuable de classe <code>Filtre</code> dont les deux constructeurs permettent de spécifier une ou deux valeurs et la condition à respecter :</p>
+<ul>
+<li><code>Filtre(type, valeur1)</code> :
+<ul>
+<li><code>EQ</code> : égal à la valeur 1 ;</li>
+<li><code>SW</code> : commençant par la valeur 1 (String seulement) ;</li>
+<li><code>LT LE GE GT</code> : supérieur / inférieur strictement ou non à la valeur 1 ;</li>
+</ul>
+</li>
+<li><code>Filtre(type, valeur1, valeur2)</code>
+<ul>
+<li><code>LTGE LTGT LEGE LEGT</code>  : compris entre valeur 1 et valeur 2 (bornes inférieure et supérieures incluses ou non).</li>
+</ul>
+</li>
+</ul>
+<h4>Recherches génériques et spécifiques</h4>
+<p>Les recherches <em>génériques</em> sont implémentées autant en R-DBMS qu'en GAE Datastore et ne demandent pas de développement spécifique.</p>
+<p>Les recherches <em>spécifiques</em> demandent le développement d'une classe comportant une ou deux (voire plus) implémentations selon le type GAE Datastore et R-DBMS (le cas échéant plusieurs).</p>
+<p>Détail des méthodes dans le document API.</p>
+<hr>
+<h1>Argumentaires</h1>
+<h3>Gestion pessimiste / optimiste du verrouillage des groupes</h3>
+<p><strong><em>En mode pessimiste</em></strong> le verrouillage <strong><em>a priori</em></strong> des groupes présente un risque accru de deadlock du fait de l'allongement de la durée de verrouillage durant les traitements. En contrepartie la lecture (avec verrouillage) du row du groupe n'intervient qu'une fois.</p>
+<p><strong><em>En mode optimiste</em></strong>, le traitement est fait sans verrouillage : les verrouillages des documents n'interviennent qu'au moment de la <em>phase finale d'écriture des documents en base</em>. Cette fois-ci les verrouillages des documents permettent a minima de vérifier que les versions n'ont pas changé depuis le début de la transaction (une requête un peu complexe <code>select for update</code> mais n'attaquant que des index). Si ça n'est  pas le cas l'opération est reprise.</p>
+<h3>Mono / multi instances de serveur</h3>
+<p>En Datastore il n'y a pas de moyen (semble-t-il) de garantir qu'une seule instance de serveur tourne, même si c'est celle-ci peut assurer le débit nécessaire. Le mode &quot;multi&quot; est implicite.</p>
+<p>En R-DBMS c'est un choix de configuration qui fixe le nombre d'instances en exécution parallèle : il est donc possible de fixer le choix en &quot;mono&quot;.</p>
+<p>Le mode &quot;mono&quot; permet plusieurs optimisations de la gestion de la mémoire cache du serveur qui en baissant la consommation de ressources permet de retarder le basculement en multi-instances : ce basculement augmente le débit mais la surconsommation de ressources est plus que linéaire.</p>
+<p>En mono instance il n'est pas nécessaire de vérifier qu'un document détenu en cache a bien la dernière version : il l'a, presque, toujours (ou pas du tout). La base peut cependant être committée et la mise à jour de la mémoire cache à l'instruction suivante une fraction de milliseconde plus tard échouer (ou son thread temporairement être bloqué par le scheduler) : la relecture dans ce cas s'impose.</p>
+<p>Le code générique est unique avec quelques courtes variantes.</p>
+
+</div>
+<!-- Adds some scroll space to the bottom of the doucment -->
+<div style="height: 1pc">&nbsp;</div>
+<!-- Scripts to handle MathJax -->
+<script async="" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script async="" src="http://markdownedit.com/assets/js/mathjax-scripts.js"></script>
+</body>
+</html>
