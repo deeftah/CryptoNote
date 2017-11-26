@@ -21,4 +21,11 @@ public class ExecContext {
 	public int phase() {return phase; }
 	
 	public DBProvider dbProvider() { return null; }
+
+	public Document getDoc(Document.Id id, int maxDelayInSeconds) {return null;}
+	public Document getDoc(Document.Id id) {return null;}
+	public Document newDoc(Document.Id id) {return null;}
+	public Document getOrNewDoc(Document.Id id) {return null;}
+	public void deleteDoc(Document.Id id) {}
+
 }

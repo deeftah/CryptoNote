@@ -110,7 +110,13 @@ Le cache peut lui-même servir de référence pour créer un document de remise 
 
 La référence ne contient pas tous les items détruits depuis `v` mais seulement depuis `dtr`. Si le cache détient un item `x` détruit entre `v` et `dtr`, le document de remise à niveau ne peut pas le savoir.  
 
-Le document de remise à niveau contient en plus de `vr` et `dtr` une **liste des clés des items existants**.
+Le document de remise à niveau contient en plus de `vr` et `dtr` une **liste des clés des items existants** (sauf toutefois ceux listés parce qu'ayant étté créés ou modifiés).
+- le document de mise à niveau inclus les items détruits postérieurement à `dtr` avec un contenu `null` et leurs version de destruction.
+- les autres items sont inclus avec un contenu et une version si leur version est postérieure à `v` (ils ont changé).
+- les items inchangés depuis v ne sont pas inclus.
+
+La nouvelle `dtime` du cache est `dtr`.  
+Elle peut aussi être avancée entre sa nouvelle valeur et la nouvelle version `vr` pour éviter de garder trop d'items détruits : le cache purge tous les items sans contenu de version antérieure à la nouvelle `dtime`.
 
 Dans ce cas un item sans contenu reste toujours un item détruit et un item absent est, 
 - soit inchangé s'il figure dans la liste des existants, 

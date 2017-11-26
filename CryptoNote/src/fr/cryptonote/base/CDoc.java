@@ -78,7 +78,7 @@ public class CDoc {
 	public static class CItemFilterExisting extends CItemFilter {
 		public boolean accept(CItem ci) {
 			Status st = ci.status();
-			return st != Status.deleted && st != Status.shortlived;
+			return st != Status.deleted && st != Status.shortlived && st != Status.oldtrace;
 		}
 	}
 
@@ -138,24 +138,39 @@ public class CDoc {
 	}
 
 	/********************************************************************************/
-	ArrayList<CItem> listAllItems(boolean detached, CItemFilter f) throws AppException{
+	ArrayList<CItem> listAllItems(CItemFilter f) throws AppException{
 		ArrayList<CItem> items = new ArrayList<CItem>();
 		for(String k : sings.keySet()) {
 			CItem ci = sings.get(k);
-			if (f != null && f.accept(ci))
-				items.add(detached ? ci.copy(null) : ci);
+			if (f != null && f.accept(ci)) items.add(ci);
 		}
 		for(String k : colls.keySet()) {
 			HashMap<String,CItem> cis = colls.get(k);
 			for(String key : cis.keySet()) {
 				CItem ci = cis.get(key);
-				if (f != null && f.accept(ci))
-					items.add(detached ? ci.copy(null) : ci);
+				if (f != null && f.accept(ci)) items.add(ci);
 			}
 		}
 		return items;
 	}
-				
+
+	/********************************************************************************/
+	ArrayList<String> listAllClKeys(CItemFilter f) throws AppException{
+		ArrayList<String> items = new ArrayList<String>();
+		for(String k : sings.keySet()) {
+			CItem ci = sings.get(k);
+			if (f != null && f.accept(ci)) items.add(ci.clkey());
+		}
+		for(String k : colls.keySet()) {
+			HashMap<String,CItem> cis = colls.get(k);
+			for(String key : cis.keySet()) {
+				CItem ci = cis.get(key);
+				if (f != null && f.accept(ci)) items.add(ci.clkey());
+			}
+		}
+		return items;
+	}
+	
 	/********************************************************************************/
 	/*
 	 * N'est utilisé QUE pour cloner le CDoc en cache en une copie pour l'opération
@@ -259,7 +274,7 @@ public class CDoc {
 		d.version = version;
 		d.ctime = ctime;
 		d.id = id;
-		d.items = listAllItems(detached, f);
+		d.items = listAllItems(f);
 		return d;
 	}
 
@@ -397,6 +412,7 @@ public class CDoc {
 		public String cvalue() { return nvalue != null ? nvalue : (value != null ? value : null); }
 		public String sha() { return sha; }
 		public String nsha() { return nsha; }
+		public String clkey() { return descr.name() + (descr.isSingleton() ? "" : "." + key); }
 				
 		/*
 		 *- `unchanged` : l'item existait avant le début de l'opération, existe toujours et n'a pas changé.
@@ -489,12 +505,19 @@ public class CDoc {
 			nvalue = s.equals(value) ? null : s;
 		}
 
-		boolean jsonpfx(StringBuffer sb, String val, boolean pf) { 
-			sb.append(pf ? ",\n\"items\":[" : ",\n").append("{\"version\":").append(version).append("\", \"cl\":\"").append(descr.name()).append("\"");
-			if (!descr.isSingleton()) sb.append(", \"key\":").append(JSON.json(key));
-			sb.append(", \"val\":").append(val).append("}");
-			return false;
+		void json(StringBuffer sb) { 
+			sb.append("\n{\"v\":").append(version).append(", \"c\":\"").append(descr.name()).append("\"");
+			if (!descr.isSingleton()) sb.append(", \"k\":").append(JSON.json(key));
+			sb.append("}");
 		}
+
+		void json(StringBuffer sb, String val) { 
+			sb.append("\n{\"v\":").append(version).append(", \"c\":\"").append(descr.name()).append("\"");
+			if (!descr.isSingleton()) sb.append(", \"k\":").append(JSON.json(key));
+			if (descr.isRaw()) sb.append(", \"s\":"); else sb.append(", \"s\":");
+			sb.append(val).append("}");
+		}
+
 	}
 		
 }

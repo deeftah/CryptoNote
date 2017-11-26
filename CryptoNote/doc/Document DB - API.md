@@ -91,9 +91,9 @@ Dans le seul cas d'une opération différée il est possible d'accumuler des tra
 
 Le DBProvider est l'objet en charge d'accéder directement au stockage de données sans passer par l'intermédiaire normal des documents. Son emploi est obligatoire pour effectuer les recherches au travers des index.
 
-Le contexte d'exécution a plusieurs fonctions :
-- de créer un objet `Operation` en initialisant sa propriété `param` avec le contenu dé-sérialisé de l'objet JSON reçu en argument `param` de la requête. Ainsi l'opération trouve dans un objet Java les arguments (du moins la plupart) du travail à effectuer.
-- de garder dans une mémoire cache de travail spécifique à ce contexte tous les objets `GState` d'état des groupes accédés et les objets `Document` des documents accédés / créés / modifiés / supprimés.
+Le contexte d'exécution a pour fonction :
+- de créer un objet `Operation` en initialisant sa propriété `param` avec le contenu dé-sérialisé de l'objet JSON reçu en argument `param` de la requête. L'opération trouve dans l'objet Java `param` les arguments (du moins la plupart) du travail à effectuer.
+- de garder dans une mémoire cache de travail spécifique à ce contexte tous les objets `Document` des documents accédés / créés / modifiés / supprimés.
 - de garder trace des demandes de création de tâches différées.
 - d'appeler la méthode `work()` de l'objet `Operation`.
 - d'effectuer la validation des documents créé / modifiés / supprimés et des tâches créées  / modifiées / annulées.
@@ -125,11 +125,11 @@ L'objet `Operation` a en générique quelques services :
     public void taskCheckpoint(Object obj)
     
     // retourne le résultat à remplir par l'opération
-    public Result result() { return result;}
+    public Result result()
     
-    // retourne le DocumentId identifiant une tâche
-    //(et son document paramètre le cas échéant)
-    public DocumentId taskId()
+    // retourne le Document.Id identifiant une tâche
+    // quand un document existe pour cette id, son contenu donne les paramètres de la tâche
+    public Document.Id taskId()
     public boolean isTask()
     
     public Stamp startTime()
@@ -180,6 +180,36 @@ Un objet `TaskInfo` contient principalement :
 - `long nexstart` : sa date-heure de lancement au plus tôt.
 - `int retry` : le numéro de l'essai d'exécution (usuellement 0).
 - `String info` : le commentaire informatif donné à la création.
+
+# Sérialisation JSON d'un document
+La forme générale est la suivante:
+
+    {
+    "docclass":"C",
+    "docid":"abcd",
+    "version":1712... ,
+    "ctime":1712... ,
+    "dtime":1712... ,
+    "items": [
+        {"c":"S4", "v":1712...},
+        {"c":"S5", "k":"def", "v":1712...},
+        {"c":"S2", "v":1712... "s":"texte d'un raw"},
+        {"c":"S1", "v":1712... "j":{ l'item en JSON }},
+        {"c":"R1", "k":"def", "v":1712... "s":"texte d'un raw"},
+        {"c":"I1", "k":"abc", "v":1712... "j":{ l'item en JSON }},
+    ]
+    "clkeys":["S1", "I1.abc", "I1.def", "R1.def"... ]
+    }
+
+`keys` n'est présent que dans le cas 2 où la `version` détenue par le cache à remettre à niveau est antérieure à la `dtime` de la source.  
+Les items détruits :
+- n'ont pas de valeur `s` ou `j`;
+- sont à inclure si leur `version` est postérieure à,
+    - cas 1 : la plus récente des deux `dtime` de la source et du cache.
+    - cas 2 : la `dtime` de la source.
+
+Les items créés, recréés, modifiés postérieurement à la version du cache sont à inclure.  
+Dans le cas 2, la liste `clkeys` ne contient pas les clés des items créés /recréés / modifiés qui figurent déjà dans `items`.
 
 # Accès aux documents par la classe `Document`
 Chaque classe de document a une classe qui hérite de `Document`.   

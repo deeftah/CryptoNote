@@ -103,8 +103,7 @@ public class DocumentDescr {
 
 		public BItem newItem(String json, String info) throws AppException {
 			if (isRaw() || json == null || json.length() == 0)
-				try { return isP() ? new Document.P() : (BItem)constructor.newInstance();
-				// un item P n'a pas de contenu en soi. Le BItem d'un P n'a aucun intérêt
+				try { return (BItem)constructor.newInstance();
 				} catch(Exception e) { throw new AppException(e, "BDOCUMENTITEM", info); }
 			else
 				try { return (BItem)JSON.fromJson(json, clazz);
