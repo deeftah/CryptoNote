@@ -54,6 +54,7 @@
 "DBUILD":"Version d''application [{0}] incompatible avec celle du serveur [{1}]",
 "BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
 
+"BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
 
 
 "ST0":"en création", 
@@ -107,7 +108,6 @@
 "BDOCUMENTIDCLASS11":"Document  mal identifié : id null ou vide",
 "BDOCUMENTIDCLASS12":"Document  mal identifié : id [{0}] ne respectant pas la syntaxe \"groupid/docid@classname\"",
 	
-"BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
 	
 "BMAILPARAM":"Paramètres du mail incorrects : [{0}]",
 "BMAILNOMAILER":"Paramètres du mail incorrects : [{0}]",

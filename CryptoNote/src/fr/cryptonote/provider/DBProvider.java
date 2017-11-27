@@ -41,6 +41,17 @@ public interface DBProvider {
 		public ArrayList<CItem> items = new ArrayList<CItem>();
 	}
 	
+	/**
+	 * Retourne le delta entre le document en cache et celui en base.
+	 * Si le document n'existe pas retourne null.<br>
+	 * Sinon retourne toujours a minima id version ctime dtime : la liste des items PEUT être vide
+	 * et typiquement l'est s'il n'y a rien de nouveau.
+	 * @param id
+	 * @param ctime
+	 * @param version
+	 * @param dtime
+	 * @return null si le document n'existe pas.
+	 */
 	public ImpExpDocument getDocument(Document.Id id, long ctime, long version, long dtime);
 	
 	/**

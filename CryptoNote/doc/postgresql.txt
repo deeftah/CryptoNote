@@ -21,76 +21,54 @@ CREATE TABLE dbinfo (
 );
 ALTER TABLE dbinfo OWNER TO "docdb";
 
-insert into dbinfo values('{"type":"postgreSQL 9.5"}');
-
-DROP TABLE IF EXISTS gstate;
-CREATE TABLE gstate (
-	groupid varchar(255) NOT NULL,
-	version bigint NOT NULL,
-	ndn int NOT NULL,
-	v1 bigint NOT NULL,
-	v2 bigint NOT NULL,
-	contentt text,
-	contentb bytea,
-	PRIMARY KEY (groupid, version)
-);
-ALTER TABLE gstate OWNER TO "docdb";
+insert into dbinfo values('{"type":"postgreSQL 10.1"}');
 
 DROP TABLE IF EXISTS s2cleanup;
 CREATE TABLE s2cleanup (
-  	groupid varchar(255) NOT NULL,
+  	docid varchar(255) NOT NULL,
   	hour int,
-  	CONSTRAINT s2cleanup_pk PRIMARY KEY (groupid, hour)
+  	CONSTRAINT s2cleanup_pk PRIMARY KEY (docid, hour)
 );
 ALTER TABLE s2cleanup OWNER TO "docdb";
 
-DROP INDEX IF EXISTS dstate_pk;
-DROP TABLE IF EXISTS dstate;
+DROP TABLE IF EXISTS doc;
 CREATE TABLE dstate (
-	groupid varchar(255) NOT NULL,
+	docid varchar(255) NOT NULL,
 	version bigint NOT NULL,
-	dn varchar(8) NOT NULL,
-	v1 bigint NOT NULL,
-	v2 bigint NOT NULL,
-  	docid varchar(255) NOT NULL,
-  	docclass varchar(16) NOT NULL,
 	ctime bigint NOT NULL,
-	CONSTRAINT dstate_pk PRIMARY KEY (groupid, version, dn)
+	dtime bigint NOT NULL,
+	CONSTRAINT doc_pk PRIMARY KEY (docid)
 );
-ALTER TABLE dstate OWNER TO "docdb";
+ALTER TABLE doc OWNER TO "docdb";
 
-DROP TABLE IF EXISTS nsdoc;
 DROP INDEX IF EXISTS item_v;
+DROP INDEX IF EXISTS item_sha;
 DROP TABLE IF EXISTS item;
 CREATE TABLE item (
-  	groupid varchar(255) NOT NULL,
   	docid varchar(255) NOT NULL,
-  	version bigint NOT NULL,
-  	itn varchar(8) NOT NULL,
   	clkey varchar(255) NOT NULL,
+  	version bigint NOT NULL,
   	sha varchar(255),
   	contentt text,
-	contentb bytea
+	contentb bytea,
+	CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
 );
 ALTER TABLE item OWNER TO "docdb";
-CREATE INDEX item_v on item (groupid, docid, version);
-CREATE INDEX item_sha on item (groupid, sha) where sha is NOT NULL;
+CREATE INDEX item_v on item (docid, version);
+CREATE INDEX item_sha on item (docid, sha) where sha is NOT NULL;
 
-DROP INDEX IF EXISTS taskqueue_nextstart;
+DROP INDEX IF EXISTS taskqueue_ns;
 DROP TABLE IF EXISTS taskqueue;
 CREATE TABLE taskqueue (
-  	groupid varchar(255) NOT NULL,
-  	version bigint NOT NULL,
   	docid varchar(255) NOT NULL,
-  	docclass varchar(16) NOT NULL,
 	nextstart bigint, 
 	retry int,
   	info varchar(255),
 	report text,
-	CONSTRAINT taskqueue_pk PRIMARY KEY (groupid, version)
+	CONSTRAINT taskqueue_pk PRIMARY KEY (docid)
 );
 ALTER TABLE taskqueue OWNER TO "docdb";
-CREATE INDEX taskqueue_nexstart on taskqueue (nextstart, groupid, version);
+CREATE INDEX taskqueue_ns on taskqueue (nextstart, docid);
 
 DROP TABLE IF EXISTS nsdoc;
 CREATE TABLE nsdoc () INHERITS (item);

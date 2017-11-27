@@ -7,9 +7,9 @@ import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.P;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 
-public class CDoc {
+public class CDoc implements Comparable<CDoc> {
+	static final CDoc FAKE = new CDoc();
 	
-	// zombie : document créé et détruit dans la même opération
 	/*
 	 *- `unchanged` : aucun item n'a changé sur le document qui existait avant le début de l'opération.
 	 *- `modified` : le document existait avant le début de l'opération et un ou des items ont été créés / modifiés / supprimés.
@@ -25,28 +25,38 @@ public class CDoc {
 	public static final int nbStatus = Status.values().length;
 
 	/********************************************************************************/
+	@Override public int compareTo(CDoc c) { return lastTouch < c.lastTouch ? -1 : (lastTouch > c.lastTouch ? 1 : 0); }
+
+	public boolean estInexistant() { return this == FAKE; }
+	
 	private Document.Id id;
 	private long version;
 	private long ctime;
 	private long dtime;
+	private Status status;
+	private long v1Before;
+	private long v2Before;
+
+	private HashMap<String,CItem> sings = new HashMap<String,CItem>();
+	private HashMap<String,HashMap<String,CItem>> colls = new HashMap<String,HashMap<String,CItem>>();
+
+	private long v1;
+	private long v2;
+	long v1Delta;
+	long v2Delta;
+
+	// Données de gestion de cache
+	int sizeInCache;
+	long lastTouch;
+	long lastCheckDB;
+	Cache cache;
 
 	Document.Id id() { return id; }
 	public long version() { return version; }
 	public long ctime() { return ctime; }
 	public long dtime() { return dtime; }
-
-	private Status status;
+		
 	public Status status() { return status; };
-
-	private HashMap<String,CItem> sings = new HashMap<String,CItem>();
-	private HashMap<String,HashMap<String,CItem>> colls = new HashMap<String,HashMap<String,CItem>>();
-	
-	private long v1;
-	private long v2;
-	private long v1Before;
-	private long v2Before;
-	long v1Delta;
-	long v2Delta;
 
 	public boolean toSave() { return status == Status.created || status == Status.recreated || status == Status.modified; }
 	void recreate() { status = Status.recreated; clearAllItems(); }
@@ -54,6 +64,46 @@ public class CDoc {
 	private void clearAllItems() {
 		sings.clear();
 		for(HashMap<String,CItem> cis : colls.values()) cis.clear();
+	}
+
+	/*
+	 * N'est utilisé QUE pour cloner le CDoc en cache en une copie pour l'opération
+	 * Il est cohérent (summarize() inutile)
+	 */
+	protected synchronized CDoc clone() {
+		CDoc c = new CDoc();
+		c.id = id;
+		c.version = version;
+		c.ctime = ctime;
+		c.dtime = dtime;
+		c.status = Status.unchanged;
+		c.v1Before = v1;
+		c.v2Before = v2;
+		for(ItemDescr itd : id().descr().itemDescrs())
+			if (!itd.isSingleton()) c.colls.put(itd.name(), new HashMap<String,CItem>());
+		for(String k : sings.keySet())
+			c.sings.put(k, sings.get(k).copy(c));
+		for(String k : colls.keySet()) {
+			HashMap<String,CItem> cis = colls.get(k);
+			HashMap<String,CItem> cis2 = c.colls.get(k);
+			if (cis !=  null && cis2 != null) // ça devrait toujours être le cas
+				for(String key : cis.keySet())
+					cis2.put(key, cis.get(key).copy(c));
+		}
+		return c;
+	}
+
+	/**
+	 * Créé un CDoc correctement identifié et pas d'items
+	 * @param id
+	 */
+	static CDoc newEmptyCDoc(Document.Id id){ 
+		CDoc cdoc = new CDoc();
+		cdoc.id = id;
+		cdoc.status = Status.created;
+		for(ItemDescr itd : id.descr().itemDescrs())
+			if (!itd.isSingleton()) cdoc.colls.put(itd.name(), new HashMap<String,CItem>());
+		return cdoc;
 	}
 
 	/********************************************************************************/
@@ -118,6 +168,16 @@ public class CDoc {
 		v2Delta = v2 - v2Before;
 	}
 
+	void compSizeInCache() {
+		int l = 0;
+		for(String k : sings.keySet()) l += sings.get(k).sizeInCache();
+		for(String k : colls.keySet()) {
+			HashMap<String,CItem> cis = colls.get(k);
+			for(String key : cis.keySet()) l += cis.get(key).sizeInCache();
+		}
+		sizeInCache = l;
+	}
+	
 	CItemFilter browseAllItems(CItemFilter f) throws AppException{
 		for(String k : sings.keySet()) 
 			f.accept(sings.get(k));
@@ -172,30 +232,6 @@ public class CDoc {
 	}
 	
 	/********************************************************************************/
-	/*
-	 * N'est utilisé QUE pour cloner le CDoc en cache en une copie pour l'opération
-	 * Ce dernier est cohérent (summarize() inutile)
-	 */
-	protected synchronized CDoc clone() {
-		CDoc c = new CDoc();
-		c.status = status;
-		c.version = version;
-		c.id = id;
-		c.v1Before = v1;
-		c.v2Before = v2;
-		for(ItemDescr itd : id().descr().itemDescrs())
-			if (!itd.isSingleton()) c.colls.put(itd.name(), new HashMap<String,CItem>());
-		for(String k : sings.keySet())
-			c.sings.put(k, sings.get(k).copy(c));
-		for(String k : colls.keySet()) {
-			HashMap<String,CItem> cis = colls.get(k);
-			HashMap<String,CItem> cis2 = c.colls.get(k);
-			if (cis !=  null && cis2 != null) // ça devrait toujours être le cas
-				for(String key : cis.keySet())
-					cis2.put(key, cis.get(key).copy(c));
-		}
-		return c;
-	}
 
 	public static class ImpExpData {
 		public Document.Id id;
@@ -247,18 +283,6 @@ public class CDoc {
 			}
 		}
 		return this;
-	}
-
-	/**
-	 * Créé un CDoc correctement identifié, avec header / state vides et pas d'items
-	 * @param id
-	 */
-	static CDoc newEmptyCDoc(Document.Id id){ 
-		CDoc cdoc = new CDoc();
-		for(ItemDescr itd : id.descr().itemDescrs())
-			if (!itd.isSingleton()) cdoc.colls.put(itd.name(), new HashMap<String,CItem>());
-		cdoc.status = Status.created;
-		return cdoc;
 	}
 
 	/**
@@ -413,6 +437,7 @@ public class CDoc {
 		public String sha() { return sha; }
 		public String nsha() { return nsha; }
 		public String clkey() { return descr.name() + (descr.isSingleton() ? "" : "." + key); }
+		public int sizeInCache() { return (value != null ? value.length() : 0) + (key != null ? key.length() : 0); }
 				
 		/*
 		 *- `unchanged` : l'item existait avant le début de l'opération, existe toujours et n'a pas changé.
