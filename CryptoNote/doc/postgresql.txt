@@ -1,0 +1,203 @@
+pg_hba.conf dans dir d'install de postgresql pour autoriser un accès depuis autre que localhost
+host      all       all         192.168.0.1   255.255.255.255  trust
+ 
+https://test.sportes.fr:8443/postit/a/op/?op=getlivrc&param={%22livrid%22:%22408.10._LivrC%22}
+https://test.sportes.fr:8443/postit/a/op/?op=updlivrc&param={%22livrid%22:%22408.10._LivrC%22,%22acs%22:[22,23,45],%22cheque%22:9876}
+https://test.sportes.fr:8443/postit/z/op/?op=domainoff&param={%22domain%22:%22a%22,%22off%22:%22ferm%C3%A9%22}&key=
+https://test.sportes.fr:8443/postit/z/op/?op=domainon&param={%22domain%22:%22a%22}&key=
+https://test.sportes.fr:8443/postit/a/op/a/rep1/Repertoire/_ds
+
+https://test.sportes.fr:8443/postit/z/op/namespace/a/NsDoc/custom.css?
+
+nonuke PBKDF2 (b64s)->
+key=oyuaWnlO9CgLtHY-Q6io4eA5bpgyOMG4Ph73hrVWELU
+sha=pH7TiudTjPGwh54TOXWFY-PvBLvS9ee8Z0-ifZ_xQq4
+
+/*********************************************************/
+
+DROP TABLE IF EXISTS dbinfo;
+CREATE TABLE dbinfo (
+	info text NOT NULL
+);
+ALTER TABLE dbinfo OWNER TO "docdb";
+
+insert into dbinfo values('{"type":"postgreSQL 9.5"}');
+
+DROP TABLE IF EXISTS gstate;
+CREATE TABLE gstate (
+	groupid varchar(255) NOT NULL,
+	version bigint NOT NULL,
+	ndn int NOT NULL,
+	v1 bigint NOT NULL,
+	v2 bigint NOT NULL,
+	contentt text,
+	contentb bytea,
+	PRIMARY KEY (groupid, version)
+);
+ALTER TABLE gstate OWNER TO "docdb";
+
+DROP TABLE IF EXISTS s2cleanup;
+CREATE TABLE s2cleanup (
+  	groupid varchar(255) NOT NULL,
+  	hour int,
+  	CONSTRAINT s2cleanup_pk PRIMARY KEY (groupid, hour)
+);
+ALTER TABLE s2cleanup OWNER TO "docdb";
+
+DROP INDEX IF EXISTS dstate_pk;
+DROP TABLE IF EXISTS dstate;
+CREATE TABLE dstate (
+	groupid varchar(255) NOT NULL,
+	version bigint NOT NULL,
+	dn varchar(8) NOT NULL,
+	v1 bigint NOT NULL,
+	v2 bigint NOT NULL,
+  	docid varchar(255) NOT NULL,
+  	docclass varchar(16) NOT NULL,
+	ctime bigint NOT NULL,
+	CONSTRAINT dstate_pk PRIMARY KEY (groupid, version, dn)
+);
+ALTER TABLE dstate OWNER TO "docdb";
+
+DROP TABLE IF EXISTS nsdoc;
+DROP INDEX IF EXISTS item_v;
+DROP TABLE IF EXISTS item;
+CREATE TABLE item (
+  	groupid varchar(255) NOT NULL,
+  	docid varchar(255) NOT NULL,
+  	version bigint NOT NULL,
+  	itn varchar(8) NOT NULL,
+  	clkey varchar(255) NOT NULL,
+  	sha varchar(255),
+  	contentt text,
+	contentb bytea
+);
+ALTER TABLE item OWNER TO "docdb";
+CREATE INDEX item_v on item (groupid, docid, version);
+CREATE INDEX item_sha on item (groupid, sha) where sha is NOT NULL;
+
+DROP INDEX IF EXISTS taskqueue_nextstart;
+DROP TABLE IF EXISTS taskqueue;
+CREATE TABLE taskqueue (
+  	groupid varchar(255) NOT NULL,
+  	version bigint NOT NULL,
+  	docid varchar(255) NOT NULL,
+  	docclass varchar(16) NOT NULL,
+	nextstart bigint, 
+	retry int,
+  	info varchar(255),
+	report text,
+	CONSTRAINT taskqueue_pk PRIMARY KEY (groupid, version)
+);
+ALTER TABLE taskqueue OWNER TO "docdb";
+CREATE INDEX taskqueue_nexstart on taskqueue (nextstart, groupid, version);
+
+DROP TABLE IF EXISTS nsdoc;
+CREATE TABLE nsdoc () INHERITS (item);
+ALTER TABLE nsdoc OWNER TO "docdb";
+
+/*********************************************************/
+
+DROP TABLE IF EXISTS livrc3;
+CREATE TABLE livrc3() INHERITS (item);
+ALTER TABLE livrc3 OWNER TO "docdb";
+
+DROP INDEX IF EXISTS livrc3_gac_prixc;
+DROP INDEX IF EXISTS livrc3_gac_prixd;
+DROP TABLE IF EXISTS livrc3_Gac;
+CREATE TABLE livrc3_gac (
+	prixc int, 
+	prixd int
+) INHERITS (livrc3);
+ALTER TABLE livrc3_gac OWNER TO "docdb";
+CREATE INDEX livrc3_gac_prixc on livrc3_gac (prixc, groupid, docid);
+CREATE INDEX livrc3_Gac_prixd on livrc3_gac (prixd, groupid, docid);
+
+/*********************************************************/
+
+DROP TABLE IF EXISTS repertoire;
+CREATE TABLE repertoire() INHERITS (item);
+ALTER TABLE repertoire OWNER TO "docdb";
+
+DROP TABLE IF EXISTS reptask;
+CREATE TABLE reptask() INHERITS (item);
+ALTER TABLE reptask OWNER TO "docdb";
+
+DROP INDEX IF EXISTS repertoire_contact_codepostal;
+DROP TABLE IF EXISTS repertoire_contact;
+CREATE TABLE repertoire_contact (
+	codepostal varchar(255)
+) INHERITS (repertoire);
+ALTER TABLE repertoire_contact OWNER TO "docdb";
+CREATE INDEX repertoire_contact_codepostal on repertoire_contact (codepostal, groupid, docid);
+
+/*********************************************************/
+
+DROP TABLE IF EXISTS compte;
+CREATE TABLE compte () INHERITS (item);
+ALTER TABLE compte OWNER TO "docdb";
+
+DROP INDEX IF EXISTS compte_ent_dhl;
+DROP INDEX IF EXISTS compte_ent_nomr;
+DROP TABLE IF EXISTS compte_ent;
+CREATE TABLE compte_ent (
+	dhl varchar(255),
+	nomr varchar(255)
+) INHERITS (compte);
+ALTER TABLE compte_ent OWNER TO "docdb";
+CREATE INDEX compte_ent_dhl ON compte_ent (dhl, groupid, docid);
+CREATE INDEX compte_ent_nomr ON compte_ent (nomr, groupid, docid);
+
+DROP INDEX IF EXISTS compte_phs_psb;
+DROP INDEX IF EXISTS compte_phs_psr;
+DROP TABLE IF EXISTS compte_phs;
+CREATE TABLE compte_Phs (
+	psb varchar(255),
+	psr varchar(255)
+) INHERITS (compte);
+ALTER TABLE compte_phs OWNER TO "docdb";
+CREATE INDEX compte_phs_psb ON compte_phs (psb, groupid, docid);
+CREATE INDEX compte_phs_psr ON compte_phs (psr, groupid, docid);
+
+DROP INDEX IF EXISTS compte_var_pseudob;
+DROP INDEX IF EXISTS compte_var_pseudor;
+DROP TABLE IF EXISTS compte_var;
+CREATE TABLE compte_var (
+	pseudob varchar(255),
+	pseudor varchar(255)
+) INHERITS (compte);
+ALTER TABLE compte_var OWNER TO "docdb";
+CREATE INDEX compte_var_pseudob ON compte_var (pseudob, groupid, docid);
+CREATE INDEX compte_var_pseudor ON compte_var (pseudor, groupid, docid);
+
+DROP INDEX IF EXISTS compte_hcf_clkey;
+DROP TABLE IF EXISTS compte_hcf;
+CREATE TABLE compte_hcf ( ) INHERITS (compte);
+ALTER TABLE compte_hcf OWNER TO "docdb";
+CREATE INDEX compte_hcf_clkey ON compte_hcf (clkey, groupid, docid);
+
+DROP TABLE IF EXISTS forum;
+CREATE TABLE forum () INHERITS (item);
+ALTER TABLE forum OWNER TO "docdb";
+
+
+/***** AVEC Json ***********/
+DROP TABLE IF EXISTS ItemRepertoire_Contact;
+CREATE TABLE ItemRepertoire_Contact () INHERITS (Item);
+ALTER TABLE ItemRepertoire_Contact OWNER TO "docdb";
+DROP INDEX IF EXISTS ItemRepertoire_Contact_idx;
+CREATE INDEX ItemRepertoire_Contact_idx ON Itemrepertoire_contact USING gin (contentj jsonb_path_ops);
+
+select distinct groupid, docid, contentj #>> '{nom}'
+from item where
+contentj @> '{"codePostal":"94203"}';
+
+select distinct groupid, docid, contentj #>> '{nom}'
+from itemrepertoire_contact where
+contentj #>> '{"codePostal"}' > '94200' 
+and contentj #>> '{"nom"}' > 'Paulo-7';
+
+select distinct groupid, docid, prixC, content #>> '{prixC}'
+from itemlivrc3_gac where
+(content #>> '{"prixC"}')::int > 500000 ;
+

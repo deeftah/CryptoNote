@@ -185,31 +185,69 @@ Un objet `TaskInfo` contient principalement :
 La forme générale est la suivante:
 
     {
-    "docclass":"C",
-    "docid":"abcd",
-    "version":1712... ,
-    "ctime":1712... ,
-    "dtime":1712... ,
-    "items": [
+    "c":"C",
+    "id":"abcd",
+    "v":1712... ,
+    "ct":1712... ,
+    "dt":1712... ,
+    "dels": [
         {"c":"S4", "v":1712...},
-        {"c":"S5", "k":"def", "v":1712...},
+        {"c":"S5", "k":"def", "v":1712...}
+        ],
+    "items": [
         {"c":"S2", "v":1712... "s":"texte d'un raw"},
         {"c":"S1", "v":1712... "j":{ l'item en JSON }},
         {"c":"R1", "k":"def", "v":1712... "s":"texte d'un raw"},
-        {"c":"I1", "k":"abc", "v":1712... "j":{ l'item en JSON }},
-    ]
+        {"c":"I1", "k":"abc", "v":1712... "j":{ l'item en JSON }}
+        ],
     "clkeys":["S1", "I1.abc", "I1.def", "R1.def"... ]
     }
+    
+    Document supprimé :  {"c":"C", "id":"abcd", "v":0 , "ct":1712... }
+    
+    1A
+    source ----------dtr-----------vr
+    cache  ----------------dt---v
+    maj1   ----------------dt------vr suppr depuis dt / clkeys vide
+    maj2   ----------------dt------vr suppr depuis dt / clkeys vide
+    
+    1B
+    source ----------dtr-----------vr
+    cache  ------dt-------------v
+    maj1   ----------dtr-----------vr suppr depuis dtr / clkeys vide
+    maj2   ----------dtr-----------vr suppr depuis dtr / clkeys vide
+    
+    2A
+    source ----------dtr-----------vr
+    cache  --dt---v
+    maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
+    maj2   ------------------------vr vr/vr suppr vide / clkeys vide
+    
+    2B
+    source ----------dtr-----------vr
+    cache  v
+    maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
+    maj2   ------------------------vr vr/vr suppr vide / clkeys vide
+    
+La mémoire cache à remettre à niveau contient un exemplaire de `d` de version `v` et de `dtime` `dt`. 
+La mémoire source de la remise à niveau contient un exemplaire de `d` de version `vr` et de `dtime` `dtr`.  
+`items` contient toujours les items créés / recréés / modifiés après `v`.
+Sous option `maj1` on garde dans le document de mise à jour l'historique des destructions le plus large possible.  
+Sous option `maj2` on limite au maximum dans le document de mise à jour l'historique des destructions.  
+Dans le cas 2B, le cache ne connaît rien (`v = 0`).  
+Lorsque les `ctime` diffèrent, on se ramène au cas 2B.  
+`clkeys` ne contient pas les clés des items créés /recréés / modifiés qui figurent déjà dans `items`.
 
-`keys` n'est présent que dans le cas 2 où la `version` détenue par le cache à remettre à niveau est antérieure à la `dtime` de la source.  
-Les items détruits :
-- n'ont pas de valeur `s` ou `j`;
-- sont à inclure si leur `version` est postérieure à,
-    - cas 1 : la plus récente des deux `dtime` de la source et du cache.
-    - cas 2 : la `dtime` de la source.
+Après analyse de la situation de départ, les options de calcul sont :
+- Cas 1 : `clkeys` vide. Option maj1/maj2 ignorée.
+    - suppressions postérieures à dtx = max(dt, dtr)
+    - en sortie : vr->version ctime->ctime dtx->dtime
+- Cas 2 : option maj1. clkeys NON vide.
+    - suppressions postérieures à dtr
+    - en sortie : vr->version ctime->ctime dtr->dtime
+- Cas 2 : option maj2. suppressions vide. clkeys vide.
+    - en sortie : vr->version ctime->ctime vr->dtime
 
-Les items créés, recréés, modifiés postérieurement à la version du cache sont à inclure.  
-Dans le cas 2, la liste `clkeys` ne contient pas les clés des items créés /recréés / modifiés qui figurent déjà dans `items`.
 
 # Accès aux documents par la classe `Document`
 Chaque classe de document a une classe qui hérite de `Document`.   

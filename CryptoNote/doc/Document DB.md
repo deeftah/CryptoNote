@@ -250,8 +250,8 @@ La classe d'un tel document est comme les autres mais contient une classe intern
 
 ### Principe d'exécution
 Une opération principale qui veut déclencher une exécution différée procède ainsi :
-- elle stocke les paramètres d'exécution dans un document ayant une ID `id1`. La seule ID est parfois suffisante pour porter les quelques paramètres nécessaires à l'exécution différée et dans ce cas le document correspondant n'est pas créé.
-- elle déclare qu'une opération différée doit s'exécuter avec cette ID `id1` au plus tôt à une date-heure dite `nextStart`. Cette opération récupérera en paramètre d'entrée (dans son URL) l'ID `id1` : cette ID comporte un nom de classe de document ayant une classe interne `Task` étendant `Operation` dont la méthode `work()` lira le cas échéant le document correspondant (ou se contentera de l'ID).
+- elle stocke les paramètres d'exécution dans un document ayant une ID `cl1.id1`. La seule ID est parfois suffisante pour porter les quelques paramètres nécessaires à l'exécution différée et dans ce cas le document correspondant n'est pas créé.
+- elle déclare qu'une opération différée doit s'exécuter avec cette ID `cl1.id1` au plus tôt à une date-heure dite `nextStart`. Cette opération récupérera en paramètre d'entrée (dans son URL) l'ID `cl1.id1` : cette ID comporte un nom de classe de document ayant une classe interne `Task` étendant `Operation` dont la méthode `work()` lira le cas échéant le document correspondant (ou se contentera de l'ID).
 - une opération peut déclarer plusieurs exécutions différées (5 au plus).
 - les opérations différées ne sont effectivement lancées qu'après la validation de l'opération et bénéficient de la sécurité de celle-ci (inscription pour lancement validée ou non).
 

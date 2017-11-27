@@ -15,7 +15,7 @@ public class CDoc {
 	 *- `modified` : le document existait avant le début de l'opération et un ou des items ont été créés / modifiés / supprimés.
 	 *- `created` : le document n'existait pas et il a été créé par un `getOrNew()`. Il n'a pas forcément d'items.
 	 *- `recreated` : le document existait et a été recréé par la méthode `recreate()`. 
-	 * Sa date-heure de création n'est pas la même qu'au début de l'opération et son contenu a complètement été purgé par la suppression survenue avant sa recréation.
+	 *   Sa date-heure de création n'est pas la même qu'au début de l'opération et son contenu a complètement été purgé par la suppression survenue avant sa recréation.
 	 *- `deleted` : le document existait mais a été supprimé par l'opération.
 	 *- `shortlived` : le document n'existait pas, a été créé par un `getOrNew()` et a été supprimé ensuite au cours de l'opération.
 	 *- `oldtrace` : pour un item seulement : était supprimé avant l'opération et n'a pas été recréé.
@@ -430,6 +430,23 @@ public class CDoc {
 			return nvalue == null ? (deleted ? Status.deleted : Status.unchanged) : Status.modified;
 		}
 		
+		public boolean changedAfterV(long v) {
+			if (version() <= v) return false;
+			Status st = status();
+			return st == Status.modified || st == Status.created || st == Status.recreated;
+		}
+
+		public boolean deletedAfterV(long v) {
+			if (version() <= v) return false;
+			Status st = status();
+			return st == Status.deleted || st == Status.oldtrace;
+		}
+
+		public boolean existing() {
+			Status st = status();
+			return st != Status.deleted && st != Status.shortlived && st != Status.oldtrace;
+		}
+
 		public int v1() {
 			Status st = status();
 			if (st == Status.deleted || st == Status.shortlived || st == Status.oldtrace) return 0;
@@ -505,13 +522,13 @@ public class CDoc {
 			nvalue = s.equals(value) ? null : s;
 		}
 
-		void json(StringBuffer sb) { 
+		void jsonDel(StringBuffer sb) { 
 			sb.append("\n{\"v\":").append(version).append(", \"c\":\"").append(descr.name()).append("\"");
 			if (!descr.isSingleton()) sb.append(", \"k\":").append(JSON.json(key));
 			sb.append("}");
 		}
 
-		void json(StringBuffer sb, String val) { 
+		void jsonExist(StringBuffer sb, String val) { 
 			sb.append("\n{\"v\":").append(version).append(", \"c\":\"").append(descr.name()).append("\"");
 			if (!descr.isSingleton()) sb.append(", \"k\":").append(JSON.json(key));
 			if (descr.isRaw()) sb.append(", \"s\":"); else sb.append(", \"s\":");

@@ -1,13 +1,17 @@
 package fr.cryptonote.provider;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import fr.cryptonote.base.AppException;
+import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.Cond;
 import fr.cryptonote.base.Document;
 import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
+import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.TaskInfo;
 
 public interface DBProvider {
@@ -27,7 +31,27 @@ public interface DBProvider {
 	public void shutdwon();
 	
 	public boolean hasMC();
+	
+	/***********************************************************************************************************/
+	public static class ImpExpDocument {
+		public Document.Id id;
+		public long version;
+		public long ctime;
+		public long dtime;
+		public ArrayList<CItem> items = new ArrayList<CItem>();
+	}
+	
+	public ImpExpDocument getDocument(Document.Id id, long ctime, long version, long dtime);
+	
+	/**
+	 * Fin de transaction de lecture ou de mise à jour
+	 * @param collect documents et parts à mettre jour, groups à checker
+	 * @throws AppException
+	 */
+	public HashMap<String,Long> validateDocument(ExecCollect collect) throws AppException;
 
+	/***********************************************************************************************************/
+	
 	/**
 	 * Recherche d'une liste de documents dont un au moins des items a un champ indexé
 	 * repondant au filtre.
@@ -49,6 +73,50 @@ public interface DBProvider {
 	 * @throws AppException
 	 */
 	public Collection<XItem> searchItemsByIndexes(String docClass, String itemClass, XItemFilter filter, Cond<?>... ffield) throws AppException;
+
+	/** Tasks (sauf Datastore) ************************************************/
+	/**
+	 * Création d'une task par l'administrateur ou par validation ou par s2cleanup
+	 * @param ti
+	 * @throws AppException
+	 */
+	public void insertTask(TaskInfo ti) throws AppException ;
+
+	/**
+	 * Mise à jour de nexstart / retry / report d'une task
+	 * Fin d'exécution en erreur (qm) ou relance (qm-admin)
+	 * @param ti
+	 * @throws AppException
+	 */
+	public void updateNRRTask(Document.Id id, long nextStart, int retry, String report) throws AppException ;
+
+	/**
+	 * Suppression d'une task
+	 * Fin d'exécution OK (qm) ou renoncement à une tâche (qm-admin / app)
+	 * @param ti
+	 * @throws AppException
+	 */
+	public void removeTask(Document.Id id) throws AppException ;
+
+	/**
+	 * Liste les tasks en attente filtré le cas échéant par les paramètres de ti
+	 * @param ti
+	 * ti.id.docclass : restreint aux tasks de cette classe
+	 * ti.id.docid : restreint à celles commençant par ce docid
+	 * ti.nexstart : restreint à celles à lancer avant et à cette stamp
+	 * ti.cron : restreint à celles de ce cron
+	 * @return
+	 * @throws AppException
+	 */
+	public Collection<TaskInfo> listTask(TaskInfo ti) throws AppException ;
+		
+	/**
+	 * Retourne le report d'une task 
+	 * @param ti
+	 * @return
+	 * @throws AppException
+	 */
+	public String taskReport(Document.Id id) throws AppException;
 
 	/*************************************************************************************/
 	/**

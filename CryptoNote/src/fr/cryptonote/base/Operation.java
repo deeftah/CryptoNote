@@ -11,6 +11,9 @@ import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import fr.cryptonote.base.Servlet.Attachment;
+import fr.cryptonote.base.Servlet.InputData;
+
 public abstract class Operation {
 	private static Hashtable<String, OperationDescriptor> operationClasses = new Hashtable<String, OperationDescriptor>();
 	private static Hashtable<String, OperationDescriptor> paramClasses = new Hashtable<String, OperationDescriptor>();
@@ -22,6 +25,7 @@ public abstract class Operation {
 		private Field paramField;
 	}
 
+	/**********************************************************************************/
 	public static void register(Class<?> c, String taskName) {
 		if (c == null)
 			return;
@@ -58,7 +62,38 @@ public abstract class Operation {
 	}
 
 	/**********************************************************************************/
-	
+	static Operation CreateOperation(String operationName, Object taskCheckpoint) throws AppException {
+		if (operationName != null) operationName = operationName.toLowerCase();
+		Object param = null;
+		Operation op = null;
+		try {
+			OperationDescriptor opd = operationClasses.get(operationName);
+			if (opd == null) throw new AppException("BBADOPERATION0", operationName);
+			op = (Operation)opd.operationClass.newInstance();
+			op.opd = opd;
+			op.execContext = ExecContext.current();
+			op.inputData = op.execContext.inputData();
+			if (opd.paramField != null) {
+				String json = op.inputData.args().get("param");
+				if (json == null) json = "{}";
+				try { param = JSON.fromJson(json, opd.paramClass);
+				} catch (AppException e){ throw new AppException(e.cause(), "BBADOPERATION1", operationName); }
+				opd.paramField.set(op, param);
+				op.taskId = null;
+			} else
+				op.taskId = op.inputData.taskId();
+			op.taskCheckpoint = op.taskId != null ? taskCheckpoint : null;
+			String ns = op.execContext.ns();
+			int s = NS.status(ns);
+			if (s > 0 && (op.taskId != null || !op.isReadOnly()))
+				throw new AppException("ODOMAINOFF", NS.info(ns));	
+		} catch (Exception e){
+			throw new AppException(e, "BBADOPERATION0", operationName);			
+		}
+		return op;
+	}
+
+	/**********************************************************************************/
 	private ExecContext execContext;
 	private InputData inputData;
 	private Object taskCheckpoint = null;
@@ -77,39 +112,22 @@ public abstract class Operation {
 	public Stamp startTime() { return execContext.startTime2(); }
 	public OperationDescriptor descr() { return opd; }
 	public String name() { return opd.operationName; }
-	
 	public boolean hasAdminKey() { return execContext().hasAdminKey(); }
-
 	public boolean hasQmKey() { return execContext().hasQmKey(); }
-
 	public boolean isQM() { return execContext().isQM(); }
 	
-	public void setTask(Document.Id id, long nextStart, String info) throws AppException{
-		execContext().setTaskInfo(id, nextStart, info);
-	}
-	
-	public void setTaskByCron(Document.Id id, String cron) throws AppException {
-		long nextStart = new Cron(cron).nextStart().stamp();
-		execContext().setTaskInfo(id, nextStart, cron);
-	}
-	
-//	public TaskInfo taskInfo(DocumentId id) throws AppException{
-//		return execContext().dbProvider().taskInfo(id);
-//	}
+	public void setTask(Document.Id id, long nextStart, String info) throws AppException{ execContext().setTaskInfo(id, nextStart, info);}
+	public void setTaskByCron(Document.Id id, String cron) throws AppException { execContext().setTaskInfo(id, new Cron(cron).nextStart().stamp(), cron);}
+	public Collection<TaskInfo> listTask(TaskInfo ti) throws AppException{ return execContext().dbProvider().listTask(ti); }
 
-	public Collection<TaskInfo> listTask(TaskInfo ti) throws AppException{
-		return execContext().dbProvider().listTask(ti);
-	}
-
+	/**********************************************************************************/
 	public String ungzip(Attachment a) throws AppException {
 		try {
 			if (a == null) return null;
 			 GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(a.bytes));
 			 ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			 byte[] b = new byte[8192];
-			 int l;
-			 while((l = gzis.read(b)) >= 0)
-				bos.write(b, 0, l);
+			 int l; while((l = gzis.read(b)) >= 0) bos.write(b, 0, l);
 			 gzis.close();
 			 try { return new String(bos.toByteArray(), "UTF-8"); } catch (Exception e) {return null;}
 		} catch (Exception e){
@@ -135,6 +153,7 @@ public abstract class Operation {
 		}
 	}
 
+	/**********************************************************************************/
 	// A surcharger
 	public void work() throws AppException { }
 	public void afterWork() throws AppException { }

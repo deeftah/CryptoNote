@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd"> 
+<Configure id="postitWebapp" class="org.eclipse.jetty.webapp.WebAppContext">
+  <Set name="contextPath">/cn</Set>
+  <!--Set name="war"><Property name="jetty.webapps" default="."/>/ac.war</Set-->
+  <Set name="war"><Property name="jetty.webapps" default="."/>/../../git/CryptoNote/CryptoNote/war/</Set>
+  <Set name="gzipHandler">
+    <New class="org.eclipse.jetty.server.handler.gzip.GzipHandler">
+      <Set name="minGzipSize">2048</Set>      
+    </New>
+  </Set>
+</Configure>

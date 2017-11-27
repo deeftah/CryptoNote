@@ -283,6 +283,7 @@ public class AConfig {
 	public String dbProviderName() { return dbProviderName; }
 	public String dbProviderConfig() { return dbProviderConfig; }
 	public String[] ns() { return gen.ns ;}
+	public String nsz() { return gen.ns[0] ;}
 
 	// public Class<?> nssrvcfgClass() { return nssrvcfgClass; }
 	public Object newNssrvcfg(String json) {

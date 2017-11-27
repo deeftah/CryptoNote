@@ -22,10 +22,37 @@
 "BITEMCLASS":"Classe d''item [{0}] inconnue",
 "BITEMCLASSCOL":"Classe d''item collection [{0}] inconnue",
 "BDOCUMENTRO":"Méthode [{1}].[{0}] interdite sur un document [{2}] en lecture seule",
-"BEMPTYBLOB":"blobStore sans blob pour [{0}] [{1}]",
-"BMIMEBLOB":"blobStore sans mime pour [{0}] [{1}]",
-"BKEYBLOB":"blobStore sans nom pour [{0}]",
+"BEMPTYBLOB":"BlobStore sans blob pour [{0}] [{1}]",
+"BMIMEBLOB":"BlobStore sans mime pour [{0}] [{1}]",
+"BKEYBLOB":"BlobStore sans nom pour [{0}]",
 
+"BBADOPERATION2":"Opération [{0}] : classe n''étendant pas Operation",
+"BBADOPERATION0":"Opération [{0}] inconnue",
+"BBADOPERATION1":"Opération [{0}] : param non parsable",
+"XGZIPEXC":"Opération [{0}] : gzip du résultat en erreur",
+"XUNGZIPEXC":"Opération [{0}] : ungzip de l''attachement [{0}] en erreur",
+
+"ODOMAINOFF":"Serveur en maintenance : [{0}]. Réessayer plus tard",
+"SADMINOP":"Opération requérant une clé d''administrateur",
+
+"ANSBADNS":"Opération uniquement accessible depuis l''espace de noms [{0}] (pas depuis [{1}])",
+"ANSSRVCFG":"Paramètre srvcfg de la configuration [{0}] non parsable",
+"ANSUNKNOWN":"Espace de noms [{0}] non reconnu",
+"ANSZRES":"Ressource de nom [{0}] sans valeur par défaut dans l'application",
+"ANSEMPTY":"Pas de fichier joint",
+
+
+"SQMKEY":"Clé d''accès au Queue Manager non reconnue",
+"BQMJSONTI":"Erreur de syntaxe sur TaskInfo json :[{0}]",
+"BQMOP":"Queue Manager : opération [{0}] inconnue",
+"XQMPOST":"Queue Manager : post [{0}] ",
+
+"BTASKDOCUMENTID":"ID de task mal formée [{0}]",
+
+"X0":"Exception inattendue",
+"XMAXTIME":"Dépassement du temps maximum d'exécution pour l''opération : [{0}]",
+"DBUILD":"Version d''application [{0}] incompatible avec celle du serveur [{1}]",
+"BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
 
 
 
@@ -60,10 +87,9 @@
 "BBUG":"Bug",
 "BEXECSYNCSPARSE":"Opération [{0}] : syncs non parsable",
 "CONTENTION":"Opération [{0}] : trop forte contention sur la base de données. Réessayer plus tard",
-"ODOMAINOFF":"Serveur en maintenance : [{0}]. Réessayer plus tard",
-"BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
 "SQM":"Opération requérant un privilège de Queue Manager [{0}]",
-"SADMINOP":"Opération requérant une clé d''administrateur",
+	
+"X1":"URL d'opération incorrecte, op absent : [{0}]",
 	
 "BHEADERJSONPARSE":"JSON mal formé pour le header du document [{0}]",
 "BDSTATEJSONPARSE":"JSON mal formé pour le DState [{0}]",
@@ -71,9 +97,6 @@
 "BGDSTATEJSONPARSE":"JSON mal formé pour le GDState [{0}]",
 	
 "ADOCINE":"Document inexistant [{0}]",
-"BEMPTYBLOB":"blobStore sans blob pour [{0}] [{1}]",
-"BMIMEBLOB":"blobStore sans mime pour [{0}] [{1}]",
-"BKEYBLOB":"blobStore sans nom pour [{0}]",
 	
 	
 "BDOCUMENTIDCLASS6":"Document [{0}] mal identifié : groupid null/vide",
@@ -91,28 +114,9 @@
 "XMAILHTTP":"Echec d''envoi (HTTP) du mail : [{0}]",
 "XMAILJAVAMAIL":"Echec d''envoi (JAVAMAIL) du mail : [{0}]",
 "BMAILTYPE":"Paramètres du mail incorrects. url : [{0}]",
-	
-"ANSUNKNOWN":"Espace de noms [{0}] non reconnu",
-"ANSZRES":"Ressource de nom [{0}] sans valeur par défaut dans l'application",
-"ANSEMPTY":"Pas de fichier joint",
-"ANSBADNS":"Opération uniquement accessible depuis l''espace de noms [{0}] (pas depuis [{1}])",
-"ANSSRVCFG":"Paramètre srvcfg de la configuration [{0}] non parsable",
 
-"BBADOPERATION2":"Opération [{0}] : classe n''étendant pas Operation",
-"BBADOPERATION0":"Opération [{0}] inconnue",
-"BBADOPERATION1":"Opération [{0}] : param non parsable",
-"XGZIPEXC":"Opération [{0}] : gzip du résultat en erreur",
-"XUNGZIPEXC":"Opération [{0}] : ungzip de l''attachement [{0}] en erreur",
 
-"SQMKEY":"Clé d''accès au Queue Manager non reconnue",
-"BQMJSONTI":"Erreur de syntaxe sur TaskInfo json :[{0}]",
-"BQMOP":"Queue Manager : opération [{0}] inconnue",
-"XQMPOST":"Queue Manager : post [{0}] ",
 
-"X0":"Exception inattendue",
-"X1":"URL d'opération incorrecte, op absent : [{0}]",
-"XMAXTIME":"Dépassement du temps maximum d'exécution pour l''opération : [{0}]",
-"DBUILD":"Version d''application [{0}] incompatible avec celle du serveur [{1}]",
 
 "XFILE0":"Erreur I/O sur [{0}]",
 	

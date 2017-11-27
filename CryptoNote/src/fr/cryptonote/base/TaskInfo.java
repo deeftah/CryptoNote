@@ -26,7 +26,7 @@ public class TaskInfo implements Comparable<TaskInfo> {
 		stampKey = nextStart().toString() + "/" + pk();
 	}
 	
-	public String pk() { return ns + "/" + version + "/" ; }
+	public String pk() { return ns + "/" + id.toString() + "/" ; }
 	
 	public String url(){
 		try { return ns + "/od/" + URLEncoder.encode(id.docid(), "UTF-8") + "/" + id.docclass();

@@ -1,8 +1,9 @@
 package fr.cryptonote.base;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.CItemFilter;
@@ -18,6 +19,7 @@ public class Document {
 		public String docid() { return docid != null ? docid : ""; }
 		public String docclass() { return descr != null ? descr.name() : ""; }
 		public DocumentDescr descr() { return descr; }
+		public String toString() { return docclass() + "." + docid; }
 		
 		@SuppressWarnings("unused")
 		private Id() {}
@@ -31,13 +33,27 @@ public class Document {
 				}
 			}
 		}
-		
+
+		public Id(String docclass, String docid){
+			descr = DocumentDescr.get(docclass);
+			this.docid = docid;
+		}
+
 		public Id(Class<?> docclass, String docid){
 			descr = docclass != null ? DocumentDescr.get(docclass.getSimpleName()) : null;
 			if (docid != null) this.docid = docid;
 		}
 		
-		public String toString() { return docclass() + "." + docid; }
+		public static Document.Id fromURL(String url) throws AppException {
+			try {
+				Document.Id id = new Document.Id(URLDecoder.decode(url == null ? "" : url, "UTF-8"));
+				if (id.descr == null) throw new AppException("BTASKDOCUMENTID", url);
+				return id;
+			} catch (UnsupportedEncodingException e) {
+				throw new AppException("BTASKDOCUMENTID", url);
+			}
+		}
+
 	}
 
 	/********************************************************************************/
@@ -132,6 +148,7 @@ public class Document {
 	/********************************************************************************/
 	public void delete() throws AppException {
 		if (isReadOnly()) throw new AppException("BDOCUMENTRO", "delete", "Document", id().toString());
+		cdoc.delete();
 		ExecContext.current().deleteDoc(id());	
 	}
 
@@ -307,145 +324,199 @@ public class Document {
 	public String[] getKeys(Class<?> itemClass) { return cdoc.itemids(itemClass);}
 
 	/********************************************************************************/
-	public String toString(){ return JSON.toJson(new Hdr(this, version())); }
+	public String toString(){ return JSON.toJson(new Hdr(this, version(), dtime())); }
+	
+	public String toJson() throws AppException { return toJson(null, 0, 0, 0, true); }
 
-	public String toStringOpen(long dt){ 
-		String s = JSON.toJson(new Hdr(this, dt)); 
+	public String toStringOpen(long v, long dt){ 
+		String s = JSON.toJson(new Hdr(this, v, dt)); 
 		return s.substring(0, s.lastIndexOf('}')); 
 	}
 
-	private static class Hdr {
-		@SuppressWarnings("unused")	private String docclass;
-		@SuppressWarnings("unused")	private String docid;
-		@SuppressWarnings("unused")	private long version;
-		@SuppressWarnings("unused")	private long ctime;
-		@SuppressWarnings("unused")	private long dtime;
-		Hdr(Document d, long dt) { docclass = d.id().docclass(); docid = d.id().docid(); version = d.version(); ctime = d.ctime(); dtime = dt; }		
+	public static class Hdr {
+		public String c;
+		public String id;
+		public long v;
+		public long ct;
+		public long dt;
+		public Hdr() {}
+		Hdr(Document doc, long v, long dt) { c = doc.id().docclass(); id = doc.id().docid(); this.v = v; ct = doc.ctime(); this.dt = dt; }
+		public Document.Id id() { return new Document.Id(c, id); }
+	}
+	public static class Sync extends Hdr {
+		public String filter; // Objet de classe docclass.SyncFilter en Json
 	}
 	
-	public static class CItemFilterDeleted extends CItemFilter {
-		private long dtime;
-		public CItemFilterDeleted(long dtime) { this.dtime = dtime; }
-		public boolean accept(CItem ci) {
-			if (ci.version() <= dtime) return false;
-			Status st = ci.status();
-			return st == Status.deleted || st == Status.oldtrace;
-		}
-	}
-
-	public static class CItemFilterModified extends CItemFilter {
-		private long version;
-		public CItemFilterModified(long version) { this.version = version; }
-		public boolean accept(CItem ci) {
-			if (ci.version() <= version) return false;
-			Status st = ci.status();
-			return st == Status.modified || st == Status.created || st == Status.recreated;
-		}
-	}
-
-	public static class CItemFilterExistingBut extends CItemFilter {
-		private HashSet<String> but;
-		public CItemFilterExistingBut(HashSet<String> but) { this.but = but; }
-		public boolean accept(CItem ci) {
-			if (but != null && but.contains(ci.clkey())) return false;
-			Status st = ci.status();
-			return st != Status.deleted && st != Status.shortlived && st != Status.oldtrace;
-		}
-	}
-
-	/* 
-	 * La mémoire cache à remettre à niveau contient un exemplaire de `d` de version `v` et de `dtime` `dt`.  
+	/*
+	 * La mémoire cache à remettre à niveau contient un exemplaire de `d` de version `v` et de `dtime` `dt`. 
 	 * La mémoire source de la remise à niveau contient un exemplaire de `d` de version `vr` et de `dtime` `dtr`.  
-	 */ 
-
-	/* Forme générale de sortie
-	    {
-	    "docclass":"C",
-	    "docid":"abcd",
-	    "version":1712... ,
-	    "ctime":1712... ,
-	    "dtime":1712... ,
-	    "items": [
-	        {"c":"S2", "v":1712... "t":"texte d'un raw"},
-	        {"c":"S1", "v":1712... "i":{ l'item en JSON }},
-	        {"c":"R1", "k":"def", "v":1712... "s":"texte d'un raw"},
-	        {"c":"I1", "k":"abc", "v":1712... "j":{ l'item en JSON }},
-	    ],
-	   	"clkeys":["S1", "I1.abc", "I1.def", "R1.def"... ]
-	    }
-		`keys` n'est présent que dans le cas 2 où la `version` détenue par le cache à remettre à niveau est antérieure à la `dtime` de la source.  
-		Les items détruits :
-		- n'ont pas de valeur `s` ou `j`;
-		- sont à inclure si leur `version` est postérieure à,
-		    - cas 1 : la plus récente des deux `dtime` de la source et du cache.
-		    - cas 2 : la `dtime` de la source.
-		
-		Les items créés, recréés, modifiés postérieurement à la version du cache sont à inclure.
-	 */
+	 * `items` contient toujours les items créés / recréés / modifiés après `v`.
+	 * {
+	 * "c":"C",
+	 * "id":"abcd",
+	 * "v":1712... ,
+	 * "ct":1712... ,
+	 * "dt":1712... ,
+	 * "dels": [
+	 *      {"c":"S4", "v":1712...},
+	 *      {"c":"S5", "k":"def", "v":1712...}
+	 *      ],
+	 * "items": [
+	 *      {"c":"S1", "v":1712... "j":{ l'item en JSON }},
+	 *      {"c":"R1", "k":"def", "v":1712... "s":"texte d'un raw"},
+	 *      {"c":"I1", "k":"abc", "v":1712... "j":{ l'item en JSON }}
+	 *      ],
+	 *  "clkeys":["S1", "I1.abc", "I1.def", "R1.def"... ]
+	 * }
+	 *  
+	 * Document supprimé :  {"c":"C", "id":"abcd", "v":0 , "ct":1712... }
+	 * 
+	 * 1A
+	 * source ----------dtr-----------vr
+	 * cache  ----------------dt---v
+	 * maj1   ----------------dt------vr suppr depuis dt / clkeys vide
+	 * maj2   ----------------dt------vr suppr depuis dt / clkeys vide
+	 * 
+	 * 1B
+	 * source ----------dtr-----------vr
+	 * cache  ------dt-------------v
+	 * maj1   ----------dtr-----------vr suppr depuis dtr / clkeys vide
+	 * maj2   ----------dtr-----------vr suppr depuis dtr / clkeys vide
+	 *  
+	 * 2A
+	 * source ----------dtr-----------vr
+	 * cache  --dt---v
+	 * maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
+	 * maj2   ------------------------vr vr/vr suppr vide / clkeys vide
+	 *  
+	 * 2B
+	 * source ----------dtr-----------vr
+	 * cache  v
+	 * maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
+	 * maj2   ------------------------vr vr/vr suppr vide / clkeys vide
+	 * 
+	 * Sous option `maj1` on garde dans le document de mise à jour l'historique des destructions le plus large possible.  
+	 * Sous option `maj2` on limite au maximum dans le document de mise à jour l'historique des destructions.  
+	 * Dans le cas 2B, le cache ne connaît rien (`v = 0`).  
+	 * Lorsque les `ctime` diffèrent, on se ramène au cas 2B.  
+	 * `clkeys` ne contient pas les clés des items créés /recréés / modifiés qui figurent déjà dans `items`.
+	 * 
+	 * Après analyse de la situation de départ, les options de calcul sont :
+	 * - Cas 1 : `clkeys` vide. Option maj1/maj2 ignorée.
+	 *     - suppressions postérieures à dtx = max(dt, dtr)
+	 *     - en sortie : vr->version ctime->ctime dtx->dtime
+	 * - Cas 2 : option maj1. clkeys NON vide.
+	 *     - suppressions postérieures à dtr
+	 *     - en sortie : vr->version ctime->ctime dtr->dtime
+	 * - Cas 2 : option maj2. suppressions vide. clkeys vide.
+	 *     - en sortie : vr->version ctime->ctime vr->dtime
+	*/
 	
-	public String toJson() throws AppException { return toJson(null, 0, 0); }
-
-	public String toJson(ISyncFilter sf, long v, long dt) throws AppException{
-		if (dt == 0) dt = version();
-		long dtr = dtime();
-		boolean cas2 = v < dtr;
-		long dtx = cas2 ? dtr : (dtr < dt ? dt : dtr);
-
+	/**
+	 * Sérialisation du document Json en vue de mise à jour d'un exemplaire de cache.
+	 * @param sf filtre pour ignorer le document ou certains items
+	 * @param ctime date-heure de création de l'exemplaire du cache. 0 : pas d'exemplaire en cache, contenu intégral.
+	 * @param version version de l'exemplaire du cache. Toujours postérieure ou égale à ctime. 0 : pas d'exemplaire, contenu intégral.
+	 * @param dtime date-heure à partir de laquelle le cache détient les suppressions d'items. 
+	 * Si version n'est pas 0, toujours antérieure à version.
+	 * @param court si true, réduire l'historique des destructions.
+	 * @return
+	 * @throws AppException
+	 */
+	public String toJson(ISyncFilter sf, long ctime, long version, long dtime, boolean court) throws AppException {
 		StringBuffer sb = new StringBuffer();
-		sb.append(toStringOpen(dtx));
+		Status st = status();
+		if (st == Status.deleted || st == Status.shortlived)
+			return sb.append(toStringOpen(0,0)).append("}").toString();
+		
+		if (ctime != ctime()) version = 0;
+		long vr = version();
+		long dtr = dtime();
+		boolean cas2 = version == 0 || version < dtr;
+		
+		boolean clk = cas2 && !court;  		// vrai si on produit clkeys
+		boolean dlx = !(cas2 && court);		// vrai si on produit dels
+		long dtx = cas2 ? dtr : (dtr < dtime ? dtime : dtr);	// si on produits dels : date-heure de filtre
+
+		sb.append(toStringOpen(vr, dlx ? dtx : 0));
 		if (filter(sf) != FilterPolicy.Accept) return sb.append("}").toString();
 		
-		ArrayList<CItem> items = cdoc.listAllItems(new CItemFilterModified(v));
-		
-		HashSet<String> clex = new HashSet<String>();
+		ArrayList<CItem> items = cdoc.listAllItems(null);
+		ArrayList<String> clkeys = clk ? new ArrayList<String>() : null;
+		ArrayList<CItem> dels = dlx ? new ArrayList<CItem>() : null;
 		
 		sb.append(",\n\"items\":[");
 		boolean pf = true;
 		
-		ArrayList<CItem> dels = cdoc.listAllItems(new CItemFilterDeleted(dtx));
-		for (CItem ci : dels) {
-			FilterPolicy fpid = filter(sf, ci.descr(), ci.key());
-			if (fpid == FilterPolicy.Exclude) continue;
-			if (!pf) sb.append(",");
-			ci.json(sb);
-			pf = false;
-		}
+//		ArrayList<CItem> dels = cdoc.listAllItems(new CItemFilterDeleted(dtx));
+//		for (CItem ci : dels) {
+//			FilterPolicy fpid = filter(sf, ci.descr(), ci.key());
+//			if (fpid == FilterPolicy.Exclude) continue;
+//			if (!pf) sb.append(",");
+//			ci.json(sb);
+//			pf = false;
+//		}
 
 		for(CItem ci : items) {
-			String val;
 			ItemDescr descr = ci.descr();
 			String key = ci.key();
 			FilterPolicy fpid = filter(sf, descr, key);
 			if (fpid == FilterPolicy.Exclude) continue;
-			if (fpid == FilterPolicy.Accept)
-				val = descr.isRaw() ? JSON.json(ci.cvalue()) : ci.cvalue();
-			else {
-				if (!descr.isRaw()) {
-					BItem item;
-					try { item = (BItem)JSON.fromJson(ci.cvalue(), descr.clazz()); } catch (Exception e) { continue; }
-					FilterPolicy fpit = sf == null ? FilterPolicy.Accept : filter(sf, descr, key, item);
-					if (fpit == FilterPolicy.Exclude) continue;
-					val = fpit == FilterPolicy.Accept ? ci.cvalue() : JSON.toJson(item);
+			
+			if (ci.deletedAfterV(version)) {
+				if (dlx) dels.add(ci);
+			} else {
+				String val = null;
+				if (fpid == FilterPolicy.Accept) {
+					if (ci.changedAfterV(version))
+						val = descr.isRaw() ? JSON.json(ci.cvalue()) : ci.cvalue();
+					else if (clk && ci.existing())
+							clkeys.add(ci.clkey());
 				} else {
-					Text t = new Text(ci.cvalue());
-					FilterPolicy fpit = sf == null ? FilterPolicy.Accept : filter(sf, descr, key, t);
-					if (fpit == FilterPolicy.Exclude) continue;
-					val = fpit == FilterPolicy.Accept ? JSON.json(ci.cvalue()) : JSON.json(t.filtered);
+					if (!descr.isRaw()) {
+						BItem item;
+						try { item = (BItem)JSON.fromJson(ci.cvalue(), descr.clazz()); } catch (Exception e) { continue; }
+						FilterPolicy fpit = sf == null ? FilterPolicy.Accept : filter(sf, descr, key, item);
+						if (fpit == FilterPolicy.Exclude) continue;
+						if (ci.changedAfterV(version))
+							val = fpit == FilterPolicy.Accept ? ci.cvalue() : JSON.toJson(item);
+						else if (clk && ci.existing())
+							clkeys.add(ci.clkey());
+					} else {
+						Text t = new Text(ci.cvalue());
+						FilterPolicy fpit = sf == null ? FilterPolicy.Accept : filter(sf, descr, key, t);
+						if (fpit == FilterPolicy.Exclude) continue;
+						if (ci.changedAfterV(version))						
+							val = fpit == FilterPolicy.Accept ? JSON.json(ci.cvalue()) : JSON.json(t.filtered);
+						else if (clk && ci.existing())
+							clkeys.add(ci.clkey());						
+					}
+				}
+				if (val != null) {
+					if (!pf) sb.append(",");
+					ci.jsonExist(sb, val);
+					pf = false;
 				}
 			}
-			if (!pf) sb.append(",");
-			ci.json(sb, val);
-			pf = false;
-			clex.add(ci.clkey());
 		}
+		sb.append("]");
 		
-		if (cas2) {
-			ArrayList<String> clkeys = cdoc.listAllClKeys(new CItemFilterExistingBut(clex));
+		if (dlx) {
+			sb.append(",\n\"dels\":[");
+			pf = true;
+			for (CItem ci : dels) {
+				if (!pf) sb.append(",");
+				ci.jsonDel(sb);
+				pf = false;
+			}
+			sb.append("]");
+		}
+
+		if (clk) {
 			String x = JSON.toJson(clkeys);
 			sb.append(",\n\"clkeys\":").append(x);
 		}
-		
-		sb.append("]");
+
 		return sb.append("}").toString();
 	}
 
