@@ -39,6 +39,8 @@ public interface DBProvider {
 		public long ctime;
 		public long dtime;
 		public ArrayList<CItem> items = new ArrayList<CItem>();
+		public ArrayList<CItem> dels = new ArrayList<CItem>();
+		public ArrayList<String> clkeys = new ArrayList<String>();
 	}
 	
 	/**

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.P;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
+import fr.cryptonote.provider.DBProvider.ImpExpDocument;
 
 public class CDoc implements Comparable<CDoc> {
 	static final CDoc FAKE = new CDoc();
@@ -72,123 +73,10 @@ public class CDoc implements Comparable<CDoc> {
 		for(HashMap<String,CItem> cis : colls.values()) cis.clear();
 	}
 
-	/*
-	 * N'est utilisé QUE pour cloner le CDoc en cache en une copie pour l'opération
-	 */
-	protected synchronized CDoc newCopy() throws AppException {
-		summarize();
-		CDoc c = new CDoc();
-		c.id = id;
-		c.version = version;
-		c.ctime = ctime;
-		c.dtime = dtime;
-		c.status = Status.unchanged;
-		c.nbExisting = nbExisting;
-		c.nbToSave = 0;
-		c.nbToDelete = 0;
-		c.nbTotal = nbTotal;
-		c.v1 = v1;
-		c.v2 = v2;
-		for(ItemDescr itd : id().descr().itemDescrs())
-			if (!itd.isSingleton()) c.colls.put(itd.name(), new HashMap<String,CItem>());
-		for(String k : sings.keySet())
-			c.sings.put(k, sings.get(k).copy(c));
-		for(String k : colls.keySet()) {
-			HashMap<String,CItem> cis = colls.get(k);
-			HashMap<String,CItem> cis2 = c.colls.get(k);
-			if (cis !=  null && cis2 != null) // ça devrait toujours être le cas
-				for(String key : cis.keySet())
-					cis2.put(key, cis.get(key).copy(c));
-		}
-		return c;
-	}
-
-	/**
-	 * Créé un CDoc correctement identifié et pas d'items
-	 * @param id
-	 */
-	static CDoc newEmptyCDoc(Document.Id id){ 
-		CDoc cdoc = new CDoc();
-		cdoc.id = id;
-		cdoc.status = Status.created;
+	CDoc initStruct() {
 		for(ItemDescr itd : id.descr().itemDescrs())
-			if (!itd.isSingleton()) cdoc.colls.put(itd.name(), new HashMap<String,CItem>());
-		return cdoc;
-	}
-
-	/********************************************************************************/
-	public static class Index {
-		public String name;
-		public Object obj;
-		public Index(String n, Object o) {name = n; obj = o; }
-	}
-	
-	/********************************************************************************/
-	public static abstract class CItemFilter {
-		public abstract boolean accept(CItem ci) throws AppException;
-	}
-
-	public static class CItemFilterToSave extends CItemFilter {
-		public boolean accept(CItem ci) { return ci.toSave; }
-	}
-
-	public static class CItemFilterExisting extends CItemFilter {
-		public boolean accept(CItem ci) { return !ci.deleted; }
-	}
-
-	public static final CItemFilter filterToSave = new CItemFilterToSave();
-	public static final CItemFilter filterExisting = new CItemFilterExisting();
-	public static final CItemFilter filterStats = new Stats();
-
-	public static class Stats extends CItemFilter {
-		private CDoc d;
-		public boolean accept(CItem ci) {
-			if (d == null) d = ci.cdoc;
-			d.sizeInCache += ci.sizeInCache();
-			d.v1 += ci.v1();
-			d.v2 += ci.v2();
-			d.nbTotal++;
-			if (!ci.deleted) d.nbExisting++;
-			if (!ci.toSave) d.nbToSave++;
-			if (!ci.toDelete) d.nbToDelete++;
-			return true;
-		}
-	}
-
-	void summarize() throws AppException {
-		v1 = 0;
-		v2 = 0;
-		nbExisting = 0;
-		nbToSave = 0;
-		nbToDelete = 0;
-		nbTotal = 0;
-		sizeInCache = 0;
-		if (status != Status.deleted && status != Status.shortlived) {
-			browseAllItems(filterStats);
-			if (status == Status.unchanged && status != Status.modified)
-				status = hasChanges() ? Status.modified : Status.unchanged;
-		}
-	}
-
-	void compSizeInCache() {
-		int l = 0;
-		for(String k : sings.keySet()) l += sings.get(k).sizeInCache();
-		for(String k : colls.keySet()) {
-			HashMap<String,CItem> cis = colls.get(k);
-			for(String key : cis.keySet()) l += cis.get(key).sizeInCache();
-		}
-		sizeInCache = l;
-	}
-	
-	CItemFilter browseAllItems(CItemFilter f) throws AppException{
-		for(String k : sings.keySet()) 
-			f.accept(sings.get(k));
-		for(String k : colls.keySet()) {
-			HashMap<String,CItem> cis = colls.get(k);
-			for(String key : cis.keySet())
-				f.accept(cis.get(key));
-		}
-		return f;
+			if (!itd.isSingleton()) colls.put(itd.name(), new HashMap<String,CItem>());
+		return this;
 	}
 	
 	/********************************************************************************/
@@ -200,111 +88,184 @@ public class CDoc implements Comparable<CDoc> {
 	}
 
 	/********************************************************************************/
-	ArrayList<CItem> listAllItems(CItemFilter f) throws AppException{
-		ArrayList<CItem> items = new ArrayList<CItem>();
-		for(String k : sings.keySet()) {
-			CItem ci = sings.get(k);
-			if (f != null && f.accept(ci)) items.add(ci);
-		}
-		for(String k : colls.keySet()) {
-			HashMap<String,CItem> cis = colls.get(k);
-			for(String key : cis.keySet()) {
-				CItem ci = cis.get(key);
-				if (f != null && f.accept(ci)) items.add(ci);
-			}
-		}
-		return items;
-	}
-
-	/********************************************************************************/
-	ArrayList<String> listAllClKeys(CItemFilter f) throws AppException{
-		ArrayList<String> items = new ArrayList<String>();
-		for(String k : sings.keySet()) {
-			CItem ci = sings.get(k);
-			if (f != null && f.accept(ci)) items.add(ci.clkey());
-		}
-		for(String k : colls.keySet()) {
-			HashMap<String,CItem> cis = colls.get(k);
-			for(String key : cis.keySet()) {
-				CItem ci = cis.get(key);
-				if (f != null && f.accept(ci)) items.add(ci.clkey());
-			}
-		}
-		return items;
+	public static class Index {
+		public String name;
+		public Object obj;
+		public Index(String n, Object o) {name = n; obj = o; }
 	}
 	
 	/********************************************************************************/
-
-	public static class ImpExpData {
-		public Document.Id id;
-		public long version;
-		public long ctime;
-		public ArrayList<CItem> items = new ArrayList<CItem>();
+	@FunctionalInterface interface CIAction {
+	    boolean action(CItem ci);
 	}
 
-	/**
-	 * N'est utilisé QUE par GDCache pour insérer dans son cache un document
-	 * importé en totalité depuis la base
-	 * @param data
-	 * @return
-	 */
-	static CDoc newCDoc(ImpExpData data) {
-		CDoc cdoc = new CDoc();
-		for(ItemDescr itd : data.id.descr().itemDescrs())
-			if (!itd.isSingleton()) cdoc.colls.put(itd.name(), new HashMap<String,CItem>());
-		cdoc.importData(data);
-		return cdoc;
+	@FunctionalInterface interface CICounter {
+	    int count(CItem ci);
 	}
 
-	/**
-	 * N'est utilisée QUE par CGDcache pour mettre à jour SON exemplaire
-	 * depuis des données incrémentales (ou complètes) de la base
-	 * SI le ctime a changé, data contient tout et il faut effectuer un clean des données actuelles
-	 * @param data n'est jamais null
-	 * @return
-	 */
-	synchronized CDoc importData(ImpExpData data) {
-		if (data.ctime != ctime) clearAllItems();
-		id = data.id;
-		version = data.version;
-		ctime = data.ctime;
-		
-		/*
-		 *  Le CDoc en cache par principe est existant mais
-		 *  si c'est un nouveau CDoc son status par défaut est created
-		 */
-		status = Status.unchanged;
-				
-		// on remplace / insère ceux mis à jour
-		for(CItem ci : data.items) {
-			ci.cdoc = this;
-			if (ci.descr.isSingleton())	sings.put(ci.descr.name(), ci);
-			else {
-				HashMap<String,CItem> cis = colls.get(ci.descr.name());
-				if (cis != null) cis.put(ci.key, ci);
-			}
+	void browse(CIAction a) {
+		for(CItem ci : sings.values()) a.action(ci);
+		for(HashMap<String,CItem> cis : colls.values()) for(CItem ci : cis.values()) a.action(ci);
+	}
+
+	int count(CICounter c) {
+		int n = 0;
+		for(CItem ci : sings.values()) n += c.count(ci);
+		for(HashMap<String,CItem> cis : colls.values()) for(CItem ci : cis.values()) n += c.count(ci);
+		return n;
+	}
+
+	ArrayList<CItem> filter(CIAction a) {
+		ArrayList<CItem> items = new ArrayList<CItem>();
+		for(CItem ci : sings.values()) if (a.action(ci)) items.add(ci);
+		for(HashMap<String,CItem> cis : colls.values()) for(CItem ci : cis.values()) if (a.action(ci)) items.add(ci);
+		return items;
+	}
+
+	ArrayList<String> listKeys(CIAction a) {
+		ArrayList<String> items = new ArrayList<String>();
+		for(CItem ci : sings.values()) if (a.action(ci)) items.add(ci.clkey());
+		for(HashMap<String,CItem> cis : colls.values()) for(CItem ci : cis.values()) if (a.action(ci)) items.add(ci.clkey());
+		return items;
+	}
+
+	void compSizeInCache() { sizeInCache = count((ci) -> ci.sizeInCache()); }
+	ArrayList<CItem> listToSave() { return filter((ci) -> ci.toSave); }
+	ArrayList<CItem> listToDelete() { return filter((ci) -> ci.toDelete); }
+	ArrayList<CItem> listExisting() { return filter((ci) -> !ci.deleted); }
+	
+	void summarize() throws AppException {
+		v1 = 0;	v2 = 0;	nbExisting = 0;	nbToSave = 0; nbToDelete = 0; nbTotal = 0; sizeInCache = 0;
+		if (status != Status.deleted && status != Status.shortlived) {
+			browse((ci) -> {
+				sizeInCache += ci.sizeInCache();
+				v1 += ci.v1();
+				v2 += ci.v2();
+				nbTotal++;
+				if (!ci.deleted) nbExisting++;
+				if (!ci.toSave) nbToSave++;
+				if (!ci.toDelete) nbToDelete++;
+				return true;		
+			});
+			if (status == Status.unchanged && status != Status.modified)
+				status = hasChanges() ? Status.modified : Status.unchanged;
 		}
-		return this;
 	}
 
-	/**
-	 * Exporte le CDoc sous forme brute d'un id, header, state et d'une liste d'items
-	 * @param detached si true ImpExpData n'a plus aucune référence sur d'autres objets externes à lui-même
-	 * (sauf immutable) sinon ses items continuent de pointer sur des données vivantes
-	 * @param f filtre facultatif pour ignorer certains items
-	 * @throws AppException 
-	 * @ return ImpExpData correspondant
-	 */
-	public ImpExpData export(boolean detached, CItemFilter f) throws AppException {
-		ImpExpData d = new ImpExpData();
-		d.version = version;
-		d.ctime = ctime;
-		d.id = id;
-		d.items = listAllItems(f);
-		return d;
-	}
-
-	/********************************************************************************/
+//	void compSizeInCache() {
+//		int l = 0;
+//		for(String k : sings.keySet()) l += sings.get(k).sizeInCache();
+//		for(String k : colls.keySet()) {
+//			HashMap<String,CItem> cis = colls.get(k);
+//			for(String key : cis.keySet()) l += cis.get(key).sizeInCache();
+//		}
+//		sizeInCache = l;
+//	}
+//
+//	CIAction stats = (ci) -> {
+//		sizeInCache += ci.sizeInCache();
+//		v1 += ci.v1();
+//		v2 += ci.v2();
+//		nbTotal++;
+//		if (!ci.deleted) nbExisting++;
+//		if (!ci.toSave) nbToSave++;
+//		if (!ci.toDelete) nbToDelete++;
+//		return true;		
+//	};
+//	
+//	public static abstract class CItemFilter {
+//		public abstract boolean accept(CItem ci) throws AppException;
+//	}
+//
+//	public static class CItemFilterToSave extends CItemFilter {
+//		public boolean accept(CItem ci) { return ci.toSave; }
+//	}
+//
+//	public static class CItemFilterExisting extends CItemFilter {
+//		public boolean accept(CItem ci) { return !ci.deleted; }
+//	}
+//
+//	public static final CItemFilter filterToSave = new CItemFilterToSave();
+//	public static final CItemFilter filterExisting = new CItemFilterExisting();
+//	public static final CItemFilter filterStats = new Stats();
+//
+//	public static class Stats extends CItemFilter {
+//		private CDoc d;
+//		public boolean accept(CItem ci) {
+//			if (d == null) d = ci.cdoc;
+//			d.sizeInCache += ci.sizeInCache();
+//			d.v1 += ci.v1();
+//			d.v2 += ci.v2();
+//			d.nbTotal++;
+//			if (!ci.deleted) d.nbExisting++;
+//			if (!ci.toSave) d.nbToSave++;
+//			if (!ci.toDelete) d.nbToDelete++;
+//			return true;
+//		}
+//	}
+//	
+//
+//	void summarize() throws AppException {
+//		v1 = 0;
+//		v2 = 0;
+//		nbExisting = 0;
+//		nbToSave = 0;
+//		nbToDelete = 0;
+//		nbTotal = 0;
+//		sizeInCache = 0;
+//		if (status != Status.deleted && status != Status.shortlived) {
+//			browseAllItems(filterStats);
+//			if (status == Status.unchanged && status != Status.modified)
+//				status = hasChanges() ? Status.modified : Status.unchanged;
+//		}
+//	}
+//	
+//	CItemFilter browseAllItems(CItemFilter f) throws AppException{
+//		for(String k : sings.keySet()) 
+//			f.accept(sings.get(k));
+//		for(String k : colls.keySet()) {
+//			HashMap<String,CItem> cis = colls.get(k);
+//			for(String key : cis.keySet())
+//				f.accept(cis.get(key));
+//		}
+//		return f;
+//	}
+//	ArrayList<CItem> listAllItems(CItemFilter f) throws AppException{
+//		ArrayList<CItem> items = new ArrayList<CItem>();
+//		for(String k : sings.keySet()) {
+//			CItem ci = sings.get(k);
+//			if (f != null && f.accept(ci)) items.add(ci);
+//		}
+//		for(String k : colls.keySet()) {
+//			HashMap<String,CItem> cis = colls.get(k);
+//			for(String key : cis.keySet()) {
+//				CItem ci = cis.get(key);
+//				if (f != null && f.accept(ci)) items.add(ci);
+//			}
+//		}
+//		return items;
+//	}
+//
+//	/********************************************************************************/
+//	ArrayList<String> listAllClKeys(CItemFilter f) throws AppException{
+//		ArrayList<String> items = new ArrayList<String>();
+//		for(String k : sings.keySet()) {
+//			CItem ci = sings.get(k);
+//			if (f != null && f.accept(ci)) items.add(ci.clkey());
+//		}
+//		for(String k : colls.keySet()) {
+//			HashMap<String,CItem> cis = colls.get(k);
+//			for(String key : cis.keySet()) {
+//				CItem ci = cis.get(key);
+//				if (f != null && f.accept(ci)) items.add(ci.clkey());
+//			}
+//		}
+//		return items;
+//	}
+//	
+//
+//	/********************************************************************************/
+	
 	/**
 	 * Construit un CItem autonome depuis des données de DB ou d'importation
 	 * Les CItem de classe P sont désérialisés immédiatement
@@ -514,5 +475,93 @@ public class CDoc implements Comparable<CDoc> {
 		}
 
 	}
+	
+	/********************************************************************************/
+	/*
+	 * N'est utilisée QUE par Cache pour mettre à jour SON exemplaire
+	 * depuis des données incrémentales (ou complètes) de la base
+	 * SI le ctime a changé, data contient tout et il faut effectuer un clean des données actuelles
+	 * Supprime physiquement les items deleted antérieurs à dtime
+	 * @param data n'est jamais null
+	 * @return
+	 */
+	synchronized CDoc importData(ImpExpDocument data) {
+		if (data.ctime != ctime) clearAllItems();
+		id = data.id;
+		version = data.version;
+		ctime = data.ctime;
+		status = Status.unchanged;
+				
+		// on remplace / insère ceux mis à jour
+		for(CItem ci : data.items) {
+			ci.cdoc = this;
+			if (ci.descr.isSingleton())	sings.put(ci.descr.name(), ci);
+			else {
+				HashMap<String,CItem> cis = colls.get(ci.descr.name());
+				if (cis != null) cis.put(ci.key, ci);
+			}
+		}
 		
+		// Supprime physiquement les items deleted antérieurs à dtime
+		// TODO
+		
+
+		return this;
+	}
+
+	/*
+	 * N'est utilisé QUE pour cloner le CDoc du cache en une copie pour l'opération
+	 */
+	protected synchronized CDoc newCopy() throws AppException {
+		summarize();
+		CDoc c = new CDoc();
+		c.id = id;
+		c.version = version;
+		c.ctime = ctime;
+		c.dtime = dtime;
+		c.status = Status.unchanged;
+		c.nbExisting = nbExisting;
+		c.nbToSave = 0;
+		c.nbToDelete = 0;
+		c.nbTotal = nbTotal;
+		c.v1 = v1;
+		c.v2 = v2;
+		for(ItemDescr itd : id().descr().itemDescrs())
+			if (!itd.isSingleton()) c.colls.put(itd.name(), new HashMap<String,CItem>());
+		for(String k : sings.keySet())
+			c.sings.put(k, sings.get(k).copy(c));
+		for(String k : colls.keySet()) {
+			HashMap<String,CItem> cis = colls.get(k);
+			HashMap<String,CItem> cis2 = c.colls.get(k);
+			if (cis !=  null && cis2 != null) // ça devrait toujours être le cas
+				for(String key : cis.keySet())
+					cis2.put(key, cis.get(key).copy(c));
+		}
+		return c;
+	}
+
+	/**
+	 * Créé un CDoc correctement identifié, neuf et sans items
+	 * @param id
+	 */
+	static CDoc newEmptyCDoc(Document.Id id){ 
+		CDoc cdoc = new CDoc();
+		cdoc.id = id;
+		cdoc.status = Status.created;
+		return cdoc.initStruct();
+	}
+	
+	/******************************************************************************/
+	/**
+	 * Méthode basculant un CDoc local à un ExecContect après commit() d'une opération
+	 * en un CDoc acceptable pour être mis en cache.
+	 * Comme dtime / ctime / version changent, les items se réinitialisent
+	 * @param version
+	 * @return true si changé ???
+	 * @throws AppException 
+	 */
+	boolean afterCommit(long version) throws AppException {
+		// TODO
+		return true;
+	}
 }

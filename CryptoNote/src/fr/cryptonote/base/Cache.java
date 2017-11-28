@@ -102,7 +102,7 @@ public class Cache {
 				// Présent en cache, assez frais : joie ! (mais peut-être rien de nouveau)
 				d.lastTouch = now;
 				if (d.version() == versionActuelle) return null;
-				if (d.version() > versionActuelle) return d.clone();	
+				if (d.version() > versionActuelle) return d.newCopy();	
 			}
 		}
 		
@@ -111,13 +111,28 @@ public class Cache {
 		ImpExpDocument impExp = provider.getDocument(id, d != null ? d.ctime() : 0, d != null ? d.version() : 0, d != null ? d.dtime() : 0);
 		if (impExp == null) {
 			// document inexistant en base
-			remove(id); // par sécurité s'il y était encore
+			remove(id); // par sécurité s'il était encore en cache
 			return CDoc.FAKE;
 		}
 		
 		
-		ImpExpData data = provider.exportDoc(id, d != null ? d.version() : 0);
-		data.state = ds;
+		ImpExpDocument data = provider.getDocument(id, d != null ? d.version() : 0, d != null ? d.ctime() : 0, d!= null ? d.dtime() : 0);
+		if (data == null) {
+			// le document N'EXISTE PAS ou PLUS en base
+			remove(id); // par sécurité s'il était encore en cache
+			return CDoc.FAKE;
+		}
+		
+		if (d != null) {
+			// faut-il mettre à jour l'exemplaire en cache ?
+			if (d.version() == data.version && d.ctime() == data.ctime) {
+				if (d.dtime() == data.dtime) {
+					// c'est exactement le même
+					d.lastTouch = now;
+					return d.version() == versionActuelle ? null : d.newCopy();	
+			}
+		}
+
 
 		if (data.header == null && data.items.size() == 0) {
 			/*
@@ -137,7 +152,7 @@ public class Cache {
 			d.importData(data);
 		} else {
 			// c'est une nouvelle insertion en cache
-			d = CDoc.newCDoc(data);
+			d = CDoc.newEmptyCDoc(data.id).importData(data);
 			doc(d);
 		}
 		return d.version() <= versionActuelle ? null : d;
