@@ -18,11 +18,9 @@ public class CDoc implements Comparable<CDoc> {
 	 *   Sa date-heure de création n'est pas la même qu'au début de l'opération et son contenu a complètement été purgé par la suppression survenue avant sa recréation.
 	 *- `deleted` : le document existait mais a été supprimé par l'opération.
 	 *- `shortlived` : le document n'existait pas, a été créé par un `getOrNew()` et a été supprimé ensuite au cours de l'opération.
-	 *- `oldtrace` : pour un item seulement : était supprimé avant l'opération et n'a pas été recréé.
 	 */
 	
-	public enum Status {unchanged, modified, created, recreated, deleted, shortlived, oldtrace};	
-	public static final int nbStatus = Status.values().length;
+	public enum Status {unchanged, modified, created, recreated, deleted, shortlived};	
 
 	/********************************************************************************/
 	@Override public int compareTo(CDoc c) { return lastTouch < c.lastTouch ? -1 : (lastTouch > c.lastTouch ? 1 : 0); }
@@ -34,16 +32,16 @@ public class CDoc implements Comparable<CDoc> {
 	private long ctime;
 	private long dtime;
 	private Status status;
-	private long v1Before;
-	private long v2Before;
-
-	private HashMap<String,CItem> sings = new HashMap<String,CItem>();
-	private HashMap<String,HashMap<String,CItem>> colls = new HashMap<String,HashMap<String,CItem>>();
-
+	
+	private int nbExisting = 0;
+	private int nbToSave = 0;
+	private int nbToDelete = 0;
+	private int nbTotal = 0;
 	private long v1;
 	private long v2;
-	long v1Delta;
-	long v2Delta;
+	
+	private HashMap<String,CItem> sings = new HashMap<String,CItem>();
+	private HashMap<String,HashMap<String,CItem>> colls = new HashMap<String,HashMap<String,CItem>>();
 
 	// Données de gestion de cache
 	int sizeInCache;
@@ -55,10 +53,18 @@ public class CDoc implements Comparable<CDoc> {
 	public long version() { return version; }
 	public long ctime() { return ctime; }
 	public long dtime() { return dtime; }
-		
+	boolean hasChanges() { return nbToSave + nbToDelete != 0 ; }
+
 	public Status status() { return status; };
 
-	public boolean toSave() { return status == Status.created || status == Status.recreated || status == Status.modified; }
+	public boolean toSave() { return nbToSave + nbToDelete != 0; }
+	public int nbExisting() { return nbExisting; }
+	public int nbToSave() { return nbToSave; }
+	public int nbToDelete() { return nbToDelete; }
+	public int nbTotal() { return nbTotal; }
+	public long v1() { return v1; };
+	public long v2() { return v2; };
+
 	void recreate() { status = Status.recreated; clearAllItems(); }
 	void delete() {	status = version() == 0 ? Status.shortlived : Status.deleted; clearAllItems(); }
 	private void clearAllItems() {
@@ -68,17 +74,21 @@ public class CDoc implements Comparable<CDoc> {
 
 	/*
 	 * N'est utilisé QUE pour cloner le CDoc en cache en une copie pour l'opération
-	 * Il est cohérent (summarize() inutile)
 	 */
-	protected synchronized CDoc clone() {
+	protected synchronized CDoc newCopy() throws AppException {
+		summarize();
 		CDoc c = new CDoc();
 		c.id = id;
 		c.version = version;
 		c.ctime = ctime;
 		c.dtime = dtime;
 		c.status = Status.unchanged;
-		c.v1Before = v1;
-		c.v2Before = v2;
+		c.nbExisting = nbExisting;
+		c.nbToSave = 0;
+		c.nbToDelete = 0;
+		c.nbTotal = nbTotal;
+		c.v1 = v1;
+		c.v2 = v2;
 		for(ItemDescr itd : id().descr().itemDescrs())
 			if (!itd.isSingleton()) c.colls.put(itd.name(), new HashMap<String,CItem>());
 		for(String k : sings.keySet())
@@ -119,53 +129,45 @@ public class CDoc implements Comparable<CDoc> {
 	}
 
 	public static class CItemFilterToSave extends CItemFilter {
-		public boolean accept(CItem ci) {
-			Status st = ci.status();
-			return st == Status.created || st == Status.recreated || st == Status.deleted || st == Status.modified;
-		}
+		public boolean accept(CItem ci) { return ci.toSave; }
 	}
 
 	public static class CItemFilterExisting extends CItemFilter {
-		public boolean accept(CItem ci) {
-			Status st = ci.status();
-			return st != Status.deleted && st != Status.shortlived && st != Status.oldtrace;
-		}
+		public boolean accept(CItem ci) { return !ci.deleted; }
 	}
 
 	public static final CItemFilter filterToSave = new CItemFilterToSave();
 	public static final CItemFilter filterExisting = new CItemFilterExisting();
+	public static final CItemFilter filterStats = new Stats();
 
 	public static class Stats extends CItemFilter {
-		int[] byStatus = new int[nbStatus];
-		int v1 = 0;
-		long v2 = 0;
-		
+		private CDoc d;
 		public boolean accept(CItem ci) {
-			Status st = ci.status();
-			byStatus[st.ordinal()]++;
-			v1 += ci.v1();
-			v2 += ci.v2();
+			if (d == null) d = ci.cdoc;
+			d.sizeInCache += ci.sizeInCache();
+			d.v1 += ci.v1();
+			d.v2 += ci.v2();
+			d.nbTotal++;
+			if (!ci.deleted) d.nbExisting++;
+			if (!ci.toSave) d.nbToSave++;
+			if (!ci.toDelete) d.nbToDelete++;
 			return true;
 		}
-		
-		int nbChanges() { return byStatus[Status.created.ordinal()] + byStatus[Status.modified.ordinal()]	+ byStatus[Status.deleted.ordinal()]; }
-		
 	}
 
 	void summarize() throws AppException {
+		v1 = 0;
+		v2 = 0;
+		nbExisting = 0;
+		nbToSave = 0;
+		nbToDelete = 0;
+		nbTotal = 0;
+		sizeInCache = 0;
 		if (status != Status.deleted && status != Status.shortlived) {
-			Stats stats = new Stats();
-			browseAllItems(stats);
-			if (status != Status.created && status != Status.recreated)
-				status = stats.nbChanges() != 0 ? Status.modified : Status.unchanged;
-			v1 = stats.v1;
-			v2 = stats.v2;
-		} else {
-			v1 = 0;
-			v2 = 0;
+			browseAllItems(filterStats);
+			if (status == Status.unchanged && status != Status.modified)
+				status = hasChanges() ? Status.modified : Status.unchanged;
 		}
-		v1Delta = v1 - v1Before;
-		v2Delta = v2 - v2Before;
 	}
 
 	void compSizeInCache() {
@@ -326,9 +328,7 @@ public class CDoc implements Comparable<CDoc> {
 		if (descr.isP() && value != null && value.length() != 0){
 			try {
 				P p = JSON.fromJson(value, P.class);
-				ci.sha = p.sha();
-				ci.nsha = null;
-				ci.size = p.size();
+				ci.blobSize = p.size();
 			} catch (AppException e) {	
 				return null;
 			}
@@ -349,6 +349,7 @@ public class CDoc implements Comparable<CDoc> {
 				ci = new CItem();
 				ci.descr = descr;
 				ci.cdoc = this;
+				ci.setStatus();
 				sings.put(descr.name(), ci);
 				return ci;
 			}
@@ -362,27 +363,33 @@ public class CDoc implements Comparable<CDoc> {
 				ci.descr = descr;
 				ci.cdoc = this;
 				ci.key = key;
+				ci.setStatus();
 				cis.put(key, ci);
 				return ci;
 			}
 		}
-		// ci existait mais il n'a peut-être pas de contenu réel (deleted oldtrace shortlived).
-		Status st = status();
-		if (st == Status.deleted || st == Status.oldtrace || st == Status.deleted) {
-			if (newIfNotExisting) {
-				ci.deleted = false;
-				return ci;
-			} else
-				return null;
+		// ci existait mais peut-être détruit
+		ci.setStatus();
+		if (newIfNotExisting && ci.deleted) {
+			// il est recréé (vide)
+			ci.deleted = false;
+			ci.toSave = true;
+			ci.toDelete = false;
+			ci.nvalue = ci.descr.isRaw() ? "{}" : "";
+			ci.nblobSize = 0;
 		}
-		return ci;
+		return ci.deleted ? null : ci;
 	}
 
+	/*
+	 * Stockage d'un BItem remplaçant le cas échéant un existant.
+	 * Ne s'applique ni à un P, ni à un raw
+	 */
 	CItem citem(BItem bitem, String key) throws AppException{
-		Class<?> clazz = bitem.getClass();
-		ItemDescr descr = id().descr().itemDescr(clazz.getSimpleName());
-		if (descr == null)
-			throw new AppException("BITEMCLASS", clazz.getSimpleName());
+		String n = bitem.getClass().getSimpleName();
+		ItemDescr descr = id().descr().itemDescr(n);
+		if (descr == null)	throw new AppException("BITEMCLASS", n);
+		if (descr.isP() || descr.isRaw()) throw new AppException("BITEMPRAW", n);
 		if (key == null) key = "";
 		CItem ci;
 		if (descr.isSingleton()) {
@@ -393,13 +400,9 @@ public class CDoc implements Comparable<CDoc> {
 				ci.cdoc = this;
 				sings.put(descr.name(), ci);
 			}
-			if (ci.bitem != null) ci.bitem.detach();
-			ci.bitem = bitem;
-			ci.nvalue = JSON.toJson(bitem);
 		} else {
 			HashMap<String,CItem> cis = colls.get(descr.name());
-			if (cis == null)
-				throw new AppException("BITEMCLASSCOL", clazz.getSimpleName());
+			if (cis == null) throw new AppException("BITEMCLASSCOL", n);
 			ci = cis.get(key);
 			if (ci == null) {
 				ci = new CItem();
@@ -408,91 +411,55 @@ public class CDoc implements Comparable<CDoc> {
 				ci.key = key;
 				cis.put(key, ci);
 			}
-			if (ci.bitem != null) ci.bitem.detach();
-			ci.bitem = bitem;
-			ci.nvalue = JSON.toJson(bitem);
 		}
+		if (ci.bitem != null) ci.bitem.detach();
+		ci.bitem = bitem;
+		ci.nvalue = JSON.toJson(bitem);
+		ci.setStatus();
 		return ci;
 	}
 
 	/********************************************************************************/
 	public static class CItem {
-		private transient CDoc cdoc;
-		private transient ItemDescr descr;
+		private CDoc cdoc;
+		private ItemDescr descr;
 		transient BItem bitem;
 		
 		private long version;	// version d'un item qui existait avant (value != null) ou une trace de suppression (value == null)
 		private String key;		// key d'un item, null pour un singleton
 		private String value; 	// contenu avant. null pour une trace de suppression ou un item nouvellement créé
 		private String nvalue; 	// nouveau contenu. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
-		private int size;		// taille du blob
-		private String sha;		// sha du blob
-		private String nsha;	// sha du blob après changement
-		private boolean deleted;// a subi une suppression.
+		private int blobSize;	// taille du blob
+		private int nblobSize;	// taille du blob après changement
+		private boolean deleted;	// item non existant
+		private boolean toSave;		// item créé / modifié à sauver
+		private boolean toDelete;	// item à supprimer
 		
 		public ItemDescr descr() { return descr; }
 		public long version() { return version; }
 		public String key() { return descr().isSingleton() ? "" : key; }
 		public String cvalue() { return nvalue != null ? nvalue : (value != null ? value : null); }
-		public String sha() { return sha; }
-		public String nsha() { return nsha; }
 		public String clkey() { return descr.name() + (descr.isSingleton() ? "" : "." + key); }
 		public int sizeInCache() { return (value != null ? value.length() : 0) + (key != null ? key.length() : 0); }
-				
-		/*
-		 *- `unchanged` : l'item existait avant le début de l'opération, existe toujours et n'a pas changé.
-		 *- `modified` : l'item existait avant le début de l'opération, existe toujours mais a changé.
-		 *- `created` : l'item n'existait pas (même en trace de suppression) et a été créé par un `getOrNew()`.
-		 *- `recreated` : l'item n'existait pas mais avait une trace de suppression et a été recréé par un `getOrNew()`. 
-		 *- `deleted` : l'item existait mais a été supprimé par l'opération.
-		 *- `shortlived` : l'item n'existait pas, a été créé par un `getOrNew()` et a été supprimé ensuite au cours de l'opération.
-		 *- `oldtrace` : l'item était supprimé avant l'opération (avait une trace de suppression) et n'a pas été recréé.
-		 */
-
-		public Status status(){
-			if (version == 0) return nvalue == null ? Status.shortlived : Status.created;
-			if (value == null) return nvalue == null ? Status.oldtrace : Status.recreated;
-			return nvalue == null ? (deleted ? Status.deleted : Status.unchanged) : Status.modified;
-		}
+		public boolean deleted() { return deleted; }	// item non existant
+		public boolean toSave() { return toSave; } // item créé / modifié à sauver
+		public boolean toDelete() { return toDelete; } // item à supprimer
 		
-		public boolean changedAfterV(long v) {
-			if (version() <= v) return false;
-			Status st = status();
-			return st == Status.modified || st == Status.created || st == Status.recreated;
+		void setStatus() {
+			deleted = value == null && nvalue == null;
+			toDelete = value != null && nvalue == null;
+			toSave = value != null && !value.equals(nvalue);
 		}
+				
+		public boolean changedAfterV(long v) { return version > v && toSave;}
 
-		public boolean deletedAfterV(long v) {
-			if (version() <= v) return false;
-			Status st = status();
-			return st == Status.deleted || st == Status.oldtrace;
-		}
+		public boolean deletedAfterV(long v) { return version > v && toDelete; }
 
-		public boolean existing() {
-			Status st = status();
-			return st != Status.deleted && st != Status.shortlived && st != Status.oldtrace;
-		}
+		public int v1() { return deleted ? 0 : sizeInCache(); }
 
-		public int v1() {
-			Status st = status();
-			if (st == Status.deleted || st == Status.shortlived || st == Status.oldtrace) return 0;
-			return (nvalue != null ? nvalue.length() : (value != null ? value.length() : 0)) + (key != null ? key.length() : 0);
-		}
+		public int v2() { return deleted ? 0 : (toSave ? nblobSize : blobSize); }
 
-		public int v2() {
-			if (!descr.isP()) return 0;
-			Status st = status();
-			if (st == Status.deleted || st == Status.shortlived || st == Status.oldtrace) return 0;
-			return size;
-		}
-
-		public boolean hasValue() throws AppException {
-			Status s = status();
-			return s == Status.created || s == Status.recreated || s == Status.unchanged || s == Status.modified;
-		}
-
-		public String toString() { 
-			return descr().docDescr().name() + "." + (cdoc != null ? cdoc.id().docid() : "") + "#" + descr.name() + (descr.isSingleton() || key == null ? "" :  "." + key); 
-		}
+		public String toString() { return cdoc != null ? cdoc.id().toString() + "#" + clkey() : clkey(); }
 		
 		public ArrayList<Index> indexes() throws AppException {	return descr.indexes(cvalue()); }
 		
@@ -504,47 +471,33 @@ public class CDoc implements Comparable<CDoc> {
 			c.key = key;
 			c.value = value;
 			c.nvalue = nvalue;
-			c.sha = sha;
-			c.size = size;
-			c.nsha = nsha;
+			c.blobSize = blobSize;
+			c.nblobSize = nblobSize;
 			c.deleted = deleted;
+			c.toSave = toSave;
+			c.toDelete = toDelete;
 			return c;
 		}
-		
-		void check(boolean singl, boolean raw) throws AppException {
-			Status st = status();
-			if (st == Status.deleted || st == Status.shortlived || st == Status.oldtrace) throw new AppException("BITEMSTATUSDEL", toString());
-			if (singl && descr.isSingleton()) throw new AppException("BITEMSINGL", toString());
-			if (raw && descr.isRaw()) throw new AppException("BITEMSRAW", toString());			
-		}
-				
-		void delete() throws AppException {	check(false, false); value = null;	deleted = true; }
-
-		void deleteBlob() throws AppException {
-			check(true, true);
-			value = null;
-			nsha = null;
-			size = 0;
-		}
+						
+		void delete() throws AppException {	nvalue = null;	nblobSize = 0; setStatus(); }
 
 		void commit(String json) throws AppException{
 			if (json == null) json = "{}";
 			nvalue = json.equals(value) ?  null : json;
-			check(false, true);
+			setStatus();
 		}
 		
 		void commitRaw(String text) throws AppException{
 			if (text == null) text = "";
-			if (!descr.isRaw())	throw new AppException("BITEMNRAW", toString());			
 			nvalue = text.equals(value) ? null : text;
-			check(false, false);
+			setStatus();
 		}
 		
 		void commitP(P p){
-			this.nsha = p.sha();
-			this.size = p.size();
+			blobSize = p.size();
 			String s = JSON.toJson(p);
 			nvalue = s.equals(value) ? null : s;
+			setStatus();
 		}
 
 		void jsonDel(StringBuffer sb) { 

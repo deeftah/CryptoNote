@@ -202,9 +202,8 @@ public class Document {
 		public Document _document() throws AppException { _checkAttached(); return _document; }
 		public int v1() throws AppException{ return _citem().v1(); }
 		public int v2() throws AppException{ return _citem().v2(); }
-		public boolean hasValue() throws AppException {	return _citem().hasValue(); }
 		public ItemDescr descr() throws AppException { return _citem().descr(); }
-		public Status status() throws AppException { return _citem().status();	}
+		public boolean toSave() throws AppException { return _citem().toSave(); }
 		public long version() throws AppException {	return _citem().version();	}
 		public String key() throws AppException { return _citem().key(); }
 		public void delete() throws AppException{ _checkro("delete"); _citem().delete(); }
@@ -228,33 +227,47 @@ public class Document {
 	public static final class P extends BItem {
 		private String mime;
 		private int size;
-		private String sha;
+		@IndexedField private String sha;
 				
 		public String mime() { return mime; }
 		public String sha() { return sha; }
 		public int size() { return size; }
-		public void delete() throws AppException{ _checkro("delete"); _citem().deleteBlob(); }
+		public void delete() throws AppException{ _checkro("delete"); _citem().delete(); }
 			
 		public byte[] blobGet() throws AppException {
 			_citem();
 			return ExecContext.current().dbProvider().blobProvider().blobGet(_document().id().toString(), sha);
 		}
-			
 	}
 	
+	public P blobStore(String key, String mime, byte[] bytes) throws AppException {
+		if (key == null || key.length() == 0) throw new AppException("BKEYBLOB", id().toString());
+		if (mime == null || mime.length() == 0) throw new AppException("BMIMEBLOB", id().toString(), key);
+		if (bytes == null || bytes.length == 0) throw new AppException("BEMPTYBLOB", id().toString(), key);
+		String sha = Crypto.bytesToBase64(Crypto.SHA256(bytes), true);
+		P p = (P)bitem(P.class, true, key);
+		p.mime = mime;
+		p.size = bytes.length;
+		if (sha.equals(p.sha)) {
+			String clid = id().toString();
+			S2Cleanup.startCleanup(clid, true);
+			ExecContext.current().dbProvider().blobProvider().blobStore(clid, sha, bytes);
+			p.sha = sha;
+		}
+		p._citem().commitP(p);
+		return p;
+	}
+
 	/********************************************************************************/
 	public static class Item  extends BItem {
-		public fr.cryptonote.base.CDoc.Status status() throws AppException { return _citem().status();	}
 		public void commit() throws AppException{ _checkro("commit"); _citem().commit(JSON.toJson(this)); }
 		public BItem getCopy() throws AppException { return descr().newItem(_citem().cvalue(), _citem().toString()); }
 
 		public void replaceIn(Document d, String key) throws AppException {
 			_checkDetached();
-			if (d == null)
-				throw new AppException("BITEMATTACHED", getClass().getSimpleName());
+			if (d == null) throw new AppException("BITEMATTACHED", getClass().getSimpleName());
 			d.set(this, key);
 		}
-		
 	}
 
 	/********************************************************************************/
@@ -264,8 +277,7 @@ public class Document {
 		
 		public void replaceIn(Document d) throws AppException {
 			_checkDetached();
-			if (d == null)
-				throw new AppException("BITEMATTACHED", getClass().getSimpleName());
+			if (d == null)	throw new AppException("BITEMATTACHED", getClass().getSimpleName());
 			d.set(this, "");
 		}
 
@@ -284,26 +296,6 @@ public class Document {
 	}
 
 	/********************************************************************************/
-	public P blobStore(String key, String mime, byte[] bytes) throws AppException {
-		if (key == null || key.length() == 0) throw new AppException("BKEYBLOB", id().toString());
-		if (mime == null || mime.length() == 0) throw new AppException("BMIMEBLOB", id().toString(), key);
-		if (bytes == null || bytes.length == 0) throw new AppException("BEMPTYBLOB", id().toString(), key);
-		String sha = Crypto.bytesToBase64(Crypto.SHA256(bytes), true);
-		P p = (P)bitem(P.class, true, key);
-		if (p.sha != null && p.sha.equals(sha)) {
-			p.mime = mime;
-			p.size = bytes.length;
-		} else {	
-			String clid = id().toString();
-			S2Cleanup.startCleanup(clid, true);
-			ExecContext.current().dbProvider().blobProvider().blobStore(clid, sha, bytes);
-			p.mime = mime;
-			p.size = bytes.length;
-			p.sha = sha;
-		}
-		p._citem().commitP(p);
-		return p;
-	}
 
 	public P p(String key) throws AppException { return (P)bitem(P.class, false, key); }
 
@@ -448,15 +440,6 @@ public class Document {
 		sb.append(",\n\"items\":[");
 		boolean pf = true;
 		
-//		ArrayList<CItem> dels = cdoc.listAllItems(new CItemFilterDeleted(dtx));
-//		for (CItem ci : dels) {
-//			FilterPolicy fpid = filter(sf, ci.descr(), ci.key());
-//			if (fpid == FilterPolicy.Exclude) continue;
-//			if (!pf) sb.append(",");
-//			ci.json(sb);
-//			pf = false;
-//		}
-
 		for(CItem ci : items) {
 			ItemDescr descr = ci.descr();
 			String key = ci.key();
@@ -470,7 +453,7 @@ public class Document {
 				if (fpid == FilterPolicy.Accept) {
 					if (ci.changedAfterV(version))
 						val = descr.isRaw() ? JSON.json(ci.cvalue()) : ci.cvalue();
-					else if (clk && ci.existing())
+					else if (clk && !ci.deleted())
 							clkeys.add(ci.clkey());
 				} else {
 					if (!descr.isRaw()) {
@@ -480,7 +463,7 @@ public class Document {
 						if (fpit == FilterPolicy.Exclude) continue;
 						if (ci.changedAfterV(version))
 							val = fpit == FilterPolicy.Accept ? ci.cvalue() : JSON.toJson(item);
-						else if (clk && ci.existing())
+						else if (clk && !ci.deleted())
 							clkeys.add(ci.clkey());
 					} else {
 						Text t = new Text(ci.cvalue());
@@ -488,7 +471,7 @@ public class Document {
 						if (fpit == FilterPolicy.Exclude) continue;
 						if (ci.changedAfterV(version))						
 							val = fpit == FilterPolicy.Accept ? JSON.json(ci.cvalue()) : JSON.json(t.filtered);
-						else if (clk && ci.existing())
+						else if (clk && !ci.deleted())
 							clkeys.add(ci.clkey());						
 					}
 				}
