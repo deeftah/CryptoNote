@@ -10,6 +10,19 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<param-value>fr.cryptonote.app.Config</param-value>
 	</context-param>
 
+	<resource-ref>
+	     <description>Postgresql DataSource</description>
+	     <res-ref-name>jdbc/cna</res-ref-name>
+	     <res-type>javax.sql.DataSource</res-type>
+	     <res-auth>Container</res-auth>
+  	</resource-ref>
+	<resource-ref>
+	     <description>Postgresql DataSource</description>
+	     <res-ref-name>jdbc/cnz</res-ref-name>
+	     <res-type>javax.sql.DataSource</res-type>
+	     <res-auth>Container</res-auth>
+  	</resource-ref>
+  
 	<servlet>
 		<servlet-name>Generic</servlet-name>
 		<servlet-class>fr.cryptonote.base.Servlet</servlet-class>

@@ -21,7 +21,7 @@ CREATE TABLE dbinfo (
 );
 ALTER TABLE dbinfo OWNER TO "docdb";
 
-insert into dbinfo values('{"type":"postgreSQL 10.1"}');
+insert into dbinfo values('postgreSQL 10.1');
 
 DROP TABLE IF EXISTS s2cleanup;
 CREATE TABLE s2cleanup (

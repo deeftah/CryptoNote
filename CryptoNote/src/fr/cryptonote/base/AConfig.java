@@ -29,7 +29,7 @@ public class AConfig {
 
 	static {
 		mfDic0.put("XSERVLETCONFIG", new MessageFormat("La classe ConfigClass n'est pas donnée en paramètre dans web.xml"));
-		mfDic0.put("XSERVLETCONFIGCLASS", new MessageFormat("La classe [{0}] donnée dans web.xml n'a pas de méthode static startup(Servlet servlet, String contextPath)"));
+		mfDic0.put("XSERVLETCONFIGCLASS", new MessageFormat("La classe [{0}] donnée dans web.xml n'a pas de méthode static startup()"));
 		mfDic0.put("XSERVLETCONFIGBUILD", new MessageFormat("Ressource /WEB-INF/config.json : build absente"));
 		mfDic0.put("XSERVLETURL", new MessageFormat("URL mal formée (espace de noms [{0}] non reconnu)"));
 		mfDic0.put("XSERVLETBASE", new MessageFormat("Base temporairement indisponible"));
@@ -164,7 +164,7 @@ public class AConfig {
 	public ASecret secret() { return secret; }
 
 
-	public static void startup(Servlet servlet, String contextPath, Class<?> genClass, Class<?> secretClass) throws Exception {		
+	public static void startup(Class<?> genClass, Class<?> secretClass) throws Exception {		
 			MimeType.init();
 
 			Servlet.Resource r = Servlet.getResource("/WEB-INF/config.json");
@@ -187,7 +187,7 @@ public class AConfig {
 				int j = s.lastIndexOf("\"");
 				config.gen.build = s.substring(i+ 1, j);
 			} catch (Exception e) {
-				throw new Exception(_format(0, "XRESSOURCEBUILDJS"));
+				throw new Exception(_format(0, "XRESSOURCEABSENTE", "/var/build.js"));
 			}
 
 			config.gen.instance = System.getProperty("fr.sportes.base.INSTANCE");

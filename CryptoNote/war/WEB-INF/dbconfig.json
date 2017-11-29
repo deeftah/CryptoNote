@@ -1,6 +1,4 @@
 {
-	"maxConnections":100,
-	"dbURL":"jdbc:postgresql://localhost:5432/ncdb",
 	"nbqueues":2,
 	"_blobsroot":"/tmp/blobsroot",
 	"blobsroot":"D:/temp/blobsroot",

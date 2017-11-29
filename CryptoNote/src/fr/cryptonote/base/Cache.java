@@ -80,6 +80,13 @@ public class Cache {
 		return d;
 	}
 
+	public static class XCDoc {
+		public long lastCheckDB;
+		public boolean existant; 
+		public CDoc cdoc;
+		public XCDoc(long lastCheckDB, boolean existant, CDoc cdoc) { this.lastCheckDB = lastCheckDB; this.existant = existant; this.cdoc = cdoc; }
+	}
+	
 	/**
 	 * Retourne CDoc trouvé en cache, le cas échéant l'ayant lu / remis à niveau si nécessaire.
 	 * @param id
@@ -90,7 +97,7 @@ public class Cache {
 	 * autre le CDoc correspondant
 	 * @throws AppException
 	 */
-	public CDoc cdoc(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
+	public XCDoc cdoc(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
 		if (id == null) throw new AppException("BDOCUMENTCACHE0");
 		long now = cleanup();
 		long maxAge = minTime != null ? minTime.epoch() : now;
@@ -103,24 +110,25 @@ public class Cache {
 			if (d.lastCheckDB >= maxAge) {
 				// Présent en cache, assez frais : joie !
 				d.lastTouch = now;
-				if (d.version() == versionActuelle) return null; 		// rien de nouveau
-				if (d.version() > versionActuelle) return d.newCopy();	// version plus récente
+				if (d.version() == versionActuelle) return new XCDoc(d.lastCheckDB, true, null);  		// rien de nouveau
+				if (d.version() > versionActuelle) return new XCDoc(d.lastCheckDB, true, d.newCopy());	// version plus récente
 			}
 		}
 
 		// Il faut relire en base : l'exemplaire en cache est soit vide, soit pas assez récent, soit dans une version trop ancienne
+		d.lastCheckDB = now;
 		DeltaDocument delta = ExecContext.current().dbProvider().getDocument(id, d.ctime(), d.version(), d.dtime());
 		if (delta == null) {
 			// document inexistant en base
 			remove(id); // il était peut-être en cache, le cas échant mis 5 lignes plus haut
-			return CDoc.FAKE;
+			return new XCDoc(d.lastCheckDB, false, null);
 		}
 		
 		if (delta.cas == 0) { // cache à niveau (v == vdb)
 			if (d.version() == versionActuelle) return null;	
 		} else // cache retardée ou vide
 			d.importData(delta);
-		return d.newCopy();
+		return new XCDoc(d.lastCheckDB, true, d.newCopy());
 	}
 
 }

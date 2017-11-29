@@ -1,0 +1,22 @@
+{
+	"text":{
+		"html":"text/html",
+		"css":"text/css",
+		"json":"application/json",
+		"js":"text/javascript",
+		"xml":"application/xml",
+		"appcache":"text/cache-manifest",
+		"app":"text/html",
+		"cloud":"text/html",
+		"sync":"text/html",
+		"local":"text/html",
+		"sync2":"text/html",
+		"local2":"text/html"
+	},
+	"bin":{
+		"woff":"application/font-woff",
+		"woff2":"application/font-woff2",
+		"png":"image/png",
+		"jpg":"image/jpeg"
+	}
+}

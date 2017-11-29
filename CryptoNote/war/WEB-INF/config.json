@@ -1,8 +1,8 @@
 {
 	"zone":"Europe/Paris",
 	"langs":["fr", "en"],
-	"dbProviderClass":"fr.sportes.app.providerPG",
-	"nssrvcfgClass":"fr.sportes.app.NSSrvCfg",
+	"dbProviderClass":"fr.cryptonote.provider.ProviderPG",
+	"nssrvcfgClass":"fr.cryptonote.app.NSSrvCfg",
 	"isDebug":true,
 	"distrib":false,
 	"url":"http://192.168.1.10:8090/cn",

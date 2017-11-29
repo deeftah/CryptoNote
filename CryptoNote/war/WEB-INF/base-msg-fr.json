@@ -1,4 +1,5 @@
 {
+"XRESSOURCEBUILDJS":"Ressource build.js non trouvée ou mal formée",
 
 "BDOCUMENTCLASS0":"Tentative d''enrigistrement d''une classe de Document vide",
 "BDOCUMENTCLASS1":"Tentative d''enrigistrement d''une classe de Document [{0}] n''étendant pas Document",
@@ -42,7 +43,6 @@
 "ANSZRES":"Ressource de nom [{0}] sans valeur par défaut dans l'application",
 "ANSEMPTY":"Pas de fichier joint",
 
-
 "SQMKEY":"Clé d''accès au Queue Manager non reconnue",
 "BQMJSONTI":"Erreur de syntaxe sur TaskInfo json :[{0}]",
 "BQMOP":"Queue Manager : opération [{0}] inconnue",
@@ -84,7 +84,6 @@
 "MC6":"espace off", 
 "MC7":"session non autorisée",
 
-"XRESSOURCEBUILDJS":"Ressource build.js non trouvée ou mal formée",
 "XRESSOURCEURL":"Ressource /WEB-INF/config.json : url absente ou vide ou incorrecte",
 "XRESSOURCECLASS":"Classe [{0}] non trouvée ou sans constructeur par défaut",
 "XDBACCESSTEST":"Test d'accès à [z] {0} : [{1}]",
@@ -92,7 +91,9 @@
 
 "BBUG":"Bug",
 "BEXECSYNCSPARSE":"Opération [{0}] : syncs non parsable",
-"CONTENTION":"Opération [{0}] : trop forte contention sur la base de données. Réessayer plus tard",
+"CONTENTION1":"Opération [{0}] : contention sur la base de données. Validation impossible : locks:[{1}]. Réessayer plus tard",
+"CONTENTION2":"Opération [{0}] : contention sur la base de données. Document [{1}] détruit depuis le début de l''opération. Réessayer plus tard",
+"CONTENTION3":"Opération [{0}] : contention sur la base de données. Document [{1}] modifié en base depuis le début de l''opération:. Réessayer plus tard",
 "SQM":"Opération requérant un privilège de Queue Manager [{0}]",
 	
 "X1":"URL d'opération incorrecte, op absent : [{0}]",

@@ -20,8 +20,10 @@ public class MimeType {
 	private static HashMap<String,Ext> byExt = new HashMap<String,Ext>();
 	private static HashMap<String,Ext> byMime = new HashMap<String,Ext>();
 	
-	static void init() {
-		Servlet.Resource r = Servlet.getResource("/var/mimetypes.json");
+	private static final String MT = "/var/mimetypes.json";
+	
+	static void init() throws Exception {
+		Servlet.Resource r = Servlet.getResource(MT);
 		if (r != null)
 			try {
 				Extensions extensions = JSON.fromJson(Util.fromUTF8(r.bytes), Extensions.class);
@@ -46,13 +48,10 @@ public class MimeType {
 					}
 				}
 			} catch (Exception ex){
-				Util.log.severe("Ressource /var/mimetypes.json mal formée : " + ex.getMessage());
-				return;				
+				throw new Exception(AConfig._format("XRESSOURCEJSONPARSE", MT, ex.getMessage()));
 			}
-		else {
-			Util.log.severe("Ressource /var/mimetypes.json absente");
-			return;
-		}
+		else
+			throw new Exception(AConfig._format("XRESSOURCEABSENTE", MT));
 	}
 	
 	public static String extOf(String mime) {

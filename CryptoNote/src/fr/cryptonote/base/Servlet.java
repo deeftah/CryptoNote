@@ -47,7 +47,7 @@ public class Servlet extends HttpServlet {
 	private static String msg;
 
 	private void err(Exception e) throws ServletException {
-		msg = initException.getMessage() + "\n" + Util.stack(e);
+		msg = e.getMessage() + "\n" + Util.stack(e);
 		Util.log.severe(msg);
 		if (e instanceof ServletException) throw (ServletException)e;
 		initException = e;
@@ -58,7 +58,8 @@ public class Servlet extends HttpServlet {
 		servletContext = servletConfig.getServletContext();
 		String s  = servletContext.getContextPath();
 		contextPath = s == null || s.length() <= 1 ? "" : s;
-		ExecContext ec = new ExecContext();
+		// ExecContext exec = 
+		new ExecContext();
 		
 		try { Crypto.startup(); } catch (Exception e) { err(e); }
 		
@@ -67,12 +68,12 @@ public class Servlet extends HttpServlet {
 		Class<?> configClass = Util.hasClass(c, AConfig.class);
 		Method startup = null;
 		try {
-			startup = configClass.getMethod("startup", Servlet.class, String.class);
+			startup = configClass.getMethod("startup");
 		} catch (Exception e) { err(new ServletException(AConfig._label("XSERVLETCONFIGCLASS", configClass.getSimpleName()))); }
 		if (!Modifier.isStatic(startup.getModifiers())) 
 			err(new ServletException(AConfig._label("XSERVLETCONFIGCLASS", configClass.getSimpleName())));
 		try { 
-			startup.invoke(null, this, contextPath); 
+			startup.invoke(null); 
 		} catch (Exception e) { err(e); }
 		
 		if (AConfig.config().build() == null || AConfig.config().build().length() == 0)
@@ -87,11 +88,11 @@ public class Servlet extends HttpServlet {
 			for(String x : var) if (x.startsWith("z/"))	zresx.add(x.substring(2));
 			zres = zresx.toArray(new String[zresx.size()]);
 			
-			NS.init();
-			ec.setNS(AConfig.config().nsz());
+			// NS.init();
+			// ec.setNS(AConfig.config().nsz());
+			// QueueManager.initQ();
 			
-			QueueManager.initQ();
-			
+			done = true;
 		} catch (Exception e){
 			err(e);
 		}
@@ -100,8 +101,8 @@ public class Servlet extends HttpServlet {
 	
 	@Override public void destroy() {
 		try {
-			QueueManager.closeQ();
-			new ExecContext().setNS(AConfig.config().nsz()).dbProvider().shutdwon();
+			// QueueManager.closeQ();
+			// new ExecContext().setNS(AConfig.config().nsz()).dbProvider().shutdwon();
 		} catch (Exception e) {	}
 	}
 
@@ -126,7 +127,7 @@ public class Servlet extends HttpServlet {
 			String b = AConfig.config().build();
 			String dbInfo;
 			try {
-				dbInfo = exec.dbProvider().dbInfo("ok");
+				dbInfo = exec.dbProvider().dbInfo(null);
 			} catch (AppException e) {
 				dbInfo = AConfig._label("XDBINFO") + "\n" + e.getMessage();			
 			}

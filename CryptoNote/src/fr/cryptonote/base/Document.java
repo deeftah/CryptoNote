@@ -137,8 +137,8 @@ public class Document {
 
 	/********************************************************************************/
 	private CDoc cdoc;
-	private boolean isRO() { return maxDelay == 0; }
-	private int maxDelay;
+	boolean isReadOnly;
+	boolean isRO() { return isReadOnly; }
 	
 	public CDoc cdoc() { return cdoc; }
 	public Document.Id id() { return cdoc.id(); }

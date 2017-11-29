@@ -9,7 +9,6 @@ import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.provider.DBProvider.DeltaDocument;
 
 public class CDoc implements Comparable<CDoc> {
-	static final CDoc FAKE = new CDoc();
 	
 	/*
 	 *- `unchanged` : aucun item n'a changé sur le document qui existait avant le début de l'opération.
@@ -25,8 +24,6 @@ public class CDoc implements Comparable<CDoc> {
 
 	/********************************************************************************/
 	@Override public int compareTo(CDoc c) { return lastTouch < c.lastTouch ? -1 : (lastTouch > c.lastTouch ? 1 : 0); }
-
-	public boolean estInexistant() { return this == FAKE; }
 	
 	private Document.Id id;
 	private long version;
@@ -426,6 +423,7 @@ public class CDoc implements Comparable<CDoc> {
 		summarize();
 		CDoc c = new CDoc().initStruct();
 		c.id = id;
+		c.lastCheckDB = lastCheckDB;
 		c.version = version;
 		c.ctime = ctime;
 		c.dtime = dtime;

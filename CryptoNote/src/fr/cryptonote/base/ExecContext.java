@@ -14,28 +14,16 @@ import javax.servlet.ServletException;
 
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
+import fr.cryptonote.base.Cache.XCDoc;
 import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.Sync;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.Servlet.InputData;
 import fr.cryptonote.provider.DBProvider;
-import fr.sportes.base.Stamp;
 
-public class ExecContext {
-	private static TimeZone timezone;
-	private static SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.FRANCE);
-	
+public class ExecContext {	
 	private static boolean isDebug ;
-	
-	private static boolean ready = false;
-	
-	private static void init(){
-		timezone = AConfig.config().timeZone();
-		sdf1.setTimeZone(timezone);
-		isDebug = AConfig.config().isDebug();
-		ready = true;
-	}
-	
+		
 	/*******************************************************************************************/
 	private static HashMap<String,int[]> statsOp = new HashMap<String,int[]>();
 	private static HashMap<String,int[]> statsD = new HashMap<String,int[]>();
@@ -108,7 +96,6 @@ public class ExecContext {
 	private HashMap<String,Object> appData = new HashMap<String,Object>();
 	
 	ExecContext() throws ServletException {
-		if (!ready) init();
 		ExecContextTL.set(this);
 		startTime = Stamp.fromNow(0);
 		chrono = new Chrono(startTime.epoch());
@@ -185,6 +172,7 @@ public class ExecContext {
 	// tâches à inscrire au QM
 	ArrayList<TaskInfo> tasks = new ArrayList<TaskInfo>();
 	HashMap<String,Document> docs = new HashMap<String,Document>();
+	HashSet<String> emptyDocs = new HashSet<String>();
 	HashSet<String> dels = new HashSet<String>();
 	HashMap<String,HashMap<String,BItem>> triggers = new HashMap<String,HashMap<String,BItem>>();
 	
@@ -218,27 +206,71 @@ public class ExecContext {
 		if (d != null) d.cdoc().delete();
 	}
 
-	Document getDoc(Document.Id id, int maxDelayInSeconds) {
+	/*
+	 * Recherche du document dans le contexte, en cache/base s'il n'y est pas et mémorisation éventuelle
+	 */
+	Document getDoc(Document.Id id, int maxDelayInSeconds) throws AppException {
 		String n = id.toString();
+		if (emptyDocs.contains(n)) return null; // on avait déjà cherché en base et il n'y en avait pas
 		boolean ro = maxDelayInSeconds != 0;
 		Stamp minTime = ro ? Stamp.fromEpoch(startTime2().epoch() - maxDelayInSeconds * 1000) : startTime2();
 		Document d = docs.get(n);
+		long versionActuelle = 0;
 		if (d != null) {
-			
+			if (!d.isReadOnly) return d; // on ne pourra jamais faire mieux
+			if (d.cdoc().lastCheckDB >= minTime.epoch()) {
+				// document assez frais. Peut-être en RO ?
+				if (!ro) d.isReadOnly = false;
+				return d;
+			}
+			versionActuelle = d.version();
 		}
-		return null;
-	}
-	
-	Document getFromCache(Document.Id id, Stamp minTime, long versionActuelle)  throws AppException {
-		CDoc cdoc = Cache.current().cdoc(id, minTime, versionActuelle);
 		
+		// il faut en obtenir un exemplaire (voire plus frais que celui du contexte)
+		XCDoc xcdoc = Cache.current().cdoc(id, minTime, versionActuelle);
 		
-		Document d = Document.newDocument(cdoc);
+		if (!xcdoc.existant) { // n'existe pas en base/cache
+			if (versionActuelle != 0) 
+				throw new AppException("CONTENTION2", this.operationName(), n); // Gros soucis : le document a été détruit depuis
+			// c'était la première fois qu'on le cherchait
+			emptyDocs.add(n);
+			return null;
+		}
+		
+		// il existe en base/cache
+		if (xcdoc.cdoc == null) { // et n'a pas changé par rapport à celui du contexte
+			d.cdoc().lastCheckDB = xcdoc.lastCheckDB;
+			return d;
+		}
+		
+		// il existe en base/cache et il y a un delta ou un premier état
+		if (versionActuelle != 0) { // on en avait un dans le contexte
+			if (!d.isReadOnly) // Gros soucis : le document a changé deuis le début de l'opération et on a fait des modifications
+				throw new AppException("CONTENTION3", this.operationName(), n);
+		}
+
+		// il faut en faire un document et le garder dans le contexte
+		// s'il était présent dans le contexte en lecture seule, il est remplacé par une version plus récente
+		d = Document.newDocument(xcdoc.cdoc);
+		if (ro) d.isReadOnly = true;
+		docs.put(n, d);
 		return d;
 	}
-	
-	Document getOrNewDoc(Document.Id id) {
-		return null;
+		
+	Document getOrNewDoc(Document.Id id) throws AppException {
+		String n = id.toString();
+		if (emptyDocs.contains(n)) {
+			// on avait déjà cherché en base et il n'y en avait pas
+			Document d = Document.newDocument(CDoc.newEmptyCDoc(id));
+			docs.put(n, d);
+			emptyDocs.remove(n);
+			return d;
+		}
+		Document d = getDoc(id, 0);
+		if (d != null) return d;
+		d = Document.newDocument(CDoc.newEmptyCDoc(id));
+		docs.put(n, d);
+		return d;
 	}
 		
 	/*********************************************************************************************/
@@ -246,6 +278,7 @@ public class ExecContext {
 		Result result = null;
 		inputData = inp;
 		iLang = AConfig._iLang(inp.args().get("lang"));
+		isDebug = AConfig.config().isDebug();
 		maxTime = isTask() ? AConfig.config().TASKMAXTIMEINSECONDS() : AConfig.config().OPERATIONMAXTIMEINSECONDS();
 		int nsStatus = NS.status(ns); // 0:rw 1:ro 2:interdit 3:inexistant
 		if (nsStatus > 2 && !hasAdminKey())
@@ -295,7 +328,7 @@ public class ExecContext {
 								StringBuffer sb = new StringBuffer();
 								for(String g : badGroups.keySet())
 									sb.append("\n" + g + " / " + badGroups.get(g));
-								throw new AppException("CONTENTION", this.operationName() + " checkAndLocks : >>>" + sb.toString() + "\n<<<");
+								throw new AppException("CONTENTION1", this.operationName(), sb.toString());
 							}
 							lapseVal = System.currentTimeMillis() - startVal;
 						}
