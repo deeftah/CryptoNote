@@ -56,21 +56,15 @@ public class AConfig {
 	}
 		
 	private static class DefMsg {
-		@SuppressWarnings("unused")
-		public String code;
-		@SuppressWarnings("unused")
-		public String[] args;
+		@SuppressWarnings("unused") public String code;
+		@SuppressWarnings("unused") public String[] args;
 		public DefMsg(String code, String[] args) { this.code = code; this.args = args; }
 	}
 
-	public static final String _format(String code, String... args) {
-		ExecContext ec = ExecContext.current();
-		return _format(ec != null ? ec.iLang() : 0, code, args);
-	}
-
-	public static final String _formatLang(String lang, String code, String... args) {
-		return _format(_iLang(lang), code, args);
-	}
+	public static final String _format(String code, String... args) { return _format(ExecContext.current().iLang(), code, args); }
+	public static final String _formatLang(String lang, String code, String... args) { return _format(_iLang(lang), code, args); }
+	public static final String _label(String code) { return _label(ExecContext.current().iLang(), code); }
+	public static final String _label(String lang, String code) { return _label(_iLang(lang), code); }
 
 	private static final String _format(int il, String code, String... args) {
 		MessageFormat mf = mfDics[il].get(code);
@@ -78,13 +72,6 @@ public class AConfig {
 		return mf == null ? JSON.toJson(new DefMsg(code, args)) : mf.format(args);
 	}
 
-	public static final String _label(String code) {
-		return _label(ExecContext.current().iLang(), code);
-	}
-
-	public static final String _label(String lang, String code) {
-		return _label(_iLang(lang), code);
-	}
 
 	private static final String _label(int il, String code) {
 		MessageFormat mf = mfDics[il].get(code);
@@ -109,23 +96,14 @@ public class AConfig {
 			try {
 				TxtDic d = (TxtDic)JSON.fromJson(r.toString(), TxtDic.class);
 				MFDic dic = mfDics[_iLang(lang)];
-				for(String k : d.keySet()) {
-					try {
-						dic.put(k,  new MessageFormat(d.get(k)));
-					} catch (Exception ex) {
-						throw new Exception(_format(0, "XRESSOURCEMSGFMT", n, k));
-					}
-				}
-			} catch (Exception ex) {
-				throw new Exception(_format(0, "XRESSOURCEJSONPARSE", n, ex.getMessage()));
-			}
+				for(String k : d.keySet())
+					try { dic.put(k,  new MessageFormat(d.get(k)));
+					} catch (Exception ex) { throw new Exception(_format(0, "XRESSOURCEMSGFMT", n, k)); }
+			} catch (Exception ex) { throw new Exception(_format(0, "XRESSOURCEJSONPARSE", n, ex.getMessage())); }
 		}
 	}
 	
 	/*******************************************************************************/
-
-	private static boolean hasMC = false;
-	public static boolean hasMC() { return hasMC; }
 	
 	public static class Instance {
 		public String[] hostedQM;
@@ -256,17 +234,6 @@ public class AConfig {
 				String msg1 = _format(0, "XRESSOURCEABSENTE", "/WEB-INF/dbconfig.json");
 				Util.log.log(Level.SEVERE, msg1);
 				throw new Exception(msg1);
-			}
-			
-			try {
-				DBProvider provider = config.newDBProvider(config.ns()[0]);
-				hasMC = provider.hasMC();
-				String dbInfo = provider.dbInfo("ok");
-				Util.log.info(_format(0, "XDBACCESSTEST", "OK", dbInfo));
-			} catch (AppException e) {
-				String msg1 = _format(0, "XDBACCESSTEST", "KO", e.getMessage());
-				Util.log.log(Level.SEVERE, msg1);
-				throw new Exception(msg1, e);				
 			}
 			
 			declareDocumentsAndOperations();	

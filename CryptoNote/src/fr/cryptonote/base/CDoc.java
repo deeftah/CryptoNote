@@ -6,7 +6,7 @@ import java.util.HashMap;
 import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.P;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
-import fr.cryptonote.provider.DBProvider.ImpExpDocument;
+import fr.cryptonote.provider.DBProvider.DeltaDocument;
 
 public class CDoc implements Comparable<CDoc> {
 	static final CDoc FAKE = new CDoc();
@@ -130,9 +130,10 @@ public class CDoc implements Comparable<CDoc> {
 	}
 
 	void compSizeInCache() { sizeInCache = count((ci) -> ci.sizeInCache()); }
-	ArrayList<CItem> listToSave() { return filter((ci) -> ci.toSave); }
-	ArrayList<CItem> listToDelete() { return filter((ci) -> ci.toDelete); }
-	ArrayList<CItem> listExisting() { return filter((ci) -> !ci.deleted); }
+	ArrayList<CItem> listItemsToSave() { return filter((ci) -> ci.toSave); }
+	ArrayList<CItem> listItemsToDelete() { return filter((ci) -> ci.toDelete); }
+	ArrayList<CItem> listExistingItems() { return filter((ci) -> !ci.deleted); }
+	ArrayList<CItem> listAllItems() { return filter((ci) -> true); }
 	
 	void summarize() throws AppException {
 		v1 = 0;	v2 = 0;	nbExisting = 0;	nbToSave = 0; nbToDelete = 0; nbTotal = 0; sizeInCache = 0;
@@ -152,121 +153,8 @@ public class CDoc implements Comparable<CDoc> {
 		}
 	}
 
-//	void compSizeInCache() {
-//		int l = 0;
-//		for(String k : sings.keySet()) l += sings.get(k).sizeInCache();
-//		for(String k : colls.keySet()) {
-//			HashMap<String,CItem> cis = colls.get(k);
-//			for(String key : cis.keySet()) l += cis.get(key).sizeInCache();
-//		}
-//		sizeInCache = l;
-//	}
-//
-//	CIAction stats = (ci) -> {
-//		sizeInCache += ci.sizeInCache();
-//		v1 += ci.v1();
-//		v2 += ci.v2();
-//		nbTotal++;
-//		if (!ci.deleted) nbExisting++;
-//		if (!ci.toSave) nbToSave++;
-//		if (!ci.toDelete) nbToDelete++;
-//		return true;		
-//	};
-//	
-//	public static abstract class CItemFilter {
-//		public abstract boolean accept(CItem ci) throws AppException;
-//	}
-//
-//	public static class CItemFilterToSave extends CItemFilter {
-//		public boolean accept(CItem ci) { return ci.toSave; }
-//	}
-//
-//	public static class CItemFilterExisting extends CItemFilter {
-//		public boolean accept(CItem ci) { return !ci.deleted; }
-//	}
-//
-//	public static final CItemFilter filterToSave = new CItemFilterToSave();
-//	public static final CItemFilter filterExisting = new CItemFilterExisting();
-//	public static final CItemFilter filterStats = new Stats();
-//
-//	public static class Stats extends CItemFilter {
-//		private CDoc d;
-//		public boolean accept(CItem ci) {
-//			if (d == null) d = ci.cdoc;
-//			d.sizeInCache += ci.sizeInCache();
-//			d.v1 += ci.v1();
-//			d.v2 += ci.v2();
-//			d.nbTotal++;
-//			if (!ci.deleted) d.nbExisting++;
-//			if (!ci.toSave) d.nbToSave++;
-//			if (!ci.toDelete) d.nbToDelete++;
-//			return true;
-//		}
-//	}
-//	
-//
-//	void summarize() throws AppException {
-//		v1 = 0;
-//		v2 = 0;
-//		nbExisting = 0;
-//		nbToSave = 0;
-//		nbToDelete = 0;
-//		nbTotal = 0;
-//		sizeInCache = 0;
-//		if (status != Status.deleted && status != Status.shortlived) {
-//			browseAllItems(filterStats);
-//			if (status == Status.unchanged && status != Status.modified)
-//				status = hasChanges() ? Status.modified : Status.unchanged;
-//		}
-//	}
-//	
-//	CItemFilter browseAllItems(CItemFilter f) throws AppException{
-//		for(String k : sings.keySet()) 
-//			f.accept(sings.get(k));
-//		for(String k : colls.keySet()) {
-//			HashMap<String,CItem> cis = colls.get(k);
-//			for(String key : cis.keySet())
-//				f.accept(cis.get(key));
-//		}
-//		return f;
-//	}
-//	ArrayList<CItem> listAllItems(CItemFilter f) throws AppException{
-//		ArrayList<CItem> items = new ArrayList<CItem>();
-//		for(String k : sings.keySet()) {
-//			CItem ci = sings.get(k);
-//			if (f != null && f.accept(ci)) items.add(ci);
-//		}
-//		for(String k : colls.keySet()) {
-//			HashMap<String,CItem> cis = colls.get(k);
-//			for(String key : cis.keySet()) {
-//				CItem ci = cis.get(key);
-//				if (f != null && f.accept(ci)) items.add(ci);
-//			}
-//		}
-//		return items;
-//	}
-//
-//	/********************************************************************************/
-//	ArrayList<String> listAllClKeys(CItemFilter f) throws AppException{
-//		ArrayList<String> items = new ArrayList<String>();
-//		for(String k : sings.keySet()) {
-//			CItem ci = sings.get(k);
-//			if (f != null && f.accept(ci)) items.add(ci.clkey());
-//		}
-//		for(String k : colls.keySet()) {
-//			HashMap<String,CItem> cis = colls.get(k);
-//			for(String key : cis.keySet()) {
-//				CItem ci = cis.get(key);
-//				if (f != null && f.accept(ci)) items.add(ci.clkey());
-//			}
-//		}
-//		return items;
-//	}
-//	
-//
-//	/********************************************************************************/
-	
-	/**
+	/************************************************************************************/
+	/*
 	 * Construit un CItem autonome depuis des données de DB ou d'importation
 	 * Les CItem de classe P sont désérialisés immédiatement
 	 * @param id du document
@@ -480,33 +368,55 @@ public class CDoc implements Comparable<CDoc> {
 	/*
 	 * N'est utilisée QUE par Cache pour mettre à jour SON exemplaire
 	 * depuis des données incrémentales (ou complètes) de la base
-	 * SI le ctime a changé, data contient tout et il faut effectuer un clean des données actuelles
-	 * Supprime physiquement les items deleted antérieurs à dtime
-	 * @param data n'est jamais null
-	 * @return
+	 * data n'est jamais null
+	 * 
+	 * 	Cache retardée (v < vdb)
+	 *  
+	 *  cas = 1 : cache vide
+	 *  cas = 2 : cache ayant une vie antérieure (c < cdb) : détruire tous les items actuels
+	 *  C'est une copie complète simple qui est retournée dispatchée entre :
+	 *  items : tous les items existants
+	 *       +  tous les items détruits
+	 *  
+	 *  Vie courante retardée
+	 *  
+	 *  cas 3 : v >= dtb. Le cache ne contient pas d'items détruits dont la suppression serait inconnue de la base
+	 *  items : tous les items existants modifiés après v
+	 *        + tous les items detruits après v
+	 *  
+	 *  cas 4 : v < dtb. Le cache peut contenir des items détruits dont la destruction est inconnue de la base
+	 *  items : tous les items existants modifiés après v
+	 *        + tous les items detruits après dtb (on en a pas avant)
+	 *  clkeys : clés des items existants qui ne figure pas dans items.
+
 	 */
-	synchronized CDoc importData(ImpExpDocument data) {
+	
+	void storeItem(CItem ci) {
+		String n = ci.descr.name();
+		if (ci.descr.isSingleton())	sings.put(n, ci); else colls.get(n).put(ci.key, ci);
+	}
+	
+	synchronized void importData(DeltaDocument data) {
 		if (data.ctime != ctime) clearAllItems();
 		id = data.id;
 		version = data.version;
 		ctime = data.ctime;
+		dtime = data.dtime;
 		status = Status.unchanged;
 				
-		// on remplace / insère ceux mis à jour
-		for(CItem ci : data.items) {
-			ci.cdoc = this;
-			if (ci.descr.isSingleton())	sings.put(ci.descr.name(), ci);
-			else {
-				HashMap<String,CItem> cis = colls.get(ci.descr.name());
-				if (cis != null) cis.put(ci.key, ci);
-			}
+		if (data.cas == 2)	clearAllItems();
+		for(CItem ci : data.items.values()) storeItem(ci);		
+		if (data.cas != 4) return;
+		
+		// suppression de tous les items qui ne figurent ni dans items, ni dans clkeys
+		String[] keys = sings.keySet().toArray(new String[sings.size()]);
+		for(String k : keys)
+			if (data.items.get(k) == null && !data.clkeys.contains(k)) sings.remove(k);
+		for(HashMap<String,CItem> cis : colls.values()) {
+			keys = cis.keySet().toArray(new String[cis.size()]);
+			for(String k : keys)
+				if (data.items.get(k) == null && !data.clkeys.contains(k)) cis.remove(k);
 		}
-		
-		// Supprime physiquement les items deleted antérieurs à dtime
-		// TODO
-		
-
-		return this;
 	}
 
 	/*
@@ -514,7 +424,7 @@ public class CDoc implements Comparable<CDoc> {
 	 */
 	protected synchronized CDoc newCopy() throws AppException {
 		summarize();
-		CDoc c = new CDoc();
+		CDoc c = new CDoc().initStruct();
 		c.id = id;
 		c.version = version;
 		c.ctime = ctime;
@@ -526,17 +436,9 @@ public class CDoc implements Comparable<CDoc> {
 		c.nbTotal = nbTotal;
 		c.v1 = v1;
 		c.v2 = v2;
-		for(ItemDescr itd : id().descr().itemDescrs())
-			if (!itd.isSingleton()) c.colls.put(itd.name(), new HashMap<String,CItem>());
-		for(String k : sings.keySet())
-			c.sings.put(k, sings.get(k).copy(c));
-		for(String k : colls.keySet()) {
-			HashMap<String,CItem> cis = colls.get(k);
-			HashMap<String,CItem> cis2 = c.colls.get(k);
-			if (cis !=  null && cis2 != null) // ça devrait toujours être le cas
-				for(String key : cis.keySet())
-					cis2.put(key, cis.get(key).copy(c));
-		}
+		for(CItem ci : sings.values()) c.storeItem(ci);
+		for(HashMap<String,CItem> cis : colls.values())
+			for(CItem ci : cis.values()) c.storeItem(ci.copy(c));
 		return c;
 	}
 

@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import fr.cryptonote.base.CDoc.CItem;
-import fr.cryptonote.base.CDoc.CItemFilter;
 import fr.cryptonote.base.CDoc.Status;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 
@@ -94,8 +93,13 @@ public class Document {
 	/** Méthode statique publique **/
 	public static Document get(Document.Id id, int maxDelayInSeconds) throws AppException { return ExecContext.current().getDoc(id, maxDelayInSeconds); }
 	public static Document getOrNew(Document.Id id) throws AppException { return ExecContext.current().getOrNewDoc(id); }
-	public static Document newDoc(Document.Id id) throws AppException { return ExecContext.current().newDoc(id); }
-	public static void delete(Document.Id id) throws AppException {	ExecContext.current().deleteDoc(id);;}
+	public static Document newDoc(Document.Id id) throws AppException { 
+		Document d = getOrNew(id);
+		d.cdoc.delete();
+		return d;
+	}
+	public static void delete(Document.Id id) throws AppException {	ExecContext.current().deleteDoc(id); }
+	public static void trigger(Document.Id id, String key, BItem item) throws AppException{ ExecContext.current().trigger(id, key, item); }
 
 	/** Méthodes à surcharger **/
 	/* Filtre sur le document lui-même */
@@ -133,12 +137,11 @@ public class Document {
 
 	/********************************************************************************/
 	private CDoc cdoc;
-	private boolean isReadOnly = false;
+	private boolean isRO() { return maxDelay == 0; }
+	private int maxDelay;
 	
 	public CDoc cdoc() { return cdoc; }
 	public Document.Id id() { return cdoc.id(); }
-	public boolean isReadOnly() { return isReadOnly; }
-	void setReadOnly() { isReadOnly = true; }
 	
 	public Status status() { return cdoc.status(); }
 	public long ctime() { return cdoc.ctime(); }
@@ -147,7 +150,7 @@ public class Document {
 
 	/********************************************************************************/
 	public void delete() throws AppException {
-		if (isReadOnly()) throw new AppException("BDOCUMENTRO", "delete", "Document", id().toString());
+		if (isRO()) throw new AppException("BDOCUMENTRO", "delete", "Document", id().toString());
 		cdoc.delete();
 		ExecContext.current().deleteDoc(id());	
 	}
@@ -169,7 +172,7 @@ public class Document {
 		return item(ci);
 	}
 
-	public CItemFilter browseAllItems(CItemFilter f) throws AppException {	return cdoc.browseAllItems(f); }
+//	public CItemFilter browseAllItems(CItemFilter f) throws AppException {	return cdoc.browseAllItems(f); }
 	
 	private void set(BItem bitem, String key) throws AppException {
 		bitem._citem = cdoc().citem(bitem, key);
@@ -210,7 +213,7 @@ public class Document {
 
 		public void _checkro(String method) throws AppException {
 			if (_document == null) throw new AppException("BDOCUMENTRO", method, getClass().getSimpleName(), "?");
-			if (_document.isReadOnly())	throw new AppException("BDOCUMENTRO", method, getClass().getSimpleName(), _document.cdoc().id().toString());
+			if (_document.isRO())	throw new AppException("BDOCUMENTRO", method, getClass().getSimpleName(), _document.cdoc().id().toString());
 		}
 		
 		void detach() {
@@ -433,7 +436,7 @@ public class Document {
 		sb.append(toStringOpen(vr, dlx ? dtx : 0));
 		if (filter(sf) != FilterPolicy.Accept) return sb.append("}").toString();
 		
-		ArrayList<CItem> items = cdoc.listAllItems(null);
+		ArrayList<CItem> items = cdoc.listAllItems();
 		ArrayList<String> clkeys = clk ? new ArrayList<String>() : null;
 		ArrayList<CItem> dels = dlx ? new ArrayList<CItem>() : null;
 		

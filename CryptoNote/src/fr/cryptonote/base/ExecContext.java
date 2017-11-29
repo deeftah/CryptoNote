@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
@@ -11,10 +12,14 @@ import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 
+import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
+import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.Sync;
+import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.Servlet.InputData;
 import fr.cryptonote.provider.DBProvider;
+import fr.sportes.base.Stamp;
 
 public class ExecContext {
 	private static TimeZone timezone;
@@ -130,7 +135,7 @@ public class ExecContext {
 	public int phase() {return phase; }	
 	public String operationName() { return inputData.operationName(); }
 	public Operation operation() { return operation; }
-	public String ns() { return ns; }
+	public String ns() { return ns == null ? AConfig.config().nsz() : ns; }
 	public boolean isTask() { return inputData.taskId() != null; }
 	public InputData inputData() { return inputData; }
 	
@@ -159,8 +164,12 @@ public class ExecContext {
 				xAdmin = -1;
 			else 
 				try {
-					String x = Crypto.bytesToBase64(Crypto.SHA256(Crypto.base64ToBytes(key)), true);
-					xAdmin = AConfig.config().isSecretKey(x) ? 1 : -1;
+					if (isDebug && key.equals("nonuke"))
+						xAdmin = 1;
+					else {
+						String x = Crypto.bytesToBase64(Crypto.SHA256(Crypto.base64ToBytes(key)), true);
+						xAdmin = AConfig.config().isSecretKey(x) ? 1 : -1;
+					}
 				} catch (Exception e) {	xAdmin = -1; }
 		}
 		return xAdmin > 0;
@@ -168,34 +177,70 @@ public class ExecContext {
 
 	public boolean hasQmKey() {	return AConfig.config().isQmSecretKey(inputData.args().get("key")); }
 	
-	public boolean isQM() {
-		String key = inputData.args().get("key");
-		if (key == null || !isTask()) return false;
-		return AConfig.config().isQmSecretKey(key);
-	}
+	public boolean isQM() { return isTask() && hasQmKey(); }
 
 	Stamp startTime2(){ if (startTime2 == null)	startTime2 = Stamp.fromNow(0); return startTime2; }
 
 	/*******************************************************************************************/
 	// tâches à inscrire au QM
 	ArrayList<TaskInfo> tasks = new ArrayList<TaskInfo>();
+	HashMap<String,Document> docs = new HashMap<String,Document>();
+	HashSet<String> dels = new HashSet<String>();
+	HashMap<String,HashMap<String,BItem>> triggers = new HashMap<String,HashMap<String,BItem>>();
 	
-	private void clearCaches(){
-		tasks.clear();
-	}
+	private void clearCaches(){ tasks.clear(); docs.clear(); triggers.clear();	dels.clear(); }
 
-	public Document getDoc(Document.Id id, int maxDelayInSeconds) {return null;}
-	public Document getDoc(Document.Id id) {return null;}
-	public Document newDoc(Document.Id id) {return null;}
-	public Document getOrNewDoc(Document.Id id) {return null;}
-	public void deleteDoc(Document.Id id) {}
-	
 	void setTaskInfo(Document.Id id, long nextStart, String info) throws AppException{
 		TaskInfo ti = null;
 		for(TaskInfo x : tasks) if (x.id.toString().equals(id.toString())) { ti = x; break; }
 		if (ti == null)	tasks.add(new TaskInfo(ns(), id, nextStart, 0, info, 0));
 	}
 
+	public void trigger(Document.Id id, String key, BItem item) throws AppException{
+		if (item == null || id == null) throw new AppException("BTRIGGER1");
+		String n = item.getClass().getSimpleName();
+		ItemDescr descr = id.descr().itemDescr(n);
+		if (descr == null) throw new AppException("BTRIGGER2", n);
+		if (!descr.isSingleton() && (key == null || key.length() == 0)) throw new AppException("BTRIGGER3", n);
+		HashMap<String,BItem> e = triggers.get(id.toString());
+		if (e == null) {
+			e = new HashMap<String,BItem>();
+			triggers.put(id.toString(), e);
+		}
+		e.put(key, item);
+	}
+
+	void deleteDoc(Document.Id id) throws AppException {
+		if (id == null) throw new AppException("BDELDOC");
+		String k = id.toString();
+		dels.add(k);
+		Document d = docs.get(k);
+		if (d != null) d.cdoc().delete();
+	}
+
+	Document getDoc(Document.Id id, int maxDelayInSeconds) {
+		String n = id.toString();
+		boolean ro = maxDelayInSeconds != 0;
+		Stamp minTime = ro ? Stamp.fromEpoch(startTime2().epoch() - maxDelayInSeconds * 1000) : startTime2();
+		Document d = docs.get(n);
+		if (d != null) {
+			
+		}
+		return null;
+	}
+	
+	Document getFromCache(Document.Id id, Stamp minTime, long versionActuelle)  throws AppException {
+		CDoc cdoc = Cache.current().cdoc(id, minTime, versionActuelle);
+		
+		
+		Document d = Document.newDocument(cdoc);
+		return d;
+	}
+	
+	Document getOrNewDoc(Document.Id id) {
+		return null;
+	}
+		
 	/*********************************************************************************************/
 	Result go(InputData inp) throws AppException {
 		Result result = null;

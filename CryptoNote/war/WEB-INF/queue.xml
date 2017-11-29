@@ -1,0 +1,6 @@
+<queue-entries>
+  <queue>
+    <name>Q1</name>
+    <rate>1/s</rate>
+  </queue>
+</queue-entries>

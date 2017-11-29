@@ -1,0 +1,73 @@
+{
+	"zone":"Europe/Paris",
+	"langs":["fr", "en"],
+	"dbProviderClass":"fr.sportes.app.providerPG",
+	"nssrvcfgClass":"fr.sportes.app.NSSrvCfg",
+	"isDebug":true,
+	"distrib":false,
+	"url":"http://192.168.1.10:8090/cn",
+	
+
+	"TASKMAXTIMEINSECONDS":1800,
+	"OPERATIONMAXTIMEINSECONDS":1200,
+
+	"CACHEMAXLIFEINMINUTES": 120,
+	"CACHEMAXSIZEINMO": 50,
+	"CACHECLEANUPLAPSEMINUTES": 5,
+	
+	"NSSCANPERIODINSECONDS":3600,
+	
+	"S2CLEANUPPERIODINHOURS":4,
+	
+	"ns":["z","namespace"],
+	
+	"offlinepages":["go","g2"],
+	
+	"shortcuts":{
+		"(empty)":"a/go.app",
+		"z":"z/go.app",
+		"a/p":"a/go.app",
+		"a/s":"a/go.ws"
+	},
+		
+	"instances":{
+		"default":{
+			"hostedQM": [],
+			"threads": [2,1],
+			"scanlapseinseconds":60,
+			"retriesInMin":[1, 10, 60, 180]
+		},
+		"A1":{
+			"hostedQM": ["qm1"],
+			"threads": [2,1],
+			"scanlapseinseconds":60,
+			"retriesInMin":[1, 10, 60, 180]
+		}
+	},
+	
+	"byeAndBack":"https://test.sportes.fr:8443/byeAndBack",
+	
+	"NBHEURESENCREATION": 72,
+	"Q1CPARDEFAUT": 1,
+	"Q1FPARDEFAUT": 5,
+	"Q2FPARDEFAUT": 20,
+	"RV1": 1000000,
+	"RV2": 10000000,
+	"RV1PC": 10,
+	"RV2PC": 10,
+	"SESSIONAGEMAXENSECONDES": 43200,
+	"REMORDAVANTCLOTUREMINUTES": 1, 
+	
+	"gouvernances" : {
+		"schemas":[
+			{"p":50,"m":2,"v":false,"i":false,"h":0}, 
+			{"p":50,"m":2,"v":false,"i":false,"h":0}
+		],
+		"liste":{
+			"def":{"t1":0, "t2":1},
+			"g1":{"t1":0, "t2":1},
+			"g2":{"t1":0, "t2":1}
+		}
+	}
+	
+}

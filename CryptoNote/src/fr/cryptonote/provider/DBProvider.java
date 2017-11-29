@@ -1,6 +1,5 @@
 package fr.cryptonote.provider;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,32 +28,59 @@ public interface DBProvider {
 	public BlobProvider blobProvider();
 	
 	public void shutdwon();
-	
-	public boolean hasMC();
-	
+		
 	/***********************************************************************************************************/
-	public static class ImpExpDocument {
+	public static class DeltaDocument {
 		public Document.Id id;
 		public long version;
 		public long ctime;
 		public long dtime;
-		public ArrayList<CItem> items = new ArrayList<CItem>();
-		public ArrayList<CItem> dels = new ArrayList<CItem>();
-		public ArrayList<String> clkeys = new ArrayList<String>();
+		public int cas;
+		public HashMap<String, CItem> items = new HashMap<String, CItem>();
+		public HashSet<String> clkeys = new HashSet<String>();
 	}
+	
+	/*
+	 * Exemplaire en cache : version:v   ctime:c   dtime:d
+	 * Exemplaire en base  : version:vdb ctime:cdb dtime:ddb
+	 * L'exemplaire en cache est, soit vide (v == 0), soit à niveau (v == vdb), soit retardé (v < vdb).
+	 * Un exemplaire en cache est TOUJOURS une image qui existe ou a existé en base.
+	 * 
+	 *  Base vide : retourne null
+	 *  
+	 *  cas = 0 : cache à niveau (v == vdb) cas = 0 
+	 *  
+	 *  Cache retardée (v < vdb)
+	 *  
+	 *  cas = 1 : cache vide
+	 *  cas = 2 : cache ayant une vie antérieure (c < cdb)
+	 *  C'est une copie complète simple qui est retournée dispatchée entre :
+	 *  items : tous les items existants
+	 *       +  tous les items détruits
+	 *  
+	 *  Vie courante retardée
+	 *  
+	 *  cas 3 : v >= dtb. Le cache ne contient pas d'items détruits dont la suppression serait inconnue de la base
+	 *  items : tous les items existants modifiés après v
+	 *        + tous les items detruits après v
+	 *  
+	 *  cas 4 : v < dtb. Le cache peut contenir des items détruits dont la destruction est inconnue de la base
+	 *  items : tous les items existants modifiés après v
+	 *        + tous les items detruits après dtb (on en a pas avant)
+	 *  clkeys : clés des items existants qui ne figure pas dans items.
+	 *  
+	 *  C'est une transaction : il y a de 1 à 3 requêtes qui doivent être consistantes entre elles.
+	 */
 	
 	/**
 	 * Retourne le delta entre le document en cache et celui en base.
-	 * Si le document n'existe pas retourne null.<br>
-	 * Sinon retourne toujours a minima id version ctime dtime : la liste des items PEUT être vide
-	 * et typiquement l'est s'il n'y a rien de nouveau.
 	 * @param id
 	 * @param ctime
 	 * @param version
 	 * @param dtime
 	 * @return null si le document n'existe pas.
 	 */
-	public ImpExpDocument getDocument(Document.Id id, long ctime, long version, long dtime);
+	public DeltaDocument getDocument(Document.Id id, long ctime, long version, long dtime);
 	
 	/**
 	 * Fin de transaction de lecture ou de mise à jour

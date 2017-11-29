@@ -52,7 +52,7 @@ CREATE TABLE item (
 	CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
 );
 ALTER TABLE item OWNER TO "docdb";
-CREATE INDEX item_v on item (docid, version);
+CREATE INDEX item_v on item (docid, version, clkey, deleted);
 
 DROP INDEX IF EXISTS item_p_sha;
 DROP TABLE IF EXISTS item_p;

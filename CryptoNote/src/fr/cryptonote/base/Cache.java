@@ -5,8 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 
-import fr.cryptonote.provider.DBProvider;
-import fr.cryptonote.provider.DBProvider.ImpExpDocument;
+import fr.cryptonote.provider.DBProvider.DeltaDocument;
 
 public class Cache {
 	private static final int MAXLIFE = AConfig.config().CACHEMAXLIFEINMINUTES() * 60 * 1000;
@@ -97,65 +96,31 @@ public class Cache {
 		long maxAge = minTime != null ? minTime.epoch() : now;
 		
 		CDoc d = doc(id);
-		if (d != null) {
-			if (d.lastCheckDB >= maxAge) {
-				// Présent en cache, assez frais : joie ! (mais peut-être rien de nouveau)
-				d.lastTouch = now;
-				if (d.version() == versionActuelle) return null;
-				if (d.version() > versionActuelle) return d.newCopy();	
-			}
-		}
-		
-		// Il faut relire en base : il est soit absent du cache, soit pas assez récent, soit dans une version trop ancienne
-		DBProvider provider = ExecContext.current().dbProvider();
-		ImpExpDocument impExp = provider.getDocument(id, d != null ? d.ctime() : 0, d != null ? d.version() : 0, d != null ? d.dtime() : 0);
-		if (impExp == null) {
-			// document inexistant en base
-			remove(id); // par sécurité s'il était encore en cache
-			return CDoc.FAKE;
-		}
-		
-		
-		ImpExpDocument data = provider.getDocument(id, d != null ? d.version() : 0, d != null ? d.ctime() : 0, d!= null ? d.dtime() : 0);
-		if (data == null) {
-			// le document N'EXISTE PAS ou PLUS en base
-			remove(id); // par sécurité s'il était encore en cache
-			return CDoc.FAKE;
-		}
-		
-		if (d != null) {
-			// faut-il mettre à jour l'exemplaire en cache ?
-			if (d.version() == data.version && d.ctime() == data.ctime) {
-				if (d.dtime() == data.dtime) {
-					// c'est exactement le même
-					d.lastTouch = now;
-					return d.version() == versionActuelle ? null : d.newCopy();	
-			}
-		}
-
-
-		if (data.header == null && data.items.size() == 0) {
-			/*
-			 * Rechargement incrémental mais rien de nouveau : comment est-ce possible ?
-			 * Si on avait une version retardée par rapport au cache de groupe, on aurait du trouver des items.
-			 * Si on n'avait aucune version mais que le cache de groupe disait qu'il y en avait
-			 * on aurait trouver des items.
-			 * Seule explication : le document a été détruit et le cache de groupe ne l'a pas encore su.
-			 */
-			remove(id); // par sécurité s'il y était encore
-			return CDoc.FAKE;			
-		}
-				
-		// on a une mise à jour (incrémentale OU totale selon le ctime) du document en cache
-		if (d != null) {
-			// c'était une incrémentale
-			d.importData(data);
+		if (d == null) {
+			d = doc(CDoc.newEmptyCDoc(id));
+			d.lastTouch = now;
 		} else {
-			// c'est une nouvelle insertion en cache
-			d = CDoc.newEmptyCDoc(data.id).importData(data);
-			doc(d);
+			if (d.lastCheckDB >= maxAge) {
+				// Présent en cache, assez frais : joie !
+				d.lastTouch = now;
+				if (d.version() == versionActuelle) return null; 		// rien de nouveau
+				if (d.version() > versionActuelle) return d.newCopy();	// version plus récente
+			}
 		}
-		return d.version() <= versionActuelle ? null : d;
+
+		// Il faut relire en base : l'exemplaire en cache est soit vide, soit pas assez récent, soit dans une version trop ancienne
+		DeltaDocument delta = ExecContext.current().dbProvider().getDocument(id, d.ctime(), d.version(), d.dtime());
+		if (delta == null) {
+			// document inexistant en base
+			remove(id); // il était peut-être en cache, le cas échant mis 5 lignes plus haut
+			return CDoc.FAKE;
+		}
+		
+		if (delta.cas == 0) { // cache à niveau (v == vdb)
+			if (d.version() == versionActuelle) return null;	
+		} else // cache retardée ou vide
+			d.importData(delta);
+		return d.newCopy();
 	}
 
 }

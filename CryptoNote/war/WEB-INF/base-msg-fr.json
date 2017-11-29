@@ -57,6 +57,10 @@
 
 "BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
 
+"BTRIGGER1":"ExecContext.trigger() sans id et/ou item",
+"BTRIGGER2":"ExecContext.trigger() item sans classe connue [{0}]",
+"BTRIGGER3":"ExecContext.trigger() item de classe [{0}] sans key",
+"BDELDOC":"ExecContext.deleteDoc() sans id",
 
 "ST0":"en création", 
 "ST1":"actif", 

@@ -45,10 +45,9 @@ public class Servlet extends HttpServlet {
 	/********************************************************************************/
 	private static Exception initException;
 	private static String msg;
-	private static void checkInitException() throws ServletException { if (initException != null) throw new ServletException(msg, initException); }
 
 	private void err(Exception e) throws ServletException {
-		String msg = initException.getMessage() + "\n" + Util.stack(e);
+		msg = initException.getMessage() + "\n" + Util.stack(e);
 		Util.log.severe(msg);
 		if (e instanceof ServletException) throw (ServletException)e;
 		initException = e;
@@ -107,16 +106,43 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	@Override public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		checkInitException();
+	private ExecContext init1(HttpServletRequest req) throws ServletException { 
+		if (initException != null) throw new ServletException(msg, initException); 
 		ExecContext exec = new ExecContext();
+		exec.setLang(req.getHeader("lang"));
+		return exec;
+	}
+
+	private String init2(ExecContext exec, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException { 
 		String uri = req.getRequestURI().substring(contextPath.length() + 1);
 		
 		if ("build".equals(uri)) {
 			String b = AConfig.config().build();
 			sendText(b, resp, b);
-			return;
+			return null;
 		}
+
+		if ("ping".equals(uri)) {
+			String b = AConfig.config().build();
+			String dbInfo;
+			try {
+				dbInfo = exec.dbProvider().dbInfo("ok");
+			} catch (AppException e) {
+				dbInfo = AConfig._label("XDBINFO") + "\n" + e.getMessage();			
+			}
+			sendText(b + " - " + dbInfo, resp, b);
+			return null;
+		}
+		
+		return uri;
+	}
+	
+	/********************************************************************************/
+	@Override public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+		ExecContext exec = init1(req);
+		String uri = init2(exec, req, resp);
+		if (uri == null) return;
+		
 		String shortcut = AConfig.config().shortcut(uri);
 		if (shortcut != null) uri = shortcut;
 		
@@ -218,14 +244,10 @@ public class Servlet extends HttpServlet {
 
 	/********************************************************************************/
 	@Override public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		checkInitException();
-		ExecContext exec = new ExecContext();
-		String uri = req.getRequestURI().substring(contextPath.length() + 1);
-		if ("build".equals(uri)) {
-			String b = AConfig.config().build();
-			sendText(b, resp, b);
-			return;
-		}
+		ExecContext exec = init1(req);
+		String uri = init2(exec, req, resp);
+		if (uri == null) return;
+
 		int i = uri.indexOf('/');
 		if (i == -1) {
 			resp.sendError(404);
