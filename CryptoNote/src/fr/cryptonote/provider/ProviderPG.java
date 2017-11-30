@@ -9,9 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import javax.naming.InitialContext;
-import javax.sql.ConnectionPoolDataSource;
-import javax.sql.DataSource;
-import javax.sql.PooledConnection;
 
 import org.postgresql.ds.common.BaseDataSource;
 
@@ -52,6 +49,7 @@ public class ProviderPG implements DBProvider {
 	}
 	private static ProviderConfig providerConfig;
 			
+	BaseDataSource dataSource;
 	private String operationName = "?";
 	private Connection conn;
 	protected String ns;
@@ -73,18 +71,20 @@ public class ProviderPG implements DBProvider {
 				throw new AppException(e, "XSQLCFG");
 			}
 		}
-		BaseDataSource dataSource = dataSources.get(ns);
 		if (dataSource == null) {
-			try {
-				InitialContext ic = new InitialContext();
-				dataSource = (BaseDataSource)ic.lookup("java:comp/env/jdbc/cn" + ns);
-				dataSources.put(ns, dataSource);
-			} catch (Exception e){
-				throw new AppException(e, "XSQLDS", ns);
+			BaseDataSource ds = dataSources.get(ns);
+			if (ds == null) {
+				try {
+					InitialContext ic = new InitialContext();
+					ds = (BaseDataSource)ic.lookup("java:comp/env/jdbc/cn" + ns);
+					dataSources.put(ns, ds);
+				} catch (Exception e){
+					throw new AppException(e, "XSQLDS", ns);
+				}
 			}
+			dataSource = ds;
+			blobProvider = new BlobProviderPG(providerConfig.blobsroot, ns);
 		}
-		blobProvider = new BlobProviderPG(providerConfig.blobsroot, ns);
-
 	}
 			
 	@Override public String ns(){ return this.ns; }

@@ -7,7 +7,7 @@ jar -xf ..\postgresql-42.1.4.jar
 jar -xf ..\jetty-util.jar
 jar -xf ..\jetty-jndi.jar
 jar -xf ..\jetty-plus.jar
-jar -xf ..\start-orig.jar
-jar -cvfm ..\start.jar META-INF\MANIFEST.MF .
+jar -xf ..\start.jar
+jar -cvfm ..\start2.jar META-INF\MANIFEST.MF .
 cd ..
 rmdir /S /Q build

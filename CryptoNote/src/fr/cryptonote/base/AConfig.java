@@ -15,6 +15,7 @@ public class AConfig {
 
 	/*******************************************************************************/
 	private static final String[] defaultLangs = {"fr", "en"};
+	private static final String DVARINSTANCE = "fr.cryptonote.instance";
 
 	private static class TxtDic extends HashMap<String,String> { 
 		private static final long serialVersionUID = 1L;			
@@ -190,7 +191,7 @@ public class AConfig {
 				throw new Exception(_format(0, "XRESSOURCEABSENTE", "/var/build.js"));
 			}
 
-			config.gen.instance = System.getProperty("fr.sportes.base.INSTANCE");
+			config.gen.instance = System.getProperty(DVARINSTANCE);
 			
 			if (config.gen.ns == null || config.gen.ns.length != 2)
 				config.gen.ns = defaultNs;

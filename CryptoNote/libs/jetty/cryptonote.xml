@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd"> 
+<Configure id="wac" class="org.eclipse.jetty.webapp.WebAppContext">
+  <New id="cna" class="org.eclipse.jetty.plus.jndi.Resource">
+     <Arg></Arg>
+     <Arg>java:comp/env/jdbc/cna</Arg>
+     <Arg>
+        <New class="org.postgresql.ds.PGConnectionPoolDataSource">
+           <Set name="User">docdb</Set>
+           <Set name="Password">docdb3542</Set>
+           <Set name="DatabaseName">cna</Set>
+           <Set name="ServerName">localhost</Set>
+           <Set name="PortNumber">5433</Set>
+        </New>
+     </Arg>
+  </New>
+  <New id="cnz" class="org.eclipse.jetty.plus.jndi.Resource">
+     <Arg></Arg>
+     <Arg>java:comp/env/jdbc/cnz</Arg>
+     <Arg>
+        <New class="org.postgresql.ds.PGConnectionPoolDataSource">
+           <Set name="User">docdb</Set>
+           <Set name="Password">docdb3542</Set>
+           <Set name="DatabaseName">cnz</Set>
+           <Set name="ServerName">localhost</Set>
+           <Set name="PortNumber">5433</Set>
+        </New>
+     </Arg>
+  </New>
+  <Set name="contextPath">/cn</Set>
+  <Set name="war"><Property name="jetty.webapps" default="."/>/../../git/cryptonote/cryptonote/war/</Set>
+  <Set name="gzipHandler">
+    <New class="org.eclipse.jetty.server.handler.gzip.GzipHandler">
+      <Set name="minGzipSize">2048</Set>      
+    </New>
+  </Set>
+</Configure>

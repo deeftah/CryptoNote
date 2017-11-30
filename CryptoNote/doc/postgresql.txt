@@ -9,10 +9,25 @@ https://test.sportes.fr:8443/postit/a/op/a/rep1/Repertoire/_ds
 
 https://test.sportes.fr:8443/postit/z/op/namespace/a/NsDoc/custom.css?
 
+fr.sportes.base.INSTANCE
+
 nonuke PBKDF2 (b64s)->
 key=oyuaWnlO9CgLtHY-Q6io4eA5bpgyOMG4Ph73hrVWELU
 sha=pH7TiudTjPGwh54TOXWFY-PvBLvS9ee8Z0-ifZ_xQq4
 
+/*********************************************************/
+La description des ressources DOIT figurer dans le crytonote.xml dans le JETTY_RUN/webapps
+bien qu'il soit écrit que ça puisse être dans WEB-INF/jetty-env.xml : NE MARCHE PAS
+
+Tous les exemples disent qu'il faut écrire <Arg>jdbc/cna</Arg> : NE MARCHE PAS
+il faut : <Arg>java:comp/env/jdbc/cna</Arg>
+
+copier: postgresql...jar JETTY_HOME/lib/jetty-jndi-${jetty.version}.jar lib/jetty-plus-${jetty.version}.jar
+dans JETTY_RUN/lib/ext
+
+Dans JETTY_RUN/start.ini
+la ligne --module=ext (qui référence JETTY_HOME/modules/ext.mod) indique comment étendre le classpath
+ 
 /*********************************************************/
 
 DROP TABLE IF EXISTS dbinfo;
