@@ -4,9 +4,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
+import fr.cryptonote.base.DocumentDescr.ExportedField;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 
 public class Document {
@@ -194,6 +196,19 @@ public class Document {
 	}
 
 	/********************************************************************************/
+	public static class ExportedFields extends HashMap<String,Object> {
+		private static final long serialVersionUID = 1L;
+	}
+	
+	public static class SerializedBItem {
+		private ExportedFields exportedFields;
+		private String serializedValue;
+		public ExportedFields ef() { return exportedFields; }
+		public String serializedValue() { return serializedValue; }
+		private SerializedBItem(BItem bi) { exportedFields = bi.exportFields(); serializedValue = bi.serializedValue();
+		}
+	}
+	/********************************************************************************/
 	public static abstract class BItem {
 		private transient CItem _citem;
 		private transient Document _document;
@@ -210,7 +225,9 @@ public class Document {
 		public long version() throws AppException {	return _citem().version();	}
 		public String key() throws AppException { return _citem().key(); }
 		public void delete() throws AppException{ _checkro("delete"); _citem().delete(); }
-
+		public abstract String serializedValue();
+		public abstract ExportedFields exportFields();
+		public SerializedBItem serializedBItem() { return new SerializedBItem(this) ; }
 		public void _checkro(String method) throws AppException {
 			if (_document == null) throw new AppException("BDOCUMENTRO", method, getClass().getSimpleName(), "?");
 			if (_document.isRO())	throw new AppException("BDOCUMENTRO", method, getClass().getSimpleName(), _document.cdoc().id().toString());
@@ -236,7 +253,9 @@ public class Document {
 		public String sha() { return sha; }
 		public int size() { return size; }
 		public void delete() throws AppException{ _checkro("delete"); _citem().delete(); }
-			
+		public String serializedValue() { return JSON.toJson(this); }
+		public ExportedFields exportFields() { return null; }
+		
 		public byte[] blobGet() throws AppException {
 			_citem();
 			return ExecContext.current().dbProvider().blobProvider().blobGet(_document().id().toString(), sha);
@@ -262,9 +281,19 @@ public class Document {
 	}
 
 	/********************************************************************************/
-	public static class Item  extends BItem {
-		public void commit() throws AppException{ _checkro("commit"); _citem().commit(JSON.toJson(this)); }
+	public static abstract class ItemSingleton  extends BItem {
+		public String serializedValue() { return JSON.toJson(this); }
+		public void commit() throws AppException{ _checkro("commit"); _citem().commit(serializedValue(), exportFields()); }
 		public BItem getCopy() throws AppException { return descr().newItem(_citem().cvalue(), _citem().toString()); }
+		
+		public final ExportedFields exportFields() {
+			ExportedField[] fields = null;
+			try { fields = descr().indexedFields(); } catch (AppException e) {	}
+			if (fields == null || fields.length == 0) return null;
+			ExportedFields val = new ExportedFields();
+			for(ExportedField f : fields) val.put(f.name(), f.value(this));
+			return val;
+		}
 
 		public void replaceIn(Document d, String key) throws AppException {
 			_checkDetached();
@@ -274,30 +303,22 @@ public class Document {
 	}
 
 	/********************************************************************************/
-	public static class Singleton extends BItem {
-		public void commit() throws AppException{ _checkro("commit"); _citem().commit(JSON.toJson(this)); }
-		public BItem getCopy() throws AppException { return descr().newItem(_citem().cvalue(), _citem().toString()); }
+	public static abstract class RawItemSingleton  extends BItem {
+		public transient String value;
+		public String serializedValue() { return value; }
+		public void commit() throws AppException{ _checkro("commit"); _citem().commitRaw(serializedValue(), exportFields()); }		
 		
-		public void replaceIn(Document d) throws AppException {
-			_checkDetached();
-			if (d == null)	throw new AppException("BITEMATTACHED", getClass().getSimpleName());
-			d.set(this, "");
-		}
-
+		/*
+		 * Peut être surchargée
+		 */
+		public ExportedFields exportFields() { return null; }
 	}
 
 	/********************************************************************************/
-	public static class RawItem  extends BItem {
-		public String rawText() throws AppException{ return _citem().cvalue(); }
-		public void commit(String text) throws AppException{ _checkro("commit"); _citem().commitRaw(text); }		
-	}
-
-	/********************************************************************************/
-	public static class RawSingleton extends BItem {
-		public String rawText() throws AppException{ return _citem().cvalue(); }
-		public void commit(String text) throws AppException{ _checkro("commit"); _citem().commitRaw(text); }		
-	}
-
+	public static abstract class Singleton extends ItemSingleton { }
+	public static abstract class Item extends ItemSingleton { }
+	public static abstract class RawSingleton extends RawItemSingleton { }
+	public static abstract class RawItem extends RawItemSingleton {	}
 	/********************************************************************************/
 
 	public P p(String key) throws AppException { return (P)bitem(P.class, false, key); }

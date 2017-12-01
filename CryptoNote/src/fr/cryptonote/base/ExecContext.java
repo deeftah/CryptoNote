@@ -16,6 +16,8 @@ import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
 import fr.cryptonote.base.Cache.XCDoc;
 import fr.cryptonote.base.Document.BItem;
+import fr.cryptonote.base.Document.ExportedFields;
+import fr.cryptonote.base.Document.SerializedBItem;
 import fr.cryptonote.base.Document.Sync;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.Servlet.InputData;
@@ -174,7 +176,7 @@ public class ExecContext {
 	HashMap<String,Document> docs = new HashMap<String,Document>();
 	HashSet<String> emptyDocs = new HashSet<String>();
 	HashSet<String> dels = new HashSet<String>();
-	HashMap<String,HashMap<String,BItem>> triggers = new HashMap<String,HashMap<String,BItem>>();
+	HashMap<String,HashMap<String,SerializedBItem >> triggers = new HashMap<String,HashMap<String,SerializedBItem >>();
 	
 	private void clearCaches(){ tasks.clear(); docs.clear(); triggers.clear();	dels.clear(); }
 
@@ -190,12 +192,12 @@ public class ExecContext {
 		ItemDescr descr = id.descr().itemDescr(n);
 		if (descr == null) throw new AppException("BTRIGGER2", n);
 		if (!descr.isSingleton() && (key == null || key.length() == 0)) throw new AppException("BTRIGGER3", n);
-		HashMap<String,BItem> e = triggers.get(id.toString());
+		HashMap<String,SerializedBItem > e = triggers.get(id.toString());
 		if (e == null) {
-			e = new HashMap<String,BItem>();
+			e = new HashMap<String,SerializedBItem >();
 			triggers.put(id.toString(), e);
 		}
-		e.put(key, item);
+		e.put(key, item.serializedBItem());
 	}
 
 	void deleteDoc(Document.Id id) throws AppException {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import fr.cryptonote.base.Document.BItem;
+import fr.cryptonote.base.Document.ExportedFields;
 import fr.cryptonote.base.Document.P;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.provider.DBProvider.DeltaDocument;
@@ -277,6 +278,7 @@ public class CDoc implements Comparable<CDoc> {
 		private String nvalue; 	// nouveau contenu. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
 		private int blobSize;	// taille du blob
 		private int nblobSize;	// taille du blob après changement
+		private ExportedFields exportedFields; // valeurs des champs exportés (extraits de BItem au commit())
 		private boolean deleted;	// item non existant
 		private boolean toSave;		// item créé / modifié à sauver
 		private boolean toDelete;	// item à supprimer
@@ -307,7 +309,7 @@ public class CDoc implements Comparable<CDoc> {
 
 		public String toString() { return cdoc != null ? cdoc.id().toString() + "#" + clkey() : clkey(); }
 		
-		public ArrayList<Index> indexes() throws AppException {	return descr.indexes(cvalue()); }
+		public ExportedFields exportedFileds() { return exportedFields; }
 		
 		CItem copy(CDoc cd){
 			CItem c = new CItem();
@@ -327,14 +329,16 @@ public class CDoc implements Comparable<CDoc> {
 						
 		void delete() throws AppException {	nvalue = null;	nblobSize = 0; setStatus(); }
 
-		void commit(String json) throws AppException{
+		void commit(String json, ExportedFields exportedFields) throws AppException{
 			if (json == null) json = "{}";
+			this.exportedFields = exportedFields;
 			nvalue = json.equals(value) ?  null : json;
 			setStatus();
 		}
 		
-		void commitRaw(String text) throws AppException{
+		void commitRaw(String text, ExportedFields exportedFields) throws AppException{
 			if (text == null) text = "";
+			this.exportedFields = exportedFields;
 			nvalue = text.equals(value) ? null : text;
 			setStatus();
 		}

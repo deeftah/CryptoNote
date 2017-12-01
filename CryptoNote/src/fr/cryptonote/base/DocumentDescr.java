@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 
-import fr.cryptonote.base.CDoc.Index;
 import fr.cryptonote.base.Document.BItem;
 
 public class DocumentDescr {
@@ -74,10 +73,11 @@ public class DocumentDescr {
 		private DocumentDescr docDescr;
 		private String name;
 		private Class<?> clazz;
-		private IndexedField[] indexedFields;
+		private ExportedField[] indexedFields;
 		private Constructor<?> constructor;
 		private boolean isRaw = false;
 		private boolean isSingleton = false;
+		public ExportedField[] indexedFields() { return indexedFields; }
 		
 		public DocumentDescr docDescr() { return docDescr; };
 		public String name() { return name; }
@@ -87,23 +87,18 @@ public class DocumentDescr {
 		public boolean isQ() { return this == qDescr; }
 		public boolean isRaw() { return isRaw; }
 		public boolean isSingleton() { return isSingleton; }
-
-		public ArrayList<Index> indexes(String nvalue) throws AppException {
-			if (indexedFields == null || isRaw() || nvalue == null || nvalue.length() == 0) return null;
-			ArrayList<Index> indexes = new ArrayList<Index>();
-			try {
-				Object obj = JSON.fromJson(nvalue, clazz());
-				for(IndexedField f : indexedFields)
-					indexes.add(new Index(f.name(), f.value(obj)));
-			} catch (AppException e){
-				throw new AppException(e.cause(), "BITEMJSONPARSE", toString());							
-			}
-			return indexes;
-		}
-
+		
 		public BItem newItem(String json, String info) throws AppException {
 			if (isRaw() || json == null || json.length() == 0)
-				try { return (BItem)constructor.newInstance();
+				try { 
+					BItem bi = (BItem)constructor.newInstance();
+					if (isRaw()) {
+						if (isSingleton())
+							((Document.RawSingleton)bi).value = json;
+						else
+							((Document.RawItem)bi).value = json;
+					}
+					return bi;
 				} catch(Exception e) { throw new AppException(e, "BDOCUMENTITEM", info); }
 			else
 				try { return (BItem)JSON.fromJson(json, clazz);
@@ -112,14 +107,24 @@ public class DocumentDescr {
 
 	}
 	
-	private static class IndexedField {
+	public static class ExportedField {
 		private String name;
 		private IndexType type;
 		private Field field;
+		private ExportedField() {}
 		
-		private String name() { return name; }
-		
-		private IndexedField(Class<?> clazz, String fieldName){
+		public String name() { return name; }
+		public IndexType type() { return type; }
+		public Object value(Object obj){
+			if (obj == null) return nullValue();
+			try {
+				return field.get(obj);
+			} catch (Exception e) {
+				return nullValue();
+			}
+		}
+
+		private ExportedField(Class<?> clazz, String fieldName){
 			try {
 				field = clazz.getDeclaredField(fieldName);
 				name = fieldName;
@@ -129,7 +134,7 @@ public class DocumentDescr {
 			}
 		}
 
-		private IndexedField(Field f, String docName, String itemName) throws AppException{
+		private ExportedField(Field f, String docName, String itemName) throws AppException{
 			name = f.getName();
 			type = idxTypeOfClass(f.getType());
 			if (type == null)
@@ -147,14 +152,6 @@ public class DocumentDescr {
 			}
 		}
 		
-		private Object value(Object obj){
-			if (obj == null) return nullValue();
-			try {
-				return field.get(obj);
-			} catch (Exception e) {
-				return nullValue();
-			}
-		}
 	}
 	
 	private static final Hashtable<Class<?>, DocumentDescr> documentDescrs1 = new Hashtable<Class<?>, DocumentDescr>();
@@ -239,12 +236,12 @@ public class DocumentDescr {
 			dd.itemDescrs1.put(cl, itd);
 			dd.itemDescrs2.put(n, itd);
 			
-			ArrayList<IndexedField> lst = new ArrayList<IndexedField>();
-			HashMap<String,Field> af = Util.getAllField(cl, null, IndexedField.class);
+			ArrayList<ExportedField> lst = new ArrayList<ExportedField>();
+			HashMap<String,Field> af = Util.getAllField(cl, null, ExportedField.class);
 			for(Field f : af.values())
-				lst.add(new IndexedField(f, dd.name, itd.name));
+				lst.add(new ExportedField(f, dd.name, itd.name));
 			if (lst.size() != 0) 
-				itd.indexedFields = lst.toArray(new IndexedField[lst.size()]);
+				itd.indexedFields = lst.toArray(new ExportedField[lst.size()]);
 		}
 		
 		documentDescrs1.put(clazz, dd);
