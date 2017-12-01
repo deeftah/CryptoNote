@@ -84,6 +84,8 @@ public class Crypto {
 			.append(bytesToBase64(random(1), true)).toString();
 	}
 	
+	public static String randomB64(int n8) { return bytesToBase64(random(n8), true); }
+	
 	public static byte[] random(int n8) {
 		int n = n8 < 1 ? 1 : (n8 > 4 ? 4 : n8);
 		ThreadLocalRandom tlr = ThreadLocalRandom.current();

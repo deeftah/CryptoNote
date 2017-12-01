@@ -12,6 +12,7 @@ import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.TaskInfo;
+import fr.cryptonote.base.TaskUpdDiff.Upd;
 
 public interface DBProvider {
 	public String ns();
@@ -81,6 +82,13 @@ public interface DBProvider {
 	 * @return null si le document n'existe pas.
 	 */
 	public DeltaDocument getDocument(Document.Id id, long ctime, long version, long dtime);
+	
+	/*
+	 * Mise à jour en une transaction de tous les items de upd dans le document d'id donnée.
+	 * Pour chaque item, upsert seulement si le champ cas (s'il existe) de l'item en base 
+	 * est inférieur au cas donné dans l'item à insérer / mettre à jour;
+	 */
+	public void rawStore(Document.Id id, Upd upd)  throws AppException;
 	
 	/**
 	 * Fin de transaction de lecture ou de mise à jour

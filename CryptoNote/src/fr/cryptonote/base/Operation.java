@@ -116,8 +116,8 @@ public abstract class Operation {
 	public boolean hasQmKey() { return execContext().hasQmKey(); }
 	public boolean isQM() { return execContext().isQM(); }
 	
-	public void setTask(Document.Id id, long nextStart, String info) throws AppException{ execContext().setTaskInfo(id, nextStart, info);}
-	public void setTaskByCron(Document.Id id, String cron) throws AppException { execContext().setTaskInfo(id, new Cron(cron).nextStart().stamp(), cron);}
+	public void setTask(Document.Id id, long nextStart, String info) throws AppException{ execContext().newTask(id, nextStart, info);}
+	public void setTaskByCron(Document.Id id, String cron) throws AppException { execContext().newTask(id, new Cron(cron).nextStart().stamp(), cron);}
 	public Collection<TaskInfo> listTask(TaskInfo ti) throws AppException{ return execContext().dbProvider().listTask(ti); }
 
 	/**********************************************************************************/

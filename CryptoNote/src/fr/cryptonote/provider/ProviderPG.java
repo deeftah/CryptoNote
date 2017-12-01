@@ -21,6 +21,7 @@ import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.JSON;
 import fr.cryptonote.base.TaskInfo;
+import fr.cryptonote.base.TaskUpdDiff.Upd;
 import fr.cryptonote.base.Util;
 
 public class ProviderPG implements DBProvider {
@@ -282,6 +283,12 @@ public class ProviderPG implements DBProvider {
 
 	@Override
 	public void setS2Cleanup(TaskInfo ti, boolean transaction) throws AppException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void rawStore(Id id, Upd upd) throws AppException {
 		// TODO Auto-generated method stub
 		
 	}

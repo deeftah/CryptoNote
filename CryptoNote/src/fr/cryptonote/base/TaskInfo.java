@@ -7,7 +7,6 @@ public class TaskInfo implements Comparable<TaskInfo> {
 
 	public String ns;
 	public Document.Id id;
-	public long version;
 	public long nextStart;
 	public int retry;
 	public String info;
@@ -16,13 +15,12 @@ public class TaskInfo implements Comparable<TaskInfo> {
 	public transient String report;
 	public transient String stampKey;
 	
-	public TaskInfo(String ns, Document.Id id, long nextStart, int retry, String info, long version) {
+	public TaskInfo(String ns, Document.Id id, long nextStart, int retry, String info) {
 		this.ns = ns;
 		this.id = id;
 		this.nextStart = nextStart;
 		this.retry = retry;
 		this.info = info;
-		this.version = version;
 		stampKey = nextStart().toString() + "/" + pk();
 	}
 	

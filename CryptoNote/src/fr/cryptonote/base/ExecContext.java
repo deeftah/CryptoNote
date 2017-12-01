@@ -172,32 +172,22 @@ public class ExecContext {
 
 	/*******************************************************************************************/
 	// tâches à inscrire au QM
-	ArrayList<TaskInfo> tasks = new ArrayList<TaskInfo>();
+	HashMap<String,TaskInfo> tasks = new HashMap<String,TaskInfo>();
 	HashMap<String,Document> docs = new HashMap<String,Document>();
 	HashSet<String> emptyDocs = new HashSet<String>();
 	HashSet<String> dels = new HashSet<String>();
-	HashMap<String,HashMap<String,SerializedBItem >> triggers = new HashMap<String,HashMap<String,SerializedBItem >>();
+	TaskUpdDiff updDiff;
 	
-	private void clearCaches(){ tasks.clear(); docs.clear(); triggers.clear();	dels.clear(); }
+	private void clearCaches(){ tasks.clear(); docs.clear(); updDiff = null; dels.clear(); }
 
-	void setTaskInfo(Document.Id id, long nextStart, String info) throws AppException{
-		TaskInfo ti = null;
-		for(TaskInfo x : tasks) if (x.id.toString().equals(id.toString())) { ti = x; break; }
-		if (ti == null)	tasks.add(new TaskInfo(ns(), id, nextStart, 0, info, 0));
+	public void newTask(Document.Id id, long nextStart, String info) throws AppException{
+		tasks.put(id.toString(), new TaskInfo(ns(), id, nextStart, 0, info));
 	}
 
-	public void trigger(Document.Id id, String key, BItem item) throws AppException{
-		if (item == null || id == null) throw new AppException("BTRIGGER1");
-		String n = item.getClass().getSimpleName();
-		ItemDescr descr = id.descr().itemDescr(n);
-		if (descr == null) throw new AppException("BTRIGGER2", n);
-		if (!descr.isSingleton() && (key == null || key.length() == 0)) throw new AppException("BTRIGGER3", n);
-		HashMap<String,SerializedBItem > e = triggers.get(id.toString());
-		if (e == null) {
-			e = new HashMap<String,SerializedBItem >();
-			triggers.put(id.toString(), e);
-		}
-		e.put(key, item.serializedBItem());
+	public void putUpdDiff(Document.Id id, String key, BItem item) throws AppException{
+		if (updDiff == null)
+			updDiff = (TaskUpdDiff)getOrNewDoc(new Document.Id(TaskUpdDiff.class, Crypto.randomB64(2)));
+		updDiff.add(id, key, item);
 	}
 
 	void deleteDoc(Document.Id id) throws AppException {
