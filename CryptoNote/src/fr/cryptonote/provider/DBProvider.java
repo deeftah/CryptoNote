@@ -88,7 +88,7 @@ public interface DBProvider {
 	 * Pour chaque item, upsert seulement si le champ cas (s'il existe) de l'item en base 
 	 * est inférieur au cas donné dans l'item à insérer / mettre à jour;
 	 */
-	public void rawStore(Document.Id id, Upd upd)  throws AppException;
+	public void rawStore(Document.Id id, Upd upd, long vop)  throws AppException;
 	
 	/**
 	 * Fin de transaction de lecture ou de mise à jour
@@ -155,7 +155,7 @@ public interface DBProvider {
 	 * @return
 	 * @throws AppException
 	 */
-	public Collection<TaskInfo> listTask(TaskInfo ti) throws AppException ;
+	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException ;
 		
 	/**
 	 * Retourne le report d'une task 
@@ -190,6 +190,6 @@ public interface DBProvider {
 	 * @param transaction si true, transaction indépendante
 	 * @throws AppException
 	 */
-	public void setS2Cleanup(TaskInfo ti, boolean transaction) throws AppException ;
+	public void setS2Cleanup(TaskInfo ti) throws AppException ;
 
 }

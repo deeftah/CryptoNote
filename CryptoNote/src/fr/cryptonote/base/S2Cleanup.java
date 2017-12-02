@@ -62,10 +62,8 @@ public class S2Cleanup extends Document {
 			hours.put(clid,  hs2);
 			if (hs2 >= hour) return false;
 		}
-		TaskInfo ti = new TaskInfo(dbProvider.ns(), new Document.Id(S2Cleanup.class, clid + "." + hour), nextStart(shour), 0, "", 0);
-		if (transaction)
-			ti.version = Stamp.fromNow(0).stamp();
-		dbProvider.setS2Cleanup(ti, transaction);
+		TaskInfo ti = new TaskInfo(dbProvider.ns(), new Document.Id(S2Cleanup.class, clid + "." + hour), nextStart(shour), 0, "");
+		dbProvider.setS2Cleanup(ti);
 		return true;
 	}
 	

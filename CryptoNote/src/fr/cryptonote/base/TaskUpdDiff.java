@@ -17,6 +17,10 @@ public class TaskUpdDiff extends Document {
 		((Upd)itemOrNew(Upd.class, id.toString())).put(descr.name() + (descr.isSingleton() ? "" : "." + key), item.serializedBItem());
 	}
 
+	public static class Hdr extends Singleton {
+		public long vop;
+	}
+	
 	public static class Upd extends Item {
 		public HashMap<String,SerializedBItem> lst;
 		public void put(String clkey, SerializedBItem sbi) throws AppException { 
@@ -35,12 +39,14 @@ public class TaskUpdDiff extends Document {
 			
 			DBProvider provider = execContext().dbProvider();
 			
+			long vop = ((Hdr)t.singletonOrNew(Hdr.class)).vop;
+			
 			String[] docIds = t.getKeys(Upd.class);
 			for(int i = 0; i < docIds.length; i++) {
 				Document.Id id = new Document.Id(docIds[i]);
 				Upd upd = (Upd)t.item(Upd.class, docIds[i]);
 				if (id.descr() != null) 
-					provider.rawStore(id, upd);
+					provider.rawStore(id, upd, vop);
 				upd.delete();
 				if (id.descr() != null) break;
 			}

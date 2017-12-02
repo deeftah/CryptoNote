@@ -40,19 +40,19 @@ insert into dbinfo values('postgreSQL 10.1');
 
 DROP TABLE IF EXISTS s2cleanup;
 CREATE TABLE s2cleanup (
-  	docid varchar(255) NOT NULL,
+  	clid varchar(255) NOT NULL,
   	hour int,
-  	CONSTRAINT s2cleanup_pk PRIMARY KEY (docid, hour)
+  	CONSTRAINT s2cleanup_pk PRIMARY KEY (clid, hour)
 );
 ALTER TABLE s2cleanup OWNER TO "docdb";
 
 DROP TABLE IF EXISTS doc;
-CREATE TABLE dstate (
-	docid varchar(255) NOT NULL,
+CREATE TABLE doc (
+	clid varchar(255) NOT NULL,
 	version bigint NOT NULL,
 	ctime bigint NOT NULL,
 	dtime bigint NOT NULL,
-	CONSTRAINT doc_pk PRIMARY KEY (docid)
+	CONSTRAINT doc_pk PRIMARY KEY (clid)
 );
 ALTER TABLE doc OWNER TO "docdb";
 
@@ -62,6 +62,7 @@ CREATE TABLE item (
   	docid varchar(255) NOT NULL,
   	clkey varchar(255) NOT NULL,
   	version bigint NOT NULL,
+  	vop bigint NOT NULL,
   	contentt text,
 	contentb bytea,
 	CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
@@ -80,15 +81,15 @@ CREATE INDEX item_p_sha on item_p (docid, sha) where sha is NOT NULL;
 DROP INDEX IF EXISTS taskqueue_ns;
 DROP TABLE IF EXISTS taskqueue;
 CREATE TABLE taskqueue (
-  	docid varchar(255) NOT NULL,
-	nextstart bigint, 
-	retry int,
+  	clid varchar(255) NOT NULL,
+	nextstart bigint NOT NULL, 
+	retry int NOT NULL,
   	info varchar(255),
 	report text,
 	CONSTRAINT taskqueue_pk PRIMARY KEY (docid)
 );
 ALTER TABLE taskqueue OWNER TO "docdb";
-CREATE INDEX taskqueue_ns on taskqueue (nextstart, docid);
+CREATE INDEX taskqueue_ns on taskqueue (nextstart, clid);
 
 DROP TABLE IF EXISTS nsdoc;
 CREATE TABLE nsdoc () INHERITS (item);

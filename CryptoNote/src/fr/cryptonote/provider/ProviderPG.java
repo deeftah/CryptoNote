@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.JSON;
 import fr.cryptonote.base.TaskInfo;
 import fr.cryptonote.base.TaskUpdDiff.Upd;
+import fr.sportes.base.DocumentId;
 import fr.cryptonote.base.Util;
 
 public class ProviderPG implements DBProvider {
@@ -213,17 +215,26 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
+	/***********************************************************************************************/
 	@Override
 	public DeltaDocument getDocument(Id id, long ctime, long version, long dtime) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	/***********************************************************************************************/
 	@Override
 	public HashMap<String, Long> validateDocument(ExecCollect collect) throws AppException {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public void rawStore(Id id, Upd upd, long vop) throws AppException {
+		// TODO Auto-generated method stub
+		
+	}
+	/***********************************************************************************************/
 
 	@Override
 	public Collection<Id> searchDocIdsByIndexes(String docClass, String itemClass, Cond<?>... ffield)
@@ -239,28 +250,104 @@ public class ProviderPG implements DBProvider {
 		return null;
 	}
 
-	@Override
-	public void insertTask(TaskInfo ti) throws AppException {
-		// TODO Auto-generated method stub
+	/***********************************************************************************************/
+	private static final String UPSERTTASK = 
+			"insert into taskqueue (clid, nextstart, retry, info) values (?,?,?,?);";
 		
+	@Override 
+	public void insertTask(TaskInfo ti) throws AppException{
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn().prepareStatement(UPSERTTASK);
+			int j = 1;
+			preparedStatement.setString(j++, ti.id.toString());
+			preparedStatement.setLong(j++, ti.nextStart);
+			preparedStatement.setInt(j++, 0);
+			preparedStatement.setString(j++, ti.info);
+			preparedStatement.setString(j++, null);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			err(preparedStatement, null);
+			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "upsertTaskInfo", ti.ns, UPSERTTASK);
+		}
 	}
+
+	private static final String UPDTASK = 
+			"update taskqueue set nextstart = ?, retry = ?, report = ? where clid = ?;";
 
 	@Override
 	public void updateNRRTask(Id id, long nextStart, int retry, String report) throws AppException {
-		// TODO Auto-generated method stub
-		
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn().prepareStatement(UPDTASK);
+			int j = 1;
+			preparedStatement.setLong(j++, nextStart);
+			preparedStatement.setInt(j++, retry);
+			preparedStatement.setString(j++, report);
+			preparedStatement.setString(j++, id.toString());
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			err(preparedStatement, null);
+			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "updateNRRTaskInfo", ns(), UPDTASK);
+		}
 	}
+
+	private static final String DELTASK = "delete from taskqueue where clid = ?;";
 
 	@Override
 	public void removeTask(Id id) throws AppException {
-		// TODO Auto-generated method stub
-		
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn().prepareStatement(DELTASK);
+			preparedStatement.setString(1, id.toString());
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			err(preparedStatement, null);
+			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "removeTask", ns(), DELTASK);
+		}
 	}
 
+	private static final String SELTI1 = "select clid, nextstart, retry, info from taskqueue ";
+
 	@Override
-	public Collection<TaskInfo> listTask(TaskInfo ti) throws AppException {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException {
+		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
+		StringBuffer sb = new StringBuffer();
+		sb.append(SELTI1);
+		int j = 1;
+		if (ti.id != null) sb.append("where clid = ?");
+		if (ti.nextStart != 0) {sb.append(j++ == 1 ? "where " : " and ").append("nextstart <= ?");}
+		if (ti.retry != 0) {sb.append(j++ == 1 ? "where " : " and ").append("retry >= ?");}
+		if (ti.info != null) {sb.append(j++ == 1 ? "where " : " and ").append("info = ?");}
+		String sql = sb.append(";").toString();
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			j = 1;
+			if (ti.id != null) preparedStatement.setString(j++, ti.id.toString());
+			if (ti.nextStart != 0) preparedStatement.setLong(j++, ti.nextStart);
+			if (ti.retry != 0) preparedStatement.setInt(j++, ti.retry);
+			if (ti.info != null) preparedStatement.setString(j++, ti.info);
+			rs = preparedStatement.executeQuery();
+			while (rs.next()){
+				long nextStart = rs.getLong("nextstart");
+				Id id = new Id(rs.getString("clid"));
+				int retry = rs.getInt("retry");
+				String info = rs.getString("info");
+				tiList.add(new TaskInfo(ti.ns, id, nextStart, retry, info));
+			}
+			rs.close();
+			preparedStatement.close();
+			return tiList;
+		} catch(Exception e){
+			err(preparedStatement, rs);
+			throw (e instanceof AppException) ? (AppException)e : 
+				new AppException(e, "XSQL0", "listTask", "", sql);
+		}
 	}
 
 	@Override
@@ -275,24 +362,50 @@ public class ProviderPG implements DBProvider {
 		return null;
 	}
 
+	/***********************************************************************************************/
+	private static final String SELS2 = "select hour from s2cleanup where clid = ?;";
+
 	@Override
 	public int lastS2Cleanup(String clid) throws AppException {
-		// TODO Auto-generated method stub
-		return 0;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		int hour = 0;
+		try {
+			preparedStatement = conn().prepareStatement(SELS2);
+			preparedStatement.setString(1, clid);
+			rs = preparedStatement.executeQuery();
+			if (rs.next())
+				hour = rs.getInt("hour");
+			rs.close();
+			preparedStatement.close();
+			return hour;
+		} catch(Exception e){
+			err(preparedStatement, rs);
+			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "lastS2Cleanup", ns(), SELS2);
+		}
 	}
+
+	private static final String UPDS2 = "update s2cleanup set hour = ? where clid = ?;";
 
 	@Override
-	public void setS2Cleanup(TaskInfo ti, boolean transaction) throws AppException {
-		// TODO Auto-generated method stub
-		
+	public void setS2Cleanup(TaskInfo ti) throws AppException {
+		PreparedStatement preparedStatement = null;
+		int hour = (int)(ti.nextStart / 10000000L);
+		try {
+			beginTransaction();
+			preparedStatement = conn().prepareStatement(UPDS2);
+			int j = 1;
+			preparedStatement.setInt(j++, hour);
+			preparedStatement.setString(j++, ti.id.toString());
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+			insertTask(ti);
+			commitTransaction();
+		} catch(Exception e){
+			rollbackTransaction();
+			err(preparedStatement, null);
+			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "upsertTaskInfo", ns(), UPDS2);
+		}
 	}
-
-	@Override
-	public void rawStore(Id id, Upd upd) throws AppException {
-		// TODO Auto-generated method stub
-		
-	}
-		
-	/***********************************************************************************************/
-
+	
 }

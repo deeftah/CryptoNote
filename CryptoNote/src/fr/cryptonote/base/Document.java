@@ -101,7 +101,7 @@ public class Document {
 		return d;
 	}
 	public static void delete(Document.Id id) throws AppException {	ExecContext.current().deleteDoc(id); }
-	public static void trigger(Document.Id id, String key, BItem item) throws AppException{ ExecContext.current().trigger(id, key, item); }
+	public static void putUpdDiff(Document.Id id, String key, BItem item) throws AppException{ ExecContext.current().putUpdDiff(id, key, item); }
 
 	/** Méthodes à surcharger **/
 	/* Filtre sur le document lui-même */
@@ -223,6 +223,7 @@ public class Document {
 		public ItemDescr descr() throws AppException { return _citem().descr(); }
 		public boolean toSave() throws AppException { return _citem().toSave(); }
 		public long version() throws AppException {	return _citem().version();	}
+		public long vop() throws AppException {	return _citem().vop();	}
 		public String key() throws AppException { return _citem().key(); }
 		public void delete() throws AppException{ _checkro("delete"); _citem().delete(); }
 		public abstract String serializedValue();

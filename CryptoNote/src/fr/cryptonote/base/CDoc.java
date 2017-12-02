@@ -273,6 +273,7 @@ public class CDoc implements Comparable<CDoc> {
 		transient BItem bitem;
 		
 		private long version;	// version d'un item qui existait avant (value != null) ou une trace de suppression (value == null)
+		private long vop;		// dans le cas d'une mise à jour différée, version de l'opération ayant déclaré cette valeur
 		private String key;		// key d'un item, null pour un singleton
 		private String value; 	// contenu avant. null pour une trace de suppression ou un item nouvellement créé
 		private String nvalue; 	// nouveau contenu. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
@@ -285,6 +286,7 @@ public class CDoc implements Comparable<CDoc> {
 		
 		public ItemDescr descr() { return descr; }
 		public long version() { return version; }
+		public long vop() { return vop; }
 		public String key() { return descr().isSingleton() ? "" : key; }
 		public String cvalue() { return nvalue != null ? nvalue : (value != null ? value : null); }
 		public String clkey() { return descr.name() + (descr.isSingleton() ? "" : "." + key); }
@@ -316,6 +318,7 @@ public class CDoc implements Comparable<CDoc> {
 			c.cdoc = cd;
 			c.descr = descr;
 			c.version = version;
+			c.vop = vop;
 			c.key = key;
 			c.value = value;
 			c.nvalue = nvalue;
