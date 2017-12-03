@@ -49,25 +49,21 @@ public interface DBProvider {
 	 * 
 	 *  Base vide : retourne null
 	 *  
-	 *  cas = 0 : cache à niveau (v == vdb) cas = 0 
+	 *  cas = 0 : cache à niveau (v == vdb) cas = 0 . rien à remplir
 	 *  
-	 *  Cache retardée (v < vdb)
+	 *  Cache ayant une version retardée (v < vdb)
 	 *  
-	 *  cas = 1 : cache vide
+	 *  cas = 1 : cache vide (v == 0
 	 *  cas = 2 : cache ayant une vie antérieure (c < cdb)
-	 *  C'est une copie complète simple qui est retournée dispatchée entre :
-	 *  items : tous les items existants
-	 *       +  tous les items détruits
+	 *  Remplit une copie complète simple :  items : tous les items existants  +  tous les items détruits
 	 *  
-	 *  Vie courante retardée
+	 *  Cache ayant une version retardée de la même vie
 	 *  
 	 *  cas 3 : v >= dtb. Le cache ne contient pas d'items détruits dont la suppression serait inconnue de la base
-	 *  items : tous les items existants modifiés après v
-	 *        + tous les items detruits après v
+	 *  delta - items : tous les items existants modifiés après v + tous les items detruits après v
 	 *  
 	 *  cas 4 : v < dtb. Le cache peut contenir des items détruits dont la destruction est inconnue de la base
-	 *  items : tous les items existants modifiés après v
-	 *        + tous les items detruits après dtb (on en a pas avant)
+	 *  items : tous les items existants modifiés après v + tous les items detruits après dtb (on en a pas avant, donc après v c'est pareil)
 	 *  clkeys : clés des items existants qui ne figure pas dans items.
 	 *  
 	 *  C'est une transaction : il y a de 1 à 3 requêtes qui doivent être consistantes entre elles.
@@ -81,7 +77,7 @@ public interface DBProvider {
 	 * @param dtime
 	 * @return null si le document n'existe pas.
 	 */
-	public DeltaDocument getDocument(Document.Id id, long ctime, long version, long dtime);
+	public DeltaDocument getDocument(Document.Id id, long ctime, long version, long dtime) throws AppException ;
 	
 	/*
 	 * Mise à jour en une transaction de tous les items de upd dans le document d'id donnée.
@@ -168,11 +164,11 @@ public interface DBProvider {
 	/*************************************************************************************/
 	/**
 	 * Retourne la liste des sha des pièces jointes utiles (référencées) dans un document.
-	 * @param clid
+	 * @param Id du document
 	 * @return set des shas des pièces jointes.
 	 * @throws AppException
 	 */
-	public HashSet<String> shas(String clid) throws AppException;
+	public HashSet<String> shas(Document.Id id) throws AppException;
 
 	/**
 	 * Retourne la dernière heure identifiant la prochaine task de clean up planifiée 

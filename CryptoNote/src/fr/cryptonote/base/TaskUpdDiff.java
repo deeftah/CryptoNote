@@ -9,11 +9,11 @@ public class TaskUpdDiff extends Document {
 	private static final int NBDOCSBYREQ = 50;
 	
 	void add(Document.Id id, String key, BItem item) throws AppException{
-		if (item == null || id == null) throw new AppException("BTRIGGER1");
+		if (item == null || id == null) throw new AppException("BUPDDIFF1");
 		String n = item.getClass().getSimpleName();
 		ItemDescr descr = id.descr().itemDescr(n);
-		if (descr == null) throw new AppException("BTRIGGER2", n);
-		if (!descr.isSingleton() && (key == null || key.length() == 0)) throw new AppException("BTRIGGER3", n);
+		if (descr == null) throw new AppException("BTUPDDIFF2", n);
+		if (!descr.isSingleton() && (key == null || key.length() == 0)) throw new AppException("BUPDDIFF3", n);
 		((Upd)itemOrNew(Upd.class, id.toString())).put(descr.name() + (descr.isSingleton() ? "" : "." + key), item.serializedBItem());
 	}
 

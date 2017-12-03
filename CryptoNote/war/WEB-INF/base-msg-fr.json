@@ -57,10 +57,18 @@
 
 "BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
 
-"BTRIGGER1":"ExecContext.trigger() sans id et/ou item",
-"BTRIGGER2":"ExecContext.trigger() item sans classe connue [{0}]",
-"BTRIGGER3":"ExecContext.trigger() item de classe [{0}] sans key",
+"XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}] sql:[{3}]",
+"XSQLCFG":"Erreur de syntaxe dans /WEB-INF/dbconfig.json",
+"XSQLDS":"Datasource pour le namespace [{0}] non initialisable",
+"XSQLDSNS":"Demande de datasource sans namespace",
+
+"BUPDDIFF1":"Mise à jour différée sans id et/ou item",
+"BUPDDIFF2":"Mise à jour différée : item sans classe connue [{0}]",
+"BUPDDIFF3":"Mise à jour différée  : item de classe [{0}] sans key",
 "BDELDOC":"ExecContext.deleteDoc() sans id",
+
+
+
 
 "ST0":"en création", 
 "ST1":"actif", 
@@ -136,9 +144,6 @@
 "XBLOBDS1":"Echec de lecture du blob [{0}]",
 "XBLOBDS2":"Echec de desctruction du blob [{0}]",
 
-"XSQL0":"Echec SQL - opération [{0}] - namespace  [{1}] - sql [{2}]",
-"XSQLCFG":"Erreur de syntaxe dans /WEB-INF/dbconfig.json",
-"XSQLDS":"Datasource pour le namespace [{0}] non initialisable",
 
 "RIEN":"rien"
 }

@@ -15,15 +15,16 @@ import org.postgresql.ds.common.BaseDataSource;
 
 import fr.cryptonote.base.AConfig;
 import fr.cryptonote.base.AppException;
+import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.Cond;
 import fr.cryptonote.base.Document.Id;
+import fr.cryptonote.base.Document.ItemId;
 import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.JSON;
 import fr.cryptonote.base.TaskInfo;
 import fr.cryptonote.base.TaskUpdDiff.Upd;
-import fr.sportes.base.DocumentId;
 import fr.cryptonote.base.Util;
 
 public class ProviderPG implements DBProvider {
@@ -57,6 +58,7 @@ public class ProviderPG implements DBProvider {
 	private Connection conn;
 	protected String ns;
 	private boolean inTransaction = false;
+	private String sql;
 	
 	private BlobProvider blobProvider;
 	
@@ -65,7 +67,7 @@ public class ProviderPG implements DBProvider {
 	@Override public BlobProvider blobProvider() { return blobProvider; }
 
 	public ProviderPG(String ns) throws AppException {
-		if (ns == null || ns.length() == 0) ns = "z";
+		if (ns == null || ns.length() == 0) throw new AppException("XSQLDSNS");
 		this.ns = ns;
 		if (providerConfig == null){
 			try {
@@ -78,8 +80,7 @@ public class ProviderPG implements DBProvider {
 			BaseDataSource ds = dataSources.get(ns);
 			if (ds == null) {
 				try {
-					InitialContext ic = new InitialContext();
-					ds = (BaseDataSource)ic.lookup("java:comp/env/jdbc/cn" + ns);
+					ds = (BaseDataSource)new InitialContext().lookup("java:comp/env/jdbc/cn" + ns);
 					dataSources.put(ns, ds);
 				} catch (Exception e){
 					throw new AppException(e, "XSQLDS", ns);
@@ -155,13 +156,14 @@ public class ProviderPG implements DBProvider {
 				conn = null;
 			}		
 	}
-
-	protected void err(PreparedStatement preparedStatement, ResultSet rs) {
+	
+	protected AppException err(PreparedStatement preparedStatement, ResultSet rs, Exception e, String meth) {
 		if (preparedStatement != null)
 			try { preparedStatement.close(); } catch (SQLException e1) {}
 		if (rs != null)
 			try { rs.close(); } catch (SQLException e1) {}
 		closeConnection();
+		return (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", operationName, meth, ns(), sql);
 	}
 
 	private static int setPS(Cond<?> c, PreparedStatement preparedStatement, int j) throws SQLException{
@@ -192,7 +194,7 @@ public class ProviderPG implements DBProvider {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String dbinfo = null;
-		String sql = INSDBINFO; 
+		sql = INSDBINFO; 
 		try {
 			if (info != null) {
 				preparedStatement = conn().prepareStatement(sql);
@@ -209,17 +211,184 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.close();
 			return dbinfo;
 		} catch(Exception e){
-			err(preparedStatement, rs);
-			throw (e instanceof AppException) ? (AppException)e : 
-				new AppException(e, "XSQL0", operationName, ns, sql);
+			throw err(preparedStatement, rs, e, "dbInfo");
+		}
+	}
+
+	/***********************************************************************************************/
+	private static final String SELDOC = "select version, ctime, dtime from doc where clid = ?;";
+	
+	private DeltaDocument getDoc(Id id) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		sql = SELDOC; 
+		DeltaDocument dd = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, id.toString());
+			rs = preparedStatement.executeQuery();
+			if (rs.next()) {
+				int j = 1;
+				dd = new DeltaDocument();
+				dd.id = id;
+				dd.version = rs.getLong(j++);
+				dd.ctime = rs.getLong(j++);
+				dd.dtime = rs.getLong(j++);
+			}
+			rs.close();
+			preparedStatement.close();
+			return dd;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "getDoc");
+		}
+	}
+	
+	private static final String SELITEMS1 = "select clkey, version, vop, contentt, contentb from item_";
+	private static final String SELITEMS2 = "where docid = ? ";
+	
+	private DeltaDocument getItem1(DeltaDocument dd) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		sql = SELITEMS1 + dd.id.docclass() + SELITEMS2 + ";"; 
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, dd.id.docid());
+			rs = preparedStatement.executeQuery();
+			while (rs.next()) {
+				int j = 1;
+				ItemId i = new ItemId(dd.id.descr(), rs.getString(j++));
+				if (i.descr() == null) continue;
+				long _version = rs.getLong(j++);
+				long _vop = rs.getLong(j++);
+				String _t = getContent(rs);
+				dd.items.put(i.toString(), new CItem(i, _version, _vop, _t));
+			}
+			rs.close();
+			preparedStatement.close();
+			return dd;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "getItem1");
+		}
+	}
+
+	private void addCItem(ResultSet rs, DeltaDocument dd) throws SQLException {
+		int j = 1;
+		ItemId i = new ItemId(dd.id.descr(), rs.getString(j++));
+		if (i.descr() == null) return;
+		long _version = rs.getLong(j++);
+		long _vop = rs.getLong(j++);
+		String _t = getContent(rs);
+		dd.items.put(i.toString(), new CItem(i, _version, _vop, _t));		
+	}
+	
+	// copie complète simple - items : tous les items existants  +  tous les items détruits
+	private DeltaDocument cas12(DeltaDocument dd) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		sql = SELITEMS1 + dd.id.docclass() + SELITEMS2 + ";"; 
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, dd.id.docid());
+			rs = preparedStatement.executeQuery();
+			while (rs.next()) addCItem(rs, dd);
+			rs.close();
+			preparedStatement.close();
+			commitTransaction();
+			return dd;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "cas12");
+		}
+	}
+
+	// delta - items : tous les items existants modifiés après v + tous les items detruits après v
+	private DeltaDocument cas3(DeltaDocument dd, long version, boolean commit) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		sql = SELITEMS1 + dd.id.docclass() + SELITEMS2 + " and version > ?;"; 
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, dd.id.docid());
+			preparedStatement.setLong(2, version);
+			rs = preparedStatement.executeQuery();
+			while (rs.next()) addCItem(rs, dd);
+			rs.close();
+			preparedStatement.close();
+			if (!commit) commitTransaction();
+			return dd;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "cas12");
+		}
+	}
+
+	private static final String SELITEMS3 = "select clkey from item_";
+	private static final String SELITEMS4 = "where docid = ?;";
+
+	
+	/* delta + keys existantes
+	 * items : tous les items existants modifiés après v + tous les items detruits après dtb (on en a pas avant, donc après v c'est pareil)
+	 * clkeys : clés des items existants qui ne figurent pas dans items.
+	 */
+	private DeltaDocument cas4(DeltaDocument dd, long version) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		sql = SELITEMS3 + dd.id.docclass() + SELITEMS4; 
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, dd.id.docid());
+			rs = preparedStatement.executeQuery();
+			while (rs.next()) {
+				String clkey = rs.getString(1);
+				// si l'item figure dans items, c'est soit qu'il est existant, soit qu'il est détruit.
+				// dans les deux cas il n'est pas à lister
+				if (dd.items.get(clkey) == null)
+					dd.clkeys.add(clkey);
+			}
+			rs.close();
+			preparedStatement.close();
+			commitTransaction();
+			return dd;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "cas12");
 		}
 	}
 
 	/***********************************************************************************************/
 	@Override
-	public DeltaDocument getDocument(Id id, long ctime, long version, long dtime) {
-		// TODO Auto-generated method stub
-		return null;
+	public DeltaDocument getDocument(Id id, long ctime, long version, long dtime) throws AppException {
+		beginTransaction();
+		DeltaDocument dd = getDoc(id);
+		if (dd == null) return null;
+		
+		if (version == dd.version) { // cas = 0 : cache à niveau (v == vdb) cas = 0
+			dd.cas = 0;
+			return dd; // rien à remplir
+		}
+		
+		// Cache ayant une version retardée (v < vdb)
+		if (version == 0) { // cas = 1 : cache vide
+			dd.cas = 1;
+			return cas12(dd); // copie complète simple - items : tous les items existants  +  tous les items détruits
+		}
+		
+		if (ctime < dd.ctime) { // cas = 2 : cache ayant une version d'une vie antérieure (c < cdb)
+			dd.cas = 2;
+			return cas12(dd); // copie complète simple - items : tous les items existants  +  tous les items détruits
+		} 
+		
+		// Cache ayant une version retardée de la même vie
+		if (version >= dd.dtime) { // Le cache ne contient pas d'items détruits dont la suppression serait inconnue de la base
+			dd.cas = 3;
+			return cas3(dd, version, true); // delta - items : tous les items existants modifiés après v + tous les items detruits après v
+		} 
+		
+		// Le cache peut contenir des items détruits dont la destruction est inconnue de la base
+		dd.cas = 4;
+		/* delta + keys existantes
+		 * items : tous les items existants modifiés après v + tous les items detruits après ddb (on en a pas avant, donc après v c'est pareil)
+		 * clkeys : clés des items existants qui ne figurent pas dans items.
+		 */
+		cas3(dd, version, false);
+		return cas4(dd, version);
 	}
 	
 	/***********************************************************************************************/
@@ -251,14 +420,14 @@ public class ProviderPG implements DBProvider {
 	}
 
 	/***********************************************************************************************/
-	private static final String UPSERTTASK = 
-			"insert into taskqueue (clid, nextstart, retry, info) values (?,?,?,?);";
+	private static final String INSERTTASK = "insert into taskqueue (clid, nextstart, retry, info) values (?,?,?,?);";
 		
 	@Override 
 	public void insertTask(TaskInfo ti) throws AppException{
 		PreparedStatement preparedStatement = null;
+		sql = INSERTTASK;
 		try {
-			preparedStatement = conn().prepareStatement(UPSERTTASK);
+			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setString(j++, ti.id.toString());
 			preparedStatement.setLong(j++, ti.nextStart);
@@ -268,19 +437,18 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 		} catch(Exception e){
-			err(preparedStatement, null);
-			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "upsertTaskInfo", ti.ns, UPSERTTASK);
+			throw err(preparedStatement, null, e, "insertTask");
 		}
 	}
 
-	private static final String UPDTASK = 
-			"update taskqueue set nextstart = ?, retry = ?, report = ? where clid = ?;";
+	private static final String UPDTASK = "update taskqueue set nextstart = ?, retry = ?, report = ? where clid = ?;";
 
 	@Override
 	public void updateNRRTask(Id id, long nextStart, int retry, String report) throws AppException {
 		PreparedStatement preparedStatement = null;
+		sql = UPDTASK;
 		try {
-			preparedStatement = conn().prepareStatement(UPDTASK);
+			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setLong(j++, nextStart);
 			preparedStatement.setInt(j++, retry);
@@ -289,8 +457,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 		} catch(Exception e){
-			err(preparedStatement, null);
-			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "updateNRRTaskInfo", ns(), UPDTASK);
+			throw err(preparedStatement, null, e, "updateNRRTaskInfo");
 		}
 	}
 
@@ -299,14 +466,14 @@ public class ProviderPG implements DBProvider {
 	@Override
 	public void removeTask(Id id) throws AppException {
 		PreparedStatement preparedStatement = null;
+		sql = DELTASK;
 		try {
-			preparedStatement = conn().prepareStatement(DELTASK);
+			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, id.toString());
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 		} catch(Exception e){
-			err(preparedStatement, null);
-			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "removeTask", ns(), DELTASK);
+			throw err(preparedStatement, null, e, "removeTask");
 		}
 	}
 
@@ -318,48 +485,82 @@ public class ProviderPG implements DBProvider {
 		StringBuffer sb = new StringBuffer();
 		sb.append(SELTI1);
 		int j = 1;
-		if (ti.id != null) sb.append("where clid = ?");
-		if (ti.nextStart != 0) {sb.append(j++ == 1 ? "where " : " and ").append("nextstart <= ?");}
-		if (ti.retry != 0) {sb.append(j++ == 1 ? "where " : " and ").append("retry >= ?");}
-		if (ti.info != null) {sb.append(j++ == 1 ? "where " : " and ").append("info = ?");}
-		String sql = sb.append(";").toString();
+		if (BEGINclid != null) sb.append("where clid >= ? and clid < ?");
+		if (AFTERnextstart != 0) {sb.append(j++ == 1 ? "where " : " and ").append("nextstart <= ?");}
+		if (MINretry != 0) {sb.append(j++ == 1 ? "where " : " and ").append("retry >= ?");}
+		if (CONTAINSinfo != null) {sb.append(j++ == 1 ? "where " : " and ").append("info CONTAINS ?");}
+		sql = sb.append(";").toString();
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			j = 1;
-			if (ti.id != null) preparedStatement.setString(j++, ti.id.toString());
-			if (ti.nextStart != 0) preparedStatement.setLong(j++, ti.nextStart);
-			if (ti.retry != 0) preparedStatement.setInt(j++, ti.retry);
-			if (ti.info != null) preparedStatement.setString(j++, ti.info);
+			if (BEGINclid != null) {
+				preparedStatement.setString(j++, BEGINclid);
+				preparedStatement.setString(j++, BEGINclid + '\u1FFF');
+			}
+			if (AFTERnextstart != 0) preparedStatement.setLong(j++, AFTERnextstart);
+			if (MINretry != 0) preparedStatement.setInt(j++, MINretry);
+			if (CONTAINSinfo != null) preparedStatement.setString(j++, CONTAINSinfo);
 			rs = preparedStatement.executeQuery();
 			while (rs.next()){
 				long nextStart = rs.getLong("nextstart");
 				Id id = new Id(rs.getString("clid"));
 				int retry = rs.getInt("retry");
 				String info = rs.getString("info");
-				tiList.add(new TaskInfo(ti.ns, id, nextStart, retry, info));
+				tiList.add(new TaskInfo(ns(), id, nextStart, retry, info));
 			}
 			rs.close();
 			preparedStatement.close();
 			return tiList;
 		} catch(Exception e){
-			err(preparedStatement, rs);
-			throw (e instanceof AppException) ? (AppException)e : 
-				new AppException(e, "XSQL0", "listTask", "", sql);
+			throw err(preparedStatement, rs, e, "listTask");
 		}
 	}
 
-	@Override
-	public String taskReport(Id id) throws AppException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	private static String SELTIREP = "select report from task where clid = ? ;";
 
 	@Override
-	public HashSet<String> shas(String clid) throws AppException {
-		// TODO Auto-generated method stub
-		return null;
+	public String taskReport(Id id) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		String report = "";
+		try {
+			beginTransaction();
+			preparedStatement = conn().prepareStatement(SELTIREP);
+			preparedStatement.setString(1, id.toString());
+			rs = preparedStatement.executeQuery();
+			if (rs.next())
+				report = rs.getNString("report");
+			rs.close();
+			preparedStatement.close();
+			return report;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "taskReport");
+		}
+	}
+
+	private static final String SELPITEM1 = "select distinct sha from item_";
+	private static final String SELPITEM2 = " where sha is not null and docid = ? ;";
+
+	@Override
+	public HashSet<String> shas(Id id) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		HashSet<String> res = new HashSet<String>();
+		sql = SELPITEM1 + id.docclass() + SELPITEM2;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, id.docid());
+			rs = preparedStatement.executeQuery();
+			while (rs.next())
+				res.add(rs.getString("sha"));
+			rs.close();
+			preparedStatement.close();
+			return res;
+		} catch(Exception e) { 
+			throw err(preparedStatement, rs, e, "shas"); 
+		}
 	}
 
 	/***********************************************************************************************/
@@ -370,8 +571,9 @@ public class ProviderPG implements DBProvider {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		int hour = 0;
+		sql = SELS2;
 		try {
-			preparedStatement = conn().prepareStatement(SELS2);
+			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, clid);
 			rs = preparedStatement.executeQuery();
 			if (rs.next())
@@ -380,8 +582,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.close();
 			return hour;
 		} catch(Exception e){
-			err(preparedStatement, rs);
-			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "lastS2Cleanup", ns(), SELS2);
+			throw err(preparedStatement, rs, e, "lastS2Cleanup");
 		}
 	}
 
@@ -391,9 +592,10 @@ public class ProviderPG implements DBProvider {
 	public void setS2Cleanup(TaskInfo ti) throws AppException {
 		PreparedStatement preparedStatement = null;
 		int hour = (int)(ti.nextStart / 10000000L);
+		sql = UPDS2;
 		try {
 			beginTransaction();
-			preparedStatement = conn().prepareStatement(UPDS2);
+			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setInt(j++, hour);
 			preparedStatement.setString(j++, ti.id.toString());
@@ -401,10 +603,8 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.close();
 			insertTask(ti);
 			commitTransaction();
-		} catch(Exception e){
-			rollbackTransaction();
-			err(preparedStatement, null);
-			throw (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", "upsertTaskInfo", ns(), UPDS2);
+		} catch(Exception e){ 
+			throw err(preparedStatement, null, e, "setS2Cleanup");
 		}
 	}
 	

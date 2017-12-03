@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.ExportedFields;
+import fr.cryptonote.base.Document.ItemId;
 import fr.cryptonote.base.Document.P;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.provider.DBProvider.DeltaDocument;
@@ -283,6 +284,13 @@ public class CDoc implements Comparable<CDoc> {
 		private boolean deleted;	// item non existant
 		private boolean toSave;		// item créé / modifié à sauver
 		private boolean toDelete;	// item à supprimer
+		
+		public CItem() {}
+		
+		public CItem(ItemId i, long version, long vop, String value) {
+			this.descr = i.descr(); this.key = i.key(); this.version = version; this.vop = vop;
+			if (value == null) deleted = true; else this.value = value;
+		}
 		
 		public ItemDescr descr() { return descr; }
 		public long version() { return version; }

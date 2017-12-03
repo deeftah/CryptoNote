@@ -63,20 +63,14 @@ CREATE TABLE item (
   	clkey varchar(255) NOT NULL,
   	version bigint NOT NULL,
   	vop bigint NOT NULL,
+  	sha varchar(255),
   	contentt text,
 	contentb bytea,
 	CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
 );
 ALTER TABLE item OWNER TO "docdb";
-CREATE INDEX item_v on item (docid, version, clkey, deleted);
-
-DROP INDEX IF EXISTS item_p_sha;
-DROP TABLE IF EXISTS item_p;
-CREATE TABLE item_p (
-  	sha varchar(255),
-) INHERITS (item);
-ALTER TABLE item_p OWNER TO "docdb";
-CREATE INDEX item_p_sha on item_p (docid, sha) where sha is NOT NULL;
+CREATE INDEX item_v on item (docid, version, clkey);
+CREATE INDEX item_p on item (docid, sha) where sha is NOT NULL;
 
 DROP INDEX IF EXISTS taskqueue_ns;
 DROP TABLE IF EXISTS taskqueue;
