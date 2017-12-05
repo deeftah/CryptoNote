@@ -71,7 +71,7 @@ public class S2Cleanup extends Document {
 		@Override public void work() throws AppException {
 			String clid = taskId().toString();
 			DBProvider dbProvider = ExecContext.current().dbProvider();
-			HashSet<String> shas = dbProvider.shas(clid);
+			HashSet<String> shas = dbProvider.shas(taskId());
 			boolean emptyBasket = dbProvider.blobProvider().cleanup(clid, shas);
 			if (!emptyBasket)
 				startCleanup(clid, true);

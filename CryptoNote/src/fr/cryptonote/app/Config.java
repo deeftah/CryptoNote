@@ -3,6 +3,7 @@ package fr.cryptonote.app;
 import java.util.HashMap;
 
 import fr.cryptonote.base.AConfig;
+import fr.cryptonote.base.DocumentDescr;
 import fr.cryptonote.base.Stamp;
 
 public class Config extends AConfig {
@@ -166,6 +167,10 @@ public class Config extends AConfig {
 	/****************************************************/
 
 	private static void declareDocumentsAndOperations() throws Exception{
+		DocumentDescr.register(Repertoire.class);
+//		ItemDescr itd = DocumentDescr.get(Repertoire.class).itemDescr(Contact.class);
+//		DocumentDescr[] dx = itd.copyToDocs();
+//		char sep = itd.separator();
 //		DocumentDescr.register(LivrC3.class);
 //		Operation.register(GetLivrC.class);
 //		Operation.register(UpdLivrC.class);

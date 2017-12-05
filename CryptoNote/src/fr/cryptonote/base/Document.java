@@ -21,6 +21,7 @@ public class Document {
 		public String docclass() { return descr != null ? descr.name() : ""; }
 		public DocumentDescr descr() { return descr; }
 		public String toString() { return docclass() + "." + docid; }
+		public String toJson() { return JSON.toJson(new Hdr(this)); }
 		
 		@SuppressWarnings("unused")
 		private Id() {}
@@ -43,6 +44,17 @@ public class Document {
 		public Id(Class<?> docclass, String docid){
 			descr = docclass != null ? DocumentDescr.get(docclass.getSimpleName()) : null;
 			if (docid != null) this.docid = docid;
+		}
+		
+		ISyncFilter syncFilter(String filter) throws AppException {
+			if (filter != null)
+				try {
+					return (ISyncFilter)JSON.fromJson(filter, descr().filterClass());
+				} catch (Exception e) {
+					throw new AppException("BJSONFILTER", filter, toString());
+				}
+			else
+				return descr().defaultFilter();
 		}
 		
 		public static Document.Id fromURL(String url) throws AppException {
@@ -101,7 +113,6 @@ public class Document {
 		return d;
 	}
 	public static void delete(Document.Id id) throws AppException {	ExecContext.current().deleteDoc(id); }
-	public static void putUpdDiff(Document.Id id, String key, BItem item) throws AppException{ ExecContext.current().putUpdDiff(id, key, item); }
 
 	/** Méthodes à surcharger **/
 	/* Filtre sur le document lui-même */
@@ -127,11 +138,11 @@ public class Document {
 	}
 
 	public static Collection<Document.Id> searchDocIdsByIndexes(Class<?> docClass, Class<?> itemClass, Cond<?>... ffield) throws AppException {
-		return ExecContext.current().dbProvider().searchDocIdsByIndexes(docClass.getSimpleName(), itemClass.getSimpleName(), ffield);
+		return ExecContext.current().dbProvider().searchDocIdsByIndexes(docClass, itemClass, ffield);
 	}
 	
 	public static Collection<XItem> searchItemsByIndexes(Class<?> docClass, Class<?> itemClass, XItemFilter filter, Cond<?>... ffield) throws AppException {
-		return ExecContext.current().dbProvider().searchItemsByIndexes(docClass.getSimpleName(), itemClass.getSimpleName(), filter, ffield); 
+		return ExecContext.current().dbProvider().searchItemsByIndexes(docClass, itemClass, filter, ffield); 
 	}
 	/***************************************************************************************/
 
@@ -359,6 +370,7 @@ public class Document {
 		public Hdr() {}
 		Hdr(Document doc, long v, long dt) { c = doc.id().docclass(); id = doc.id().docid(); this.v = v; ct = doc.ctime(); this.dt = dt; }
 		public Document.Id id() { return new Document.Id(c, id); }
+		Hdr(Document.Id id) {c = id.docclass(); this.id = id.docid();}
 	}
 	public static class Sync extends Hdr {
 		public String filter; // Objet de classe docclass.SyncFilter en Json
@@ -440,7 +452,9 @@ public class Document {
 	 * @return
 	 * @throws AppException
 	 */
-	public String toJson(ISyncFilter sf, long ctime, long version, long dtime, boolean court) throws AppException {
+	public String toJson(String filter, long ctime, long version, long dtime, boolean court) throws AppException {
+		ISyncFilter sf = id().syncFilter(filter);
+		sf.init(ExecContext.current(), this);
 		StringBuffer sb = new StringBuffer();
 		Status st = status();
 		if (st == Status.deleted || st == Status.shortlived)

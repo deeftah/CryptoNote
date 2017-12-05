@@ -58,6 +58,7 @@ public class DocumentDescr {
 	public Class<?> filterClass() { return filterClass; }
 	public Collection<ItemDescr> itemDescrs() { return itemDescrs2.values(); }
 	public ItemDescr itemDescr(String name) { return itemDescrs2.get(name); }
+	public ItemDescr itemDescr(Class<?> itemClass) { return itemDescrs1.get(itemClass); }
 	
 	public ISyncFilter defaultFilter() throws AppException{
 		try { return (ISyncFilter)filterClass.newInstance();
@@ -77,6 +78,23 @@ public class DocumentDescr {
 		private Constructor<?> constructor;
 		private boolean isRaw = false;
 		private boolean isSingleton = false;
+		private Class<?>[] docclasses;
+		private char separator;
+		private DocumentDescr[] copyToDocs;
+		
+		public DocumentDescr[] copyToDocs() {
+			if (copyToDocs == null) {
+				ArrayList<DocumentDescr> x = new ArrayList<DocumentDescr>();
+				if (docclasses != null && docclasses.length != 0) for(Class<?> c : docclasses) {
+					DocumentDescr d = documentDescrs1.get(c);
+					if (d != null) x.add(d);
+				}
+				copyToDocs = x.toArray(new DocumentDescr[x.size()]);
+			}
+			return copyToDocs;
+		};
+		public char separator() { return separator; }
+		public boolean hasDifferedCopy() { return copyToDocs().length != 0 ; }
 		public ExportedField[] indexedFields() { return indexedFields; }
 		
 		public DocumentDescr docDescr() { return docDescr; };
@@ -157,9 +175,8 @@ public class DocumentDescr {
 	private static final Hashtable<Class<?>, DocumentDescr> documentDescrs1 = new Hashtable<Class<?>, DocumentDescr>();
 	private static final Hashtable<String, DocumentDescr> documentDescrs2 = new Hashtable<String, DocumentDescr>();
 	
-	public static DocumentDescr get(String docClassName) {
-		return documentDescrs2.get(docClassName);
-	}
+	public static DocumentDescr get(String docClassName) {return documentDescrs2.get(docClassName); }
+	public static DocumentDescr get(Class<?> docClass) {return documentDescrs1.get(docClass); }
 		
 	public static DocumentDescr register(Class<?> clazz)throws AppException {
 		if (clazz == null) throw new AppException("BDOCUMENTCLASS0");
@@ -233,11 +250,17 @@ public class DocumentDescr {
 				throw new AppException(e, "BDOCUMENTCLASS9", dd.name + "." + n);
 			}
 			
+			DifferedCopy dc = itd.clazz.getAnnotation(DifferedCopy.class);
+			if (dc != null) {
+				itd.docclasses = dc.copyToDocs();
+				itd.separator = dc.separator();
+			}
+			
 			dd.itemDescrs1.put(cl, itd);
 			dd.itemDescrs2.put(n, itd);
 			
 			ArrayList<ExportedField> lst = new ArrayList<ExportedField>();
-			HashMap<String,Field> af = Util.getAllField(cl, null, ExportedField.class);
+			HashMap<String,Field> af = Util.getAllField(cl, null, IndexedField.class);
 			for(Field f : af.values())
 				lst.add(new ExportedField(f, dd.name, itd.name));
 			if (lst.size() != 0) 

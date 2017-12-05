@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
@@ -118,7 +117,6 @@ public abstract class Operation {
 	
 	public void setTask(Document.Id id, long nextStart, String info) throws AppException{ execContext().newTask(id, nextStart, info);}
 	public void setTaskByCron(Document.Id id, String cron) throws AppException { execContext().newTask(id, new Cron(cron).nextStart().stamp(), cron);}
-	public Collection<TaskInfo> listTask(TaskInfo ti) throws AppException{ return execContext().dbProvider().listTask(ti); }
 
 	/**********************************************************************************/
 	public String ungzip(Attachment a) throws AppException {

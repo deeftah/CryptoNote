@@ -216,6 +216,44 @@ public class ProviderPG implements DBProvider {
 	}
 
 	/***********************************************************************************************/
+	private static final String SELDOCS = "select clid, version, ctime, dtime from namespace ";
+
+	@Override public Collection<DeltaDocument> listDoc(String BEGINclid, long AFTERversion) throws AppException {
+		ArrayList<DeltaDocument> lst = new ArrayList<DeltaDocument>();
+		StringBuffer sb = new StringBuffer();
+		sb.append(SELDOCS);
+		int j = 1;
+		if (BEGINclid != null) { j++; sb.append("where clid >= ? and clid < ?"); }
+		if (AFTERversion != 0) {sb.append(j++ == 1 ? "where " : " and ").append("version > ?");}
+		sql = sb.append(";").toString();
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			j = 1;
+			if (BEGINclid != null) {
+				preparedStatement.setString(j++, BEGINclid);
+				preparedStatement.setString(j++, BEGINclid + '\u1FFF');
+			}
+			if (AFTERversion != 0) preparedStatement.setLong(j++, AFTERversion);
+			rs = preparedStatement.executeQuery();
+			while (rs.next()){
+				DeltaDocument dd = new DeltaDocument();
+				dd.id = new Id(rs.getString("clid"));
+				dd.version = rs.getLong("version");
+				dd.ctime = rs.getLong("ctime");
+				dd.dtime = rs.getLong("dtime");
+				lst.add(dd);
+			}
+			rs.close();
+			preparedStatement.close();
+			return lst;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "listDoc");
+		}
+	}
+	
+	/***********************************************************************************************/
 	private static final String SELDOC = "select version, ctime, dtime from doc where clid = ?;";
 	
 	private DeltaDocument getDoc(Id id) throws AppException {
@@ -246,31 +284,6 @@ public class ProviderPG implements DBProvider {
 	private static final String SELITEMS1 = "select clkey, version, vop, contentt, contentb from item_";
 	private static final String SELITEMS2 = "where docid = ? ";
 	
-	private DeltaDocument getItem1(DeltaDocument dd) throws AppException {
-		PreparedStatement preparedStatement = null;
-		ResultSet rs = null;
-		sql = SELITEMS1 + dd.id.docclass() + SELITEMS2 + ";"; 
-		try {
-			preparedStatement = conn().prepareStatement(sql);
-			preparedStatement.setString(1, dd.id.docid());
-			rs = preparedStatement.executeQuery();
-			while (rs.next()) {
-				int j = 1;
-				ItemId i = new ItemId(dd.id.descr(), rs.getString(j++));
-				if (i.descr() == null) continue;
-				long _version = rs.getLong(j++);
-				long _vop = rs.getLong(j++);
-				String _t = getContent(rs);
-				dd.items.put(i.toString(), new CItem(i, _version, _vop, _t));
-			}
-			rs.close();
-			preparedStatement.close();
-			return dd;
-		} catch(Exception e){
-			throw err(preparedStatement, rs, e, "getItem1");
-		}
-	}
-
 	private void addCItem(ResultSet rs, DeltaDocument dd) throws SQLException {
 		int j = 1;
 		ItemId i = new ItemId(dd.id.descr(), rs.getString(j++));
@@ -406,14 +419,14 @@ public class ProviderPG implements DBProvider {
 	/***********************************************************************************************/
 
 	@Override
-	public Collection<Id> searchDocIdsByIndexes(String docClass, String itemClass, Cond<?>... ffield)
+	public Collection<Id> searchDocIdsByIndexes(Class<?> docClass, Class<?> itemClass, Cond<?>... ffield)
 			throws AppException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Collection<XItem> searchItemsByIndexes(String docClass, String itemClass, XItemFilter filter,
+	public Collection<XItem> searchItemsByIndexes(Class<?> docClass, Class<?> itemClass, XItemFilter filter,
 			Cond<?>... ffield) throws AppException {
 		// TODO Auto-generated method stub
 		return null;

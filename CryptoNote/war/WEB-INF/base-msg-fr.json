@@ -1,5 +1,6 @@
 {
 "XRESSOURCEBUILDJS":"Ressource build.js non trouvée ou mal formée",
+"XRESSOURCENS":"Liste des namespaces (\"ns\":[...]) non trouvée ou ayant moins de 2 termes",
 
 "BDOCUMENTCLASS0":"Tentative d''enrigistrement d''une classe de Document vide",
 "BDOCUMENTCLASS1":"Tentative d''enrigistrement d''une classe de Document [{0}] n''étendant pas Document",

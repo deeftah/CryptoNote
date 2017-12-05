@@ -31,6 +31,8 @@ public interface DBProvider {
 	public void shutdwon();
 		
 	/***********************************************************************************************************/
+	public Collection<DeltaDocument> listDoc(String BEGINclid, long AFTERversion) throws AppException;
+
 	public static class DeltaDocument {
 		public Document.Id id;
 		public long version;
@@ -104,7 +106,7 @@ public interface DBProvider {
 	 * @return Collection des identifiants de documents où un item a été trouvé
 	 * @throws AppException
 	 */
-	public Collection<Document.Id> searchDocIdsByIndexes(String docClass, String itemClass,	Cond<?>... ffield) throws AppException;
+	public Collection<Document.Id> searchDocIdsByIndexes(Class<?> docClass, Class<?> itemClass,	Cond<?>... ffield) throws AppException;
 
 	/**
 	 * Recherche d'une liste d'items ayant un champ indexé repondant au filtre.
@@ -115,7 +117,7 @@ public interface DBProvider {
 	 * @return Collection des Item trouvés
 	 * @throws AppException
 	 */
-	public Collection<XItem> searchItemsByIndexes(String docClass, String itemClass, XItemFilter filter, Cond<?>... ffield) throws AppException;
+	public Collection<XItem> searchItemsByIndexes(Class<?> docClass, Class<?> itemClass, XItemFilter filter, Cond<?>... ffield) throws AppException;
 
 	/** Tasks (sauf Datastore) ************************************************/
 	/**

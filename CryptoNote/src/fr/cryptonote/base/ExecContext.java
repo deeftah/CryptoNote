@@ -84,6 +84,8 @@ public class ExecContext {
 	public static ExecContext current() { return ExecContextTL.get(); }
 	private static final ThreadLocal<ExecContext> ExecContextTL = new ThreadLocal<ExecContext>();
 
+	public static DBProvider dbProvider(String ns) throws AppException { return AConfig.config().newDBProvider(ns); }
+	
 	private int iLang = 0;
 	private String ns;
 	private Stamp startTime;
@@ -176,18 +178,11 @@ public class ExecContext {
 	HashMap<String,Document> docs = new HashMap<String,Document>();
 	HashSet<String> emptyDocs = new HashSet<String>();
 	HashSet<String> dels = new HashSet<String>();
-	TaskUpdDiff updDiff;
 	
-	private void clearCaches(){ tasks.clear(); docs.clear(); updDiff = null; dels.clear(); }
+	private void clearCaches(){ tasks.clear(); docs.clear(); dels.clear(); }
 
 	public void newTask(Document.Id id, long nextStart, String info) throws AppException{
 		tasks.put(id.toString(), new TaskInfo(ns(), id, nextStart, 0, info));
-	}
-
-	public void putUpdDiff(Document.Id id, String key, BItem item) throws AppException{
-		if (updDiff == null)
-			updDiff = (TaskUpdDiff)getOrNewDoc(new Document.Id(TaskUpdDiff.class, Crypto.randomB64(2)));
-		updDiff.add(id, key, item);
 	}
 
 	void deleteDoc(Document.Id id) throws AppException {
@@ -221,7 +216,7 @@ public class ExecContext {
 		// il faut en obtenir un exemplaire (voire plus frais que celui du contexte)
 		XCDoc xcdoc = Cache.current().cdoc(id, minTime, versionActuelle);
 		
-		if (!xcdoc.existant) { // n'existe pas en base/cache
+		if (!xcdoc.existing) { // n'existe pas en base/cache
 			if (versionActuelle != 0) 
 				throw new AppException("CONTENTION2", this.operationName(), n); // Gros soucis : le document a été détruit depuis
 			// c'était la première fois qu'on le cherchait
@@ -375,44 +370,30 @@ public class ExecContext {
 		
 	/*********************************************************************************************/
 	private String sync(Sync[] syncs) throws AppException {
-		StringBuffer sb = new StringBuffer();
-		sb.append("[");
-		GDCache cache = GDCache.current();
+		Cache cache = Cache.current();
 		Stamp minTime = Stamp.fromEpoch(startTime2().epoch());
-		boolean pf = true;
-		if (syncs.length != 0) 
-			for(Sync sync : syncs){
-				String content = null;
-				Document.Id id = sync.id();
-				Document d =  cache.documentRO(id, minTime, 0L);
-				
-				ISyncFilter sf = null;
-				if (sync.filter != null)
-					try {
-						Class<?> cf = id.descr().filterClass();
-						sf = (ISyncFilter)JSON.fromJson(sync.filter, cf);
-					} catch (Exception e) {
-						throw new AppException("BJSONFILTER", sync.filter, id.toString());
-					}
-				else
-					sf = id.descr().defaultFilter();
-				sf.init(this, d);
-
-				content = d.toJson(sf, sync.ct, sync.v, sync.dt, true);
-				
-				if (content != null) {
-					if (!pf) sb.append(", "); else pf = false;
-					sb.append(content);
-				}
-			}
-		sb.append("]");
-		return sb.toString();
+		StringBuffer sb = new StringBuffer().append("[");
+		for(Sync sync : syncs){
+			Document.Id id = sync.id();
+			XCDoc xc = cache.cdoc(id, minTime, 0L);
+			String content = !xc.existing ? id.toJson() :  Document.newDocument(xc.cdoc).toJson(sync.filter, sync.ct, sync.v, sync.dt, true);
+			if (sb.length() > 1) sb.append(", "); 
+			sb.append(content);
+		}
+		return sb.append("]").toString();
 	}
 
 	/*********************************************************************************************/
 	public class ExecCollect {
 		public boolean nothingToCommit() { return true;}
 		
+		TaskUpdDiff updDiff;
+		public void putUpdDiff(Document.Id id, String key, BItem item) throws AppException{
+			if (updDiff == null)
+				updDiff = (TaskUpdDiff)getOrNewDoc(new Document.Id(TaskUpdDiff.class, Crypto.randomB64(2)));
+			updDiff.add(id, key, item);
+		}
+
 		ExecCollect() throws AppException {
 			
 		}

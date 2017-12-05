@@ -332,7 +332,8 @@ public class QueueManager implements Runnable {
 			try {
 				if (NS.status(ns) != 0) continue;
 				provider = AConfig.config().newDBProvider(ns);
-				Collection<TaskInfo> tiList = provider.listTask(new TaskInfo(ns, null, nextFullScan.stamp(), 0, null));
+				// 	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException ;
+				Collection<TaskInfo> tiList = provider.listTask(null, nextFullScan.stamp(), 0, null);
 				for(TaskInfo ti : tiList)
 					tmp.add(ti);
 			} catch (AppException e){

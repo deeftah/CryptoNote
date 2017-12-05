@@ -271,7 +271,7 @@ public class Servlet extends HttpServlet {
 			}
 		else {
 			// par convention ns est le namespace des namespace ("z" en général)
-			ns = NS.nsns();
+			ns = NS.nsz();
 			exec.setNS(ns);
 		}
 		

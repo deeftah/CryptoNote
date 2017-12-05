@@ -148,9 +148,7 @@ public class AConfig {
 
 	protected static AConfig config;
 	public static AConfig config() { return config; }
-	
-	private static final String[] defaultNs = {"z", "namespace"};
-	
+		
 	/** AConfig **********************************/
 	private AGen gen;
 	private ASecret secret;
@@ -193,8 +191,8 @@ public class AConfig {
 
 			config.gen.instance = System.getProperty(DVARINSTANCE);
 			
-			if (config.gen.ns == null || config.gen.ns.length != 2)
-				config.gen.ns = defaultNs;
+			if (config.gen.ns == null || config.gen.ns.length < 2)
+				throw new Exception(_format(0, "XRESSOURCENS"));
 			if (config.gen.url == null || 
 					(!config.gen.url.startsWith("http://") && !config.gen.url.startsWith("https://")))
 				throw new Exception(_format(0, "XRESSOURCEURL"));
@@ -253,7 +251,6 @@ public class AConfig {
 	public String[] ns() { return gen.ns ;}
 	public String nsz() { return gen.ns[0] ;}
 
-	// public Class<?> nssrvcfgClass() { return nssrvcfgClass; }
 	public Object newNssrvcfg(String json) {
 		try {
 			if (json == null || json.length() == 0 || "{}".equals(json))
@@ -263,6 +260,7 @@ public class AConfig {
 			return null; // Non parsable
 		} 
 	}
+	
 	public String[] offlinepages() { return gen.offlinepages == null ? new String[0] : gen.offlinepages ;}
 	public boolean MONOSERVER() { return gen.MONOSERVER;}
 	public int TASKMAXTIMEINSECONDS() { return gen.TASKMAXTIMEINSECONDS;}

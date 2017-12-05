@@ -85,9 +85,9 @@ CREATE TABLE taskqueue (
 ALTER TABLE taskqueue OWNER TO "docdb";
 CREATE INDEX taskqueue_ns on taskqueue (nextstart, clid);
 
-DROP TABLE IF EXISTS nsdoc;
-CREATE TABLE nsdoc () INHERITS (item);
-ALTER TABLE nsdoc OWNER TO "docdb";
+DROP TABLE IF EXISTS namespace;
+CREATE TABLE namespace () INHERITS (item);
+ALTER TABLE namespace OWNER TO "docdb";
 
 /*********************************************************/
 

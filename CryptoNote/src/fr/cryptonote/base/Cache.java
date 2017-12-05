@@ -82,9 +82,9 @@ public class Cache {
 
 	public static class XCDoc {
 		public long lastCheckDB;
-		public boolean existant; 
+		public boolean existing; 
 		public CDoc cdoc;
-		public XCDoc(long lastCheckDB, boolean existant, CDoc cdoc) { this.lastCheckDB = lastCheckDB; this.existant = existant; this.cdoc = cdoc; }
+		public XCDoc(long lastCheckDB, boolean existant, CDoc cdoc) { this.lastCheckDB = lastCheckDB; this.existing = existant; this.cdoc = cdoc; }
 	}
 	
 	/**
@@ -92,9 +92,7 @@ public class Cache {
 	 * @param id
 	 * @param minTime : contrainte de fraîcheur. En exigeant la startTime de l'ExecContexct fait lire la plus récente
 	 * @param versionActuelle : si non 0, version actuellement détenue. Retourne null si pas mieux
-	 * @return null: pas mieux que la version actuelle (non 0), 
-	 * CDoc.FAKE: ce document n'existe pas (plus), 
-	 * autre le CDoc correspondant
+	 * @return null: pas mieux que la version actuelle (non 0), XCdoc.existant indique si le document existe ou non.
 	 * @throws AppException
 	 */
 	public XCDoc cdoc(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
@@ -131,4 +129,16 @@ public class Cache {
 		return new XCDoc(d.lastCheckDB, true, d.newCopy());
 	}
 
+	/**
+	 * Retourne le document trouvé en cache, le cas échéant l'ayant lu / remis à niveau si nécessaire.
+	 * @param id
+	 * @param minTime : contrainte de fraîcheur. En exigeant la startTime de l'ExecContexct fait lire la plus récente
+	 * @param versionActuelle : si non 0, version actuellement détenue. Retourne null si pas mieux
+	 * @return null: pas mieux que la version actuelle (non 0), XCdoc.existant indique si le document existe ou non.
+	 * @throws AppException
+	 */
+	public Document document(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
+		XCDoc xc = cdoc(id, minTime, versionActuelle);
+		return Document.newDocument(xc.existing ? xc.cdoc : CDoc.newEmptyCDoc(id));
+	}
 }

@@ -1,14 +1,16 @@
 package fr.cryptonote.base;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import fr.cryptonote.base.CDoc.Status;
 import fr.cryptonote.base.Document.P;
-import fr.cryptonote.base.NS.NsDoc.Cfg;
+import fr.cryptonote.base.NS.Namespace.Cfg;
 import fr.cryptonote.base.Servlet.Attachment;
 import fr.cryptonote.base.Servlet.Resource;
+import fr.cryptonote.provider.DBProvider;
+import fr.cryptonote.provider.DBProvider.DeltaDocument;
 
 public class NS {
 	/*
@@ -18,54 +20,37 @@ public class NS {
 	 * custom.css : :root{ ... } inclu après le CSS du thème de base cité dans cfg
 	 */
 		
-	private static String nsns;
-	public static String nsns() { return nsns; }
-	private static String nsGroup;
+	private static String nsz;
+	public static String nsz() { return nsz; }
 	private static long nextReload = 0;
 	private static int NSSCANPERIODINSECONDS;
 	private static final Integer LOCK = new Integer(0);
-	private static Stamp lastScan = Stamp.minStamp;
-	private static String[] allns = new String[0];
+	private static long lastScan = 0;
+	private static String[] allns;
 	private static HashMap<String,NS> namespaces = new HashMap<String,NS>();
 	private static HashMap<String,ArrayList<String>> queueManagers = new HashMap<String,ArrayList<String>>();
 	
-	private static long lastGroupVersion = -1;
 	
 	static void init() throws AppException{
 		NSSCANPERIODINSECONDS = AConfig.config().NSSCANPERIODINSECONDS();
-		String[] x = AConfig.config().ns();
-		nsns = x[0];
-		nsGroup = x[1];
-		namespaces.put(nsns, new NS()); // initialise le namespace des namespaces
+		allns = AConfig.config().ns();
+		nsz = allns[0];
+		for(String n : allns) namespaces.put(n, new NS());
 	}
 	
 	static void reload() throws AppException{
-		if (System.currentTimeMillis() < nextReload) return;
+		Stamp now = Stamp.fromNow(0);
+		if (now.epoch() < nextReload) return;
+		DBProvider provider = ExecContext.dbProvider(nsz);
 		synchronized(LOCK){
-			HashSet<String> toUpd = new HashSet<String>();
-			HashSet<String> existingNs = new HashSet<String>();
-			existingNs.add(nsns);
-			Stamp now = Stamp.fromNow(0);
-			CGroup g = GDCache.current().cgroup(nsGroup, now);
-			if (g.version() > lastGroupVersion) {
-				ArrayList<Document.Id> ids = g.documentIds();
-				for(Document.Id id : ids){
-					existingNs.add(id.docid());
-					if (g.gdstate().dstate(id).version > lastScan.stamp())
-						toUpd.add(id.docid());
+			Collection<DeltaDocument> lst = provider.listDoc("Namespace.", lastScan);
+			if (lst.size() != 0) {
+				for(DeltaDocument dd : lst) {
+					NS ns = namespaces.get(dd.id.docid());
+					if (ns != null)
+						ns.refresh((Namespace)Cache.cacheOf(nsz).document(dd.id, now, ns.version));
 				}
-	
-				allns = namespaces.keySet().toArray(new String[namespaces.size()]);
-	
-				for(String ns : allns)
-					if (!existingNs.contains(ns)) 
-						namespaces.remove(ns);
-				if (!toUpd.isEmpty())
-					for(String n : toUpd) 
-						reloadNS(n, now);
-
-				allns = namespaces.keySet().toArray(new String[namespaces.size()]);
-
+				
 				queueManagers.clear();
 				for(String ns : allns){
 					String qm = NS.get(ns).cfg.qm;
@@ -79,41 +64,32 @@ public class NS {
 					}
 				}
 			}
-			nextReload = System.currentTimeMillis() + (NSSCANPERIODINSECONDS * 1000);
+			nextReload = now.epoch() + (NSSCANPERIODINSECONDS * 1000);
 		}
 	}
 	
-	private static void reloadNS(String nsCode, Stamp startTime) throws AppException{
-		NS ns = namespaces.get(nsCode);
-		if (ns == null) {
-			ns = new NS();
-			namespaces.put(nsCode, ns);
-		}
-		NsDoc d = (NsDoc)GDCache.current().documentRO(id(nsCode), startTime, ns.version);
-		if (d == null) return; // rien de neuf
-		ns.version = d.version();
+	private void refresh(Namespace d) throws AppException {
+		version = d.version();
 		
-		NsDoc.Cfg cfg = d.cfg();
-		ns.cfg = (NsDoc.Cfg)cfg.getCopy();
+		Namespace.Cfg cfg = d.cfg();
+		cfg = (Namespace.Cfg)cfg.getCopy();
 		HashSet<String> resok = new HashSet<String>();
 		for(String name : d.getPKeys()){
 			resok.add(name);
 			P p = d.p(name);
-			PX r = ns.resources.get(name);
+			PX r = resources.get(name);
 			if (r != null && r.version >= p.version()) continue;
 			PX px = new PX(p);
 			if (px.resource != null)
-				ns.resources.put(name, px);
+				resources.put(name, px);
 			else
-				ns.resources.remove(name);
+				resources.remove(name);
 		}
-		for(String n : ns.resources.keySet())
+		for(String n : resources.keySet())
 			if (!resok.contains(n)) 
-				ns.resources.remove(n);
+				resources.remove(n);
 	}
-	
-	public static String[] namespaces() { return allns; }
-	
+		
 	public static NS get(String ns){ return namespaces.get(ns); }
 
 	public static ArrayList<String> nsOfQm(String[] qms) throws AppException{
@@ -168,7 +144,7 @@ public class NS {
 	}
 
 	public static Resource resource(String ns, String name) throws AppException{
-		if (nsns.equals(ns)) return null;
+		if (nsz.equals(ns)) return null;
 		NS x = get(ns);
 		if (x != null) {
 			PX px = x.resources.get(name);
@@ -178,15 +154,15 @@ public class NS {
 		return null;
 	}
 
-	private static Document.Id id(String ns) throws AppException { return new Document.Id(NsDoc.class, ns); }
+	private static Document.Id id(String ns) throws AppException { return new Document.Id(Namespace.class, ns); }
 	
-	public static class NsDoc extends Document {
-		private static NsDoc document(String ns) throws AppException {
-			return (NsDoc)Document.getOrNew(NS.id(ns));
+	public static class Namespace extends Document {
+		private static Namespace document(String ns) throws AppException {
+			return (Namespace)Document.getOrNew(NS.id(ns));
 		}
 
-		private static NsDoc existingDocument(String ns) throws AppException {
-			return (NsDoc)Document.get(NS.id(ns), 0);
+		private static Namespace existingDocument(String ns) throws AppException {
+			return (Namespace)Document.get(NS.id(ns), 0);
 		}
 
 		private Cfg cfg() throws AppException {	
@@ -220,7 +196,7 @@ public class NS {
 			
 	/** Instance NS ******************************/
 	private long version = 0;
-	private NsDoc.Cfg cfg = new NsDoc.Cfg();
+	private Namespace.Cfg cfg = new Namespace.Cfg();
 	
 	private static class PX {
 		long version;
@@ -246,17 +222,17 @@ public class NS {
 			if (!hasAdminKey())	throw new AppException("SADMINOP");
 			
 			String nsc = ExecContext.current().ns();
-			if (!nsc.equals(nsns)) throw new AppException("ANSBADNS", nsns, nsc);
+			if (!nsc.equals(nsz)) throw new AppException("ANSBADNS", nsz, nsc);
 			
 			Attachment a = inputData().attachments().get("resource");
 			if (a == null || a.bytes == null || a.bytes.length == 0) throw new AppException("ANSEMPTY");
 			
-			NsDoc d = NsDoc.existingDocument(param.ns);
+			Namespace d = Namespace.existingDocument(param.ns);
 			if (d == null) throw new AppException("ANSUNKNOWN", param.ns);
 			if (!Servlet.isZres(param.name)) throw new AppException("ANSZRES", param.name);;
 			
 			P p = d.blobStore(param.name, a.contentType, a.bytes);
-			if (p.status() != Status.unchanged) {
+			if (p.toSave()) {
 				Cfg cfg = d.cfg();
 				cfg.build++;
 				cfg.commit();
@@ -286,9 +262,9 @@ public class NS {
 			if (!hasAdminKey()) throw new AppException("SADMINOP");
 			
 			String nsc = ExecContext.current().ns();
-			if (!nsc.equals(nsns)) throw new AppException("ANSBADNS", nsns, nsc);
+			if (!nsc.equals(nsz)) throw new AppException("ANSBADNS", nsz, nsc);
 				
-			NsDoc d = NsDoc.document(param.ns);
+			Namespace d = Namespace.document(param.ns);
 			Cfg cfg = d.cfg();
 			if (param.theme != null && param.theme.length() != 0) cfg.theme = param.theme;
 			if (param.label != null && param.label.length() != 0) cfg.label = param.label;
@@ -304,7 +280,7 @@ public class NS {
 				cfg.srvcfg = x;
 			}
 			cfg.commit();
-			if (cfg.status() != Status.unchanged) {
+			if (cfg.toSave()) {
 				cfg.build++;
 				cfg.commit();
 			}
@@ -327,7 +303,7 @@ public class NS {
 			if (!hasAdminKey())	throw new AppException("SADMINOP");
 			
 			String nsc = ExecContext.current().ns();
-			if (!nsc.equals(nsns)) throw new AppException("ANSBADNS", nsns, nsc);
+			if (!nsc.equals(nsz)) throw new AppException("ANSBADNS", nsz, nsc);
 			
 			String json = "{}";
 			if (param.ns == null)
