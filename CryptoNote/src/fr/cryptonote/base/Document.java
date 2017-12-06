@@ -107,12 +107,6 @@ public class Document {
 	/** Méthode statique publique **/
 	public static Document get(Document.Id id, int maxDelayInSeconds) throws AppException { return ExecContext.current().getDoc(id, maxDelayInSeconds); }
 	public static Document getOrNew(Document.Id id) throws AppException { return ExecContext.current().getOrNewDoc(id); }
-	public static Document newDoc(Document.Id id) throws AppException { 
-		Document d = getOrNew(id);
-		d.cdoc.delete();
-		return d;
-	}
-	public static void delete(Document.Id id) throws AppException {	ExecContext.current().deleteDoc(id); }
 
 	/** Méthodes à surcharger **/
 	/* Filtre sur le document lui-même */
@@ -156,19 +150,23 @@ public class Document {
 	public CDoc cdoc() { return cdoc; }
 	public Document.Id id() { return cdoc.id(); }
 	
+	public void summarize() throws AppException { cdoc.summarize(); }
 	public Status status() { return cdoc.status(); }
 	public long ctime() { return cdoc.ctime(); }
 	public long version() { return cdoc.version(); }
 	public long dtime() { return cdoc.dtime(); }
+	public boolean toSave() { return cdoc.toSave(); }
 
 	/********************************************************************************/
+	public static void forceDeleteDoc(Id id) {ExecContext.current().forceDeleteDoc(id); }
+	
 	public void delete() throws AppException {
 		if (isRO()) throw new AppException("BDOCUMENTRO", "delete", "Document", id().toString());
 		cdoc.delete();
-		ExecContext.current().deleteDoc(id());	
+		ExecContext.current().deleteDoc(this);
 	}
 
-	public Document recreate(){	cdoc.recreate(); return this; }
+	public void recreate(){	cdoc.recreate(); }
 	
 	public BItem item(CItem ci) throws AppException{
 		if (ci == null) return null;
@@ -288,7 +286,7 @@ public class Document {
 			ExecContext.current().dbProvider().blobProvider().blobStore(clid, sha, bytes);
 			p.sha = sha;
 		}
-		p._citem().commitP(p);
+		p._citem().commitP(p, sha);
 		return p;
 	}
 

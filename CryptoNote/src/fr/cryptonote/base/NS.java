@@ -140,7 +140,8 @@ public class NS {
 	public static Object srvcfg(String ns) throws AppException{
 		reload();
 		NS x = get(ns);
-		return AConfig.config().newNssrvcfg(x == null ? null : x.cfg.srvcfg);
+		Object nscfg = AConfig.config().newNSSrvCfg();
+		return x == null ? nscfg : JSON.fromJson(x.cfg.srvcfg, nscfg.getClass());
 	}
 
 	public static Resource resource(String ns, String name) throws AppException{
@@ -275,8 +276,12 @@ public class NS {
 			if (x == null || x.length() == 0 || "{}".equals(x))
 				cfg.srvcfg = null;
 			else {
-				Object obj = AConfig.config().newNssrvcfg(x);
-				if (obj == null) throw new AppException("ANSSRVCFG", x);
+				Object nscfg = AConfig.config().newNSSrvCfg();
+				try {
+					JSON.fromJson(x, nscfg.getClass());
+				} catch (Exception e) {
+					throw new AppException(e, "ANSSRVCFG", x);
+				}
 				cfg.srvcfg = x;
 			}
 			cfg.commit();

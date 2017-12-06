@@ -24,7 +24,7 @@ import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.JSON;
 import fr.cryptonote.base.TaskInfo;
-import fr.cryptonote.base.TaskUpdDiff.Upd;
+import fr.cryptonote.provider.DBProvider.ItemToCopy;
 import fr.cryptonote.base.Util;
 
 public class ProviderPG implements DBProvider {
@@ -222,15 +222,15 @@ public class ProviderPG implements DBProvider {
 		ArrayList<DeltaDocument> lst = new ArrayList<DeltaDocument>();
 		StringBuffer sb = new StringBuffer();
 		sb.append(SELDOCS);
-		int j = 1;
-		if (BEGINclid != null) { j++; sb.append("where clid >= ? and clid < ?"); }
-		if (AFTERversion != 0) {sb.append(j++ == 1 ? "where " : " and ").append("version > ?");}
+		boolean p = true;
+		if (BEGINclid != null) { p = false; sb.append("where clid >= ? and clid < ?"); }
+		if (AFTERversion != 0) {sb.append(p ? "where " : " and ").append("version > ?"); p = false;}
 		sql = sb.append(";").toString();
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
-			j = 1;
+			int j = 1;
 			if (BEGINclid != null) {
 				preparedStatement.setString(j++, BEGINclid);
 				preparedStatement.setString(j++, BEGINclid + '\u1FFF');
@@ -266,12 +266,11 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setString(1, id.toString());
 			rs = preparedStatement.executeQuery();
 			if (rs.next()) {
-				int j = 1;
 				dd = new DeltaDocument();
 				dd.id = id;
-				dd.version = rs.getLong(j++);
-				dd.ctime = rs.getLong(j++);
-				dd.dtime = rs.getLong(j++);
+				dd.version = rs.getLong("version");
+				dd.ctime = rs.getLong("ctime");
+				dd.dtime = rs.getLong("dtime");
 			}
 			rs.close();
 			preparedStatement.close();
@@ -281,17 +280,17 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 	
-	private static final String SELITEMS1 = "select clkey, version, vop, contentt, contentb from item_";
+	private static final String SELITEMS1 = "select clkey, version, vop, sha, contentt, contentb from item_";
 	private static final String SELITEMS2 = "where docid = ? ";
 	
 	private void addCItem(ResultSet rs, DeltaDocument dd) throws SQLException {
-		int j = 1;
-		ItemId i = new ItemId(dd.id.descr(), rs.getString(j++));
+		ItemId i = new ItemId(dd.id.descr(), rs.getString("clkey"));
 		if (i.descr() == null) return;
-		long _version = rs.getLong(j++);
-		long _vop = rs.getLong(j++);
+		long _version = rs.getLong("version");
+		long _vop = rs.getLong("vop");
+		String _sha = rs.getString("sha");
 		String _t = getContent(rs);
-		dd.items.put(i.toString(), new CItem(i, _version, _vop, _t));		
+		dd.items.put(i.toString(), new CItem(i, _version, _vop, _sha, _t));		
 	}
 	
 	// copie complète simple - items : tous les items existants  +  tous les items détruits
@@ -406,13 +405,14 @@ public class ProviderPG implements DBProvider {
 	
 	/***********************************************************************************************/
 	@Override
-	public HashMap<String, Long> validateDocument(ExecCollect collect) throws AppException {
-		// TODO Auto-generated method stub
+	public HashSet<String> validateDocument(ExecCollect collect) throws AppException {
+		
+		
 		return null;
 	}
 
 	@Override
-	public void rawStore(Id id, Upd upd, long vop) throws AppException {
+	public void rawDuplicate(long vop, Collection<ItemToCopy> items)  throws AppException {
 		// TODO Auto-generated method stub
 		
 	}

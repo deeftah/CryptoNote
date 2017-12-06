@@ -3,7 +3,6 @@ package fr.cryptonote.app;
 import java.util.HashMap;
 
 import fr.cryptonote.base.AConfig;
-import fr.cryptonote.base.DocumentDescr;
 import fr.cryptonote.base.Stamp;
 
 public class Config extends AConfig {
@@ -24,6 +23,21 @@ public class Config extends AConfig {
 		Gouvernances gouvernances;
 	}
 
+	static {
+		config = new Config();
+	}
+	
+	public static Config config() { return (Config)config; }
+
+	protected static class Secret extends ASecret {
+		int bar;
+	}
+
+	public static class NSSrvCfg {
+
+	}
+	@Override public Object newNSSrvCfg() {	return new NSSrvCfg(); }
+	
 	public int SESSIONAGEMAXENSECONDES() { return ((Gen)config.gen()).SESSIONAGEMAXENSECONDES; }
 	public int NBHEURESENCREATION() { return ((Gen)config.gen()).NBHEURESENCREATION; }
 	public int NBHEURESENZOMBIE() { return ((Gen)config.gen()).NBHEURESENZOMBIE; }
@@ -37,21 +51,8 @@ public class Config extends AConfig {
 	public long RV2() { return ((Gen)config.gen()).RV2; }
 	public int RV1PC() { return ((Gen)config.gen()).RV1PC; }
 	public int RV2PC() { return ((Gen)config.gen()).RV2PC; }
-	
-	private static final SchVote defScheVote = new SchVote(50,2,false,false,0);
-	
-	protected static class Secret extends ASecret {
-		int bar;
-	}
-	
-	static {
-		config = new Config();
-	}
-
-	public static Config config() { return (Config)config; }
 
 	private static boolean ready = false;
-	
 	public static void startup() throws Exception {
 		synchronized (config) {
 			if (ready) return;
@@ -78,6 +79,8 @@ public class Config extends AConfig {
 	}
 
 	/*************************************************************************/
+	private static final SchVote defScheVote = new SchVote(50,2,false,false,0);
+
 	public static class GouvernanceExc extends HashMap<String,SchVote> {
 		private static final long serialVersionUID = 1L;
 		private SchVote schema(String type) { return get(type); }
@@ -167,20 +170,6 @@ public class Config extends AConfig {
 	/****************************************************/
 
 	private static void declareDocumentsAndOperations() throws Exception{
-		DocumentDescr.register(Repertoire.class);
-//		ItemDescr itd = DocumentDescr.get(Repertoire.class).itemDescr(Contact.class);
-//		DocumentDescr[] dx = itd.copyToDocs();
-//		char sep = itd.separator();
-//		DocumentDescr.register(LivrC3.class);
-//		Operation.register(GetLivrC.class);
-//		Operation.register(UpdLivrC.class);
-//
-//		DocumentDescr.register(Repertoire.class);
-//		DocumentDescr.register(RepTask.class);
-//
-//		Operation.register(Default.class);
-//		Operation.register(DBInfo.class);
-//
 //		DocumentDescr.register(Compte.class);
 //		DocumentDescr.register(Mur.class);
 //		DocumentDescr.register(Groupe.class);

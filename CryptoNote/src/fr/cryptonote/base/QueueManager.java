@@ -142,8 +142,11 @@ public class QueueManager implements Runnable {
 					throw new AppException(e, "BQMJSONTI", jsonp);
 				}
 			}
-			TaskInfo[] til = {ti};
-			if (ti != null)	insertAllInQueue(til);
+			if (ti != null) {
+				ArrayList<TaskInfo> til = new ArrayList<TaskInfo>();
+				til.add(ti);
+				insertAllInQueue(til);
+			}
 			return null;
 		}
 		if (!exec.hasQmKey()) throw new AppException("SQMKEY");
@@ -195,9 +198,9 @@ public class QueueManager implements Runnable {
 		}
 	}
 
-	public static void insertAllInQueue(TaskInfo[] tiList){
+	public static void insertAllInQueue(Collection<TaskInfo> tiList){
 		if (qm == null) return;
-		if (tiList == null || tiList.length == 0) return;
+		if (tiList == null || tiList.size() == 0) return;
 		for(TaskInfo ti : tiList) {
 			if (ti.nextStart > qm.nextFullScan.stamp()) continue;
 			if (qm == null || !hostNsQ(ti.ns))

@@ -3,8 +3,10 @@ package fr.cryptonote.base;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 
+import fr.cryptonote.base.ExecContext.IuCDoc;
 import fr.cryptonote.provider.DBProvider.DeltaDocument;
 
 public class Cache {
@@ -140,5 +142,28 @@ public class Cache {
 	public Document document(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
 		XCDoc xc = cdoc(id, minTime, versionActuelle);
 		return Document.newDocument(xc.existing ? xc.cdoc : CDoc.newEmptyCDoc(id));
+	}
+	
+	/*
+	 * Invoquée dans la phase de validation d'une opération juste APRES le commit()
+	 * pour répercuter dans la cache locale les cdocs commités et supprimés.
+	 */
+	public synchronized void afterValidateCommit(long version, Collection<IuCDoc> updated, Collection<Document> docsToDel, Collection<String> docsToDelForced) {
+		if (updated != null) for(IuCDoc x : updated) {
+			CDoc a = documents.get(x.cdoc.id().toString());
+			if (a == null || a.version() < version) doc(x.cdoc);
+		}
+		if (docsToDel != null) for(Document x : docsToDel) documents.remove(x.id().toString());
+		if (docsToDelForced != null) for(String clid : docsToDelForced) documents.remove(clid);
+	}
+	
+	/*
+	 * Validation échouée parce que ces documents sont obsolètes : rafraîchir
+	 */
+	public synchronized void refreshCache(HashSet<String> badDocs) {
+		if (badDocs != null) for(String k : badDocs) {
+			CDoc a = documents.get(k);
+			if (a != null) a.lastCheckDB = 0;
+		}
 	}
 }

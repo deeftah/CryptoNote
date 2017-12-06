@@ -1,69 +1,38 @@
 package fr.cryptonote.base;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
-import fr.cryptonote.base.DocumentDescr.ItemDescr;
-import fr.cryptonote.provider.DBProvider;
+import fr.cryptonote.base.CDoc.CItem;
+import fr.cryptonote.provider.DBProvider.ItemToCopy;
 
 public class TaskUpdDiff extends Document {
-	private static final int NBDOCSBYREQ = 50;
 	
-	void add(Document.Id id, String key, BItem item) throws AppException{
-		if (item == null || id == null) throw new AppException("BUPDDIFF1");
-		String n = item.getClass().getSimpleName();
-		ItemDescr descr = id.descr().itemDescr(n);
-		if (descr == null) throw new AppException("BTUPDDIFF2", n);
-		if (!descr.isSingleton() && (key == null || key.length() == 0)) throw new AppException("BUPDDIFF3", n);
-		((Upd)itemOrNew(Upd.class, id.toString())).put(descr.name() + (descr.isSingleton() ? "" : "." + key), item.serializedBItem());
+	void add(ItemToCopy item) throws AppException{ if (item != null) hdr().items.add(item); }
+	
+	void setVop(long version) throws AppException { hdr().vop = version; }
+	
+	CItem commit() throws AppException { 
+		Hdr hdr = hdr();
+		hdr.commit(); 
+		return hdr._citem();
 	}
 
 	public static class Hdr extends Singleton {
 		public long vop;
+		public ArrayList<ItemToCopy> items = new ArrayList<ItemToCopy>();
 	}
 	
-	public static class Upd extends Item {
-		public HashMap<String,SerializedBItem> lst;
-		public void put(String clkey, SerializedBItem sbi) throws AppException { 
-			if (lst == null) lst = new HashMap<String,SerializedBItem>();
-			lst.put(clkey, sbi); 
-			commit();
-		}
-	}
-	
+	private Hdr hdr() throws AppException { return (Hdr)singletonOrNew(Hdr.class); }
+		
 	public static class Task extends Operation {
 		@Override public void work() throws AppException {
-			int ckp = taskCheckpoint() == null ? 0 : (int)taskCheckpoint();
-			ckp++;
 			TaskUpdDiff t = (TaskUpdDiff)Document.get(taskId(), 0);
 			if (t == null) return;
 			
-			DBProvider provider = execContext().dbProvider();
+			Hdr hdr = t.hdr();
+			execContext().dbProvider().rawDuplicate(hdr.vop, hdr.items);
 			
-			long vop = ((Hdr)t.singletonOrNew(Hdr.class)).vop;
-			
-			String[] docIds = t.getKeys(Upd.class);
-			for(int i = 0; i < docIds.length; i++) {
-				Document.Id id = new Document.Id(docIds[i]);
-				Upd upd = (Upd)t.item(Upd.class, docIds[i]);
-				if (id.descr() != null) 
-					provider.rawStore(id, upd, vop);
-				upd.delete();
-				if (id.descr() != null) break;
-			}
-			
-			int nbx = t.getKeys(Upd.class).length;
-			if (nbx == 0) {
-				t.delete();
-				taskCheckpoint(null);
-			} else {
-				if (ckp < NBDOCSBYREQ) // NBDOCSBYREQ dans la même requête
-					taskCheckpoint(new Integer(ckp));
-				else {
-					setTask(taskId(), Stamp.fromNow(1000).stamp(), "" + nbx);
-					taskCheckpoint(null);
-				}
-			}
-			
+			t.delete();
 		}
 	}
 }

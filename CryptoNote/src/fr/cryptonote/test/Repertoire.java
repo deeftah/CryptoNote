@@ -1,4 +1,4 @@
-package fr.cryptonote.app;
+package fr.cryptonote.test;
 
 import fr.cryptonote.base.AppException;
 import fr.cryptonote.base.Cond;

@@ -12,7 +12,6 @@ import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.TaskInfo;
-import fr.cryptonote.base.TaskUpdDiff.Upd;
 
 public interface DBProvider {
 	public String ns();
@@ -81,19 +80,25 @@ public interface DBProvider {
 	 */
 	public DeltaDocument getDocument(Document.Id id, long ctime, long version, long dtime) throws AppException ;
 	
+	public static class ItemToCopy {
+		public String clid;
+		public String clkey;
+		public String json;
+		public ItemToCopy(String clid, String clkey, String json) { this.clid = clid; this.clkey = clkey; this.json = json; }
+	}
+	
 	/*
-	 * Mise à jour en une transaction de tous les items de upd dans le document d'id donnée.
-	 * Pour chaque item, upsert seulement si le champ cas (s'il existe) de l'item en base 
-	 * est inférieur au cas donné dans l'item à insérer / mettre à jour;
+	 * Mise à jour par document cible des items dupliqués.
+	 * Pour chaque item, update seulement si vop > version de l'item en base;
 	 */
-	public void rawStore(Document.Id id, Upd upd, long vop)  throws AppException;
+	public void rawDuplicate(long vop, Collection<ItemToCopy> items)  throws AppException;
 	
 	/**
 	 * Fin de transaction de lecture ou de mise à jour
 	 * @param collect documents et parts à mettre jour, groups à checker
 	 * @throws AppException
 	 */
-	public HashMap<String,Long> validateDocument(ExecCollect collect) throws AppException;
+	public HashSet<String> validateDocument(ExecCollect collect) throws AppException;
 
 	/***********************************************************************************************************/
 	

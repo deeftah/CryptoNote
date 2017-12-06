@@ -131,8 +131,7 @@ public class AConfig {
 		private int NSSCANPERIODINSECONDS = 30;
 		private int S2CLEANUPPERIODINHOURS = 4;
 		private boolean isDebug = false;
-		private String dbProviderClass = "app.DbProvider";
-		private String nssrvcfgClass = "app.Config";
+		private String dbProviderClass = "fr.cryptonote.provider.ProviderPG";
 		private boolean MONOSERVER = false;
 		private HashMap<String,Instance> instances;
 		private HashMap<String,String> shortcuts;
@@ -156,12 +155,10 @@ public class AConfig {
 	private String dbProviderName;
 	private String dbProviderConfig;
 	private Class<?> dbProviderClass;
-	private Class<?> nssrvcfgClass;
 	private Constructor<?> dbProviderConstructor;
 	
 	public AGen gen() { return gen; }
 	public ASecret secret() { return secret; }
-
 
 	public static void startup(Class<?> genClass, Class<?> secretClass) throws Exception {		
 			MimeType.init();
@@ -171,13 +168,12 @@ public class AConfig {
 				try {
 					config.gen = (AGen)JSON.fromJson(r.toString(), genClass);
 				} catch (Exception ex) {
-					throw new Exception(_format(0, "XRESSOURCECONFIG", ex.getMessage()));
+					throw exc(ex, _format(0, "XRESSOURCECONFIG", ex.getMessage()));
 				}
-				if (config.gen.langs == null || config.gen.langs.length == 0)
-					config.gen.langs = defaultLangs;
+				if (config.gen.langs == null || config.gen.langs.length == 0) config.gen.langs = defaultLangs;
 				setMF(config.gen.langs);
 			} else
-				throw new Exception(_format(0, "XRESSOURCECONFIG"));
+				throw exc(null, _format(0, "XRESSOURCECONFIG"));
 
 			try {
 				Servlet.Resource rb = Servlet.getResource("/var/build.js");
@@ -186,33 +182,21 @@ public class AConfig {
 				int j = s.lastIndexOf("\"");
 				config.gen.build = s.substring(i+ 1, j);
 			} catch (Exception e) {
-				throw new Exception(_format(0, "XRESSOURCEABSENTE", "/var/build.js"));
+				throw exc(e, _format(0, "XRESSOURCEABSENTE", "/var/build.js"));
 			}
 
 			config.gen.instance = System.getProperty(DVARINSTANCE);
 			
-			if (config.gen.ns == null || config.gen.ns.length < 2)
-				throw new Exception(_format(0, "XRESSOURCENS"));
-			if (config.gen.url == null || 
-					(!config.gen.url.startsWith("http://") && !config.gen.url.startsWith("https://")))
-				throw new Exception(_format(0, "XRESSOURCEURL"));
-			if (config.gen.url.endsWith("/"))
-				config.gen.url = config.gen.url.substring(0,  config.gen.url.length() - 1);
-
-			try {
-				config.nssrvcfgClass = Class.forName(config.gen.nssrvcfgClass);
-				config.nssrvcfgClass.newInstance();
-			} catch (Exception e) {
-				String msg1 = _format(0, "XRESSOURCECLASS", config.gen.nssrvcfgClass);
-				Util.log.log(Level.SEVERE, msg1 + " - " + e.getMessage());
-				throw new Exception(msg1, e);
-			}
+			if (config.gen.ns == null || config.gen.ns.length < 2) throw exc(null, _format(0, "XRESSOURCENS"));
+			if (config.gen.url == null || (!config.gen.url.startsWith("http://") && !config.gen.url.startsWith("https://")))
+				throw exc(null, _format(0, "XRESSOURCEURL"));
+			if (config.gen.url.endsWith("/")) config.gen.url = config.gen.url.substring(0,  config.gen.url.length() - 1);
 
 			r = Servlet.getResource("/WEB-INF/secret.json");
 			if (r != null) {
 				config.secret = (ASecret)JSON.fromJson(Util.fromUTF8(r.bytes), secretClass);
-			} else
-				throw new Exception(_format(0, "XRESSOURCEABSENTE", "/WEB-INF/secret.json"));
+			} else 
+				throw exc(null, _format(0, "XRESSOURCEABSENTE", "/WEB-INF/secret.json"));
 
 			try {
 				String n = config.gen.dbProviderClass;
@@ -221,21 +205,23 @@ public class AConfig {
 				config.dbProviderClass = Class.forName(n);
 				config.dbProviderConstructor = config.dbProviderClass.getConstructor(String.class);
 			} catch (Exception e) {
-				String msg1 = _format(0, "XRESSOURCECLASS", config.gen.dbProviderClass);
-				Util.log.log(Level.SEVERE, msg1 + " - " + e.getMessage());
-				throw new Exception(msg1, e);
+				throw exc(e, _format(0, "XRESSOURCECLASS", config.gen.dbProviderClass));
 			}
 			
 			r = Servlet.getResource("/WEB-INF/dbconfig.json");
 			if (r != null) {
 				config.dbProviderConfig = r.toString();
 			} else {
-				String msg1 = _format(0, "XRESSOURCEABSENTE", "/WEB-INF/dbconfig.json");
-				Util.log.log(Level.SEVERE, msg1);
-				throw new Exception(msg1);
+				throw exc(null, _format(0, "XRESSOURCEABSENTE", "/WEB-INF/dbconfig.json"));
 			}
 			
 			declareDocumentsAndOperations();	
+	}
+	
+	private static Exception exc(Exception e, String msg) {
+		if (e != null) msg += " - " + e.getMessage();
+		Util.log.log(Level.SEVERE, msg);
+		return new Exception(msg);
 	}
 	
 	public final int iLang(String lang) { return _iLang(lang); }
@@ -251,15 +237,11 @@ public class AConfig {
 	public String[] ns() { return gen.ns ;}
 	public String nsz() { return gen.ns[0] ;}
 
-	public Object newNssrvcfg(String json) {
-		try {
-			if (json == null || json.length() == 0 || "{}".equals(json))
-				return nssrvcfgClass.newInstance();
-			return JSON.fromJson(json, nssrvcfgClass);
-		} catch(Exception e) { 
-			return null; // Non parsable
-		} 
+	public static class DefaultNSSrvCfg {
+		public HashMap<String,String> args;
 	}
+
+	public Object newNSSrvCfg() { return new DefaultNSSrvCfg(); }
 	
 	public String[] offlinepages() { return gen.offlinepages == null ? new String[0] : gen.offlinepages ;}
 	public boolean MONOSERVER() { return gen.MONOSERVER;}

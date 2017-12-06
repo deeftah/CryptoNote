@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.ExportedFields;
+import fr.cryptonote.base.Document.Id;
 import fr.cryptonote.base.Document.ItemId;
 import fr.cryptonote.base.Document.P;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
@@ -94,8 +95,8 @@ public class CDoc implements Comparable<CDoc> {
 	}
 	
 	/********************************************************************************/
-	@FunctionalInterface interface CIAction {
-	    boolean action(CItem ci);
+	@FunctionalInterface public interface CIAction {
+	    public boolean action(CItem ci);
 	}
 
 	@FunctionalInterface interface CICounter {
@@ -137,7 +138,7 @@ public class CDoc implements Comparable<CDoc> {
 	void summarize() throws AppException {
 		v1 = 0;	v2 = 0;	nbExisting = 0;	nbToSave = 0; nbToDelete = 0; nbTotal = 0; sizeInCache = 0;
 		if (status != Status.deleted && status != Status.shortlived) {
-			browse((ci) -> {
+			browse(ci -> {
 				sizeInCache += ci.sizeInCache();
 				v1 += ci.v1();
 				v2 += ci.v2();
@@ -278,6 +279,8 @@ public class CDoc implements Comparable<CDoc> {
 		private String key;		// key d'un item, null pour un singleton
 		private String value; 	// contenu avant. null pour une trace de suppression ou un item nouvellement créé
 		private String nvalue; 	// nouveau contenu. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
+		private String sha; 	// item P seulement : sha avant. null pour une trace de suppression ou un item nouvellement créé
+		private String nsha; 	// item P seulement : sha nouveau. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
 		private int blobSize;	// taille du blob
 		private int nblobSize;	// taille du blob après changement
 		private ExportedFields exportedFields; // valeurs des champs exportés (extraits de BItem au commit())
@@ -287,21 +290,25 @@ public class CDoc implements Comparable<CDoc> {
 		
 		public CItem() {}
 		
-		public CItem(ItemId i, long version, long vop, String value) {
-			this.descr = i.descr(); this.key = i.key(); this.version = version; this.vop = vop;
+		public CItem(ItemId i, long version, long vop, String sha, String value) {
+			this.descr = i.descr(); this.key = i.key(); this.version = version; this.vop = vop; this.sha = sha;
 			if (value == null) deleted = true; else this.value = value;
 		}
 		
 		public ItemDescr descr() { return descr; }
+		public Id id() { return cdoc.id; }
 		public long version() { return version; }
 		public long vop() { return vop; }
 		public String key() { return descr().isSingleton() ? "" : key; }
 		public String cvalue() { return nvalue != null ? nvalue : (value != null ? value : null); }
+		public String sha() { return sha; }
+		public String nsha() { return nsha(); }
 		public String clkey() { return descr.name() + (descr.isSingleton() ? "" : "." + key); }
 		public int sizeInCache() { return (value != null ? value.length() : 0) + (key != null ? key.length() : 0); }
-		public boolean deleted() { return deleted; }	// item non existant
-		public boolean toSave() { return toSave; } // item créé / modifié à sauver
-		public boolean toDelete() { return toDelete; } // item à supprimer
+		public boolean deleted() { return deleted; }				// item non existant
+		public boolean toSave() { return toSave; } 					// item créé / modifié à sauver
+		public boolean toDelete() { return toDelete; } 				// item à supprimer
+		public boolean created() { return toSave && version == 0; } // item créé
 		
 		void setStatus() {
 			deleted = value == null && nvalue == null;
@@ -330,6 +337,8 @@ public class CDoc implements Comparable<CDoc> {
 			c.key = key;
 			c.value = value;
 			c.nvalue = nvalue;
+			c.sha = sha;
+			c.nsha = nsha;
 			c.blobSize = blobSize;
 			c.nblobSize = nblobSize;
 			c.deleted = deleted;
@@ -338,7 +347,7 @@ public class CDoc implements Comparable<CDoc> {
 			return c;
 		}
 						
-		void delete() throws AppException {	nvalue = null;	nblobSize = 0; setStatus(); }
+		void delete() throws AppException {	nvalue = null;	nblobSize = 0; nsha = null; setStatus(); }
 
 		void commit(String json, ExportedFields exportedFields) throws AppException{
 			if (json == null) json = "{}";
@@ -354,9 +363,10 @@ public class CDoc implements Comparable<CDoc> {
 			setStatus();
 		}
 		
-		void commitP(P p){
+		void commitP(P p, String sha){
 			blobSize = p.size();
 			String s = JSON.toJson(p);
+			nsha = sha;
 			nvalue = s.equals(value) ? null : s;
 			setStatus();
 		}
@@ -467,16 +477,37 @@ public class CDoc implements Comparable<CDoc> {
 	}
 	
 	/******************************************************************************/
+	
 	/**
 	 * Méthode basculant un CDoc local à un ExecContect après commit() d'une opération
 	 * en un CDoc acceptable pour être mis en cache.
 	 * Comme dtime / ctime / version changent, les items se réinitialisent
 	 * @param version
-	 * @return true si changé ???
 	 * @throws AppException 
 	 */
-	boolean afterCommit(long version) throws AppException {
-		// TODO
-		return true;
+	void afterCommit(long version) throws AppException {
+		if (status == Status.created || status == Status.recreated) ctime = version;
+		this.version = version;
+		status = Status.unchanged;
+		browse(ci -> {
+			if (ci.toSave) {
+				ci.version = version;
+				ci.value = ci.nvalue;
+				ci.nvalue = null;
+				ci.sha = ci.nsha;
+				ci.nsha = null;
+				ci.toSave = false;
+			} else if (ci.toDelete){
+				ci.version = version;
+				ci.value = null;
+				ci.nvalue = null;
+				ci.sha = null;
+				ci.nsha = null;
+				ci.toSave = false;
+				ci.toDelete = false;
+				ci.deleted = true;	
+			}
+			return true;
+		});	
 	}
 }
