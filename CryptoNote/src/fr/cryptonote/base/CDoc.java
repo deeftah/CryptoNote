@@ -130,14 +130,16 @@ public class CDoc implements Comparable<CDoc> {
 	}
 
 	void compSizeInCache() { sizeInCache = count((ci) -> ci.sizeInCache()); }
-	ArrayList<CItem> listItemsToSave() { return filter((ci) -> ci.toSave); }
-	ArrayList<CItem> listItemsToDelete() { return filter((ci) -> ci.toDelete); }
-	ArrayList<CItem> listExistingItems() { return filter((ci) -> !ci.deleted); }
+//	ArrayList<CItem> listItemsToSave() { return filter((ci) -> ci.toSave); }
+//	ArrayList<CItem> listItemsToDelete() { return filter((ci) -> ci.toDelete); }
+//	ArrayList<CItem> listExistingItems() { return filter((ci) -> !ci.deleted); }
 	ArrayList<CItem> listAllItems() { return filter((ci) -> true); }
 	
 	void summarize() throws AppException {
+		// unchanged, modified, created, recreated, deleted, shortlived
 		v1 = 0;	v2 = 0;	nbExisting = 0;	nbToSave = 0; nbToDelete = 0; nbTotal = 0; sizeInCache = 0;
 		if (status != Status.deleted && status != Status.shortlived) {
+			// unchanged, modified, created, recreated
 			browse(ci -> {
 				sizeInCache += ci.sizeInCache();
 				v1 += ci.v1();
@@ -148,8 +150,9 @@ public class CDoc implements Comparable<CDoc> {
 				if (!ci.toDelete) nbToDelete++;
 				return true;		
 			});
-			if (status == Status.unchanged && status != Status.modified)
-				status = hasChanges() ? Status.modified : Status.unchanged;
+			if (status != Status.created && status == Status.recreated)
+				// unchanged, modified
+				status = nbToSave + nbToDelete != 0 ? Status.modified : Status.unchanged;
 		}
 	}
 
@@ -326,7 +329,17 @@ public class CDoc implements Comparable<CDoc> {
 
 		public String toString() { return cdoc != null ? cdoc.id().toString() + "#" + clkey() : clkey(); }
 		
-		public ExportedFields exportedFileds() { return exportedFields; }
+		public ExportedFields exportedFields() { return exportedFields; }
+		
+		private void purge() {
+			if (descr.isSingleton()) 
+				cdoc.sings.remove(descr.name());
+			else
+				cdoc.colls.get(descr.name()).remove(key);
+			cdoc = null;
+			descr = null;
+			bitem = null;
+		}
 		
 		CItem copy(CDoc cd){
 			CItem c = new CItem();
@@ -477,7 +490,7 @@ public class CDoc implements Comparable<CDoc> {
 	}
 	
 	/******************************************************************************/
-	
+		
 	/**
 	 * Méthode basculant un CDoc local à un ExecContect après commit() d'une opération
 	 * en un CDoc acceptable pour être mis en cache.
@@ -485,10 +498,12 @@ public class CDoc implements Comparable<CDoc> {
 	 * @param version
 	 * @throws AppException 
 	 */
-	void afterCommit(long version) throws AppException {
+	void afterCommit(long version, long dtime) throws AppException {
 		if (status == Status.created || status == Status.recreated) ctime = version;
 		this.version = version;
+		this.dtime = dtime;
 		status = Status.unchanged;
+		ArrayList<CItem> toPurge = new ArrayList<CItem>();
 		browse(ci -> {
 			if (ci.toSave) {
 				ci.version = version;
@@ -506,8 +521,11 @@ public class CDoc implements Comparable<CDoc> {
 				ci.toSave = false;
 				ci.toDelete = false;
 				ci.deleted = true;	
+			} else if (ci.deleted && ci.version < dtime) {
+				toPurge.add(ci);
 			}
 			return true;
 		});	
+		for(CItem ci : toPurge) ci.purge();
 	}
 }

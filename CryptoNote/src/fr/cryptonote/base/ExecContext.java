@@ -12,11 +12,12 @@ import javax.servlet.ServletException;
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
 import fr.cryptonote.base.Cache.XCDoc;
+import fr.cryptonote.base.Document.ExportedFields;
 import fr.cryptonote.base.Document.Id;
 import fr.cryptonote.base.Document.Sync;
 import fr.cryptonote.base.Servlet.InputData;
+import fr.cryptonote.base.TaskUpdDiff.ItemToCopy;
 import fr.cryptonote.provider.DBProvider;
-import fr.cryptonote.provider.DBProvider.ItemToCopy;
 
 public class ExecContext {	
 	private static boolean isDebug ;
@@ -181,22 +182,25 @@ public class ExecContext {
 		tasks.put(id.toString(), new TaskInfo(ns(), id, nextStart, 0, info));
 	}
 
-	void forceDeleteDoc(Id id){
+	void forceDeleteDoc(Id id) throws AppException{
 		if (id != null){
 			String k = id.toString();
 			Document d = docs.get(k);
-			if (d != null){
-				d.cdoc().delete();
-				deletedDocuments.put(k, d);
-				docs.remove(k);			
-			} else 
-				forcedDeletedDocuments.add(k);			
+			if (d != null)
+				deleteDoc(d);
+			else {
+				forcedDeletedDocuments.add(k);
+				emptyDocs.add(k);
+			}
 		}
 	}
 	
 	void deleteDoc(Document d) throws AppException {
 		String k = d.id().toString();
+		if (d.isRO()) throw new AppException("BDOCUMENTRO", "delete", "Document", k);
+		d.cdoc().delete();
 		deletedDocuments.put(k, d);
+		emptyDocs.add(k);
 		docs.remove(k);
 	}
 
@@ -318,14 +322,12 @@ public class ExecContext {
 						if (!collect.nothingToCommit()) {
 							phase = 2;
 							long startVal = System.currentTimeMillis();
-							HashSet<String> badDocs = dbProvider().validateDocument(collect);
-							if (badDocs!= null) {
-								Cache.current().refreshCache(badDocs);
-								StringBuffer sb = new StringBuffer();
-								for(String clid : badDocs) sb.append(clid + "\n");
-								throw new AppException("CONTENTION1", this.operationName(), sb.toString());
-							}
+							HashMap<String,Long> badDocs = dbProvider().validateDocument(collect);
 							lapseVal = System.currentTimeMillis() - startVal;
+							if (badDocs != null) {
+								String lst = Cache.current().refreshCache(badDocs.keySet());
+								throw new AppException("CONTENTION1", this.operationName(), lst);
+							}
 						}
 						
 						phase = 3;	
@@ -392,70 +394,88 @@ public class ExecContext {
 	}
 
 	/*********************************************************************************************/
-	public static class IuCDoc {
-		public int iu; // 1:insert 2:update 3:clear et update
-		public CDoc cdoc;
-		public long oldVersion;
-		public IuCDoc(CDoc cdoc) { 
-			Status dst = cdoc.status();
-			iu = dst == Status.created ? 1 : ( dst == Status.recreated ? 3 : 2);
-			this.cdoc = cdoc; 
-			this.oldVersion = cdoc.version();
+	public static class ItemIUD {
+		public int iud; // 1:insertion 2:update 3:suppression logique 4:purge/delete (trop ancien)
+		public Id id;
+		public String cvalue;
+		public ExportedFields exportedFields;
+		public String sha;
+		public String name;
+		public String clkey;
+		public ItemIUD() {}
+		public ItemIUD(CItem ci, long dtime, HashSet<String> s2Cleanup) {
+			this.id = ci.id(); 
+			name = ci.descr().name();
+			clkey = ci.clkey();
+			if (ci.deleted() && ci.version() < dtime)
+				iud = 4;
+			else
+				iud = ci.created() ? 1 : (ci.toDelete() ? 3 : (ci.toSave() ? 2 : 0));
+			if (ci.descr().isP()) {
+				if (iud == 2)
+					sha = ci.nsha();
+				if (iud == 2 || iud == 3)
+					s2Cleanup.add(ci.id().toString());
+			}
+			if (iud == 1 || iud == 2){
+				cvalue = ci.cvalue();
+				exportedFields = ci.exportedFields();
+			}
 		}
 	}
+	
+	/*********************************************************************************************/
+	public class IuCDoc {
+		public int iu; // 1:insert 2:update 3:clear et insert
+		public long oldVersion;
+		public String clid;
+		public long oldctime;
+		public long olddtime;
+		public CDoc cdoc;			// pour mise à jour de cache afterCommit
+		public IuCDoc(Document doc) { 
+			Status dst = doc.status();
+			iu = dst == Status.created ? 1 : ( dst == Status.recreated ? 3 : 2);
+			oldVersion = doc.version();
+			clid = doc.id().toString();
+			oldctime = doc.ctime();
+			olddtime = doc.dtime();
+			cdoc = doc.cdoc();
+		}
+	}
+
 
 	public class ExecCollect {
 //		HashMap<String,TaskInfo> tasks = new HashMap<String,TaskInfo>();
 //		HashMap<String,Document> docs = new HashMap<String,Document>();
 //		HashMap<String,Document> deletedDocuments = new HashMap<String,Document>();
 //		HashSet<String> forcedDeletedDocuments = new HashSet<String>();
-
-		public class ItemIUD {
-			public int iud;
-			public Id id;
-			public CItem ci;
-			public String sha;
-			public String oldSha;
-			public ItemIUD(CItem ci) {
-				this.id = ci.id(); 
-				this.ci = ci;
-				iud = ci.created() ? 1 : (ci.deleted() ? 3 : (ci.toSave() ? 2 : 0));
-				if (ci.descr().isP()) {
-					sha = ci.nsha();
-					oldSha = ci.sha();
-				}
-				if (ci.descr().hasDifferedCopy())
-					try {  
-						if (updDiff == null)
-							updDiff = (TaskUpdDiff)Document.newDocument(CDoc.newEmptyCDoc(new Document.Id(TaskUpdDiff.class, Crypto.randomB64(2))));
-						updDiff.add(new ItemToCopy(ci.id().toString(), ci.clkey(), ci.cvalue()));
-					} catch (AppException e) {	}
-			}
-		}
-
+		
 		public boolean nothingToCommit() {
-			return toLock.size() == 0 && docsToDelForced.size() == 0 && (tq == null || tq.size() == 0); 
+			return versionsToCheckAndLock.size() == 0 && docsToDelForced.size() == 0 && (tq == null || tq.size() == 0); 
 		}
 						
-		public long version; // la future version
+		public long version; 	// future version des documenrs mis à jour / crés ou des items détruits
+		public long dtime;		// future dtime des documenrs mis à jour
 		
 		public void afterCommit(){
-			Cache.current().afterValidateCommit(version, cdocsToSave, docsToDel == null ? null : docsToDel.values(), docsToDelForced);
+			Cache.current().afterValidateCommit(version, docsToSave, docsToDelForced);
 			QueueManager.insertAllInQueue(tq == null ? null : tq.values());
 		}
 
-		// Tasks
-		public HashMap<String,TaskInfo> tq;
+		private void checkVersion(Document doc){
+			long v = doc.version();
+			if (v <= version) version = Stamp.fromStamp(v, 1).stamp();
+			versionsToCheckAndLock.put(doc.id().toString(), v);
+		}
 		
 		// documents à supprimer
-		HashMap<String,Document> docsToDel;
-		HashSet<String> docsToDelForced;
+		public HashSet<String> docsToDelForced;
 
 		// documents à sauver
-		public ArrayList<IuCDoc> cdocsToSave = new ArrayList<IuCDoc>();
+		public ArrayList<IuCDoc> docsToSave = new ArrayList<IuCDoc>();
 		
 		// documents à verrouiller
-		public ArrayList<Id> toLock = new ArrayList<Id>();
+		public HashMap<String,Long> versionsToCheckAndLock = new HashMap<String,Long>();
 
 		// documents avec S2 à nettoyer
 		public HashSet<String> s2Cleanup = new HashSet<String>();
@@ -466,44 +486,55 @@ public class ExecContext {
 		// items à insérer / mettre à jour / supprimer
 		public ArrayList<ItemIUD> itemsIUD = new ArrayList<ItemIUD>();
 
-		private TaskUpdDiff updDiff;
+		// Tasks
+		public HashMap<String,TaskInfo> tq;
 
+		private TaskUpdDiff updDiff;
+		private void updDiff(CItem ci){
+			if (ci.descr().hasDifferedCopy())
+				try {  
+					if (updDiff == null)
+						updDiff = (TaskUpdDiff)Document.newDocument(CDoc.newEmptyCDoc(new Document.Id(TaskUpdDiff.class, Crypto.randomB64(2))));
+					updDiff.add(new ItemToCopy(ci.id().toString(), ci.clkey(), ci.cvalue()));
+				} catch (AppException e) {	}
+		}
+		
 		ExecCollect() throws AppException {
 			tq = tasks;
-			docsToDel = deletedDocuments;
 			docsToDelForced = forcedDeletedDocuments;
 			version = Stamp.fromNow(0).stamp();
+			dtime = Stamp.fromNow(- (AConfig.config().DTIMEDELAYINHOURS() * 3600000)).stamp();
 			for(Document doc : docs.values()) {
-				if (doc.isReadOnly) continue;
+				if (doc.isRO()) continue;
 				doc.summarize();
-				Status dst = doc.status();
-				if (dst == Status.shortlived || dst == Status.deleted) continue;
-				if (doc.toSave()) {
-					CDoc d = doc.cdoc();
-					cdocsToSave.add(new IuCDoc(d));
-					d.browse(ci -> {
-						if (ci.toSave() || ci.deleted()) {
-							itemsIUD.add(new ItemIUD(ci)); 
-							if (ci.descr().isP())
-								s2Cleanup.add(ci.id().toString()); 
+				// status : unchanged, modified, created, recreated, deleted, shortlived
+				// les deleted / shortlived ne sont pas dans docs (mais dans docsToDel)
+				if (doc.status() != Status.unchanged) {
+					// pas de purge des vieux deleted si document non modifié
+					docsToSave.add(new IuCDoc(doc));
+					doc.cdoc().browse(ci -> {
+						if (ci.toSave() || ci.deleted() || ci.toDelete()) {
+							itemsIUD.add(new ItemIUD(ci, dtime, s2Cleanup)); 
+							updDiff(ci);
 							return true;
 						}
 						return false;
 					});
 				}
-				if (doc.version() <= version) version = Stamp.fromStamp(doc.version(), 1).stamp();
-				toLock.add(doc.id());
+				checkVersion(doc);
 			}
 			if (updDiff != null) {
 				CItem hdr = updDiff.commit();
-				itemsIUD.add(new ItemIUD(hdr)); 
+				itemsIUD.add(new ItemIUD(hdr, dtime, s2Cleanup)); 
+				updDiff(hdr);
 				updDiff.summarize();
-				cdocsToSave.add(new IuCDoc(updDiff.cdoc()));
+				docsToSave.add(new IuCDoc(updDiff));
+				// 	public TaskInfo(String ns, Document.Id id, long nextStart, int retry, String info) {
+				tq.put(updDiff.id().toString(), new TaskInfo(ns(), updDiff.id(), version, 0, null));
 			}
-			for(Document doc : docsToDel.values()) {
-				if (doc.version() <= version) version = Stamp.fromStamp(doc.version(), 1).stamp();
-				toLock.add(doc.id());
-				s2Purge.add(doc.id().toString());
+			for(Document doc : deletedDocuments.values()) {
+				checkVersion(doc);
+				docsToDelForced.add(doc.id().toString());
 			}
 			for(String clid : docsToDelForced) 
 				s2Purge.add(clid);
@@ -511,10 +542,11 @@ public class ExecContext {
 			/*
 			 * Maintenant on connaît la version et on peut basculer les docs et items dans leur état 
 			 * committés prêts à être sauvés en base et à remettre en cache
+			 * les vieux deleted peuvent être purgés, ils sont dans la liste des items à supprimer de la base
 			 */
-			for(IuCDoc x : cdocsToSave) 
-				x.cdoc.afterCommit(version);
-			
+			for(Document doc : docs.values())
+				if (!doc.isRO() && doc.status() == Status.unchanged) 
+					doc.cdoc().afterCommit(version, dtime);
 		}
 		
 	}

@@ -5,9 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.naming.InitialContext;
 
@@ -21,10 +23,16 @@ import fr.cryptonote.base.Document.Id;
 import fr.cryptonote.base.Document.ItemId;
 import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
+import fr.cryptonote.base.DocumentDescr;
+import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.ExecContext.ExecCollect;
+import fr.cryptonote.base.ExecContext.ItemIUD;
+import fr.cryptonote.base.ExecContext.IuCDoc;
 import fr.cryptonote.base.JSON;
+import fr.cryptonote.base.S2Cleanup;
+import fr.cryptonote.base.Stamp;
 import fr.cryptonote.base.TaskInfo;
-import fr.cryptonote.provider.DBProvider.ItemToCopy;
+import fr.cryptonote.base.TaskUpdDiff.ByTargetClkey;
 import fr.cryptonote.base.Util;
 
 public class ProviderPG implements DBProvider {
@@ -404,32 +412,419 @@ public class ProviderPG implements DBProvider {
 	}
 	
 	/***********************************************************************************************/
-	@Override
-	public HashSet<String> validateDocument(ExecCollect collect) throws AppException {
-		
-		
-		return null;
+//	CREATE TABLE doc (
+//			clid varchar(255) NOT NULL,
+//			version bigint NOT NULL,
+//			ctime bigint NOT NULL,
+//			dtime bigint NOT NULL,
+//			CONSTRAINT doc_pk PRIMARY KEY (clid)
+//		);
+
+	private Stamp checkVersion(String info, String clid, long vx) throws AppException{
+		Stamp st = Stamp.fromStamp(vx);
+		if (st == null)	throw new AppException("XSQL0", operationName, ns, info + "corrompue [" + clid != null ? clid : "" + "] - [" + vx + "]");
+		return st;
 	}
 
-	@Override
-	public void rawDuplicate(long vop, Collection<ItemToCopy> items)  throws AppException {
-		// TODO Auto-generated method stub
+	private static final String LOCKDOC1 = "select clid, version from doc where clid in (";
+	private static final String LOCKDOC2 = ") for update nowait;";
 		
+	/*
+	 * Retourne null si tout est OK.
+	 * Le retour peut être vide et non null si il y aune exception d'accès à la base
+	 */
+	private HashMap<String,Long> checkAndLock(HashMap<String,Long> docs) throws AppException {
+		StringBuffer sb = new StringBuffer();
+		HashMap<String,Long> badDocs = new HashMap<String,Long>();
+		sb.append(LOCKDOC1);
+		for(int i = 0; i < docs.size(); i++) sb.append(i == 0 ? "?" : ",?");
+		String sql = sb.append(LOCKDOC2).toString();
+		
+		// tri des groupes pour limiter les apparitions de deadlocks
+		String[] clids = docs.keySet().toArray(new String[docs.size()]);
+		Arrays.sort(clids);
+		
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		long _version;
+		String _clid;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			for(String clid : clids)
+				preparedStatement.setString(j++, clid);
+			rs = preparedStatement.executeQuery();
+			while (rs.next()) {
+				_clid = rs.getString("clid");
+				_version = rs.getLong("version");
+				checkVersion("table doc " + _clid, null, _version);
+				Long v = docs.get(_clid);
+				if (v != _version) badDocs.put(_clid, _version);
+			}
+			rs.close();
+			preparedStatement.close();
+			return badDocs.size() != 0 ? badDocs : null;
+		} catch(Exception e){
+			if (preparedStatement != null) try { preparedStatement.close(); } catch (SQLException e1) {}
+			if (rs != null)	try { rs.close(); } catch (SQLException e1) {}
+			return badDocs;
+		}
+	}
+
+	/***********************************************************************************************/
+	private static final String DELITEMS = " where docid = ?;";
+	private static final String DELDOC = "delete from doc where clid = ?;";
+
+	private void purge(String clid) throws AppException {
+		Id id = new Id(clid);
+		PreparedStatement preparedStatement = null;
+		String sql = "delete from " + id.docclass() + DELITEMS;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(2, id.docid());
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+			sql = DELDOC;
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, id.toString());
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "purge");
+		}
+	
+	}
+
+	/***********************************************************************************************/
+	private static final String INSDOC ="insert into doc (clid, version, ctime, dtime) values (?,?,?,?);";
+
+	private void insertDoc(IuCDoc x, long version) throws AppException {
+		PreparedStatement preparedStatement = null;
+		String sql = INSDOC;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, x.clid);
+			preparedStatement.setLong(j++, version);
+			preparedStatement.setLong(j++, version);
+			preparedStatement.setLong(j++, version);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "insertDoc");
+		}		
+
 	}
 	/***********************************************************************************************/
+	private static final String UPDDOC ="update doc set version = ?, ctime = ?, dtime = ?) where clid = ?;";
+
+	private void updateDoc(String clid, long version, long ctime, long dtime) throws AppException {
+		PreparedStatement preparedStatement = null;
+		String sql = UPDDOC;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setLong(j++, version);
+			preparedStatement.setLong(j++, ctime);
+			preparedStatement.setLong(j++, dtime);
+			preparedStatement.setString(j++, clid);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "insertDoc");
+		}
+	}
+
+	/***********************************************************************************************/
+//	CREATE TABLE item (
+//		  	docid varchar(255) NOT NULL,
+//		  	clkey varchar(255) NOT NULL,
+//		  	version bigint NOT NULL,
+//		  	vop bigint NOT NULL,
+//		  	sha varchar(255),
+//		  	contentt text,
+//			contentb bytea,
+//			CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
+//		);
+
+	private static final String INSITEM1 = " (docid, clkey, version, vop, sha, contentt, contentb";
+	private static final String INSITEM2 = ") values (?,?,?,?,?,?,?";
+
+	private void ins(ItemIUD x, long version) throws AppException {
+		String[] fields = null;
+		if (x.exportedFields != null) {
+			Set<String> ks = x.exportedFields.keySet();
+			fields = ks.toArray(new String[ks.size()]);
+		}
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append("insert into " + x.id.docclass());
+		if (fields != null)	sb.append("_" + x.name);
+		sb.append(INSITEM1);
+		if (fields != null)
+			for(String n : fields)
+				sb.append(", ").append(n);
+		sb.append(INSITEM2);
+		if (fields != null)
+			for(int i = 0; i < fields.length; i++) sb.append(",?");
+		String sql = sb.append(");").toString();
+
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, x.id.docid());
+			preparedStatement.setString(j++, x.clkey);
+			preparedStatement.setLong(j++, version);
+			preparedStatement.setLong(j++, version);
+			preparedStatement.setString(j++, x.sha);
+			j = setContent(preparedStatement, x.cvalue, j);
+			if (fields != null) for(String n : fields) 
+				preparedStatement.setObject(j++, x.exportedFields.get(n));
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "ins");
+		}
+	}
+
+	/***********************************************************************************************/
+	private static final String UPDITEM1 = " set version = ?, vop = ?, sha = ?, contentt = ?, contentb = ? ";
+	private static final String UPDITEM2 = " where docid = ? and clkey = ?";
+	private static final String UPDITEM3 = " and vop < ?;";
+
+	private void upd(ItemIUD x, long version, boolean hasContent, long vopFromRawDup) throws AppException {
+		String[] fields = null;
+		if (x.exportedFields != null) {
+			Set<String> ks = x.exportedFields.keySet();
+			fields = ks.toArray(new String[ks.size()]);
+		}
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append("update " + x.id.docclass());
+		if (fields != null)	sb.append("_" + x.name);
+		sb.append(UPDITEM1);
+		if (fields != null)
+			for(String n : fields)
+				sb.append(", ").append(n).append(" = ?");
+		sb.append(UPDITEM2);
+		String sql = sb.append(vopFromRawDup == 0 ? ";" : UPDITEM3).toString();
+
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setLong(j++, version);
+			preparedStatement.setLong(j++, version);
+			if (hasContent) {
+				preparedStatement.setString(j++, x.sha);
+				j = setContent(preparedStatement, x.cvalue, j);
+			} else {
+				preparedStatement.setString(j++, null);
+				preparedStatement.setString(j++, null);
+				preparedStatement.setString(j++, null);				
+			}
+			if (fields != null) for(String n : fields) 
+				preparedStatement.setObject(j++, x.exportedFields.get(n));
+			preparedStatement.setString(j++, x.id.docid());
+			preparedStatement.setString(j++, x.clkey);
+			if (vopFromRawDup != 0)
+				preparedStatement.setLong(j++, vopFromRawDup);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "insertDoc");
+		}
+	}
+
+	/***********************************************************************************************/
+	private static final String DELITEM = " where docid = ? and clkey = ?;";
+
+	private void del(ItemIUD x) throws AppException {
+		PreparedStatement preparedStatement = null;
+		String sql = "delete from " + x.id.docclass() + DELITEM;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, x.id.docid());
+			preparedStatement.setString(j++, x.clkey);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "del");
+		}
+	}
+
+	/***********************************************************************************************/
+	@Override
+	public HashMap<String,Long> validateDocument(ExecCollect collect) throws AppException {
+//		// documents à supprimer
+//		public HashSet<String> docsToDelForced;
+//
+//		// documents à sauver
+//		public ArrayList<IuCDoc> docsToSave = new ArrayList<IuCDoc>();
+//		
+//		// documents à verrouiller
+//		public HashMap<String,Long> versionsToCheckAndLock = new HashMap<String,Long>();
+//
+//		// documents avec S2 à nettoyer
+//		public HashSet<String> s2Cleanup = new HashSet<String>();
+//
+//		// documents avec S2 à purger
+//		public HashSet<String> s2Purge = new HashSet<String>();
+//
+//		// items à insérer / mettre à jour / supprimer
+//		public ArrayList<ItemIUD> itemsIUD = new ArrayList<ItemIUD>();
+//
+//		// Tasks
+//		public HashMap<String,TaskInfo> tq;
+
+		try {			
+			beginTransaction();
+			HashMap<String,Long> badDocs = checkAndLock(collect.versionsToCheckAndLock);
+			if (badDocs != null) { rollbackTransaction(); return badDocs; }
+			if (collect.docsToDelForced != null) for(String clid : collect.docsToDelForced) purge(clid);
+			
+			for (IuCDoc x : collect.docsToSave) {
+				switch (x.iu) {
+				case 1 : {insertDoc(x, collect.version); continue; } // insert
+				case 2 : {updateDoc(x.clid, collect.version, x.oldctime, collect.dtime); continue; } // update 
+				case 3 : {purge(x.clid); insertDoc(x, collect.version); continue; } // clear et update
+				}
+			}
+
+			for(ItemIUD x : collect.itemsIUD){
+				switch (x.iud) {
+				case 1 : {ins(x, collect.version); continue; } // insertion
+				case 2 : {upd(x, collect.version, true, 0); continue; } // update contenu
+				case 3 : {upd(x, collect.version, false, 0); continue; } // suppression logique (contenu)
+				case 4 : { del(x); continue; } // purge/delete (trop ancien)
+				}
+			}
+
+			if (collect.s2Purge != null) for(String clid : collect.s2Purge) blobProvider().blobDeleteAll(clid);
+			if (collect.tq != null) for(TaskInfo ti : collect.tq.values()) insertTask(ti);
+			if (collect.s2Cleanup != null) for(String clid : collect.s2Cleanup) S2Cleanup.startCleanup(clid);
+			commitTransaction();
+			collect.afterCommit();
+			return null;
+		} catch (Throwable t){
+			rollbackTransaction();
+			if (t instanceof AppException) throw (AppException)t; else throw new AppException(t, "X0");
+		}
+
+	}
+
+	/***********************************************************************************************/
+	
+	@Override
+	public void rawDuplicate(long vop, HashMap<String,ArrayList<ByTargetClkey>> byDoc)  throws AppException {
+		try {
+			for(String clid : byDoc.keySet()){
+				Id id = new Id(clid);
+				ArrayList<ByTargetClkey> lst = byDoc.get(clid);
+				
+				beginTransaction();
+				DeltaDocument doc = getDoc(id);
+				if (doc == null) {
+					commitTransaction();
+					continue;
+				}
+				long version = System.currentTimeMillis();
+				long v = doc.version;
+				if (v <= version) version = Stamp.fromStamp(v, 1).stamp();
+				updateDoc(clid, version, doc.ctime, doc.dtime);
+				for(ByTargetClkey t : lst) {
+					ItemIUD iud = new ItemIUD();
+					iud.id = id;
+					iud.cvalue = t.content;
+					iud.exportedFields = t.exportedFields;
+					iud.name = t.itd.name();
+					iud.clkey = t.clkey;
+					upd(iud, version, true, vop);
+				}
+				commitTransaction();
+				
+			}
+		} catch(Exception e){
+			throw err(null, null, e, "rawDuplicate");
+		}
+	}
+	
+	/***********************************************************************************************/
+	private static final String SQLSEARCH1 = "select distinct docid from ";
+	private static final String SQLSEARCH2 = "select docid, version, clkey, contentt, contentb from ";
 
 	@Override
-	public Collection<Id> searchDocIdsByIndexes(Class<?> docClass, Class<?> itemClass, Cond<?>... ffield)
-			throws AppException {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<Id> searchDocIdsByIndexes(Class<?> docClass, Class<?> itemClass, Cond<?>... ffield) throws AppException {
+		ArrayList<Id> res = new ArrayList<Id>();
+		DocumentDescr dd = DocumentDescr.get(docClass);
+		if (dd == null) return res;
+		ItemDescr itd = dd.itemDescr(itemClass);
+		if (itd == null) return res;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append(SQLSEARCH1).append(docClass.getSimpleName()).append("_").append(itemClass.getSimpleName()).append(" where ");
+		boolean pf = true;
+		for(Cond<?> c : ffield) {
+			if (pf) pf = false; else sb.append(" and ");
+			sb.append(c.toSql());
+		}
+		String sql = sb.toString();
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			for(Cond<?> c : ffield)
+				j = setPS(c, preparedStatement, j);
+			rs = preparedStatement.executeQuery();
+			while (rs.next())
+				res.add(new Id(docClass, rs.getString(1)));
+			rs.close();
+			preparedStatement.close();
+			return res;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "searchDocIdsByIndexes");
+		}
 	}
 
 	@Override
-	public Collection<XItem> searchItemsByIndexes(Class<?> docClass, Class<?> itemClass, XItemFilter filter,
-			Cond<?>... ffield) throws AppException {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<XItem> searchItemsByIndexes(Class<?> docClass, Class<?> itemClass, XItemFilter filter, Cond<?>... ffield) throws AppException {
+		ArrayList<XItem> res = new ArrayList<XItem>();
+		DocumentDescr dd = DocumentDescr.get(docClass);
+		if (dd == null) return res;
+		ItemDescr itd = dd.itemDescr(itemClass);
+		if (itd == null) return res;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append(SQLSEARCH2).append(docClass.getSimpleName()).append("_").append(itemClass.getSimpleName()).append(" where ");
+		boolean pf = true;
+		for(Cond<?> c : ffield) {
+			if (pf) pf = false; else sb.append(" and ");
+			sb.append(c.toSql());
+		}
+		String sql = sb.toString();
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			for(Cond<?> c : ffield)
+				j = setPS(c, preparedStatement, j);
+			rs = preparedStatement.executeQuery();
+			while (rs.next()) {
+				// public XItem(ItemDescr descr, String docid, String clkey, long version, String content) throws AppException{ 
+				XItem xi = new XItem(itd, rs.getString("docid"), rs.getString("clkey"), rs.getLong("version"), getContent(rs));
+				if (filter == null || filter.filter(xi))
+					res.add(xi);
+			}
+			rs.close();
+			preparedStatement.close();
+			return res;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "searchDocIdsByIndexes");
+		}
 	}
 
 	/***********************************************************************************************/
@@ -606,8 +1001,9 @@ public class ProviderPG implements DBProvider {
 		PreparedStatement preparedStatement = null;
 		int hour = (int)(ti.nextStart / 10000000L);
 		sql = UPDS2;
+		boolean transaction = inTransaction;
 		try {
-			beginTransaction();
+			if (!transaction) beginTransaction();
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setInt(j++, hour);
@@ -615,7 +1011,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 			insertTask(ti);
-			commitTransaction();
+			if (!transaction) commitTransaction();
 		} catch(Exception e){ 
 			throw err(preparedStatement, null, e, "setS2Cleanup");
 		}

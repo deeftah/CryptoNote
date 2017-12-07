@@ -157,17 +157,17 @@ public class Document {
 	public long dtime() { return cdoc.dtime(); }
 	public boolean toSave() { return cdoc.toSave(); }
 
-	/********************************************************************************/
-	public static void forceDeleteDoc(Id id) {ExecContext.current().forceDeleteDoc(id); }
+	/*******************************************************************************/
+	public static void forceDeleteDoc(Id id) throws AppException {ExecContext.current().forceDeleteDoc(id); }
 	
-	public void delete() throws AppException {
-		if (isRO()) throw new AppException("BDOCUMENTRO", "delete", "Document", id().toString());
-		cdoc.delete();
-		ExecContext.current().deleteDoc(this);
-	}
+	public void delete() throws AppException { ExecContext.current().deleteDoc(this); }
 
-	public void recreate(){	cdoc.recreate(); }
+	public void recreate() throws AppException { 
+		if (isRO()) throw new AppException("BDOCUMENTRO", "delete", "Document", id().toString());
+		cdoc.recreate(); 
+	}
 	
+	/*******************************************************************************/	
 	public BItem item(CItem ci) throws AppException{
 		if (ci == null) return null;
 		if (ci.bitem != null) return ci.bitem;
@@ -182,8 +182,6 @@ public class Document {
 		CItem ci = this.cdoc.citem(itemClass, newIfNotExisting, key);
 		return item(ci);
 	}
-
-//	public CItemFilter browseAllItems(CItemFilter f) throws AppException {	return cdoc.browseAllItems(f); }
 	
 	private void set(BItem bitem, String key) throws AppException {
 		bitem._citem = cdoc().citem(bitem, key);
@@ -202,8 +200,16 @@ public class Document {
 			key = ci.key();
 			version = ci.version();
 		}
+		public XItem(ItemDescr descr, String docid, String clkey, long version, String content) throws AppException{ 
+			this.docId = docid; 
+			item = descr.newItem(content, "");
+			if (!descr.isSingleton() && clkey != null && clkey.startsWith(descr.name() + "."))
+				key = clkey.substring(descr.name().length() + 1);
+			this.version = version;
+		}
 	}
 
+	/********************************************************************************/
 	/********************************************************************************/
 	public static class ExportedFields extends HashMap<String,Object> {
 		private static final long serialVersionUID = 1L;
@@ -257,7 +263,7 @@ public class Document {
 	public static final class P extends BItem {
 		private String mime;
 		private int size;
-		@IndexedField private String sha;
+		@AExportedField private String sha;
 				
 		public String mime() { return mime; }
 		public String sha() { return sha; }
@@ -282,7 +288,7 @@ public class Document {
 		p.size = bytes.length;
 		if (sha.equals(p.sha)) {
 			String clid = id().toString();
-			S2Cleanup.startCleanup(clid, true);
+			S2Cleanup.startCleanup(clid);
 			ExecContext.current().dbProvider().blobProvider().blobStore(clid, sha, bytes);
 			p.sha = sha;
 		}
@@ -291,14 +297,17 @@ public class Document {
 	}
 
 	/********************************************************************************/
-	public static abstract class ItemSingleton  extends BItem {
+	public static abstract class ItemSingleton extends BItem {
 		public String serializedValue() { return JSON.toJson(this); }
 		public void commit() throws AppException{ _checkro("commit"); _citem().commit(serializedValue(), exportFields()); }
 		public BItem getCopy() throws AppException { return descr().newItem(_citem().cvalue(), _citem().toString()); }
-		
+
 		public final ExportedFields exportFields() {
+			try { return exportFields(descr()); } catch (AppException e) { return null; }
+		}
+		final ExportedFields exportFields(ItemDescr descr) {
 			ExportedField[] fields = null;
-			try { fields = descr().indexedFields(); } catch (AppException e) {	}
+			fields = descr.exportedFields();
 			if (fields == null || fields.length == 0) return null;
 			ExportedFields val = new ExportedFields();
 			for(ExportedField f : fields) val.put(f.name(), f.value(this));
@@ -313,7 +322,7 @@ public class Document {
 	}
 
 	/********************************************************************************/
-	public static abstract class RawItemSingleton  extends BItem {
+	public static abstract class RawItemSingleton extends BItem {
 		public transient String value;
 		public String serializedValue() { return value; }
 		public void commit() throws AppException{ _checkro("commit"); _citem().commitRaw(serializedValue(), exportFields()); }		

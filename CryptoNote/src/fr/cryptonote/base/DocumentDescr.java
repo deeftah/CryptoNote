@@ -11,26 +11,26 @@ import java.util.Hashtable;
 import fr.cryptonote.base.Document.BItem;
 
 public class DocumentDescr {
-	public enum IndexType {String, Long, Int, Double, StringArray, LongArray, IntArray, DoubleArray };
+	public enum FieldType {String, Long, Int, Double, StringArray, LongArray, IntArray, DoubleArray };
 	
 	public static final DocumentDescr FAKE = new DocumentDescr();
 	
 	private static final Class<?>[] indexClasses = { String.class, long.class, int.class, double.class,
 			String[].class, long[].class, int[].class, double[].class};
 	
-	public static boolean isArray(IndexType type) {
-		return type == null ? false : type.ordinal() >= IndexType.StringArray.ordinal();
+	public static boolean isArray(FieldType type) {
+		return type == null ? false : type.ordinal() >= FieldType.StringArray.ordinal();
 	}
 	
-	public static Class<?> classOfValues(IndexType type) {
+	public static Class<?> classOfValues(FieldType type) {
 		if (type == null)
 			return null;
 		return indexClasses[type.ordinal()];
 	}
 	
-	public static IndexType idxTypeOfClass(Class<?> clazz){
+	public static FieldType idxTypeOfClass(Class<?> clazz){
 		for(int i = 0; i < indexClasses.length; i++)
-			if (indexClasses[i] == clazz) return IndexType.values()[i];
+			if (indexClasses[i] == clazz) return FieldType.values()[i];
 		return null;
 	}
 
@@ -74,7 +74,7 @@ public class DocumentDescr {
 		private DocumentDescr docDescr;
 		private String name;
 		private Class<?> clazz;
-		private ExportedField[] indexedFields;
+		private ExportedField[] exportedFields;
 		private Constructor<?> constructor;
 		private boolean isRaw = false;
 		private boolean isSingleton = false;
@@ -95,7 +95,7 @@ public class DocumentDescr {
 		};
 		public char separator() { return separator; }
 		public boolean hasDifferedCopy() { return copyToDocs().length != 0 ; }
-		public ExportedField[] indexedFields() { return indexedFields; }
+		public ExportedField[] exportedFields() { return exportedFields; }
 		
 		public DocumentDescr docDescr() { return docDescr; };
 		public String name() { return name; }
@@ -127,12 +127,12 @@ public class DocumentDescr {
 	
 	public static class ExportedField {
 		private String name;
-		private IndexType type;
+		private FieldType type;
 		private Field field;
 		private ExportedField() {}
 		
 		public String name() { return name; }
-		public IndexType type() { return type; }
+		public FieldType type() { return type; }
 		public Object value(Object obj){
 			if (obj == null) return nullValue();
 			try {
@@ -250,7 +250,7 @@ public class DocumentDescr {
 				throw new AppException(e, "BDOCUMENTCLASS9", dd.name + "." + n);
 			}
 			
-			DifferedCopy dc = itd.clazz.getAnnotation(DifferedCopy.class);
+			ADifferedCopy dc = itd.clazz.getAnnotation(ADifferedCopy.class);
 			if (dc != null) {
 				itd.docclasses = dc.copyToDocs();
 				itd.separator = dc.separator();
@@ -260,11 +260,11 @@ public class DocumentDescr {
 			dd.itemDescrs2.put(n, itd);
 			
 			ArrayList<ExportedField> lst = new ArrayList<ExportedField>();
-			HashMap<String,Field> af = Util.getAllField(cl, null, IndexedField.class);
+			HashMap<String,Field> af = Util.getAllField(cl, null, ExportedField.class);
 			for(Field f : af.values())
 				lst.add(new ExportedField(f, dd.name, itd.name));
 			if (lst.size() != 0) 
-				itd.indexedFields = lst.toArray(new ExportedField[lst.size()]);
+				itd.exportedFields = lst.toArray(new ExportedField[lst.size()]);
 		}
 		
 		documentDescrs1.put(clazz, dd);

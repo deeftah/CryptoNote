@@ -2,12 +2,12 @@ package fr.cryptonote.test;
 
 import fr.cryptonote.base.AppException;
 import fr.cryptonote.base.Cond;
-import fr.cryptonote.base.DifferedCopy;
+import fr.cryptonote.base.ADifferedCopy;
 import fr.cryptonote.base.Document;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.ExecContext;
 import fr.cryptonote.base.ISyncFilter;
-import fr.cryptonote.base.IndexedField;
+import fr.cryptonote.base.AExportedField;
 import fr.cryptonote.base.Operation;
 
 public class Repertoire extends Document {
@@ -20,11 +20,11 @@ public class Repertoire extends Document {
 		return (Contact) itemOrNew(Contact.class, code);
 	}
 	
-	@DifferedCopy (copyToDocs={Repertoire.class}, separator='/')
+	@ADifferedCopy (copyToDocs={Repertoire.class}, separator='/')
 	public static class Contact extends Document.Item {
 		String code;
 		String nom;
-		@IndexedField String codePostal;
+		@AExportedField String codePostal;
 	}
 	
 	public static class SyncFilter implements ISyncFilter {

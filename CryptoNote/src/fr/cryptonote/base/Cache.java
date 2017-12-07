@@ -3,7 +3,6 @@ package fr.cryptonote.base;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 
 import fr.cryptonote.base.ExecContext.IuCDoc;
@@ -148,22 +147,24 @@ public class Cache {
 	 * Invoquée dans la phase de validation d'une opération juste APRES le commit()
 	 * pour répercuter dans la cache locale les cdocs commités et supprimés.
 	 */
-	public synchronized void afterValidateCommit(long version, Collection<IuCDoc> updated, Collection<Document> docsToDel, Collection<String> docsToDelForced) {
+	public synchronized void afterValidateCommit(long version, Collection<IuCDoc> updated, Collection<String> docsToDelForced) {
 		if (updated != null) for(IuCDoc x : updated) {
-			CDoc a = documents.get(x.cdoc.id().toString());
+			CDoc a = documents.get(x.clid);
 			if (a == null || a.version() < version) doc(x.cdoc);
 		}
-		if (docsToDel != null) for(Document x : docsToDel) documents.remove(x.id().toString());
 		if (docsToDelForced != null) for(String clid : docsToDelForced) documents.remove(clid);
 	}
 	
 	/*
 	 * Validation échouée parce que ces documents sont obsolètes : rafraîchir
 	 */
-	public synchronized void refreshCache(HashSet<String> badDocs) {
+	public synchronized String refreshCache(Collection<String> badDocs) {
+		StringBuffer sb = new StringBuffer();
 		if (badDocs != null) for(String k : badDocs) {
 			CDoc a = documents.get(k);
 			if (a != null) a.lastCheckDB = 0;
+			sb.append(k + "\n");
 		}
+		return sb.toString();
 	}
 }

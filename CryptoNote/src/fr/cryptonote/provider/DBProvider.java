@@ -1,5 +1,6 @@
 package fr.cryptonote.provider;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.TaskInfo;
+import fr.cryptonote.base.TaskUpdDiff.ByTargetClkey;
 
 public interface DBProvider {
 	public String ns();
@@ -80,25 +82,18 @@ public interface DBProvider {
 	 */
 	public DeltaDocument getDocument(Document.Id id, long ctime, long version, long dtime) throws AppException ;
 	
-	public static class ItemToCopy {
-		public String clid;
-		public String clkey;
-		public String json;
-		public ItemToCopy(String clid, String clkey, String json) { this.clid = clid; this.clkey = clkey; this.json = json; }
-	}
-	
 	/*
 	 * Mise à jour par document cible des items dupliqués.
 	 * Pour chaque item, update seulement si vop > version de l'item en base;
 	 */
-	public void rawDuplicate(long vop, Collection<ItemToCopy> items)  throws AppException;
+	public void rawDuplicate(long vop, HashMap<String,ArrayList<ByTargetClkey>> byDoc)  throws AppException;
 	
 	/**
 	 * Fin de transaction de lecture ou de mise à jour
 	 * @param collect documents et parts à mettre jour, groups à checker
 	 * @throws AppException
 	 */
-	public HashSet<String> validateDocument(ExecCollect collect) throws AppException;
+	public HashMap<String,Long> validateDocument(ExecCollect collect) throws AppException;
 
 	/***********************************************************************************************************/
 	
@@ -190,7 +185,6 @@ public interface DBProvider {
 	 * Planifie le prochain cleanup à exécuter. C'est une transaction
 	 * indépendante ou incluse dans celle de validation selon le cas.
 	 * @param ti. docid=hour du cleanup (AAMMJJhh du nextStart); docclass=s2cleanup
-	 * @param transaction si true, transaction indépendante
 	 * @throws AppException
 	 */
 	public void setS2Cleanup(TaskInfo ti) throws AppException ;

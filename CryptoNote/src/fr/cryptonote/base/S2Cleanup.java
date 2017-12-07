@@ -43,7 +43,7 @@ public class S2Cleanup extends Document {
 	 * Lance la tâche de nettoyage pour le document identifié par clid (classe.docid)
 	 * Si transaction est vrai cette exécution s'effectue dans le contexte de la transaction en cours du thread
 	 */
-	public static boolean startCleanup(String clid, boolean transaction) throws AppException {
+	public static boolean startCleanup(String clid) throws AppException {
 		Stamp now  = Stamp.fromNow(0);
 		Stamp day = Stamp.fromDetail(now.yy(), now.MM(), now.dd(), 0, 0, 0, 0);
 		Stamp day1 = Stamp.fromEpoch(day.epoch() + 86400000);
@@ -74,7 +74,7 @@ public class S2Cleanup extends Document {
 			HashSet<String> shas = dbProvider.shas(taskId());
 			boolean emptyBasket = dbProvider.blobProvider().cleanup(clid, shas);
 			if (!emptyBasket)
-				startCleanup(clid, true);
+				startCleanup(clid);
 		}
 	}
 	

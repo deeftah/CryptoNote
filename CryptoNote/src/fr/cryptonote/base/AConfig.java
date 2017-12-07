@@ -130,6 +130,7 @@ public class AConfig {
 		private int CACHECLEANUPLAPSEMINUTES = 5;
 		private int NSSCANPERIODINSECONDS = 30;
 		private int S2CLEANUPPERIODINHOURS = 4;
+		private int DTIMEDELAYINHOURS = 24 * 8;
 		private boolean isDebug = false;
 		private String dbProviderClass = "fr.cryptonote.provider.ProviderPG";
 		private boolean MONOSERVER = false;
@@ -252,6 +253,7 @@ public class AConfig {
 	public int CACHECLEANUPLAPSEMINUTES() { return gen.CACHECLEANUPLAPSEMINUTES;}
 	public int NSSCANPERIODINSECONDS() { return gen.NSSCANPERIODINSECONDS; }
 	public int S2CLEANUPPERIODINHOURS() { return gen.S2CLEANUPPERIODINHOURS; }
+	public int DTIMEDELAYINHOURS() { return gen.DTIMEDELAYINHOURS; }
 	public String[] langs() { return config.gen.langs; }
 	public String lang() { return config.gen.langs[0]; }
 	public boolean isDebug() { return gen.isDebug;}
