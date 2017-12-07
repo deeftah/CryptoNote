@@ -6,10 +6,6 @@ import java.util.HashMap;
 
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.Cond.Type;
-import fr.cryptonote.base.Document.ExportedFields;
-import fr.cryptonote.base.Document.Id;
-import fr.cryptonote.base.Document.ItemId;
-import fr.cryptonote.base.Document.ItemSingleton;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 
 public class TaskUpdDiff extends Document {
