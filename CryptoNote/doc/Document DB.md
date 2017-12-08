@@ -19,7 +19,7 @@ Une section de l'API est dédiée à la description,
 - des quelques actions spécifiques à l'espace **z**;
 - des quelques possibilités offertes à un espace pour consulter les données des autres avec des restrictions significatives.
 
-Le nombre d'espaces peut être de ***quelques dizaines au plus*** (limite raisonnable des R-DBMS), l'administration pouvant s'avérer délicate au delà.  
+Le nombre d'espaces peut être de ***quelques dizaines au plus***, limite raisonnable d'administration de R-DBMS pour un serveur.  
 C'est un moyen important pour augmenter le débit global et permettre des migrations d'espaces d'un hébergeur vers un autre.
 
 # Documents et items
@@ -27,19 +27,20 @@ Le stockage de données apparaît comme un ensemble de ***documents*** :
 - un document a une **classe** qui en Java étend la classe `Document`.
 - un document est **identifié** par un `String` nommé par la suite `docid`.
 - un document a une **version**, une date-heure en millisecondes UTC sous forme d'un `long` lisible (171128094052123) et croissante dans le temps : la version est la date-heure de la dernière opération ayant mis à jour le document.
-- un document a une **date-heure de création `ctime`** : un document peut être détruit et recréé plus tard avec un même `docid` : `ctime` permet à une mémoire externe retardée de savoir si elle détient une version retardée de la même vie du document (dont le contenu peut être valable en partie) ou une version d'une vie antérieure (dont le contenu est totalement obsolète).
+- un document a une **date-heure de création `ctime`** : un document peut être détruit et recréé plus tard avec un même `docid` : `ctime` permet à une mémoire externe retardée de savoir si elle détient une version retardée de la *même vie* du document (dont le contenu peut être valable en partie) ou une version *d'une vie antérieure* (dont le contenu est totalement obsolète).
 - un document à une **`dtime`** qui est la date-heure au delà de laquelle le document a gardé la trace des items détruits (voir la gestion des mémoires persistante et cache).
 
 ### Items
-Un document est un ***ensemble d'items***,
-- ayant une **classe** d'item qui en Java correspond à une sous classe statique de la classe du document et qui étend la classe `Document.BItem` et plus spécifiquement `Item` `RawItem` `Singleton` `RawSingleton` qui étendent `BItem`.
-- un item `Singleton` existe en une occurrence au plus dans son document.
-- un item `Item` existe en 0 à N occurrences identifiées par un `String` nommé par la suite `key` avec la seule contrainte d'une longueur maximale de 255.
-- un item a une **version** (date-heure de l'opération qui a mis à jour le document).
+Un document est un ***ensemble d'items*** chacun ayant,
+- une **classe** d'item qui en Java correspond à une sous classe statique de la classe du document et qui étend la classe `Document.BItem` et plus spécifiquement `Item` `RawItem` `Singleton` `RawSingleton` qui étendent `BItem`.
+    - un `Singleton` existe en une occurrence au plus dans son document.
+    - un `Item` existe en 0 à N occurrences identifiées par un `String` nommé par la suite `key` avec la seule contrainte d'une longueur maximale de 255.
+- une **version** : date-heure de l'opération qui a *mis à jour le document*.
+- une **vop** : date-heure de l'opération ayant mis à jour l'item. Pour une mise à jour non différée `vop` et `version` ont la même valeur. `vop` vaut 0 pour un item détruit.
 - un item a un **contenu** `String` qui peut être,
     - un JSON (`Singleton` et `Item`),
     - un `String` opaque (`RawSingleton` et `RawItem`), typiquement l'encodage en base 64 d'un vecteur d'octets.
-- un **contenu `null`** indique un item détruit, sa version indiquant quelle opération l'a détruit. Un item détruit peut rester connu en tant que tel pendant un certain temps afin de permettre la synchronisation rapide du contenu du document avec un contenu distant, puis être finalement physiquement purgé.
+- un **contenu `null`** indique un item détruit (`vop` est 0), sa *version* indiquant quelle opération l'a détruit. Un item détruit peut rester connu en tant que tel pendant un certain temps afin de permettre la synchronisation rapide du contenu du document avec un contenu distant, puis être finalement physiquement purgé.
 
 ##### Items JSON
 Leurs propriétés peuvent être : 
@@ -66,18 +67,18 @@ Le stockage des pièces jointes bénéficie de la même cohérence temporelle qu
 Il n'existe qu'une **mémoire persistante de référence** (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.
 
 Il existe de nombreuses **mémoires caches** de documents, qui sont toujours potentiellement retardées (dispose d'une version antérieure) par rapport à la référence persistante :
-- une en mémoire *memcached* *commune à tous les serveurs du pool* servant les opérations : elle est optionnelle et sans intérêt pour un pool d'un seul serveur.
-- une *volatile dans chaque serveur du pool* servant les opérations.
+- éventuellement dans le cas Datastore une en mémoire *memcached* *commune à tous les serveurs du pool* servant les opérations.
+- une mémoire cache *volatile dans chaque serveur du pool* servant les opérations.
 - dans les *sessions externes clientes*: 
-    - une mémoire volatile dans la session tant qu'elle est active.
-    - éventuellement une mémoire persistante locale survivant aux interruptions de sessions.
+    - une mémoire cache volatile dans chaque session active.
+    - éventuellement une (ou des) mémoire cache persistante locale au terminal survivant aux interruptions de sessions.
 
-L'objectif est de permettre de remettre à un niveau plus récent `vr` (le dernier pour simplifier) un exemplaire d'un document `d` datée `v` en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.  
-La mise à jour d'une mémoire cache depuis l'exemplaire de référence d'un document `d` est *un document de mise à niveau* plus ou moins complet établi selon les principes suivants :
-- si l'exemplaire en cache a une `ctime` inférieure à celle de référence, son contenu en cache est à remplacer en totalité totalement par le document de mise à niveau qui contient une copie complète de celui de référence.
+L'objectif est de permettre de remettre à un niveau plus récent `vr` (*version de référence*, la plus récente pour simplifier) un exemplaire d'un document `d` datée `v` en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.  
+La mise à jour d'une mémoire cache depuis un exemplaire de référence d'un document `d` est *un document de mise à niveau* plus ou moins complet établi selon les principes suivants :
+- si l'exemplaire en cache a une `ctime` inférieure à celle de référence, son contenu en cache est à remplacer en totalité totalement par le document de mise à niveau qui contient une copie complète de celui de référence (y compris des items détruits).
 - sinon l'exemplaire en cache contient :
     - des items inchangés, toujours existants en référence avec la même version : ils ne figurent pas dans le document de remise à niveau.
-    - des items qui ont changés, toujours existants en référence avec une version plus récentes : ils figurent dans le document de remise à niveau avec leur nouveau contenu.
+    - des items qui ont changé, toujours existants en référence avec une version plus récente : ils figurent dans le document de remise à niveau avec leur nouveau contenu.
     - des items qui existent en mémoire cache mais plus en référence : ils devront être détruits ou conservés avec un contenu vide (marqués détruits) dans la mémoire cache. Voir les cas 1 et 2 ci-dessous.
 
 Un exemplaire dans une mémoire cache contient,
@@ -89,8 +90,7 @@ La mémoire source de la remise à niveau contient un exemplaire de `d` de versi
 En plus des données `vr` et `dtr`, que contient le document de mise à niveau ?
 
 ##### Cas 1 : `v` est postérieure ou égale à `dtr`.
-
-La source contient tous les items détruits depuis `v` : 
+La référence contient tous les items détruits depuis `v` : 
 - le document de mise à niveau inclus les items détruits postérieurement à `v` avec un contenu `null` et leurs version de destruction.
 - les autres items sont inclus avec un contenu et une version si leur version est postérieure à `v` (ils ont changé).
 - les items inchangés depuis v ne sont pas inclus.
@@ -104,16 +104,15 @@ La mise à niveau de la mémoire cache par le document de mise à niveau transmi
 - les items *avec* contenu du document de remise à niveau écrasent ceux du cache ou les insèrent quand ils n'y étaient pas.
 - la nouvelle `dtime` du cache peut aussi être avancée entre sa nouvelle valeur et la nouvelle version pour éviter de garder trop d'items détruits : le cache purge tous les items sans contenu de version antérieure à la nouvelle `dtime`.
 
-Le cache peut lui-même servir de référence pour créer un document de remise à niveau d'un autre cache plus retardé.
+Le cache peut lui-même désormais servir de référence pour créer un document de remise à niveau d'un autre cache plus retardé.
 
 ##### Cas 2 : `v` est antérieure à `dtr`.
-
 La référence ne contient pas tous les items détruits depuis `v` mais seulement depuis `dtr`. Si le cache détient un item `x` détruit entre `v` et `dtr`, le document de remise à niveau ne peut pas le savoir.  
 
-Le document de remise à niveau contient en plus de `vr` et `dtr` une **liste des clés des items existants** (sauf toutefois ceux listés parce qu'ayant étté créés ou modifiés).
+Le document de remise à niveau contient en plus de `vr` et `dtr` une **liste des clés des items existants** (sauf toutefois celles de ceux listés parce qu'ayant été créés ou modifiés).
 - le document de mise à niveau inclus les items détruits postérieurement à `dtr` avec un contenu `null` et leurs version de destruction.
 - les autres items sont inclus avec un contenu et une version si leur version est postérieure à `v` (ils ont changé).
-- les items inchangés depuis v ne sont pas inclus.
+- les items inchangés depuis `v` ne sont pas inclus.
 
 La nouvelle `dtime` du cache est `dtr`.  
 Elle peut aussi être avancée entre sa nouvelle valeur et la nouvelle version `vr` pour éviter de garder trop d'items détruits : le cache purge tous les items sans contenu de version antérieure à la nouvelle `dtime`.
@@ -134,7 +133,7 @@ Une opération est une succession d'actions de lecture, d'écriture (création /
 - **une opération peut se terminer prématurément en exception**, technique ou métier, bug détecté ou situation inattendue ...
 - Une opération a trois date-heures :
     - souvent mais pas toujours, une *date-heure d'opération* `dhop` qui est celle de la session ayant invoqué l'opération.
-    - une *date heure de début*, horloge du début du traitement. Si dhop existe elle doit être pas trop inférieure ou égale à celle-ci mais jamais supérieure. Les horloges des sessions doivent être à peu synchronisées sur celle du serveur;
+    - une *date heure de début*, horloge du début du traitement. Si `dhop` existe elle doit ne pas être trop inférieure à celle-ci mais jamais supérieure. Les horloges des sessions doivent être à peu synchronisées sur celle du serveur;
     - une **date-heure de validation**, non connue au cours du traitement, et qui marque la **version** de tous les documents et de leurs items ayant été créés, modifiés, ou détruits au cours de l'opération.
 
 Une opération est initiée par l'arrivée d'une requête externe HTTPS le cas échéant émise par le *Queue Manager* gérant des requêtes différées mises en file d'attente.
@@ -153,9 +152,9 @@ Les estampilles sont des nombres de la forme `AAMMJJhhmmssmmm` soit la date en a
 - `Stamp.maxStamp` : dernière milliseconde du siècle.
  
 Par exemple : `160714223045697` (le 14 juillet 2016 à 22:30:45 et 697 ms).  
-La classe `Stamp` dont les objets sont immuables permet de créer et manipuler ces estampilles et de les convertir en `epoch` nombre de millisecondes écoulées depuis le 1/1/1970.
+La classe `Stamp` dont les objets sont immuables permet de créer et manipuler ces estampilles et de les convertir en `epoch` nombre de millisecondes écoulées depuis le 1/1/1970 (`epoch`).
 
->Un document *existe* dès lorsqu'il a une estampille de création et une version : il peut être vide (n'avoir aucun item). Les estampilles étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.
+>Un document *existe* dès lorsqu'il a une date-heure de création et une version : il peut n'avoir aucun item. Les versions étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.
 
 >Une opération peut créer / modifier / supprimer plusieurs documents : ces documents, et leurs items, portent comme version l'estampille de validation de l'opération ce qui permet de déterminer après coup si plusieurs modifications ont été portées exactement par la même opération.
 
@@ -237,12 +236,12 @@ Comme une opération doit avoir un temps d'exécution réduit et surtout ne pas 
 Par ailleurs une opération *principale* peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations `secondaires` différées par rapport à l'opération principale.
 
 Le **Queue Manager** est un ensemble de threads chargés d'envoyer des requêtes HTTP correspondant aux opérations différées inscrites et d'en récupérer le status d'exécution. Le Queue Manager est une session utilisatrice un peu spéciale dans la mesure où,
-- elle n'a que faire d'un quelconque résultat ! il n'y pas d'humain pour en interpréter le résultat.
+- elle n'a que faire d'un quelconque résultat, il n'y pas d'humain pour en interpréter le résultat.
 - elle doit gérer les erreurs d'exécution des opérations, ce qu'un humain effectue derrière une session interactive,
-    - en relançant les traitements tombés en exception : si la cause était fugitive, ça s'arrangera tout seul. Typiquement un lapse de temps croissant est laissé entre les relances afin de contourner un éventuel problème de contention sur les données ou une indisponibilité technique un peu longue ;
-    - alerter un administrateur technique par e-mail si un traitement échoue à sa n-ième relance : l'administrateur pourra ainsi :
-        - remédier à la cause fonctionnelle du souci si possible puis remettre la tâche en exécution.
-        - renoncer définitivement à celle-ci en ayant apprécié les conséquences fonctionnelles de cet abandon.
+    - en relançant les traitements tombés en exception : si la cause était fugitive, ça s'arrange tout seul. Typiquement un lapse de temps croissant est laissé entre les relances afin de contourner un éventuel problème de contention sur les données ou une indisponibilité technique un peu longue ;
+    - en alertant un administrateur technique par e-mail si un traitement échoue à sa n-ième relance. Ce dernier peut,
+        - soit remédier à la cause fonctionnelle du souci si possible, puis remettre la tâche en exécution.
+        - soit renoncer définitivement à celle-ci en ayant apprécié les conséquences fonctionnelles de cet abandon.
 
 ### Document associé à une opération différée
 Un document est à créer avec pour fonction de contenir les données / paramètres nécessaires à l’exécution d'une ou d'une succession d'opérations **différées**.  
@@ -253,9 +252,9 @@ Une opération principale qui veut déclencher une exécution différée procèd
 - elle stocke les paramètres d'exécution dans un document ayant une ID `cl1.id1`. La seule ID est parfois suffisante pour porter les quelques paramètres nécessaires à l'exécution différée et dans ce cas le document correspondant n'est pas créé.
 - elle déclare qu'une opération différée doit s'exécuter avec cette ID `cl1.id1` au plus tôt à une date-heure dite `nextStart`. Cette opération récupérera en paramètre d'entrée (dans son URL) l'ID `cl1.id1` : cette ID comporte un nom de classe de document ayant une classe interne `Task` étendant `Operation` dont la méthode `work()` lira le cas échéant le document correspondant (ou se contentera de l'ID).
 - une opération peut déclarer plusieurs exécutions différées (5 au plus).
-- les opérations différées ne sont effectivement lancées qu'après la validation de l'opération et bénéficient de la sécurité de celle-ci (inscription pour lancement validée ou non).
+- les opérations différées ne sont effectivement lancées qu'après la validation de l'opération et bénéficient de la sécurité transactionnelle de celle-ci (inscription pour lancement validée ou non).
 
-Une opération différée est  comme les autres opérations avec quelques nuances :
+Une opération différée est comme les autres opérations avec quelques nuances :
 - elle ne retourne aucun résultat, n'effectue pas de calcul de synchronisation, et n'a pas de phase `afterwork()` : elle ne fait *que* des mises à jour de documents dans sa phase `work()`.
 - elle peut inscrire des opérations différées et en particulier se réinscrire elle-même.
 - elle bénéficie d'un quota de temps plus long pour son exécution.
@@ -313,58 +312,69 @@ Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi
 
 Normalement un traitement dont la `nextStart` a été calculée depuis `Cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le `Cron`.
 
-# Propagations différées d'items
-Une opération ne doit travailler que sur peu de documents : si elle doit par exemple notifier 200 autres documents d'un nouvel état (par exemple propager un changement de tarif et faire recalculer des commandes en cours) elle doit opérer par une tâche différée.
+# Réplications différées d'items
+Une opération ne doit travailler que sur peu de documents : en conséquence un document A1 ayant à répliquer son état synthétique sur des dizaines / centaines d'autres documents ne peut pas le faire dans le cadre d'une opération unique. L'usage d'une tâche différée permet d'y remédier.
 
-Par ailleurs dans une opération l'unité d'accès est le document :
-- c'est un avantage de pouvoir effectuer un traitement sur un agrégat significatif de données en mémoire ;
-- c'est un inconvénient quand il s'agit d'insérer / remplacer un unique item d'un document. Il est extrait en totalité du stockage, mis en totalité en cache où finalement il occupe de l'espace sans bénéfice.
+Un cas particulièrement fréquent a toutefois fait l'objet d'un traitement générique. Exemple :
+- chaque document d'une classe *Asso* représente une association identifiée par une identification (*idAsso*) :
+    - un singleton `Sta` représente le statut général de l'association : son intitulé, son état (actif / résilié), voire quelques compteurs importants changeant peu souvent (nombre d'adhérents au premier janvier de l'année).
+    - des items `Adh` avec pour clé le numéro de l'adhérent (`numAdh`) dans l'association représente les adhérents de l'association avec un résumé simple de données changeant peu souvent : nom, état d'activité, date d'adhésion / résiliation.
+- chaque document d'une classe `GT` représente un groupe de travail réunissant quelques adhérents de multiples associations. On souhaite disposer dans un document G1 de `GT` lui-même,
+    - `Adh` : du résumé relatif à chaque adhérent : c'est la copie (faiblement désynchronisée) de l'item `Adh` de l'adhérent dans son association.
+    - `Sta` : du statut général de toutes les associations dont au moins un adhérent fait partie du groupe de travail : c'est la copie (faiblement désynchronisée) du singleton `Sta` de l'association.
 
-Dans bien des cas le traitement sur un autre document que celui principal de l'opération consiste à :
-- notifier d'autres documents d'un changement d'état : ça se fait par un item dédié dans les documents cibles redondant (fonctionnellement) avec un item du document origine.
-- notifier de la survenue d'événements portant sur le document origine et impactant des documents cibles nombreux : des items de notifications sont insérés (et le cas échéant marqués obsolètes en cas d'effacement de l'événement).
+Dans les deux classes `Asso` et `GT` les items `Sta` et `Adh` portent le même nom, mais :
+- pour `Sta` :
+    - dans `Asso` c'est un singleton ayant une annotation :
+    `@ADifferedCopy (copyToDocs={GT.class}, separator='.')` . Il peut y avoir plusieurs classes de documents listées.
+    - dans `GT` c'est un item ayant pour clé `idAsso`.
+- pour `Adh` :
+    - dans `Asso` c'est un item de clé `numAdh` ayant une annotation :
+    `@ADifferedCopy (copyToDocs={GT.class}, separator='.')`.
+    - dans `GT` c'est un item ayant pour clé `numAdh.idAsso` : le `.` qui sépare les deux parties de la clé est le signe déclaré dans le paramètre `separator` ci-dessus.
 
-Une opération peut définir, en sus des quelques documents à valider, une liste d'items différés portant sur un nombre possiblement important de dossiers cibles :
-- la validation de l'opération enregistre une tâche générique dont le document reprend cette liste ;
-- la tâche est lancée après la validation.
+Deux index sont déclarés sur la colonne `clkey` pour les items `Sta` et `Adh` de `GT`.
 
-Cette tâche épuise les documents de la liste et à raison d'une exécution d'opération pour chaque document et pour chaque item cité pour ce document :
-- si l'item n'existait pas il est inséré sans aucun traitement ni contrôle.
-- si l'item existait il est remplacé.
-- cette opération a une date-heure, les items insérés / remplacés portent cette version, laquelle n'a rien à voir avec la version de l'opération origine de cette propagation.
+**A la déclaration d'une nouvelle participation** d'un adhérent `N1` d'une association `A1` à un groupe de travail `G1`, l'opération effectue :
+- la création d'un item `Adh` de clé `N1.A1` dans `G1` en y copiant le contenu courant de l'item `Adh` de clé `N1` représentant l'adhérent dans son `Asso` d'identifiant `A1`.
+- si c'est le premier participant appartenant à l'association `A1`, un item `Sta` de clé `A1` est créé dans `G1` avec une copie du singleton `Sta` de `A1`.
 
-### Propriété de `cas`
-Ce comportement de base comporte un risque : les traitements étant différés, un remplacement plus récent d'un item pourrait être écrasé par un remplacement / insertion plus ancien.  
-Afin d'éviter ce souci, les items ainsi remplaçables disposent d'une propriété nommée `cas` qui est un `long` (en général une estampille) : le remplacement n'intervient que si le cas dans l'item stocké est inférieur au cas de l'item remplaçant.
+**Au retrait de la participation** de l'adhérent `N1` de l'association `A1` du groupe de travail `G1`, l'opération effectue :
+- la suppression de l'item `Adh` de clé `N1.A1` dans `G1`.
+- si c'est le dernier participant appartenant à l'association `A1`, la suppression de l'item `Sta` de clé `A1` dans `G1`
 
-Dans la liste des items d'insertion / remplacement la valeur de la propriété `cas` :
-- soit est fixée par la logique fonctionnelle;
-- soit est fixée à la date-heure de l'opération source, inconnue au moment du traitement mais connue au moment de l'inscription de la tâche.
-
->La gestion des propagation différées présente l'avantage de ne pas requérir la montée en cache d'un document complet (mais d'en profiter s'il y est). C'est la couche de stockage basse qui gère ainsi cette fonctionnalité qui n'est pas techniquement faisable depuis une opération standard métier.
+Moyennant ces contraintes, toute mise à jour de `Sta` ou d'un `Adh` dans le document d'une association `Ai` par une opération de date-heure `dh1` provoquera une réplication faiblement différée automatique :
+- dans tous les documents d'une des classes citées dans les annotations de `Sta / Adh`,
+- ayant un item de même nom de classe `Sta / Adh` et de clé `A1` (pour `Sta`) ou `xxx.A1` pour `Adh`, d'où l'importance des index sur `clkey`.
+- les items sont insérés en base *sans lecture des dossiers*.
+- chaque dossier impliqué a désormais une version `dh2` supérieure à `dh1` (chacun des dossiers ayant leur propre date-heure de mise à jour).
+- chaque item mis à jour a pour version `dh2` et pour `vop` `dh1` : il est ainsi possible de savoir de combien la réplication a été retardée.
+- comme les réplications sont désynchronisées rien n'interdirait qu'une seconde opération de date-heur `dh3` ait sa réplication doublant celle de `dh1` pour un item donné : ce dernier n'est mis à jour que si sa `vop` mémorisée est inférieure à la `vop` proposée en mise à jour, bref un état retardé n'écrase pas un état plus récent.
+- les mises à jours désynchronisées ne sont soumises à aucun contrôle fonctionnel.
 
 # Identification / authentification
 Ce service est géré au niveau de l'application : chaque requête est autonome des précédentes et il n'y a pas de concept de session dans le serveur.  
-Chaque requête peut être porteuse de propriétés, par exemple `account` et `key`, où,
+Chaque requête peut être porteuse de propriétés, ***par exemple*** `account` `key` `admin` où,
 - `account` : identifie un compte,
 - `key` : donne le mot de passe, tout autre élément d'authentification, un jeton de session etc.
+- `admin` : donne pour certaines opérations une clé d'autorisation de privilège administrateur.
 
-Des opérations de login peuvent être écrites pour identifier des sessions d'utilisation avec un utilisateur identifié par le login qui déclare (ou retrouve) une session puis des requêtes qui ne font que référencer des sessions déclarées.
+Des opérations de login *peuvent* être écrites pour identifier des sessions d'utilisation avec un utilisateur identifié par le login qui déclare (ou retrouve) une session puis des requêtes qui ne font que référencer des sessions déclarées.
 
 # Indexation et recherche de documents
 L'objectif de l'indexation est de pouvoir effectuer une recherche de tous les identifiants des documents d'une classe donnée,
 - ***dont l'identifiant est éventuellement contraint***,
 - ***dont au moins un item d'une classe donnée a une valeur de propriété satisfaisant au critère de sélection***. 
 
-Un second type de recherche utilisant l'indexation consiste à obtenir, non plus seulement l'identifiant d'un document mais le contenu des items (dont leur `key` et identifiant du document).
+Un second type de recherche utilisant l'indexation consiste à obtenir, non plus seulement l'identifiant d'un document mais le ***contenu*** des items (dont leur `key` et l'identifiant de leur document).
 
 Par exemple si un item `Adr` contient un `codePostal` et une *collection* d'adresses `email`, obtenir la liste des identifiants des documents ayant un item `Adr` dont le `codePostal` est compris entre `94000` et `94999` et ayant au moins une adresse `email` `toto@gmail.com`.
 
 ### Déclaration des propriétés indexées
-Dans la classe d'un Item quelques propriétés peuvent avoir une annotation `@IndexedField`. Le type de ces propriétés est l'un des suivants `String long int double String[] long[] int[] double[]`.
+Dans la classe d'un Item quelques propriétés peuvent avoir une annotation `@ExportedField`. Le type de ces propriétés est l'un des suivants `String long int double String[] long[] int[] double[]`.
 
 #### Mise en œuvre en R-DBMS
-Il faut déclarer une table portant le nom `Item_docClass_itemClass` héritant de la table `Item` et y déclarer les propriétés indexées sous le même nom que dans la classe Java et avec le même type.  
+Il faut déclarer une table portant le nom `Item_docClass_itemClass` héritant de la table `Item` et y déclarer les propriétés indexées sous le même nom que dans la classe Java et avec le même type. `docClass` et `itemClass` sont les noms des classes de document et de l'item dans le document.  
 Il faut ensuite déclarer un (ou plusieurs) index sur ces propriétés, index contenant en tête la (ou les) propriétés indexées puis les colonnes identifiantes du document et de l'item.
 
 #### Mise en œuvre en GAE Datastore
@@ -379,10 +389,8 @@ Une condition est déclarée par un objet immuable de classe `Filtre` dont les d
 - `Filtre(type, valeur1, valeur2)`
     - `LTGE LTGT LEGE LEGT`  : compris entre valeur 1 et valeur 2 (bornes inférieure et supérieures incluses ou non).
 
-#### Recherches génériques et spécifiques
-Les recherches *génériques* sont implémentées autant en R-DBMS qu'en GAE Datastore et ne demandent pas de développement spécifique.
-
-Les recherches *spécifiques* demandent le développement d'une classe comportant une ou deux (voire plus) implémentations selon le type GAE Datastore et R-DBMS (le cas échéant plusieurs).
+#### Recherches spécifiques
+Des recherches *spécifiques* demandent le développement d'une classe comportant une ou deux (voire plus) implémentations selon le type GAE Datastore et R-DBMS (le cas échéant plusieurs).
 
 Détail des méthodes dans le document API.
 

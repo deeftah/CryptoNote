@@ -25,6 +25,7 @@
 "BITEMPRAW":"Méthode ne s'appliquant ni aux items P ni aux raw : classe [{0}]",
 "BITEMCLASSCOL":"Classe d''item collection [{0}] inconnue",
 "BDOCUMENTRO":"Méthode [{1}].[{0}] interdite sur un document [{2}] en lecture seule",
+"BDOCUMENTDEL":"Méthode [{1}].[{0}] interdite sur un document [{2}] détruit",
 "BEMPTYBLOB":"BlobStore sans blob pour [{0}] [{1}]",
 "BMIMEBLOB":"BlobStore sans mime pour [{0}] [{1}]",
 "BKEYBLOB":"BlobStore sans nom pour [{0}]",

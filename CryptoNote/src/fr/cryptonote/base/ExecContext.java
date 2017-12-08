@@ -182,7 +182,7 @@ public class ExecContext {
 		tasks.put(id.toString(), new TaskInfo(ns(), id, nextStart, 0, info));
 	}
 
-	void forceDeleteDoc(Id id) throws AppException{
+	void forcedDeleteDoc(Id id) throws AppException{
 		if (id != null){
 			String k = id.toString();
 			Document d = docs.get(k);
@@ -259,14 +259,22 @@ public class ExecContext {
 		
 	Document getOrNewDoc(Document.Id id) throws AppException {
 		String n = id.toString();
+		Document d = deletedDocuments.get(n);
+		if (d != null) {
+			d.cdoc().recreate();
+			deletedDocuments.remove(n);
+			emptyDocs.remove(n);
+			docs.put(n, d);
+			return d;			
+		}
 		if (emptyDocs.contains(n)) {
 			// on avait déjà cherché en base et il n'y en avait pas
-			Document d = Document.newDocument(CDoc.newEmptyCDoc(id));
+			d = Document.newDocument(CDoc.newEmptyCDoc(id));
 			docs.put(n, d);
 			emptyDocs.remove(n);
 			return d;
 		}
-		Document d = getDoc(id, 0);
+		d = getDoc(id, 0);
 		if (d != null) return d;
 		d = Document.newDocument(CDoc.newEmptyCDoc(id));
 		docs.put(n, d);

@@ -35,7 +35,6 @@ public class DocumentDescr {
 	}
 
 	private static ItemDescr pDescr;
-	private static ItemDescr qDescr;
 
 	static {
 		pDescr = new ItemDescr();
@@ -102,7 +101,6 @@ public class DocumentDescr {
 		public Class<?> clazz() { return clazz; }
 		
 		public boolean isP() { return this == pDescr; }
-		public boolean isQ() { return this == qDescr; }
 		public boolean isRaw() { return isRaw; }
 		public boolean isSingleton() { return isSingleton; }
 		

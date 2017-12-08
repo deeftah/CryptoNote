@@ -47,8 +47,11 @@ public class NS {
 			if (lst.size() != 0) {
 				for(DeltaDocument dd : lst) {
 					NS ns = namespaces.get(dd.id.docid());
-					if (ns != null)
-						ns.refresh((Namespace)Cache.cacheOf(nsz).document(dd.id, now, ns.version));
+					if (ns != null) {
+						Namespace n = (Namespace)Cache.cacheOf(nsz).document(dd.id, now, ns.version);
+						if (n != null)
+							ns.refresh(n);
+					}
 				}
 				
 				queueManagers.clear();

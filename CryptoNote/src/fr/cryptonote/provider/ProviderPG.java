@@ -516,7 +516,7 @@ public class ProviderPG implements DBProvider {
 
 	}
 	/***********************************************************************************************/
-	private static final String UPDDOC ="update doc set version = ?, ctime = ?, dtime = ?) where clid = ?;";
+	private static final String UPDDOC ="update doc set version = ?, ctime = ?, dtime = ? where clid = ?;";
 
 	private void updateDoc(String clid, long version, long ctime, long dtime) throws AppException {
 		PreparedStatement preparedStatement = null;
@@ -615,7 +615,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setLong(j++, version);
-			preparedStatement.setLong(j++, version);
+			preparedStatement.setLong(j++, hasContent ? version : 0);
 			if (hasContent) {
 				preparedStatement.setString(j++, x.sha);
 				j = setContent(preparedStatement, x.cvalue, j);

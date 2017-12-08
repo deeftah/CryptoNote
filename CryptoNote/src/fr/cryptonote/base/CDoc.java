@@ -54,11 +54,9 @@ public class CDoc implements Comparable<CDoc> {
 	public long version() { return version; }
 	public long ctime() { return ctime; }
 	public long dtime() { return dtime; }
-	boolean hasChanges() { return nbToSave + nbToDelete != 0 ; }
 
 	public Status status() { return status; };
 
-	public boolean toSave() { return nbToSave + nbToDelete != 0; }
 	public int nbExisting() { return nbExisting; }
 	public int nbToSave() { return nbToSave; }
 	public int nbToDelete() { return nbToDelete; }
@@ -66,7 +64,7 @@ public class CDoc implements Comparable<CDoc> {
 	public long v1() { return v1; };
 	public long v2() { return v2; };
 
-	void recreate() { status = Status.recreated; clearAllItems(); }
+	void recreate() { status = version() == 0 ? Status.created : Status.recreated; clearAllItems(); }
 	void delete() {	status = version() == 0 ? Status.shortlived : Status.deleted; clearAllItems(); }
 	private void clearAllItems() {
 		sings.clear();
@@ -307,7 +305,7 @@ public class CDoc implements Comparable<CDoc> {
 		public String sha() { return sha; }
 		public String nsha() { return nsha(); }
 		public String clkey() { return descr.name() + (descr.isSingleton() ? "" : "." + key); }
-		public int sizeInCache() { return (value != null ? value.length() : 0) + (key != null ? key.length() : 0); }
+		int sizeInCache() { return (value != null ? value.length() : 0) + (key != null ? key.length() : 0); }
 		public boolean deleted() { return deleted; }				// item non existant
 		public boolean toSave() { return toSave; } 					// item créé / modifié à sauver
 		public boolean toDelete() { return toDelete; } 				// item à supprimer
@@ -472,7 +470,7 @@ public class CDoc implements Comparable<CDoc> {
 		c.nbTotal = nbTotal;
 		c.v1 = v1;
 		c.v2 = v2;
-		for(CItem ci : sings.values()) c.storeItem(ci);
+		for(CItem ci : sings.values()) c.storeItem(ci.copy(c));
 		for(HashMap<String,CItem> cis : colls.values())
 			for(CItem ci : cis.values()) c.storeItem(ci.copy(c));
 		return c;
@@ -507,6 +505,7 @@ public class CDoc implements Comparable<CDoc> {
 		browse(ci -> {
 			if (ci.toSave) {
 				ci.version = version;
+				ci.vop = version;
 				ci.value = ci.nvalue;
 				ci.nvalue = null;
 				ci.sha = ci.nsha;
@@ -514,6 +513,7 @@ public class CDoc implements Comparable<CDoc> {
 				ci.toSave = false;
 			} else if (ci.toDelete){
 				ci.version = version;
+				ci.vop = 0;
 				ci.value = null;
 				ci.nvalue = null;
 				ci.sha = null;

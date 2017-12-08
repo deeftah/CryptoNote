@@ -96,7 +96,7 @@ public class Cache {
 	 * @return null: pas mieux que la version actuelle (non 0), XCdoc.existant indique si le document existe ou non.
 	 * @throws AppException
 	 */
-	public XCDoc cdoc(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
+	XCDoc cdoc(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
 		if (id == null) throw new AppException("BDOCUMENTCACHE0");
 		long now = cleanup();
 		long maxAge = minTime != null ? minTime.epoch() : now;
@@ -135,19 +135,19 @@ public class Cache {
 	 * @param id
 	 * @param minTime : contrainte de fraîcheur. En exigeant la startTime de l'ExecContexct fait lire la plus récente
 	 * @param versionActuelle : si non 0, version actuellement détenue. Retourne null si pas mieux
-	 * @return null: pas mieux que la version actuelle (non 0), XCdoc.existant indique si le document existe ou non.
+	 * @return null: pas mieux que la version actuelle.
 	 * @throws AppException
 	 */
 	public Document document(Document.Id id, Stamp minTime, long versionActuelle) throws AppException {
 		XCDoc xc = cdoc(id, minTime, versionActuelle);
-		return Document.newDocument(xc.existing ? xc.cdoc : CDoc.newEmptyCDoc(id));
+		return xc.existing ? Document.newDocumentRO(xc.cdoc) : null;
 	}
 	
 	/*
 	 * Invoquée dans la phase de validation d'une opération juste APRES le commit()
 	 * pour répercuter dans la cache locale les cdocs commités et supprimés.
 	 */
-	public synchronized void afterValidateCommit(long version, Collection<IuCDoc> updated, Collection<String> docsToDelForced) {
+	synchronized void afterValidateCommit(long version, Collection<IuCDoc> updated, Collection<String> docsToDelForced) {
 		if (updated != null) for(IuCDoc x : updated) {
 			CDoc a = documents.get(x.clid);
 			if (a == null || a.version() < version) doc(x.cdoc);
@@ -158,7 +158,7 @@ public class Cache {
 	/*
 	 * Validation échouée parce que ces documents sont obsolètes : rafraîchir
 	 */
-	public synchronized String refreshCache(Collection<String> badDocs) {
+	synchronized String refreshCache(Collection<String> badDocs) {
 		StringBuffer sb = new StringBuffer();
 		if (badDocs != null) for(String k : badDocs) {
 			CDoc a = documents.get(k);
