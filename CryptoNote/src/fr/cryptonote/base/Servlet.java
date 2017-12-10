@@ -110,6 +110,7 @@ public class Servlet extends HttpServlet {
 	private ExecContext init1(HttpServletRequest req) throws ServletException { 
 		if (initException != null) throw new ServletException(msg, initException); 
 		ExecContext exec = new ExecContext();
+		exec.setNS("a");
 		exec.setLang(req.getHeader("lang"));
 		return exec;
 	}

@@ -188,7 +188,7 @@ public class AConfig {
 
 			config.gen.instance = System.getProperty(DVARINSTANCE);
 			
-			if (config.gen.ns == null || config.gen.ns.length < 2) throw exc(null, _format(0, "XRESSOURCENS"));
+			if (config.gen.ns == null || config.gen.ns.length == 0) throw exc(null, _format(0, "XRESSOURCENS"));
 			if (config.gen.url == null || (!config.gen.url.startsWith("http://") && !config.gen.url.startsWith("https://")))
 				throw exc(null, _format(0, "XRESSOURCEURL"));
 			if (config.gen.url.endsWith("/")) config.gen.url = config.gen.url.substring(0,  config.gen.url.length() - 1);

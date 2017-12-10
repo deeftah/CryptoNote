@@ -28,7 +28,7 @@
      </Arg>
   </New>
   <Set name="contextPath">/cn</Set>
-  <Set name="war"><Property name="jetty.webapps" default="."/>/../../git/cryptonote/cryptonote/war/</Set>
+  <Set name="war"><Property name="jetty.webapps" default="."/>/../../git/CryptoNote/CryptoNote/war/</Set>
   <Set name="gzipHandler">
     <New class="org.eclipse.jetty.server.handler.gzip.GzipHandler">
       <Set name="minGzipSize">2048</Set>      

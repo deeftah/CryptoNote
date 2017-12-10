@@ -27,18 +27,20 @@ public class NS {
 	private static final Integer LOCK = new Integer(0);
 	private static long lastScan = 0;
 	private static String[] allns;
+	private static boolean ready = false;
 	private static HashMap<String,NS> namespaces = new HashMap<String,NS>();
 	private static HashMap<String,ArrayList<String>> queueManagers = new HashMap<String,ArrayList<String>>();
-	
 	
 	static void init() throws AppException{
 		NSSCANPERIODINSECONDS = AConfig.config().NSSCANPERIODINSECONDS();
 		allns = AConfig.config().ns();
 		nsz = allns[0];
 		for(String n : allns) namespaces.put(n, new NS());
+		ready = true;
 	}
 	
 	static void reload() throws AppException{
+		if (!ready) init();
 		Stamp now = Stamp.fromNow(0);
 		if (now.epoch() < nextReload) return;
 		DBProvider provider = ExecContext.dbProvider(nsz);
