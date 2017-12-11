@@ -15,7 +15,7 @@ import javax.naming.InitialContext;
 
 import org.postgresql.ds.common.BaseDataSource;
 
-import fr.cryptonote.base.AConfig;
+import fr.cryptonote.base.BConfig;
 import fr.cryptonote.base.AppException;
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.Cond;
@@ -79,7 +79,7 @@ public class ProviderPG implements DBProvider {
 		this.ns = ns;
 		if (providerConfig == null){
 			try {
-				providerConfig = JSON.fromJson(AConfig.config().dbProviderConfig(), ProviderConfig.class);
+				providerConfig = JSON.fromJson(BConfig.config().dbProviderConfig(), ProviderConfig.class);
 			} catch (Exception e){
 				throw new AppException(e, "XSQLCFG");
 			}

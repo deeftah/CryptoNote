@@ -2,83 +2,57 @@ package fr.cryptonote.app;
 
 import java.util.HashMap;
 
-import fr.cryptonote.base.AConfig;
 import fr.cryptonote.base.Stamp;
 
 public class Config {
-	private static Config config;
+	private static Config g;
 	
-	int NBHEURESENCREATION;
-	int NBHEURESENZOMBIE;
-	int REMORDAVANTCLOTUREMINUTES;
-	int Q1CPARDEFAUT;
-	int Q1FPARDEFAUT;
-	int Q2FPARDEFAUT;
-	long RV1;
-	long RV2;
-	int RV1PC;
-	int RV2PC;
-	int SESSIONAGEMAXENSECONDES;
-	int MAXNBVISITES;
-	int NTFNBJ;
-	Gouvernances gouvernances;
+	private int NBHEURESENCREATION;
+	private int NBHEURESENZOMBIE;
+	private int REMORDAVANTCLOTUREMINUTES;
+	private int Q1CPARDEFAUT;
+	private int Q1FPARDEFAUT;
+	private int Q2FPARDEFAUT;
+	private long RV1;
+	private long RV2;
+	private int RV1PC;
+	private int RV2PC;
+	private int SESSIONAGEMAXENSECONDES;
+	private int MAXNBVISITES;
+	private int NTFNBJ;
+	private Gouvernances gouvernances;
+	
+	public int SESSIONAGEMAXENSECONDES() { return g.SESSIONAGEMAXENSECONDES; }
+	public int NBHEURESENCREATION() { return g.NBHEURESENCREATION; }
+	public int NBHEURESENZOMBIE() { return g.NBHEURESENZOMBIE; }
+	public int REMORDAVANTCLOTUREMINUTES() { return g.REMORDAVANTCLOTUREMINUTES; }
+	public int MAXNBVISITES() { return g.MAXNBVISITES; }
+	public int NTFNBJ() { return g.NTFNBJ; }
+	public int Q1CPARDEFAUT() { return g.Q1CPARDEFAUT; }
+	public int Q1FPARDEFAUT() { return g.Q1FPARDEFAUT; }
+	public int Q2FPARDEFAUT() { return g.Q2FPARDEFAUT; }
+	public long RV1() { return g.RV1; }
+	public long RV2() { return g.RV2; }
+	public int RV1PC() { return g.RV1PC; }
+	public int RV2PC() { return g.RV2PC; }
 
-	public Config() {
+	public static void startup(Object config) throws Exception {
+		g = (Config)config;
 		
-	}
-	static {
-		config = new Config();
-	}
-	
-	public static Config config() { return (Config)config; }
+		if (g.NBHEURESENCREATION <= 0) g.NBHEURESENCREATION = 72 ;
+		if (g.NBHEURESENZOMBIE <= 0) g.NBHEURESENZOMBIE = 240 ;
+		if (g.MAXNBVISITES <= 0) g.MAXNBVISITES = 10 ;
+		if (g.NTFNBJ <= 0) g.NTFNBJ = 30 ;
+		if (g.Q1CPARDEFAUT <= 0) g.Q1CPARDEFAUT = 1;
+		if (g.Q1FPARDEFAUT <= 0) g.Q1FPARDEFAUT = 5;
+		if (g.Q2FPARDEFAUT <= 0) g.Q2FPARDEFAUT = 20;
+		if (g.RV1 <= 0) g.RV1 = 1000000;
+		if (g.RV2 <= 0) g.RV2 = 10000000;
+		if (g.RV1PC <= 0) g.RV1PC = 10;
+		if (g.RV2PC <= 0) g.RV2PC = 10;
+		if (g.SESSIONAGEMAXENSECONDES <= 0) g.SESSIONAGEMAXENSECONDES = 43200;
 
-	protected static class Secret extends ASecret {
-		int bar;
-	}
-
-	public static class NSSrvCfg {
-
-	}
-	@Override public Object newNSSrvCfg() {	return new NSSrvCfg(); }
-	
-	public int SESSIONAGEMAXENSECONDES() { return ((Gen)config.gen()).SESSIONAGEMAXENSECONDES; }
-	public int NBHEURESENCREATION() { return ((Gen)config.gen()).NBHEURESENCREATION; }
-	public int NBHEURESENZOMBIE() { return ((Gen)config.gen()).NBHEURESENZOMBIE; }
-	public int REMORDAVANTCLOTUREMINUTES() { return ((Gen)config.gen()).REMORDAVANTCLOTUREMINUTES; }
-	public int MAXNBVISITES() { return ((Gen)config.gen()).MAXNBVISITES; }
-	public int NTFNBJ() { return ((Gen)config.gen()).NTFNBJ; }
-	public int Q1CPARDEFAUT() { return ((Gen)config.gen()).Q1CPARDEFAUT; }
-	public int Q1FPARDEFAUT() { return ((Gen)config.gen()).Q1FPARDEFAUT; }
-	public int Q2FPARDEFAUT() { return ((Gen)config.gen()).Q2FPARDEFAUT; }
-	public long RV1() { return ((Gen)config.gen()).RV1; }
-	public long RV2() { return ((Gen)config.gen()).RV2; }
-	public int RV1PC() { return ((Gen)config.gen()).RV1PC; }
-	public int RV2PC() { return ((Gen)config.gen()).RV2PC; }
-
-	private static boolean ready = false;
-	public static void startup() throws Exception {
-		synchronized (config) {
-			if (ready) return;
-			AConfig.startup(Gen.class, Secret.class);
-				
-			Gen g = (Gen)config.gen();
-			if (g.NBHEURESENCREATION <= 0) g.NBHEURESENCREATION = 72 ;
-			if (g.NBHEURESENZOMBIE <= 0) g.NBHEURESENZOMBIE = 240 ;
-			if (g.MAXNBVISITES <= 0) g.MAXNBVISITES = 10 ;
-			if (g.NTFNBJ <= 0) g.NTFNBJ = 30 ;
-			if (g.Q1CPARDEFAUT <= 0) g.Q1CPARDEFAUT = 1;
-			if (g.Q1FPARDEFAUT <= 0) g.Q1FPARDEFAUT = 5;
-			if (g.Q2FPARDEFAUT <= 0) g.Q2FPARDEFAUT = 20;
-			if (g.RV1 <= 0) g.RV1 = 1000000;
-			if (g.RV2 <= 0) g.RV2 = 10000000;
-			if (g.RV1PC <= 0) g.RV1PC = 10;
-			if (g.RV2PC <= 0) g.RV2PC = 10;
-			if (g.SESSIONAGEMAXENSECONDES <= 0) g.SESSIONAGEMAXENSECONDES = 43200;
-
-			declareDocumentsAndOperations();
-			
-			ready = true;
-		}
+		declareDocumentsAndOperations();
 	}
 
 	/*************************************************************************/
@@ -102,7 +76,7 @@ public class Config {
 		private static final Gouvernance gouvernanceVide = new Gouvernance();
 		
 		public static Gouvernance gouvernance(String nom) { 
-			if (GV == null) GV = ((Gen)config.gen()).gouvernances;
+			if (GV == null) GV = g.gouvernances;
 			Gouvernance g = GV.liste.get(nom); 
 			return g != null ? g : gouvernanceVide;
 		}
@@ -113,7 +87,7 @@ public class Config {
 				s = exgv.schema(type);
 				if (s != null) return s;
 			}
-			if (GV == null) GV = ((Gen)config.gen()).gouvernances;
+			if (GV == null) GV = g.gouvernances;
 			Integer ns = get(type);
 			if (ns == null || ns < 0 || ns > GV.schemas.length) return defScheVote;
 			s = GV.schemas[ns];

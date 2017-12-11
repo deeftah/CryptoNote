@@ -16,12 +16,12 @@ import java.util.logging.Level;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import fr.cryptonote.base.AConfig.Instance;
+import fr.cryptonote.base.BConfig.Instance;
 import fr.cryptonote.base.Servlet.InputData;
 import fr.cryptonote.provider.DBProvider;
 
 public class QueueManager implements Runnable {
-	private static boolean isDatastore = (AConfig.config().dbProviderName()).endsWith("DS");
+	private static boolean isDatastore = (BConfig.config().dbProviderName()).endsWith("DS");
 	public static boolean hostsQM() { 
 		return instance.hostedQM != null && instance.hostedQM.length != 0 && !isDatastore; 
 	}
@@ -37,7 +37,7 @@ public class QueueManager implements Runnable {
 	
 	private static QueueManager qm;
 	private static Instance instance;
-	private static AConfig config;
+	private static BConfig config;
 	private static int nbQueues = 0;
 	
 	private BlockingQueue<Integer> qmQueue =  new ArrayBlockingQueue<Integer>(1000) ;
@@ -98,7 +98,7 @@ public class QueueManager implements Runnable {
 	}
 	
 	static void initQ() throws AppException{
-		config = AConfig.config();
+		config = BConfig.config();
 		instance = config.instance();
 		nbQueues = instance.threads.length;
 		if (!hostsQM()) return;
@@ -240,7 +240,7 @@ public class QueueManager implements Runnable {
 			if (ti == null || ti.nextStart > qm.nextFullScan.stamp()) return;
 			TaskInfo tx = byPK.get(ti.pk());
 			if (tx != null && tx.workerIndex != 0) return; // déjà en cours d'exécution par un worker
-			ti.queue = QueueManager.normalizeQueueNumber(AConfig.config().queueNumber(ti.id));
+			ti.queue = QueueManager.normalizeQueueNumber(BConfig.config().queueNumber(ti.id));
 			ti.workerIndex = 0;
 			if (tx != null)
 				byStamp.remove(tx.stampKey);
@@ -334,7 +334,7 @@ public class QueueManager implements Runnable {
 			DBProvider provider = null;
 			try {
 				if (NS.status(ns) != 0) continue;
-				provider = AConfig.config().newDBProvider(ns);
+				provider = BConfig.config().newDBProvider(ns);
 				// 	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException ;
 				Collection<TaskInfo> tiList = provider.listTask(null, nextFullScan.stamp(), 0, null);
 				for(TaskInfo ti : tiList)
@@ -451,7 +451,7 @@ public class QueueManager implements Runnable {
 			DBProvider myProvider = null;
 			for(int i = 0; i < 3; i++) {
 				try {
-					myProvider = AConfig.config().newDBProvider(ti.ns);
+					myProvider = BConfig.config().newDBProvider(ti.ns);
 					if (report == null) {
 						myProvider.removeTask(ti.id);
 						qm.tiStore.remove(this);

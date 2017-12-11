@@ -1,6 +1,7 @@
 {
-"XRESSOURCEBUILDJS":"Ressource build.js non trouvée ou mal formée",
-"XRESSOURCENS":"Liste des namespaces (\"ns\":[...]) non trouvée ou ayant moins de 2 termes",
+"XRESSOURCEND":"Ressource [{0}] temporairement indisponible (base hors service)",
+"XRESSOURCEMF":"Nom de ressource mal formé [{0}] : devrait se terminer par .appcache ou .wsjs)",
+"XNSNA":"Espace [{0}] temporairement inaccessible",
 
 "BDOCUMENTCLASS0":"Tentative d''enrigistrement d''une classe de Document vide",
 "BDOCUMENTCLASS1":"Tentative d''enrigistrement d''une classe de Document [{0}] n''étendant pas Document",

@@ -63,7 +63,7 @@ public class Mailer {
 	private static String httpServerPWD;
 	
 	static void initMailers() {
-		mailers = AConfig.config().mailers();
+		mailers = BConfig.mailers();
 		Servlet.Resource r = Servlet.getResource("/WEB-INF/mail.json");
 		if (r != null)
 			try {

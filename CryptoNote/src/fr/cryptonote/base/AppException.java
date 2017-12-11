@@ -35,7 +35,7 @@ public class AppException extends Exception {
 		public String getMessage() {
 			StringBuffer sb = new StringBuffer();
 			sb.append("AppException: ").append(httpStatus);
-			String mc = AConfig._label("MC" + major);
+			String mc = BConfig.label("MC" + major);
 			sb.append(" Nature:").append(mc).append(" Code:").append(minor);
 			sb.append("\nDetail: ").append(detail[0]);
 			return sb.toString();
@@ -79,7 +79,7 @@ public class AppException extends Exception {
 		}
 		error.minor = code;
 		
-		error.detail[0] = AConfig._format(code,  args);
+		error.detail[0] = BConfig.format(code,  args);
 		
 		error.detail[1] = "";
 		if (t != null) {

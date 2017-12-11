@@ -230,7 +230,7 @@ public class Util {
 				throw new Exception("x");
 			return c;
 		} catch (Exception e) {
-			String msg1 = AConfig._format("XSERVLETCLASS", name, type.getCanonicalName());
+			String msg1 = BConfig.format("XSERVLETCLASS", name, type.getCanonicalName());
 			log.log(Level.SEVERE, msg1);
 			throw new ServletException(msg1, e);
 		}

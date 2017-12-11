@@ -9,9 +9,9 @@ import fr.cryptonote.base.ExecContext.IuCDoc;
 import fr.cryptonote.provider.DBProvider.DeltaDocument;
 
 public class Cache {
-	private static final int MAXLIFE = AConfig.config().CACHEMAXLIFEINMINUTES() * 60 * 1000;
-	private static final long MAXSIZE = AConfig.config().CACHEMAXSIZEINMO() * 1000000;
-	private static final int CLEANUPLAPSEMINUTES = AConfig.config().CACHECLEANUPLAPSEMINUTES();
+	private static final int MAXLIFE = BConfig.CACHEMAXLIFEINMINUTES() * 60 * 1000;
+	private static final long MAXSIZE = BConfig.CACHEMAXSIZEINMO() * 1000000;
+	private static final int CLEANUPLAPSEMINUTES = BConfig.CACHECLEANUPLAPSEMINUTES();
 	private static Long NEXTCLEANUP = System.currentTimeMillis() + (CLEANUPLAPSEMINUTES * 60000);
 	
 	private static final Hashtable<String, Cache> caches = new Hashtable<String, Cache>();

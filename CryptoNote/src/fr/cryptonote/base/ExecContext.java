@@ -80,7 +80,7 @@ public class ExecContext {
 	public static ExecContext current() { return ExecContextTL.get(); }
 	private static final ThreadLocal<ExecContext> ExecContextTL = new ThreadLocal<ExecContext>();
 
-	public static DBProvider dbProvider(String ns) throws AppException { return AConfig.config().newDBProvider(ns); }
+	public static DBProvider dbProvider(String ns) throws AppException { return BConfig.config().newDBProvider(ns); }
 	
 	private int iLang = 0;
 	private String ns;
@@ -101,7 +101,7 @@ public class ExecContext {
 		chrono = new Chrono(startTime.epoch());
 	}
 
-	ExecContext setLang(String lang) { iLang = AConfig._iLang(lang); return this; }
+	ExecContext setLang(String lang) { iLang = BConfig.lang(lang); return this; }
 	
 	/*
 	 * N'est invoqué que depuis Servlet init / get / post qui ne supporte que du ServletException
@@ -118,11 +118,11 @@ public class ExecContext {
 	}
 	
 	public int iLang() { return iLang; }
-	public String lang() { return AConfig.config().lang(iLang); }
+	public String lang() { return BConfig.lang(iLang); }
 	public int phase() {return phase; }	
 	public String operationName() { return inputData.operationName(); }
 	public Operation operation() { return operation; }
-	public String ns() { return ns == null ? AConfig.config().nsz() : ns; }
+	public String ns() { return ns == null ? BConfig.config().nsz() : ns; }
 	public boolean isTask() { return inputData.taskId() != null; }
 	public InputData inputData() { return inputData; }
 	
@@ -137,7 +137,7 @@ public class ExecContext {
 		sw.append(chrono.toString() + " - ").append(msg).append("\n");
 	}
 	
-	public DBProvider dbProvider() throws AppException{	if (dbProvider == null)	dbProvider = AConfig.config().newDBProvider(ns()); 	return dbProvider; }
+	public DBProvider dbProvider() throws AppException{	if (dbProvider == null)	dbProvider = BConfig.config().newDBProvider(ns()); 	return dbProvider; }
 
 	public void maxTime() throws AppException { if (!isDebug && startTime.lapseInMs() > maxTime) throw new AppException("XMAXTIME", operationName()); }
 
@@ -155,14 +155,14 @@ public class ExecContext {
 						xAdmin = 1;
 					else {
 						String x = Crypto.bytesToBase64(Crypto.SHA256(Crypto.base64ToBytes(key)), true);
-						xAdmin = AConfig.config().isSecretKey(x) ? 1 : -1;
+						xAdmin = BConfig.config().isSecretKey(x) ? 1 : -1;
 					}
 				} catch (Exception e) {	xAdmin = -1; }
 		}
 		return xAdmin > 0;
 	}
 
-	public boolean hasQmKey() {	return AConfig.config().isQmSecretKey(inputData.args().get("key")); }
+	public boolean hasQmKey() {	return BConfig.config().isQmSecretKey(inputData.args().get("key")); }
 	
 	public boolean isQM() { return isTask() && hasQmKey(); }
 
@@ -285,9 +285,8 @@ public class ExecContext {
 	Result go(InputData inp) throws AppException {
 		Result result = null;
 		inputData = inp;
-		iLang = AConfig._iLang(inp.args().get("lang"));
-		isDebug = AConfig.config().isDebug();
-		maxTime = isTask() ? AConfig.config().TASKMAXTIMEINSECONDS() : AConfig.config().OPERATIONMAXTIMEINSECONDS();
+		isDebug = BConfig.isDebug();
+		maxTime = isTask() ? BConfig.TASKMAXTIMEINSECONDS() : BConfig.OPERATIONMAXTIMEINSECONDS();
 		int nsStatus = NS.status(ns); // 0:rw 1:ro 2:interdit 3:inexistant
 		if (nsStatus > 2 && !hasAdminKey())
 			throw new AppException("ODOMAINOFF", NS.info(ns));
@@ -511,7 +510,7 @@ public class ExecContext {
 			tq = tasks;
 			docsToDelForced = forcedDeletedDocuments;
 			version = Stamp.fromNow(0).stamp();
-			dtime = Stamp.fromNow(- (AConfig.config().DTIMEDELAYINHOURS() * 3600000)).stamp();
+			dtime = Stamp.fromNow(- (BConfig.DTIMEDELAYINHOURS() * 3600000)).stamp();
 			for(Document doc : docs.values()) {
 				if (doc.isRO()) continue;
 				doc.summarize();

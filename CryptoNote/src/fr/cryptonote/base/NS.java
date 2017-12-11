@@ -32,8 +32,8 @@ public class NS {
 	private static HashMap<String,ArrayList<String>> queueManagers = new HashMap<String,ArrayList<String>>();
 	
 	static void init() throws AppException{
-		NSSCANPERIODINSECONDS = AConfig.config().NSSCANPERIODINSECONDS();
-		allns = AConfig.config().ns();
+		NSSCANPERIODINSECONDS = BConfig.config().NSSCANPERIODINSECONDS();
+		allns = BConfig.config().ns();
 		nsz = allns[0];
 		for(String n : allns) namespaces.put(n, new NS());
 		ready = true;
@@ -145,7 +145,7 @@ public class NS {
 	public static Object srvcfg(String ns) throws AppException{
 		reload();
 		NS x = get(ns);
-		Object nscfg = AConfig.config().newNSSrvCfg();
+		Object nscfg = BConfig.config().newNSSrvCfg();
 		return x == null ? nscfg : JSON.fromJson(x.cfg.srvcfg, nscfg.getClass());
 	}
 
@@ -275,7 +275,7 @@ public class NS {
 			if (x == null || x.length() == 0 || "{}".equals(x))
 				cfg.srvcfg = null;
 			else {
-				Object nscfg = AConfig.config().newNSSrvCfg();
+				Object nscfg = BConfig.config().newNSSrvCfg();
 				try {
 					JSON.fromJson(x, nscfg.getClass());
 				} catch (Exception e) {

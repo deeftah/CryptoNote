@@ -21,7 +21,7 @@ public class S2Cleanup extends Document {
 	private static int nbs; // nombre de tranches de nbh heures dans un jour
 
 	static {
-		nbh = AConfig.config().S2CLEANUPPERIODINHOURS();
+		nbh = BConfig.S2CLEANUPPERIODINHOURS();
 		boolean found = false;
 		for(int i = 0; i < slices.length; i++) if (slices[i] == nbh) { found = true; break; }
 		if (!found) nbh = 24;

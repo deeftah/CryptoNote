@@ -2,6 +2,8 @@ package fr.cryptonote.base;
 
 import java.util.HashMap;
 
+import javax.servlet.ServletException;
+
 public class MimeType {
 	public static final String defaultMime = "application/octet-stream";
 	
@@ -22,7 +24,7 @@ public class MimeType {
 	
 	private static final String MT = "/var/mimetypes.json";
 	
-	static void init() throws Exception {
+	static void init() throws ServletException {
 		Servlet.Resource r = Servlet.getResource(MT);
 		if (r != null)
 			try {
@@ -48,10 +50,10 @@ public class MimeType {
 					}
 				}
 			} catch (Exception ex){
-				throw new Exception(AConfig._format("XRESSOURCEJSONPARSE", MT, ex.getMessage()));
+				throw BConfig.exc(ex, BConfig.format("XRESSOURCEJSON", MT, ex.getMessage()));
 			}
 		else
-			throw new Exception(AConfig._format("XRESSOURCEABSENTE", MT));
+			throw BConfig.exc(null, BConfig.format("XRESSOURCEABSENTE", MT));
 	}
 	
 	public static String extOf(String mime) {

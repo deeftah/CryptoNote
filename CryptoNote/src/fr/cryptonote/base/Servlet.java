@@ -4,8 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -31,7 +29,7 @@ public class Servlet extends HttpServlet {
 	private static final String ext1 = "_appcache_swjs_";
 	private static final String ext2 = "_cloud_app_local_sync_local2_sync2_";	
 
-	private static boolean done = false;
+	private static Boolean done = false;
 	private static String contextPath;
 	private static ServletContext servletContext;
 	private static String[] var;
@@ -43,58 +41,24 @@ public class Servlet extends HttpServlet {
 	public static boolean isZres(String name) { for (String n : zres) if (n.equals(name)) return true; return false; }
 
 	/********************************************************************************/
-	private static Exception initException;
-	private static String msg;
-
-	private void err(Exception e) throws ServletException {
-		msg = e.getMessage() + "\n" + Util.stack(e);
-		Util.log.severe(msg);
-		if (e instanceof ServletException) throw (ServletException)e;
-		initException = e;
-	}
-
 	@Override public void init(ServletConfig servletConfig) throws ServletException {
-		if (done) return;
-		servletContext = servletConfig.getServletContext();
-		String s  = servletContext.getContextPath();
-		contextPath = s == null || s.length() <= 1 ? "" : s;
-		// ExecContext exec = 
-		new ExecContext();
-		
-		try { Crypto.startup(); } catch (Exception e) { err(e); }
-		
-		String c = servletContext.getInitParameter("ConfigClass");
-		if (c == null)	throw new ServletException(AConfig._label("XSERVLETCONFIG"));
-		Class<?> configClass = Util.hasClass(c, AConfig.class);
-		Method startup = null;
-		try {
-			startup = configClass.getMethod("startup");
-		} catch (Exception e) { err(new ServletException(AConfig._label("XSERVLETCONFIGCLASS", configClass.getSimpleName()))); }
-		if (!Modifier.isStatic(startup.getModifiers())) 
-			err(new ServletException(AConfig._label("XSERVLETCONFIGCLASS", configClass.getSimpleName())));
-		try { 
-			startup.invoke(null); 
-		} catch (Exception e) { err(e); }
-		
-		if (AConfig.config().build() == null || AConfig.config().build().length() == 0)
-			err(new ServletException(AConfig._label("XSERVLETCONFIGBUILD")));
-		
-		try {			
+		synchronized (done) {
+			if (done) return;
+			servletContext = servletConfig.getServletContext();
+			String s  = servletContext.getContextPath();
+			contextPath = s == null || s.length() <= 1 ? "" : s;
+			
+			BConfig.startup();			
+			
 			ArrayList<String> varx = new ArrayList<String>();
-			lpath(AConfig.config().resFilter(), varx, "/var/");
+			lpath(new BConfig.ResFilter(), varx, "/var/");
 			var = varx.toArray(new String[varx.size()]);
 			Arrays.sort(var);
 			ArrayList<String> zresx = new ArrayList<String>();
 			for(String x : var) if (x.startsWith("z/"))	zresx.add(x.substring(2));
 			zres = zresx.toArray(new String[zresx.size()]);
 			
-			// NS.init();
-			// ec.setNS(AConfig.config().nsz());
-			// QueueManager.initQ();
-			
 			done = true;
-		} catch (Exception e){
-			err(e);
 		}
 
 	}
@@ -107,46 +71,41 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	private ExecContext init1(HttpServletRequest req) throws ServletException { 
-		if (initException != null) throw new ServletException(msg, initException); 
+	private ExecContext exec(HttpServletRequest req) throws ServletException { 
 		ExecContext exec = new ExecContext();
-		exec.setNS("a");
 		exec.setLang(req.getHeader("lang"));
 		return exec;
 	}
 
-	private String init2(ExecContext exec, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException { 
+	private String uri(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException { 
 		String uri = req.getRequestURI().substring(contextPath.length() + 1);
-		
 		if ("build".equals(uri)) {
-			String b = AConfig.config().build();
+			String b = BConfig.build();
 			sendText(b, resp, b);
 			return null;
 		}
+		String shortcut = BConfig.shortcut(uri);
+		return shortcut != null ? uri : shortcut;
 
-		if ("ping".equals(uri)) {
-			String b = AConfig.config().build();
-			String dbInfo;
-			try {
-				dbInfo = exec.dbProvider().dbInfo(null);
-			} catch (AppException e) {
-				dbInfo = AConfig._label("XDBINFO") + "\n" + e.getMessage();			
-			}
-			sendText(b + " - " + dbInfo, resp, b);
-			return null;
-		}
-		
-		return uri;
 	}
 	
 	/********************************************************************************/
 	@Override public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		ExecContext exec = init1(req);
-		String uri = init2(exec, req, resp);
+		ExecContext exec = exec(req);
+		String uri = uri(req, resp);
 		if (uri == null) return;
-		
-		String shortcut = AConfig.config().shortcut(uri);
-		if (shortcut != null) uri = shortcut;
+
+		if ("ping".equals(uri)) {
+			String b = BConfig.build();
+			String dbInfo;
+			try {
+				dbInfo = exec.dbProvider().dbInfo(null);
+			} catch (AppException e) {
+				dbInfo = BConfig.label("XDBINFO") + "\n" + e.getMessage();			
+			}
+			sendText(b + " - " + dbInfo, resp, b);
+			return;
+		}
 		
 		int x = uri.lastIndexOf('.');
 		String extx = '_' + (x == -1 ? "" : uri.substring(x + 1)) + '_';
@@ -187,12 +146,12 @@ public class Servlet extends HttpServlet {
 			try {
 				exec.setNS(ns);
 				if (NS.status(ns) > 2) {
-					resp.sendError(404, AConfig._format("XSERVLETURL", ns));
+					resp.sendError(404, BConfig.format("XSERVLETURL", ns));
 					return;
 				};
 				nsb = NS.build(ns);
 			} catch (AppException e){
-				resp.sendError(404, AConfig._label("XSERVLETBASE"));
+				resp.sendError(404, BConfig.label("XSERVLETBASE"));
 				return;			
 			}
 		else {
@@ -202,7 +161,7 @@ public class Servlet extends HttpServlet {
 		}
 
 		if (uri.equals(ns + "/build")){
-			String b = AConfig.config().build() + "_" + nsb;
+			String b = BConfig.build() + "_" + nsb;
 			sendText(b, resp, b);
 			return;
 		}
@@ -238,7 +197,7 @@ public class Servlet extends HttpServlet {
 				r = getResource("/var/" + uri);
 			sendRes(r, req, resp);
 		} catch (AppException e){
-			resp.sendError(404, AConfig._label("XSERVLETBASE"));
+			resp.sendError(404, BConfig.label("XSERVLETBASE"));
 			return;			
 		}
 
@@ -246,8 +205,8 @@ public class Servlet extends HttpServlet {
 
 	/********************************************************************************/
 	@Override public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		ExecContext exec = init1(req);
-		String uri = init2(exec, req, resp);
+		ExecContext exec = exec(req);
+		String uri = uri(req, resp);
 		if (uri == null) return;
 
 		int i = uri.indexOf('/');
@@ -262,12 +221,12 @@ public class Servlet extends HttpServlet {
 			try {
 				exec.setNS(ns);
 				if (NS.status(ns) > 2) {
-					resp.sendError(404, AConfig._format("XSERVLETNS", ns));
+					resp.sendError(404, BConfig.format("XSERVLETNS", ns));
 					return;
 				};
 				nsb = NS.build(ns);
 			} catch (AppException e){
-				resp.sendError(404, AConfig._label("XSERVLETBASE"));
+				resp.sendError(404, BConfig.label("XSERVLETBASE"));
 				return;			
 			}
 		else {
@@ -277,7 +236,7 @@ public class Servlet extends HttpServlet {
 		}
 		
 		if (uri.equals(ns + "/build")){
-			String b = AConfig.config().build() + "_" + nsb;
+			String b = BConfig.build() + "_" + nsb;
 			sendText(b, resp, b);
 			return;
 		}
@@ -321,7 +280,7 @@ public class Servlet extends HttpServlet {
 			boolean mpfd = !isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
 			inp = !mpfd ? getInputData(req) : postInputData(req);
 			String b1 = inp.args.get("build");
-			String b2 = AConfig.config().build();
+			String b2 = BConfig.build();
 			if (b1 != null && !b2.equals(b1))
 				throw new AppException("DBUILD", b1, b2);
 
@@ -528,7 +487,7 @@ public class Servlet extends HttpServlet {
 
 	/********************************************************************************/
 	private static final int lvar = "/var/".length();
-	private void lpath(ResFilter rf, ArrayList<String> var, String root){
+	private void lpath(BConfig.ResFilter rf, ArrayList<String> var, String root){
 		Set<String> paths = servletContext.getResourcePaths(root);
 		if (paths != null)
 			for(String s : paths)

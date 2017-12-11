@@ -10,18 +10,15 @@ import fr.cryptonote.base.Servlet.Resource;
 public class OfflineServlet {
 	
 	static void doGetOffline(String ns, String ext, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		int nsstatus = 0;
 		String nsbuild = null;
 		try {
-			nsstatus = NS.status(ns);
+			if (NS.status(ns) != 0) {
+				resp.sendError(404, BConfig.format("XNSNA", ns));
+				return;
+			}
 			nsbuild = "" + NS.build(ns);
 		} catch (AppException e){
-			resp.sendError(404, "Ressource " + req.getRequestURI() + "temporairement indisponible (base hors service)");
-			return;
-		}
-
-		if (nsstatus > 2) {
-			resp.sendError(404, "URL mal formée : espace de noms [" + ns + "] non reconnu)");
+			resp.sendError(404, BConfig.format("XRESSOURCEND", req.getRequestURI()));
 			return;
 		}
 		if ("appcache".equals(ext)) {
@@ -32,20 +29,18 @@ public class OfflineServlet {
 			wsjs(ns, nsbuild, req, resp);
 			return;
 		}
-		resp.sendError(404, "URI mal formée (ne se termine ni par .appcache ni par .wsjs)");
+		resp.sendError(404, BConfig.format("XRESSOURCEMF", req.getRequestURI()));
 	}
 	
 	private static void appcache(String ns, String nsbuild, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		AConfig config = AConfig.config();
-		String contextPath = Servlet.contextPath();
-		String p1 = contextPath + "/" + ns;
-		String v = "_" + config.build() + "_" + nsbuild;
+		String p1 = Servlet.contextPath() + "/" + ns;
+		String v = "_" + BConfig.build() + "_" + nsbuild;
 		String p2 = p1 + "/" + v + "/";
 		StringBuffer sb = new StringBuffer();
 		sb.append("CACHE MANIFEST\n#").append(v).append("\nCACHE:\n");
 		for(String s : Servlet.var())
 			sb.append(p2 + s + "\n");
-		for(String s : config.offlinepages())
+		for(String s : BConfig.offlinepages())
 			sb.append(p1).append('/').append(s).append(".local2\n")
 			.append(p1).append('/').append(s).append(".sync2\n");	
 		byte[] bytes = sb.toString().getBytes("UTF-8");
@@ -53,27 +48,23 @@ public class OfflineServlet {
 	}
 
 	private static void wsjs(String ns, String nsbuild, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		AConfig config = AConfig.config();
-		String contextPath = Servlet.contextPath();
 		Servlet.Resource c = Servlet.getResource("/var/sw.js");
-		if (c == null) {
-			resp.sendError(404, "La ressource /var/sw.js n'est pas disponible");
-			return;
-		}
-		String p1 = "\"" + contextPath + "/" + ns;
-		String v = "_" + config.build() + "_" + nsbuild;
+		if (c == null) { resp.sendError(404, BConfig.format("XRESSOURCEABSENTE", "/var/sw.js")); return; }
+		
+		String p1 = "\"" + Servlet.contextPath() + "/" + ns;
+		String v = "_" + BConfig.build() + "_" + nsbuild;
 		String p2 = p1 + "/" + v + "/";
 
 		StringBuffer sb = new StringBuffer();
 		sb.append("'use strict';\n");
-		sb.append("const CONTEXTPATH = \"").append(contextPath).append("\";\n");
-		sb.append("const BUILD = \"").append(config.build()).append("\";\n");
+		sb.append("const CONTEXTPATH = \"").append(Servlet.contextPath()).append("\";\n");
+		sb.append("const BUILD = \"").append(BConfig.build()).append("\";\n");
 		sb.append("const NS = \"").append(ns).append("\";\n");
 		sb.append("const NSBUILD = \"").append(nsbuild).append("\";\n");
 		sb.append("const RESSOURCES = [\n");
 		for(String s : Servlet.var())
 			sb.append(p2 + s + "\",\n");
-		for(String s : config.offlinepages())
+		for(String s : BConfig.offlinepages())
 			sb.append(p1).append('/').append(s).append(".local\",\n")
 			.append(p1).append('/').append(s).append(".sync\",\n");	
 		sb.append("];\n");
@@ -83,8 +74,6 @@ public class OfflineServlet {
 	}
 	
 	static void doGetPages(String ns, String ext, String uri, HttpServletRequest req, HttpServletResponse resp) throws IOException {		
-		AConfig config = AConfig.config();
-		String contextPath = Servlet.contextPath();
 		Servlet.Resource res = null;
 		int nsstatus = 0;
 		String nsbuild = null;
@@ -99,12 +88,7 @@ public class OfflineServlet {
 			nsstatus = NS.status(ns);
 			nsbuild = "" + NS.build(ns);
 		} catch (AppException e){
-			resp.sendError(404, "Ressource " + uri + " temporairement indisponible (base hors service)");
-			return;
-		}
-
-		if (nsstatus > 2) {
-			resp.sendError(404, "URL mal formée : espace de noms [" + ns + "] non reconnu)");
+			resp.sendError(404, BConfig.format("XRESSOURCEND", uri));
 			return;
 		}
 		
@@ -150,17 +134,13 @@ public class OfflineServlet {
 		sb.append("<!DOCTYPE html>");
 		
 		if (ext.endsWith("2"))
-			sb.append("<html manifest=\"").append(contextPath)
+			sb.append("<html manifest=\"").append(Servlet.contextPath())
 			.append("/").append(ns).append(".appcache\">");
 		else
 			sb.append("<html>");
 		
-		String build = config.build();
-		sb.append("<head><base href=\"").append(contextPath).append("/").append(ns);
-//		if (ext.equals("app") || ext.equals("cloud")) 
-//			sb.append("/var"); 
-//		else
-			sb.append("/_").append(build).append("_").append(nsbuild);
+		sb.append("<head><base href=\"").append(Servlet.contextPath()).append("/").append(ns);
+		sb.append("/_").append(BConfig.build()).append("_").append(nsbuild);
 		sb.append("/\">\n");
 		
 		sb.append(head);
@@ -181,25 +161,26 @@ public class OfflineServlet {
 
 		sb.append("\n<script type=\"text/javascript\">\n");
 		sb.append("'use strict';\n");
-		sb.append("SRV.buildSrv = \"").append(build).append("\";\n");
-		sb.append("SRV.contextpath = \"").append(contextPath).append("\";\n");
+		sb.append("SRV.buildSrv = \"").append(BConfig.build()).append("\";\n");
+		sb.append("SRV.contextpath = \"").append(Servlet.contextPath()).append("\";\n");
 		
 		sb.append("SRV.langs = [");
-		String[] lx = config.langs();
+		String[] lx = BConfig.langs();
 		for(int l = 0; l < lx.length; l++){
 			if (l != 0) sb.append(",");
 			sb.append("\"").append(lx[l]).append("\"");
 		}
 		sb.append("];\n");
-		sb.append("SRV.defaultLang = \"").append(config.lang()).append("\";\n");
-		sb.append("APP.lang = \"").append(config.lang()).append("\";\n");
-		sb.append("SRV.zone = \"").append(config.zone()).append("\";\n");
+		sb.append("SRV.defaultLang = \"").append(BConfig.defaultLang()).append("\";\n");
+		// TODO
+//		sb.append("APP.lang = \"").append(config.lang()).append("\";\n");
+		sb.append("SRV.zone = \"").append(BConfig.zone()).append("\";\n");
 		sb.append("SRV.ns = \"").append(ns).append("\";\n");
 		sb.append("SRV.nsbuild = \"").append(nsbuild).append("\";\n");
 		sb.append("SRV.nslabel = \"").append(nslabel).append("\";\n");
 		sb.append("SRV.nsinfo = \"").append(nsinfo).append("\";\n");
 		sb.append("SRV.nsstatus = ").append(nsstatus).append(";\n");
-		String b = config.byeAndBack();
+		String b = BConfig.byeAndBack();
 		if (b != null)
 			sb.append("SRV.byeAndBack = \"").append(b).append("\";\n");
 		sb.append("</script>\n");
