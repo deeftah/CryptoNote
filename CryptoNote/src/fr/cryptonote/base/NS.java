@@ -190,13 +190,7 @@ public class NS {
 			
 			String label = null;
 			
-			// Code du queue manager
-			String qm = "qm1";
-			
-			/* Un JSON utilisable librement par le serveur pour y obtenir 
-			 * des données de configuration spécifique à un namespace
-			 */
-			String srvcfg = null;
+			HashMap<String,String> options = new HashMap<String,String>();
 		}
 	}
 			

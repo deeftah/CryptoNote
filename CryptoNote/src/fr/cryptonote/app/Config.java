@@ -5,24 +5,27 @@ import java.util.HashMap;
 import fr.cryptonote.base.AConfig;
 import fr.cryptonote.base.Stamp;
 
-public class Config extends AConfig {
-	protected static class Gen extends AGen {
-		int NBHEURESENCREATION;
-		int NBHEURESENZOMBIE;
-		int REMORDAVANTCLOTUREMINUTES;
-		int Q1CPARDEFAUT;
-		int Q1FPARDEFAUT;
-		int Q2FPARDEFAUT;
-		long RV1;
-		long RV2;
-		int RV1PC;
-		int RV2PC;
-		int SESSIONAGEMAXENSECONDES;
-		int MAXNBVISITES;
-		int NTFNBJ;
-		Gouvernances gouvernances;
-	}
+public class Config {
+	private static Config config;
+	
+	int NBHEURESENCREATION;
+	int NBHEURESENZOMBIE;
+	int REMORDAVANTCLOTUREMINUTES;
+	int Q1CPARDEFAUT;
+	int Q1FPARDEFAUT;
+	int Q2FPARDEFAUT;
+	long RV1;
+	long RV2;
+	int RV1PC;
+	int RV2PC;
+	int SESSIONAGEMAXENSECONDES;
+	int MAXNBVISITES;
+	int NTFNBJ;
+	Gouvernances gouvernances;
 
+	public Config() {
+		
+	}
 	static {
 		config = new Config();
 	}

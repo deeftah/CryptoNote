@@ -1,0 +1,76 @@
+{
+	"zone":"Europe/Paris",
+	"langs":["fr", "en"],
+	"dbProviderClass":"fr.cryptonote.provider.ProviderPG",
+	"appConfigClass":"fr.cryptonote.app.config",
+	"isDebug":true,
+	"isDistrib":false,
+	"defaultUrl":"http://192.168.0.10:8090/cn",
+	"byeAndBack":"https://test.sportes.fr:8443/byeAndBack",
+
+	"TASKMAXTIMEINSECONDS":1800,
+	"OPERATIONMAXTIMEINSECONDS":1200,
+	"CACHEMAXLIFEINMINUTES": 120,
+	"CACHEMAXSIZEINMO": 50,
+	"CACHECLEANUPLAPSEMINUTES": 5,
+	"NSSCANPERIODINSECONDS":3600,
+	"S2CLEANUPPERIODINHOURS":4,
+	"DTIMEDELAYINHOURS":24,
+	
+	"namespaces" : {
+		"namespace":{"label":"Espace de noms", "base":"cna", "qm":"A", "pwd":"ns"},
+		"test":{"label":"Test : associations et groupes de travail", "base":"cna", "qm":"HA", "pwd":"test", "url": "http://192.168.0.10:8090/cn"}
+	},
+	
+	"queueManagers":{
+		"A":{
+			"url": "http://192.168.0.10:8090/cn",
+			"base":"nca",
+			"threads": [2,1],
+			"scanlapseinseconds":60,
+			"retriesInMin":[1, 10, 60, 180],
+			"pwd":"qm"
+		}
+	},
+	
+	"mailserver":"simu://alterconsos.fr/tech/server2.php",
+	"adminMails":"daniel@sportes.fr,domi.colin@laposte.net",
+	"emailfilter":["sportes.fr"],
+	"mailers": {
+		 "A":{
+		 	"name":"[A]",
+		 	"host":"compote.o2switch.net",
+		 	"port":465,
+		 	"username":"app@alterconsos.fr",
+		 	"from":"app@alterconsos.fr",
+		  	"starttls":true,
+		  	"auth":true,
+		 	"isDefault":true,
+		 	"pwd":"pA"
+		 	},
+		 "B":{
+		 	"name":"[B]",
+		 	"host":"auth.smtp.1and1.fr",
+		 	"port":587,
+		 	"username":"daniel@sportes.fr",
+		 	"from":"daniel@sportes.fr",
+		  	"starttls":true,
+		  	"auth":true,
+		  	"pwd":"pB"
+			}
+	},
+	
+	"s2Sstorages":{
+		"nca": {"blobsroot":"/tmp/blobsroot", "bucket":"bk1" }
+	},
+	
+	"offlinepages":["go","g2"],
+	
+	"shortcuts":{
+		"(empty)":"a/go.app",
+		"z":"z/go.app",
+		"a/p":"a/go.app",
+		"a/s":"a/go.ws"
+	}
+	
+}

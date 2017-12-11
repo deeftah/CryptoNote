@@ -1,0 +1,24 @@
+{			
+	"REMORDAVANTCLOTUREMINUTES": 1, 
+	"NBHEURESENCREATION": 72,
+	"Q1CPARDEFAUT": 1,
+	"Q1FPARDEFAUT": 5,
+	"Q2FPARDEFAUT": 20,
+	"RV1": 1000000,
+	"RV2": 10000000,
+	"RV1PC": 10,
+	"RV2PC": 10,
+			
+	"gouvernances" : {
+		"schemas":[
+			{"p":50,"m":2,"v":false,"i":false,"h":0}, 
+			{"p":50,"m":2,"v":false,"i":false,"h":0}
+		],
+		"liste":{
+			"def":{"t1":0, "t2":1},
+			"g1":{"t1":0, "t2":1},
+			"g2":{"t1":0, "t2":1}
+		}
+	}
+	
+}
