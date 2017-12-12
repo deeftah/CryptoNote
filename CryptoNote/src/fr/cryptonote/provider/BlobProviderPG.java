@@ -10,18 +10,20 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 
 import fr.cryptonote.base.AppException;
+import fr.cryptonote.base.BConfig.S2Storage;
 
 public class BlobProviderPG extends BlobProvider {
 	public static final String basketPath = "__basket__";
 		
-	public BlobProviderPG(String blobsroot, String ns){
-		super(blobsroot, ns);
+	public BlobProviderPG(String ns) throws AppException{
+		super(ns);
 	}
 	
+	public BlobProviderPG(S2Storage s2, String ns) throws AppException {super(s2, ns);}
 	
 	/** Blob store **************************************************/	
 	private Path path(String clid, String sha){
-		String root = blobsroot + "/" + ns ;
+		String root = s2Storage.blobsroot() + "/" + ns ;
 		int f = clid.hashCode() % 100;
 		String g = urlencode(clid);
 		return sha == null ? Paths.get(root + "/" + f, g) : Paths.get(root, g, sha);
@@ -118,7 +120,8 @@ public class BlobProviderPG extends BlobProvider {
 	
 	public static void main(String[] args) {
 		try {
-			BlobProviderPG bp = new BlobProviderPG("d:/temp/blobsroot", "a");
+			S2Storage s2 = new S2Storage("/tmp/blobsroot", "bk1");
+			BlobProviderPG bp = new BlobProviderPG(s2, "cna");
 			byte[] t = "toto".getBytes(UTF8);
 			bp.blobStore("g1", "abc", t);
 			bp.blobStore("g1", "abcd", t);

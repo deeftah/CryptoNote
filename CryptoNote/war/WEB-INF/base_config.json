@@ -2,6 +2,7 @@
 	"zone":"Europe/Paris",
 	"langs":["fr", "en"],
 	"dbProviderClass":"fr.cryptonote.provider.ProviderPG",
+	"defaultBase":"cna",
 	"appConfigClass":"fr.cryptonote.app.config",
 	"isDebug":true,
 	"isDistrib":false,
@@ -18,18 +19,27 @@
 	"DTIMEDELAYINHOURS":24,
 	
 	"namespaces" : {
-		"namespace":{"label":"Espace de noms", "base":"cna", "qm":"A", "pwd":"ns"},
-		"test":{"label":"Test : associations et groupes de travail", "base":"cna", "qm":"HA", "pwd":"test", "url": "http://192.168.0.10:8090/cn"}
+		"namespace":{"label":"Espace de noms", "url": "http://192.168.0.10:8090/cn", "base":"cna", "pwd":"ns", "qm":"A"},
+		"test":{
+			"label":"Test : associations et groupes de travail", 
+			"url": "http://192.168.0.10:8090/cn",
+			"base":"cna", 
+			"pwd":"test", 
+			"qm":"qm1",
+			"theme":"a",
+			"options":{}
+			}
 	},
 	
 	"queueManagers":{
-		"A":{
+		"qm1":{
+			"label":"QM de test", 
 			"url": "http://192.168.0.10:8090/cn",
 			"base":"nca",
+			"pwd":"qm",
 			"threads": [2,1],
 			"scanlapseinseconds":60,
-			"retriesInMin":[1, 10, 60, 180],
-			"pwd":"qm"
+			"retriesInMin":[1, 10, 60, 180]
 		}
 	},
 	

@@ -31,7 +31,7 @@ public class Cache {
 		return dc;
 	}
 
-	public static synchronized Cache current() { return cacheOf(ExecContext.current().ns()) ;}
+	public static synchronized Cache current() { return cacheOf(ExecContext.current().nsqm().code) ;}
 
 	/*************************************************************/
 

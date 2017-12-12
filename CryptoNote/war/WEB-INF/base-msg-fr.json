@@ -1,4 +1,14 @@
 {
+"500URLMF1":"URL [{0}] mal formée : https://site.com/org/... attendue",
+"500URLMF1cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue",
+
+"BNAMESPACENO":"Aucune organisation (namespace) déclérée à la configuration",
+"BNAMESPACEPWD":"Organisation (namespace) [{0}] : mot de passe non déclaré à la configuration",
+"BNAMESPACEBASE":"Organisation (namespace) [{0}] : base non déclaré à la configuration",
+"BQMPWD":"Queue Manager [{0}] : mot de passe non déclaré à la configuration",
+"BQMBASE":"Queue Manager [{0}] : base non déclaré à la configuration",
+
+
 "XRESSOURCEND":"Ressource [{0}] temporairement indisponible (base hors service)",
 "XRESSOURCEMF":"Nom de ressource mal formé [{0}] : devrait se terminer par .appcache ou .wsjs)",
 "XNSNA":"Espace [{0}] temporairement inaccessible",
@@ -62,8 +72,8 @@
 
 "XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}] sql:[{3}]",
 "XSQLCFG":"Erreur de syntaxe dans /WEB-INF/dbconfig.json",
-"XSQLDS":"Datasource pour le namespace [{0}] non initialisable",
-"XSQLDSNS":"Demande de datasource sans namespace",
+"XSQLDS":"Datasource pour la base [{0}] non initialisable",
+"XSQLDSNS":"Demande d''un DBProvider pour une base [{0}] non déclarée",
 
 "BUPDDIFF1":"Mise à jour différée sans id et/ou item",
 "BUPDDIFF2":"Mise à jour différée : item sans classe connue [{0}]",

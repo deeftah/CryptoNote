@@ -3,6 +3,7 @@ package fr.cryptonote.base;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TimeZone;
@@ -41,7 +42,8 @@ public class BConfig {
 		mfDic0.put("XSERVLETNS", new MessageFormat("URL mal formée (espace de noms [{0}] non reconnu)"));
 		mfDic0.put("XSERVLETCLASS", new MessageFormat("La classe [{0}] doit exister et étendre (ou être) la classe [{1}]"));
 		
-		mfDic0.put("BDBNAME", new MessageFormat("Database inconnue [{0}]"));
+		mfDic0.put("BDBNAME", new MessageFormat("Database inconnue [{0}] ou sans password déclaré"));
+		mfDic0.put("BS2NAME", new MessageFormat("Stockage S2 inconnu [{0}]"));
 		mfDic0.put("BCRYPTOSTARTUP", new MessageFormat("Erreur d''initialisation de la classe Crypto"));
 		mfDic0.put("XRESSOURCEABSENTE", new MessageFormat("Ressource [{0}] : non trouvée"));
 		mfDic0.put("XRESSOURCEJSON", new MessageFormat("Ressource [{0}] : erreur de parse json [{1}]"));
@@ -51,7 +53,8 @@ public class BConfig {
 		mfDic0.put("XAPPCONFIG", new MessageFormat("Classe [{0}] de configuration application : non trouvée ou non instantiable ou sans méthode static startup(Object)"));
 		mfDic0.put("XDBPROVIDERFACTORY", new MessageFormat("Classe [{0}] DBProvider : non trouvée ou sans méthode static getProvider(String)"));
 				
-		mfDic1.put("BDBNAME", new MessageFormat("Unknown database [{0}]"));
+		mfDic1.put("BDBNAME", new MessageFormat("Unknown database [{0}] or without declared password"));
+		mfDic1.put("BS2NAME", new MessageFormat("Unknown S2 storage [{0}]"));
 		mfDic1.put("BCRYPTOSTARTUP", new MessageFormat("Initialization error of Crypto class"));
 		mfDic1.put("XRESSOURCEABSENTE", new MessageFormat("Resource [{0}] : not found"));
 		mfDic1.put("XRESSOURCEJSON", new MessageFormat("Resource [{0}] : json parse error [{0}]"));
@@ -110,37 +113,54 @@ public class BConfig {
 	}
 	
 	/*******************************************************************************/
-	
-	public static class QueueManager {
-		public String url;
-		public String base;
-		public int[] threads;
-		public int scanlapseinseconds;
-		public int[] retriesInMin;
+	public static class Nsqm {
+		String code;
+		boolean isQM;
+		String label;
+		String url;
+		String base;
 		private String pwd;
+		
+		String qm;
+		String theme;
+		HashMap<String,String> options;
+		int build;
+		int off;
+		
+		int[] threads;
+		int scanlapseinseconds;
+		int[] retriesInMin;
+		
+		public String label() { return label != null && label.length() != 0 ? label : code; }
+		public boolean isQM() { return isQM; }
+		public String url() { return url != null && url.length() != 0 ? url : g.defaultUrl; }
+		public String base() { return base != null && base.length() != 0 ? base : g.defaultBase; }
 		public String pwd() {
 			if (pwd == null || pwd.length() == 0) return "";
 			String px = p == null ? null : p.get(pwd);
 			return px != null ? px : pwd;
 		}
-	}
-	
-	public static class Namespace {
-		public String label;
-		public String base;
-		public String qm;
-		public String url;
-		private String pwd;
-		public String pwd() {
-			if (pwd == null || pwd.length() == 0) return "";
-			String px = p == null ? null : p.get(pwd);
-			return px != null ? px : pwd;
-		}
+		
+		public String qm() { return qm; }
+		public String theme() { return theme != null || theme.length() != 0 ? theme : "a"; }
+		public int build() { return build; }
+		public int off() { return off; }
+		public String[] options() { return options == null || options.size() == 0 ? new String[0] : options.keySet().toArray(new String[options.size()]); }
+		public String option(String opt) { return options == null ? null : options.get(opt); }
+		
+		public int[] threads() { return threads; }
+		public int scanlapseinseconds() { return scanlapseinseconds; }
+		public int[] retriesInMin() { return retriesInMin; }
+		
 	}
 
 	public static class S2Storage {
-		public String blobsroot;
-		public String bucket;
+		private String blobsroot;
+		private String bucket;
+		public String blobsroot() { return blobsroot; }
+		public String bucket() { return bucket; }
+		public S2Storage() {}
+		public S2Storage(String blobsroot, String bucket) { this.blobsroot = blobsroot; this.bucket = bucket; }
 	}
 	
 	public static class Mailer {
@@ -160,16 +180,17 @@ public class BConfig {
 		}
 	}
 	
-	protected static class Passwords {
-		private HashMap<String,String> passwords;
-	}
+//	protected static class Passwords {
+//		private HashMap<String,String> passwords;
+//	}
 
 	private static class BaseConfig {
-		private String 		build;
+		private int 		build;
 		private String 		instance = "?";
 		private String 		zone = "Europe/Paris";
 		private String[] 	langs = defaultLangs;
 		private String 		dbProviderClass = "fr.cryptonote.provider.ProviderPG";
+		private String 		defaultBase = "defaultBase";
 		private String 		appConfigClass = "fr.cryptonote.app.config";
 		private boolean 	isDebug = false;
 		private boolean 	isDistrib = true;
@@ -186,20 +207,20 @@ public class BConfig {
 		private int 		S2CLEANUPPERIODINHOURS = 4;
 		private int 		DTIMEDELAYINHOURS = 24 * 8;
 		
-		private HashMap<String,QueueManager> 	queueManagers;
-		private HashMap<String,Namespace> 		namespaces;
-		private HashMap<String,S2Storage> 		s2Storages;
-		private HashMap<String,Mailer> 			mailers;
+		private HashMap<String,Nsqm> 		queueManagers;
+		private HashMap<String,Nsqm> 		namespaces;
+		private HashMap<String,S2Storage> 	s2Storages;
+		private HashMap<String,Mailer> 		mailers;
 		
 		private String 		mailServer = "simu://alterconsos.fr/tech/server2.php";
 		private String 		adminMails = "daniel@sportes.fr,domi.colin@laposte.net";
 		private String[] 	emailFilter = {"sportes.fr"};
 		
 		private String[] 	offlinepages;
-		private HashMap<String,String> 			shortcuts;
+		private HashMap<String,String> 		shortcuts;
 	}
 
-	public static String 		build() { return g.build; }
+	public static int 			build() { return g.build; }
 	public static String 		instance() { return g.instance; }
 	public static String 		zone() { return g.zone; }
 	public static TimeZone 		timeZone() { return TimeZone.getTimeZone(g.zone); }
@@ -211,8 +232,8 @@ public class BConfig {
 	public static boolean 		isDebug() { return g.isDebug;}
 	public static boolean 		isMonoServer() { return g.isMonoServer;}
 	public static String 		defaultUrl() { return g.defaultUrl; }
-	public static String		url(String namespace) { Namespace ns = g.namespaces.get(namespace);	return ns == null || ns.url == null ? g.defaultUrl : ns.url; }
 	public static String 		byeAndBack() { return g.byeAndBack; }
+	public static String 		defaultBase() { return g.defaultBase; }
 
 	public static int 			TASKMAXTIMEINSECONDS() { return g.TASKMAXTIMEINSECONDS;}
 	public static int 			OPERATIONMAXTIMEINSECONDS() { return g.OPERATIONMAXTIMEINSECONDS;}
@@ -231,14 +252,30 @@ public class BConfig {
 	public static String[] offlinepages() { return g.offlinepages == null ? new String[0] : g.offlinepages ;}
 	public static String shortcut(String s){ return g.shortcuts != null ? g.shortcuts.get((s == null || s.length() == 0) ? "(empty)" : s) : null; }
 		
+	public static String[]		namespaces() { return g.namespaces.keySet().toArray(new String[g.namespaces.size()]);}
+	public static String[]		queueManagers() { return g.queueManagers == null ? new String[0] : g.queueManagers.keySet().toArray(new String[g.queueManagers.size()]);}
+	
+	public static Nsqm namespace(String ns, boolean fresh) { 
+		Nsqm x = g.namespaces.get(ns);
+		return x != null && fresh ? NS.fresh(x) : x;
+	}
+	public static Nsqm queueManager(String ns, boolean fresh) { 
+		Nsqm x = g.queueManagers == null ? null : g.queueManagers.get(ns); 
+		return x != null && fresh ? NS.fresh(x) : x;
+	}
+	public static Nsqm nsqm(String nsqm, boolean fresh) { 
+		Nsqm x = namespace(nsqm, fresh); 
+		return x != null ? x : queueManager(nsqm, fresh);
+	}
+	
 	/***************************************************************************************/
 	private static BaseConfig g;
 	private static HashMap<String,String> p;
-	private static HashMap<String,String[]> namespacesByDB = new HashMap<String,String[]>();
+	private static HashMap<String,ArrayList<String>> namespacesByDB = new HashMap<String,ArrayList<String>>();
 	private static HashSet<String> databases = new HashSet<String>();
 	private static String dbProviderName;
 	private static Method dbProviderFactory;
-
+	
 	static ServletException exc(Exception e, String msg) {
 		if (e != null) msg += "\n" + e.getMessage() + "\n" + Util.stack(e);
 		Util.log.log(Level.SEVERE, msg);
@@ -266,16 +303,20 @@ public class BConfig {
 
 		try {
 			Servlet.Resource rb = Servlet.getResource(BUILDJS);
-			String s = rb.toString();
-			int i = s.indexOf("\"");
-			if (i == -1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "1"));
-			int j = s.lastIndexOf("\"");
-			if (j == -1 || j > s.length() - 3) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));
-			g.build = s.substring(i+ 1, j);
+				if (rb != null) {
+				String s = rb.toString();
+				int i = s.indexOf("=");
+				if (i == -1 || i == s.length() - 1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "1"));
+				try { g.build = Integer.parseInt(s.substring(i+ 1)); } catch (Exception e) { throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));}
+			}
+			else 
+				throw exc(null, _format(0, "XRESSOURCEABSENTE", BUILDJS));
 		} catch (Exception e) {
 			throw exc(e, _format(0, "XRESSOURCEABSENTE", BUILDJS));
 		}
 
+		checkNsqm();
+		
 		g.instance = System.getProperty(DVARINSTANCE);
 		
 		r = Servlet.getResource(PASSWORDS);
@@ -293,7 +334,7 @@ public class BConfig {
 			dbProviderName = g.dbProviderClass.substring(i + 1);
 			Class<?> c = Class.forName(g.dbProviderClass);
 			try {
-				Method dbProviderFactory = c.getMethod("getProvider", String.class);
+				Method dbProviderFactory = c.getMethod("getProvider", String.class, String.class);
 				if (!Modifier.isStatic(dbProviderFactory.getModifiers())) 
 					throw exc(null, _format(0, "XDBPROVIDERFACTORY", g.dbProviderClass));
 			} catch (Exception e) {
@@ -332,19 +373,56 @@ public class BConfig {
 	}
 			
 	/****************************************************/
-	public static String[] namespacesByDB(String db) { return namespacesByDB.get(db); }
+	private static void checkNsqm() throws ServletException {
+		if (g.namespaces == null || g.namespaces.size() == 0)
+			throw exc(null, _format(0, "XNAMESPACENO"));
+		for(String ns : g.namespaces.keySet()) {
+			Nsqm x = g.namespaces.get(ns);
+			x.isQM = false;
+			x.code = ns;
+			if (x.pwd == null || x.pwd.length() == 0) throw exc(null, _format(0, "XNAMESPACEPWD", ns));
+			if (x.base != null && x.base.length() != 0) {
+				databases.add(x.base);
+				ArrayList<String> al = namespacesByDB.get(x.base);
+				if (al == null) {
+					al = new ArrayList<String>();
+					namespacesByDB.put(x.base, al);
+				}
+				al.add(ns);
+			}
+		}
+		for(String qm : g.queueManagers.keySet()) {
+			Nsqm x = g.queueManagers.get(qm);
+			x.isQM = true;
+			x.code = qm;
+			if (x.pwd == null || x.pwd.length() == 0) throw exc(null, _format(0, "XQMPWD", qm));			
+			if (x.base != null && x.base.length() != 0) databases.add(x.base);
+		}
+	}
+	
+	/****************************************************/
+	public static ArrayList<String> namespacesByDB(String db) { return namespacesByDB.get(db); }
 	public static String dbProviderName() { return dbProviderName; }
 	public static String[] databases() { return databases.toArray(new String[databases.size()]); }
+	public static boolean hasDatabase(String n) { return databases.contains(n); }
 
 	public static final DBProvider getDBProvider(String db) throws AppException {
 		try {
 			if (!databases.contains(db)) throw new AppException("BDBNAME");
-			return (DBProvider) dbProviderFactory.invoke(db);
+			String pwd = p.get(db);
+			if (pwd == null) throw new AppException("BDBNAME");
+			return (DBProvider) dbProviderFactory.invoke(db, pwd);
 		} catch (Exception e) {
 			throw new AppException(e, "XDBPROVIDERFACTORY", g.dbProviderClass);
 		}
 	}
 
+	public static final S2Storage s2Storage(String db) throws AppException {
+		S2Storage s = g.s2Storages.get(db);
+		if (s == null) throw new AppException("BS2NAME", db);
+		return s;
+	}
+	
 	/****************************************************/
 	private static final String[] ignore = {"bower.json", ".gitignore", ".yml", ".md", ".log", "Makefile", "index.html", ".js.map", "LICENSE.txt"};
 	public static class ResFilter {

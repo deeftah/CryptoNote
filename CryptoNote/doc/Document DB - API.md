@@ -3,19 +3,86 @@
 # Requêtes HTTP et Contextes d'exécution
 Les sessions externes émettent des requêtes HTTPS qui peuvent être des GET ou des POST.
 
-***Raccourcis d'URLs***  
-La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le *namespace*. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.
+### Applications : `context-path`, ping, build
+Un serveur ou pool de serveurs accessible par une URL peut servir plusieurs applications d'objets différents. Le début de l'URL après le nom du serveur est le code de cette application :
 
-Les URLs comportent en tête un *context path* `cp` qui selon les options de déploiement peut ne pas exister et,
-- soit un code de namespace `ns` obligatoire (le code `qm` étant interdit): 
-    - `htpps://monserveur.mondomaine.fr/cp/ns` 
-    - `htpps://monserveur.mondomaine.fr/ns`
-- soit un code Queue Manager :
-    - `htpps://monserveur.mondomaine.fr/cp/qm1` 
-    - `htpps://monserveur.mondomaine.fr/qm1`
+    https://site.org/theApp/xxx...
 
-Ceci permet au frontal HTTP de router les requêtes sur les serveurs appropriés du pool et en particulier d'adresser les requêtes techniques pour les Queue Managers sur les instances qui les gèrent effectivement.  
-Plusieurs codes `qmXXX` de Queue Manager peuvent être gérés par une même instance de serveur.
+Un serveur ou pool de serveurs qui ne sert qu'une unique application a une URL qui ignore `theApp` :  
+
+    https://site.otg/xxx...
+
+Le code `theApp` ci-dessus est nommé techniquement `context-path` et peut être "" ou contenir `"theApp"`.
+
+Quand il s'agit d'un pool de serveur, il y a en général :
+- une adresse pour le pool sans savoir à quel serveur physique on s'adresse :  `https://pool.site.org/... ` ou le cas échéant `https://site.org/...` C'est l'utilisation la plus fréquente.
+- une adresse indiquant précisément quel serveur physique est à joindre : `https://django.site.org/...` Cet adressage est réservé à des opérations techniques particulières, typiquement celles de commandes d'un *QueueManager* gérant les tâches différées des applications.
+
+Pour déterminer si l'application `theApp` est en ligne on peut utiliser les commandes :
+
+    1 - https://site.org/theApp/ping
+    2 - https://django.site.org/theApp/ping
+
+Dans le cas 1, un serveur du pool répond qu'il est prêt à recevoir des requêtes.  
+Dans le cas 2, le serveur spécifique adressé répond qu'il est prêt à recevoir des requêtes.
+
+Chaque application a une version du logiciel nommée `build` qui est un numéro toujours croissant au fil du temps : le ping retourne un texte de la forme `{t:171205184532456, b:132}`
+- `t` indique la date-heure courante du serveur en millisecondes UTC : le 5 décembre 2017 à 18:45:32 et 456 millisecondes.
+- `b` indique le numéro de build (la version de l'application).
+
+### Organisations : code stop
+Une application donnée peut être déployée pour le compte de plusieurs **organisations**, les données de chacune étant étanches de celles des autres mais :
+- toutes exécutent la même application sous la même version (build) du logiciel.
+- chaque organisation, indépendamment des autres, peut être mise on/off par un administrateur technique.
+    - quand l'application est **on** son code `off` vaut 0 (ou est absent).
+    - quand l'application est **off** son code `off` a deux chiffres :
+        - le premier indique la raison de l'arrêt, par exemple :
+            - 1-maintenance technique, 
+            - 2-suspension administrative temporaire, 
+            - 3-exportation vers un autre site, 
+            - 4-opération de sécurité,
+            - 9-clôture définitive.
+        - le second donne une idée du délai d'interruption estimé, par exemple :
+            - 0-totalement inconnu et non maîtrisé,
+            - 1-très courte durée (secondes),
+            - 2-courte durée, de l'ordre de dizaines de minutes à une heure ou deux,
+            - 3-plusieurs heures,
+            - 4-plusieurs jours,
+            - 5-plusieurs semaines ou mois.
+            - 9-pas de reprise envisagée.
+
+**Datastore / Base de données**
+Une organisation donnée a ses données permanentes gérées par un Datastore / Base de données, sachant que chaque base peut techniquement héberger les données de plusieurs organisations.
+- les données d'une organisation sont techniquement étanches de celles des autres même dans le même Datastore / Base de données.
+- elles peuvent être techniquement facilement exportées / purgées sans perturbation pour les autres organisations dont les données seraient co-hébergées (mais l'exportation peut être très longue).
+
+L'URL qui permet d'accéder à l'application d'une organisation a la forme suivante :
+
+    https://site.org/theApp/monOrg/...
+
+La commande `https://site.org/theApp/monOrg/ping` permet de connaître le statut de l'application pour cette organisation : 
+
+    {t:171205184532456, b:132, off:12, db:"PG-10.1 [cna]"}
+    
+Le code `off` est celui décrit ci-dessus et est absent quand l'application est on pour cette organisation.  
+Le code `db` donne le type de Datastore utilisé (Postgresql 10.1) et son identifiant local (cna).  
+Le texte du code derrière `db` peut être un code d'erreur si la base de données est indisponible pour une raison technique.
+
+**Queue Managers**
+Certains serveurs physiques sont chargé de gérer la file des tâches différées pour une ou plusieurs organisations : ces serveur ont un profil de Queue Manager.
+
+Un Queue Manageur a un code commençant par `qm`) : qm1 qm7 etc. Dans une URL visant exclusivement un serveur physique (pas l'adresse d'un pool) un administrateur technique peut adresser des requêtes au QueueManager :
+
+    https://django.site.org/theApp/qm7/...
+
+Si ce serveur n'héberge pas de Queue Manager, ou pas celui de code qm7, la requête revient avec un code d'erreur 500.
+
+***Raccourcis d'URLs*** pour un GET  
+La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le *code de l'organisation*. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.
+
+    https://site.org/theApp/app -> https://site.org/theApp/monOrg/page-home.app
+
+
 
 ### Invocation d'opérations
 URLs : `cp/ns/op/p1/p2 ...`  

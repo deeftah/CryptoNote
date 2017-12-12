@@ -15,7 +15,6 @@ import javax.naming.InitialContext;
 
 import org.postgresql.ds.common.BaseDataSource;
 
-import fr.cryptonote.base.BConfig;
 import fr.cryptonote.base.AppException;
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.Cond;
@@ -28,7 +27,6 @@ import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.ExecContext.ItemIUD;
 import fr.cryptonote.base.ExecContext.IuCDoc;
-import fr.cryptonote.base.JSON;
 import fr.cryptonote.base.S2Cleanup;
 import fr.cryptonote.base.Stamp;
 import fr.cryptonote.base.TaskInfo;
@@ -37,73 +35,51 @@ import fr.cryptonote.base.Util;
 
 public class ProviderPG implements DBProvider {
 	private static final int GZIPSIZE = 2000;
-	
-	private static int setContent(PreparedStatement preparedStatement, String text, int j) throws SQLException{
-		byte[] bytes = (text != null && text.length() > GZIPSIZE) ? Util.gzip(text) : null;
-		if (bytes != null && bytes.length > text.length() * 0.6)
-			bytes = null;
-		preparedStatement.setString(j++, bytes == null ? text : null);
-		preparedStatement.setBytes(j++, bytes);
-		return j;
-	}
-
-	private String getContent(ResultSet rs)  throws SQLException{
-		String content = rs.getString("contentt");
-		if (content != null) return content;
-		byte[] bytes = rs.getBytes("contentb");
-		return bytes != null ? Util.ungzipText(bytes) : null;
-	}
-		
+			
 	private static HashMap<String,BaseDataSource> dataSources = new HashMap<String,BaseDataSource>();
-
-	private static class ProviderConfig {
-		private String blobsroot;
-	}
-	private static ProviderConfig providerConfig;
 			
 	BaseDataSource dataSource;
 	private String operationName = "?";
 	private Connection conn;
 	protected String ns;
+	protected String dbname;
 	private boolean inTransaction = false;
 	private String sql;
-	
 	private BlobProvider blobProvider;
 	
 	@Override public void shutdwon() { }
 	
-	@Override public BlobProvider blobProvider() { return blobProvider; }
+	@Override public BlobProvider blobProvider() throws AppException { 
+		if (blobProvider == null)
+			blobProvider = new BlobProviderPG(ns);
+		return blobProvider;
+	}
 
-	public ProviderPG(String ns) throws AppException {
-		if (ns == null || ns.length() == 0) throw new AppException("XSQLDSNS");
-		this.ns = ns;
-		if (providerConfig == null){
+	public static DBProvider getProvider(String dbname, String pwd) throws AppException {
+		BaseDataSource ds = dataSources.get(dbname);
+		if (ds == null) {
 			try {
-				providerConfig = JSON.fromJson(BConfig.config().dbProviderConfig(), ProviderConfig.class);
+				ds = (BaseDataSource)new InitialContext().lookup("java:comp/env/jdbc/" + dbname);
+				ds.setPassword(pwd);
+				dataSources.put(dbname, ds);
 			} catch (Exception e){
-				throw new AppException(e, "XSQLCFG");
+				throw new AppException(e, "XSQLDS", dbname);
 			}
 		}
-		if (dataSource == null) {
-			BaseDataSource ds = dataSources.get(ns);
-			if (ds == null) {
-				try {
-					ds = (BaseDataSource)new InitialContext().lookup("java:comp/env/jdbc/cn" + ns);
-					dataSources.put(ns, ds);
-				} catch (Exception e){
-					throw new AppException(e, "XSQLDS", ns);
-				}
-			}
-			dataSource = ds;
-			blobProvider = new BlobProviderPG(providerConfig.blobsroot, ns);
-		}
+		ProviderPG p = new ProviderPG();
+		p.dataSource = ds;
+		p.dbname = dbname;
+		p.ns = dbname;
+		return p;
 	}
 			
 	@Override public String ns(){ return this.ns; }
 
+	@Override public DBProvider ns(String ns){ this.ns = ns; return this; }
+
 	@Override public String operationName(){ return this.operationName; }
 
-	@Override public void operationName(String operationName){ this.operationName = operationName; }
+	@Override public DBProvider operationName(String operationName){ this.operationName = operationName; return this; }
 
 	/*************************************************************************************/
 	@Override public Object connection() throws AppException { return conn(); }
@@ -164,7 +140,25 @@ public class ProviderPG implements DBProvider {
 				conn = null;
 			}		
 	}
-	
+
+	/*************************************************************************************/
+
+	private static int setContent(PreparedStatement preparedStatement, String text, int j) throws SQLException{
+		byte[] bytes = (text != null && text.length() > GZIPSIZE) ? Util.gzip(text) : null;
+		if (bytes != null && bytes.length > text.length() * 0.6)
+			bytes = null;
+		preparedStatement.setString(j++, bytes == null ? text : null);
+		preparedStatement.setBytes(j++, bytes);
+		return j;
+	}
+
+	private String getContent(ResultSet rs)  throws SQLException{
+		String content = rs.getString("contentt");
+		if (content != null) return content;
+		byte[] bytes = rs.getBytes("contentb");
+		return bytes != null ? Util.ungzipText(bytes) : null;
+	}
+
 	protected AppException err(PreparedStatement preparedStatement, ResultSet rs, Exception e, String meth) {
 		if (preparedStatement != null)
 			try { preparedStatement.close(); } catch (SQLException e1) {}

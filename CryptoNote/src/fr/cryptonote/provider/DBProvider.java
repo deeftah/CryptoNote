@@ -17,8 +17,9 @@ import fr.cryptonote.base.TaskUpdDiff.ByTargetClkey;
 
 public interface DBProvider {
 	public String ns();
+	public DBProvider ns(String ns);
 	public String operationName();
-	public void operationName(String operationName);
+	public DBProvider operationName(String operationName);
 	
 	public void rollbackTransaction();
 	public void closeConnection();
@@ -27,7 +28,7 @@ public interface DBProvider {
 	
 	public String dbInfo(String info) throws AppException ;
 	
-	public BlobProvider blobProvider();
+	public BlobProvider blobProvider() throws AppException;
 	
 	public void shutdwon();
 		

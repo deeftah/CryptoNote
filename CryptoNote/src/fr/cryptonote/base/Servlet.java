@@ -36,6 +36,7 @@ public class Servlet extends HttpServlet {
 	private static String[] zres;
 
 	public static String contextPath() { return contextPath; }
+	public static boolean hasCP() { return contextPath.length() != 0; }
 	public static String[] var() { return var; }
 	public static String[] zres() { return zres; }
 	public static boolean isZres(String name) { for (String n : zres) if (n.equals(name)) return true; return false; }
@@ -70,31 +71,37 @@ public class Servlet extends HttpServlet {
 		} catch (Exception e) {	}
 	}
 
+	
+	
 	/********************************************************************************/
-	private ExecContext exec(HttpServletRequest req) throws ServletException { 
-		ExecContext exec = new ExecContext();
-		exec.setLang(req.getHeader("lang"));
-		return exec;
-	}
-
 	private String uri(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException { 
 		String uri = req.getRequestURI().substring(contextPath.length() + 1);
-		if ("build".equals(uri)) {
-			String b = BConfig.build();
-			sendText(b, resp, b);
+		if ("ping".equals(uri)) {
+			String x = "\"{t\":" + Stamp.fromNow(0).stamp() + ", \"b\":" + BConfig.build() + "}";
+			sendText(0, x, resp);
 			return null;
 		}
 		String shortcut = BConfig.shortcut(uri);
 		return shortcut != null ? uri : shortcut;
-
 	}
 	
 	/********************************************************************************/
 	@Override public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		ExecContext exec = exec(req);
 		String uri = uri(req, resp);
 		if (uri == null) return;
-
+		ExecContext exec = new ExecContext().setLang(req.getHeader("lang"));
+		
+		int i = uri.indexOf('/');
+		if (i == -1 || i == uri.length() - 1) {
+			sendText(500, BConfig.format("500URLMF1" + (hasCP() ? "cp" : ""), uri), resp);
+			return;
+		}
+		
+		String nsqm = uri.substring(0, i);
+		uri = uri.substring(i + 1);
+		
+		
+		ExecContext exec = new ExecContext().setLang(req.getHeader("lang"));
 		if ("ping".equals(uri)) {
 			String b = BConfig.build();
 			String dbInfo;
@@ -253,18 +260,21 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	private void sendText(String text, HttpServletResponse resp, String build) throws IOException {
+	private void sendText(int code, String text, HttpServletResponse resp) throws IOException {
 		if (text == null) text = "";
 		resp.setStatus(200);
 		resp.setContentType("text/plain");
-		if (build != null)
-			resp.addHeader("build", build);
-		try {
-			byte[] bytes = text.getBytes("UTF-8");
-			resp.setContentLength(bytes.length);
-			resp.getOutputStream().write(bytes);		
-		} catch (UnsupportedEncodingException e) {
-			resp.sendError(500);
+		resp.addHeader("build", "" + BConfig.build());
+		if (code == 0 || code == 200) {
+			try {
+				byte[] bytes = text.getBytes("UTF-8");
+				resp.setContentLength(bytes.length);
+				resp.getOutputStream().write(bytes);		
+			} catch (UnsupportedEncodingException e) {
+				resp.sendError(500);
+			}
+		} else {
+			resp.sendError(code, text);
 		}
 	}
 

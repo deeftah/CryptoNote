@@ -82,10 +82,6 @@ public abstract class Operation {
 			} else
 				op.taskId = op.inputData.taskId();
 			op.taskCheckpoint = op.taskId != null ? taskCheckpoint : null;
-			String ns = op.execContext.ns();
-			int s = NS.status(ns);
-			if (s > 0 && (op.taskId != null || !op.isReadOnly()))
-				throw new AppException("ODOMAINOFF", NS.info(ns));	
 		} catch (Exception e){
 			throw new AppException(e, "BBADOPERATION0", operationName);			
 		}
@@ -111,9 +107,8 @@ public abstract class Operation {
 	public Stamp startTime() { return execContext.startTime2(); }
 	public OperationDescriptor descr() { return opd; }
 	public String name() { return opd.operationName; }
-	public boolean hasAdminKey() { return execContext().hasAdminKey(); }
-	public boolean hasQmKey() { return execContext().hasQmKey(); }
-	public boolean isQM() { return execContext().isQM(); }
+	public boolean isSudo() { return execContext.isSudo(); }
+	public boolean isQM() { return execContext.isQM(); }
 	
 	public void setTask(Document.Id id, long nextStart, String info) throws AppException{ execContext().newTask(id, nextStart, info);}
 	public void setTaskByCron(Document.Id id, String cron) throws AppException { execContext().newTask(id, new Cron(cron).nextStart().stamp(), cron);}

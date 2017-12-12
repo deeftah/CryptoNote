@@ -9,6 +9,7 @@ import java.util.Set;
 
 import javax.servlet.ServletException;
 
+import fr.cryptonote.base.BConfig.Nsqm;
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
 import fr.cryptonote.base.Cache.XCDoc;
@@ -79,11 +80,9 @@ public class ExecContext {
 
 	public static ExecContext current() { return ExecContextTL.get(); }
 	private static final ThreadLocal<ExecContext> ExecContextTL = new ThreadLocal<ExecContext>();
-
-	public static DBProvider dbProvider(String ns) throws AppException { return BConfig.config().newDBProvider(ns); }
 	
 	private int iLang = 0;
-	private String ns;
+	private Nsqm nsqm;
 	private Stamp startTime;
 	private Stamp startTime2;
 	private Chrono chrono;
@@ -106,23 +105,14 @@ public class ExecContext {
 	/*
 	 * N'est invoqué que depuis Servlet init / get / post qui ne supporte que du ServletException
 	 */
-	ExecContext setNS(String namespace) throws ServletException {
-		if (ns != null) return this;
-		ns = namespace;
-		try {
-			NS.reload();
-			return this;
-		} catch (AppException e) {
-			throw new ServletException(e);
-		}
-	}
+	ExecContext setNsqm(Nsqm nsqm) throws ServletException { this.nsqm = nsqm; return this; }
 	
 	public int iLang() { return iLang; }
 	public String lang() { return BConfig.lang(iLang); }
 	public int phase() {return phase; }	
 	public String operationName() { return inputData.operationName(); }
 	public Operation operation() { return operation; }
-	public String ns() { return ns == null ? BConfig.config().nsz() : ns; }
+	public Nsqm nsqm() { return nsqm; }
 	public boolean isTask() { return inputData.taskId() != null; }
 	public InputData inputData() { return inputData; }
 	
@@ -137,34 +127,32 @@ public class ExecContext {
 		sw.append(chrono.toString() + " - ").append(msg).append("\n");
 	}
 	
-	public DBProvider dbProvider() throws AppException{	if (dbProvider == null)	dbProvider = BConfig.config().newDBProvider(ns()); 	return dbProvider; }
+	public DBProvider dbProvider() throws AppException{	if (dbProvider == null)	dbProvider = BConfig.getDBProvider(nsqm.base()); return dbProvider; }
 
 	public void maxTime() throws AppException { if (!isDebug && startTime.lapseInMs() > maxTime) throw new AppException("XMAXTIME", operationName()); }
 
 	void closeAll() { if (dbProvider != null) dbProvider.closeConnection(); }
 		
 	private int xAdmin = 0;
-	public boolean hasAdminKey() {
+	public boolean isSudo() {
 		if (xAdmin == 0) {
-			String key = inputData.args().get("key");
-			if (key == null) 
+			String sudo = inputData.args().get("sudo");
+			if (sudo == null) 
 				xAdmin = -1;
 			else 
 				try {
-					if (isDebug && key.equals("nonuke"))
+					if (isDebug && sudo.equals("nonuke"))
 						xAdmin = 1;
 					else {
-						String x = Crypto.bytesToBase64(Crypto.SHA256(Crypto.base64ToBytes(key)), true);
-						xAdmin = BConfig.config().isSecretKey(x) ? 1 : -1;
+						String x = Crypto.bytesToBase64(Crypto.SHA256(Crypto.base64ToBytes(sudo)), true);
+						xAdmin = nsqm.pwd().equals(x) ? 1 : -1;
 					}
 				} catch (Exception e) {	xAdmin = -1; }
 		}
 		return xAdmin > 0;
 	}
-
-	public boolean hasQmKey() {	return BConfig.config().isQmSecretKey(inputData.args().get("key")); }
 	
-	public boolean isQM() { return isTask() && hasQmKey(); }
+	public boolean isQM() { return nsqm.isQM; }
 
 	Stamp startTime2(){ if (startTime2 == null)	startTime2 = Stamp.fromNow(0); return startTime2; }
 
@@ -179,7 +167,7 @@ public class ExecContext {
 	private void clearCaches(){ tasks.clear(); docs.clear(); deletedDocuments.clear(); forcedDeletedDocuments.clear();}
 
 	public void newTask(Document.Id id, long nextStart, String info) throws AppException{
-		tasks.put(id.toString(), new TaskInfo(ns(), id, nextStart, 0, info));
+		tasks.put(id.toString(), new TaskInfo(nsqm.code, id, nextStart, 0, info));
 	}
 
 	void forcedDeleteDoc(Id id) throws AppException{
@@ -287,9 +275,6 @@ public class ExecContext {
 		inputData = inp;
 		isDebug = BConfig.isDebug();
 		maxTime = isTask() ? BConfig.TASKMAXTIMEINSECONDS() : BConfig.OPERATIONMAXTIMEINSECONDS();
-		int nsStatus = NS.status(ns); // 0:rw 1:ro 2:interdit 3:inexistant
-		if (nsStatus > 2 && !hasAdminKey())
-			throw new AppException("ODOMAINOFF", NS.info(ns));
 		
 		if (!"sync".equalsIgnoreCase(operationName())) {
 			Object taskCheckpoint = null;
@@ -304,18 +289,16 @@ public class ExecContext {
 						if ("statsOp".equals(operationName())){
 							result = new Result();
 							result.mime = "application/json";
-							result.text = hasAdminKey() || isDebug ? ExecContext.getStatsOp() : "{}";
+							result.text = isSudo() || isDebug ? ExecContext.getStatsOp() : "{}";
 							return result;
 						}
 						if ("statsD".equals(operationName())){
 							result = new Result();
 							result.mime = "application/json";
-							result.text = hasAdminKey() || isDebug ? ExecContext.getStatsD() : "{}";
+							result.text = isSudo() || isDebug ? ExecContext.getStatsD() : "{}";
 							return result;
 						}
 						operation = Operation.CreateOperation(operationName(), taskCheckpoint);
-						if (nsStatus > 1 && !operation.isReadOnly())
-							throw new AppException("ODOMAINOFF", NS.info(ns));
 
 						phase = 1;
 						long lapseOp = 0;
@@ -345,13 +328,13 @@ public class ExecContext {
 						st[6] = (int)lapseOp;
 						st[7] = (int)lapseVal;
 						st[retry] = 1;
-						stats(ns, operationName(), st);
+						stats(nsqm.code, operationName(), st);
 						break; // OK : break retry, vers next step
 					} catch (Throwable t){
 						AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
 						if (dbProvider != null)	dbProvider.rollbackTransaction();
 						if (retry == 2 || isDebug || !ex.toRetry()) {
-							stats(ns, operationName(), 0,0,0,0,0,1,0,0);
+							stats(nsqm.code, operationName(), 0,0,0,0,0,1,0,0);
 							throw ex; // sortie des retries (éventuellement avant 3)
 						}
 						phase = 0;
@@ -537,7 +520,7 @@ public class ExecContext {
 				updDiff.summarize();
 				docsToSave.add(new IuCDoc(updDiff));
 				// 	public TaskInfo(String ns, Document.Id id, long nextStart, int retry, String info) {
-				tq.put(updDiff.id().toString(), new TaskInfo(ns(), updDiff.id(), version, 0, null));
+				tq.put(updDiff.id().toString(), new TaskInfo(nsqm.code, updDiff.id(), version, 0, null));
 			}
 			for(Document doc : deletedDocuments.values()) {
 				checkVersion(doc);
