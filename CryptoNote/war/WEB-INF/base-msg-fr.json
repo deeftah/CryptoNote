@@ -1,17 +1,36 @@
 {
 "500URLMF1":"URL [{0}] mal formée : https://site.com/org/... attendue",
 "500URLMF1cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue",
+"500URLMF2":"URL [{0}] mal formée : https://site.com/org/... attendue. [{1}] n''est ni une organisation ni un queue manager répertorié",
+"500URLMF2cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue [{1}] n''est ni une organisation ni un queue manager répertorié",
+"500OFF":"Application OFF : raison [{0}]",
+"500HQM":"Ce serveur n''héberge pas le Queue Manager [{0}]",
+"404SWJS":"Ressource /var/sw.js non trouvée",
+"404PAGE":"Page [{0}] non trouvée",
+"404PAGE1":"Page [{0}] mal formée : ligne 1 du type <!DOCTYPE html><html><head><base href=''...'' /> requise",
+"404PAGE2":"Page [{0}] mal formée : une ligne commençant par </head> est requise pour isoler la section <head>",
+"404PAGE3":"Page [{0}] mal formée : une section <head> non vide est requise",
+"404PAGE4":"Page [{0}] mal formée : une section <body> et le tag de fin </html> sont requis",
 
 "BNAMESPACENO":"Aucune organisation (namespace) déclérée à la configuration",
 "BNAMESPACEPWD":"Organisation (namespace) [{0}] : mot de passe non déclaré à la configuration",
 "BNAMESPACEBASE":"Organisation (namespace) [{0}] : base non déclaré à la configuration",
 "BQMPWD":"Queue Manager [{0}] : mot de passe non déclaré à la configuration",
 "BQMBASE":"Queue Manager [{0}] : base non déclaré à la configuration",
-
+"XMAILERCFG1":"Deux mailers déclarés ''par défaut''",
+"XMAILERCFG2":"Aucun mailer déclaré ''par défaut''",
+"XMAILERCFG3":"Password requis pour ''mailServer''",
 
 "XRESSOURCEND":"Ressource [{0}] temporairement indisponible (base hors service)",
 "XRESSOURCEMF":"Nom de ressource mal formé [{0}] : devrait se terminer par .appcache ou .wsjs)",
-"XNSNA":"Espace [{0}] temporairement inaccessible",
+"XNSNA":"L''application pour [{0}] est temporairement inaccessible",
+
+"BMAILPARAM":"Paramètres du mail incorrects : [{0}]",
+"BMAILNOMAILER":"Nom de mailer non déclaré : [{0}]",
+"XMAILHTTP":"Echec d''envoi (HTTP) du mail : [{0}]",
+"XMAILJAVAMAIL":"Echec d''envoi (JAVAMAIL) du mail : [{0}]",
+"BMAILTYPE":"Paramètres du mail incorrects. url : [{0}]",
+
 
 "BDOCUMENTCLASS0":"Tentative d''enrigistrement d''une classe de Document vide",
 "BDOCUMENTCLASS1":"Tentative d''enrigistrement d''une classe de Document [{0}] n''étendant pas Document",
@@ -136,11 +155,6 @@
 "BDOCUMENTIDCLASS12":"Document  mal identifié : id [{0}] ne respectant pas la syntaxe \"groupid/docid@classname\"",
 	
 	
-"BMAILPARAM":"Paramètres du mail incorrects : [{0}]",
-"BMAILNOMAILER":"Paramètres du mail incorrects : [{0}]",
-"XMAILHTTP":"Echec d''envoi (HTTP) du mail : [{0}]",
-"XMAILJAVAMAIL":"Echec d''envoi (JAVAMAIL) du mail : [{0}]",
-"BMAILTYPE":"Paramètres du mail incorrects. url : [{0}]",
 
 
 

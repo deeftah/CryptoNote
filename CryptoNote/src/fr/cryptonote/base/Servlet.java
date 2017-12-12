@@ -23,11 +23,12 @@ import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
+import fr.cryptonote.base.BConfig.Nsqm;
+
 public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 		
-	private static final String ext1 = "_appcache_swjs_";
-	private static final String ext2 = "_cloud_app_local_sync_local2_sync2_";	
+	private static final String[] ext2 = {".cloud", ".app", ".local", ".sync", ".local2"};	
 
 	private static Boolean done = false;
 	private static String contextPath;
@@ -73,190 +74,277 @@ public class Servlet extends HttpServlet {
 
 	
 	
-	/********************************************************************************/
-	private String uri(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException { 
-		String uri = req.getRequestURI().substring(contextPath.length() + 1);
-		if ("ping".equals(uri)) {
-			String x = "\"{t\":" + Stamp.fromNow(0).stamp() + ", \"b\":" + BConfig.build() + "}";
-			sendText(0, x, resp);
-			return null;
+	/********************************************************************************/	
+	private final class ReqCtx {
+		HttpServletRequest req;
+		HttpServletResponse resp;
+		ExecContext exec;
+		String origUri;
+		String uri;
+		String build;
+		Nsqm nsqm;
+		boolean fini = false;
+		
+		ReqCtx(HttpServletRequest req, HttpServletResponse resp) throws IOException { 
+			this.req = req; 
+			this.resp = resp; 
+			origUri = req.getRequestURI().substring(contextPath.length() + 1);
+			build = ""+ BConfig.build();
+			if ("ping".equals(origUri)) {
+				String x = "\"{t\":" + Stamp.fromNow(0).stamp() + ", \"b\":" + build + "}";
+				sendText(0, x, resp);
+				fini = true;
+			}
+			String shortcut = BConfig.shortcut(uri);
+			if (shortcut != null) origUri = shortcut;
+			exec = new ExecContext().setLang(req.getHeader("lang"));
 		}
-		String shortcut = BConfig.shortcut(uri);
-		return shortcut != null ? uri : shortcut;
+		
+		void checkNsqm() throws IOException {
+			int i = origUri.indexOf('/');
+			if (i == -1 || i == origUri.length() - 1) {
+				sendText(500, BConfig.format("500URLMF1" + (hasCP() ? "cp" : ""), origUri), resp);
+				fini = true;
+				return;
+			}
+			String x = origUri.substring(0, i);
+			nsqm = BConfig.nsqm(x, true);
+			if (nsqm == null) {
+				sendText(500, BConfig.format("500URLMF2" + (hasCP() ? "cp" : ""), origUri, x), resp);
+				return;			
+			}
+			if (nsqm.isQM) {
+				if (nsqm.code.equals(BConfig.QM())) {
+					sendText(500, BConfig.format("500HQM", nsqm.code), resp);	
+					fini = true;
+					return;
+				}	
+			} else {
+				if (nsqm.off != 0) {
+					sendText(500, BConfig.format("500OFF", ""+nsqm.off), resp);	
+					fini = true;
+					return;
+				}
+				build += "_" + nsqm.build;
+			}
+			exec.setNsqm(nsqm);
+			
+			uri = uri.substring(i + 1);
+			if ("ping".equals(uri)) {
+				String dbInfo;
+				try {
+					dbInfo = exec.dbProvider().dbInfo(null);
+				} catch (AppException e) {
+					dbInfo = BConfig.label("XDBINFO");			
+				}
+				StringBuffer sb = new StringBuffer();
+				sb.append("\"{t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":").append(build).append(", \"off\":").append(nsqm.off)
+				.append(", \"db\":").append(JSON.toJson(dbInfo)).append("}");
+				sendText(0, sb.toString(), resp);
+				fini = true;
+				return;
+			}
+		}
+		
+		private void appcache() throws IOException {
+			String p1 = contextPath + "/" + nsqm.code;
+			String v = "_" + build;
+			String p2 = p1 + "/" + v + "/";
+			StringBuffer sb = new StringBuffer();
+			sb.append("CACHE MANIFEST\n#").append(v).append("\nCACHE:\n");
+			for(String s : var())
+				sb.append(p2 + s + "\n");
+			for(String s : BConfig.offlinepages())
+				sb.append(p1).append('/').append(s).append(".local2\n").append(p1).append('/').append(s).append(".sync2\n");	
+			byte[] bytes = sb.toString().getBytes("UTF-8");
+			sendRes(new Servlet.Resource(bytes, "text/cache-manifest"), req, resp);
+			fini = true;
+		}
+
+		private void wsjs() throws IOException {
+			Resource c = getResource("/var/sw.js");
+			if (c == null) {
+				sendText(404, BConfig.format("404SWJS"), resp);
+				fini = true;
+				return;
+			}
+			String p1 = "\"" + contextPath + "/" + nsqm.code;
+			String v = "_" + build;
+			String p2 = p1 + "/" + v + "/";
+
+			StringBuffer sb = new StringBuffer();
+			sb.append("'use strict';\n");
+			sb.append("const CONTEXTPATH = \"").append(contextPath).append("\";\n");
+			sb.append("const BUILD = \"").append(BConfig.build()).append("\";\n");
+			sb.append("const NS = \"").append(nsqm.code).append("\";\n");
+			sb.append("const NSBUILD = \"").append(nsqm.build).append("\";\n");
+			sb.append("const RESSOURCES = [\n");
+			for(String s : var())
+				sb.append(p2 + s + "\",\n");
+			for(String s : BConfig.offlinepages())
+				sb.append(p1).append('/').append(s).append(".local\",\n").append(p1).append('/').append(s).append(".sync\",\n");	
+			sb.append("];\n");
+			sb.append(new String(c.bytes, "UTF-8"));
+			byte[] bytes = sb.toString().getBytes("UTF-8");
+			sendRes(new Servlet.Resource(bytes, " text/javascript"), req, resp);	
+			fini = true;
+		}
+		
+		void pages() throws IOException{
+			String ext = null;	for(String s : ext2) if (uri.endsWith(s)) ext = s;
+			if (ext == null) return;
+			String page = uri.substring(0, uri.length() - ext.length());
+			Resource res = NS.resource(nsqm.code, "custom.css");
+			String rp = "/var/" + page + ".html";
+			Resource r = getResource(rp);
+			if (r == null){
+				sendText(404, BConfig.format("404PAGE", rp), resp);
+				fini = true;
+				return;
+			}
+			String html = r.toString();
+			int x = html.indexOf('\n');
+			if (x == -1){
+				sendText(404, BConfig.format("404PAGE1", rp), resp);
+				fini = true;
+				return;
+			}
+			html = html.substring(x);
+			x = html.indexOf("</head>");
+			if (x == -1){
+				sendText(404, BConfig.format("404PAGE2", rp), resp);
+				fini = true;
+				return;
+			}
+			String head = html.substring(0, x);
+			if (head.length() == 0){
+				sendText(404, BConfig.format("404PAGE3", rp), resp);
+				fini = true;
+				return;
+			}
+			String body = html.substring(x);
+			if (body.length() < 19){
+				sendText(404, BConfig.format("404PAGE4", rp), resp);
+				fini = true;
+				return;
+			}
+			
+			StringBuffer sb = new StringBuffer();
+			sb.append("<!DOCTYPE html>");
+			
+			if (ext.endsWith("2")) 
+				sb.append("<html manifest=\"").append(contextPath).append("/").append(nsqm.code).append(".appcache\">");
+			else
+				sb.append("<html>");
+			
+			sb.append("<head><base href=\"").append(contextPath).append("/").append(nsqm.code).append("/_").append(build).append("_").append(build).append("/\">\n");
+			
+			sb.append(head);
+			sb.append("<style is=\"custom-style\">\n");
+			r = getResource("/var/themes/default.css");
+			if (r != null) sb.append(r.toString()).append("\n");
+			r = getResource("/var/themes/" + nsqm.theme + ".css");
+			if (r != null) sb.append(r.toString()).append("\n");
+			
+			if (res != null) 
+				sb.append("\n\n/***** theme spécifique de ").append(nsqm.code).append(" ************/\n").append(res.toString()).append("\n");
+			sb.append("</style>\n");
+
+			sb.append("<script src=\"build.js\"></script>\n");
+
+			sb.append("\n<script type=\"text/javascript\">\n");
+			sb.append("'use strict';\n");
+			sb.append("SRV.buildSrv = ").append(BConfig.build()).append(";\n");
+			sb.append("SRV.contextpath = \"").append(contextPath).append("\";\n");
+			
+			sb.append("SRV.langs = [");
+			String[] lx = BConfig.langs();
+			for(int l = 0; l < lx.length; l++){
+				if (l != 0) sb.append(",");
+				sb.append("\"").append(lx[l]).append("\"");
+			}
+			sb.append("];\n");
+			sb.append("APP.lang = \"").append(nsqm.lang()).append("\";\n");
+			sb.append("SRV.zone = \"").append(BConfig.zone()).append("\";\n");
+			sb.append("SRV.ns = \"").append(nsqm.code).append("\";\n");
+			sb.append("SRV.nsbuild = ").append(nsqm.build).append(";\n");
+			sb.append("SRV.nslabel = \"").append(nsqm.label).append("\";\n");
+			String b = BConfig.byeAndBack();
+			if (b != null)
+				sb.append("SRV.byeAndBack = \"").append(b).append("\";\n");
+			sb.append("</script>\n");
+			
+			sb.append("<script src=\"z/custom.js\"></script>\n");
+			sb.append("<script src=\"final.js\"></script>\n");
+
+			sb.append(body);
+			
+			sendRes(new Resource(sb.toString(), "text/html"), req, resp);
+			fini = true;
+		}
+
+		void resource() throws IOException {
+			if (uri.startsWith("var/"))
+				uri = uri.substring(4);
+			else {
+				if (uri.charAt(0) == '_'){
+					int i = uri.indexOf('/');
+					if (i != -1)
+						uri = uri.substring(i + 1);
+					else {
+						resp.sendError(404);
+						return;
+					}
+				} else {
+					resp.sendError(404);
+					return;
+				}
+			}
+
+			Resource res = null;
+			if (uri.startsWith("z/"))
+				res = NS.resource(nsqm.code, uri.substring(2));
+			if (res == null)
+				res = getResource("/var/" + uri);
+			if (res == null)
+				resp.sendError(404);
+			sendRes(res, req, resp);
+		}
 	}
 	
 	/********************************************************************************/
 	@Override public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		String uri = uri(req, resp);
-		if (uri == null) return;
-		ExecContext exec = new ExecContext().setLang(req.getHeader("lang"));
+		ReqCtx r = new ReqCtx(req, resp);
+		if (r.fini) return;
+		r.checkNsqm();
+		if (r.fini) return;
 		
-		int i = uri.indexOf('/');
-		if (i == -1 || i == uri.length() - 1) {
-			sendText(500, BConfig.format("500URLMF1" + (hasCP() ? "cp" : ""), uri), resp);
+		if ("x.appache".equals(r.uri)) { r.appcache(); return; }
+		if ("x.swjs".equals(r.uri)) { r.wsjs();	return;	}
+		r.pages();
+		if (r.fini) return;
+		
+		if (r.uri.startsWith("op/") || r.uri.startsWith("od/")){
+			doGetPost(true, r);
 			return;
 		}
 		
-		String nsqm = uri.substring(0, i);
-		uri = uri.substring(i + 1);
-		
-		
-		ExecContext exec = new ExecContext().setLang(req.getHeader("lang"));
-		if ("ping".equals(uri)) {
-			String b = BConfig.build();
-			String dbInfo;
-			try {
-				dbInfo = exec.dbProvider().dbInfo(null);
-			} catch (AppException e) {
-				dbInfo = BConfig.label("XDBINFO") + "\n" + e.getMessage();			
-			}
-			sendText(b + " - " + dbInfo, resp, b);
-			return;
-		}
-		
-		int x = uri.lastIndexOf('.');
-		String extx = '_' + (x == -1 ? "" : uri.substring(x + 1)) + '_';
-		if (ext1.indexOf(extx) != -1) {
-			int i = uri.indexOf('.');
-			if (i == -1) {
-				resp.sendError(404);
-				return;
-			}
-			String ns = uri.substring(0, i);
-			String ext = uri.substring(i + 1);
-			exec.setNS(ns);
-			OfflineServlet.doGetOffline(ns, ext, req, resp);
-			return;
-		}
-		if (ext2.indexOf(extx) != -1) {
-			int i = uri.indexOf('/');
-			if (i == -1) {
-				resp.sendError(404);
-				return;
-			}
-			String ns = uri.substring(0, i);
-			int j = uri.lastIndexOf('.');
-			String ext = uri.substring(j + 1);
-			exec.setNS(ns);
-			OfflineServlet.doGetPages(ns, ext, uri, req, resp);
-			return;
-		}
-				
-		int ix = uri.indexOf('/');
-		if (ix == -1) {
-			resp.sendError(404);
-			return;
-		}
-		String ns = uri.substring(0, ix);
-		int nsb = 0;
-		if (!ns.startsWith("qm"))
-			try {
-				exec.setNS(ns);
-				if (NS.status(ns) > 2) {
-					resp.sendError(404, BConfig.format("XSERVLETURL", ns));
-					return;
-				};
-				nsb = NS.build(ns);
-			} catch (AppException e){
-				resp.sendError(404, BConfig.label("XSERVLETBASE"));
-				return;			
-			}
-		else {
-			// par convention ns est égal au qm
-			ns = ns.substring(2);
-			exec.setNS(ns);
-		}
-
-		if (uri.equals(ns + "/build")){
-			String b = BConfig.build() + "_" + nsb;
-			sendText(b, resp, b);
-			return;
-		}
-		
-		uri = uri.substring(ix + 1);
-		if (uri.startsWith("op/") || uri.startsWith("qm/") || uri.startsWith("od/")){
-			doGetPost(true, uri, exec, req, resp);
-			return;
-		}
-		
-		if (uri.startsWith("var/"))
-			uri = uri.substring(4);
-		else {
-			if (uri.charAt(0) == '_'){
-				int i = uri.indexOf('/');
-				if (i != -1)
-					uri = uri.substring(i + 1);
-				else {
-					resp.sendError(404);
-					return;
-				}
-			} else {
-				resp.sendError(404);
-				return;
-			}
-		}
-
-		try {
-			Resource r = null;
-			if (uri.startsWith("z/"))
-				r = NS.resource(ns, uri.substring(2));
-			if (r == null)
-				r = getResource("/var/" + uri);
-			sendRes(r, req, resp);
-		} catch (AppException e){
-			resp.sendError(404, BConfig.label("XSERVLETBASE"));
-			return;			
-		}
-
+		r.resource();
 	}
 
 	/********************************************************************************/
 	@Override public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		ExecContext exec = exec(req);
-		String uri = uri(req, resp);
-		if (uri == null) return;
-
-		int i = uri.indexOf('/');
-		if (i == -1) {
-			resp.sendError(404);
-			return;
-		}
-		String ns = uri.substring(0, i);
-		int nsb = 0;
-		
-		if (!ns.startsWith("qm"))
-			try {
-				exec.setNS(ns);
-				if (NS.status(ns) > 2) {
-					resp.sendError(404, BConfig.format("XSERVLETNS", ns));
-					return;
-				};
-				nsb = NS.build(ns);
-			} catch (AppException e){
-				resp.sendError(404, BConfig.label("XSERVLETBASE"));
-				return;			
-			}
-		else {
-			// par convention ns est le namespace des namespace ("z" en général)
-			ns = NS.nsz();
-			exec.setNS(ns);
-		}
-		
-		if (uri.equals(ns + "/build")){
-			String b = BConfig.build() + "_" + nsb;
-			sendText(b, resp, b);
-			return;
-		}
-
-		uri = uri.substring(i + 1);
-
-		if (uri.startsWith("op/") || uri.startsWith("qm/") || uri.startsWith("od/")){
-			doGetPost(false, uri, exec, req, resp);
+		ReqCtx r = new ReqCtx(req, resp);
+		if (r.fini) return;
+		r.checkNsqm();
+		if (r.fini) return;
+				
+		if (r.uri.startsWith("op/") || r.uri.startsWith("od/")){
+			doGetPost(true, r);
 			return;
 		}
 
 		resp.sendError(404);
-
 	}
 
 	/********************************************************************************/
@@ -279,50 +367,50 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	private void doGetPost(boolean isGet, String uri, ExecContext exec, HttpServletRequest req, HttpServletResponse resp) 
-			throws IOException, ServletException {
-		// op/ od/ qm/
+	private void doGetPost(boolean isGet, ReqCtx r) throws IOException, ServletException {
+		// op/ od/
 		InputData inp = null;
 		Result result = null;
 		
 		try {
-			String ct = req.getContentType();
+			String ct = r.req.getContentType();
 			boolean mpfd = !isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
-			inp = !mpfd ? getInputData(req) : postInputData(req);
-			String b1 = inp.args.get("build");
-			String b2 = BConfig.build();
+			inp = !mpfd ? getInputData(r.req) : postInputData(r.req);
+			String b1 = r.req.getHeader("build");
+			String b2 = "" + BConfig.build();
 			if (b1 != null && !b2.equals(b1))
 				throw new AppException("DBUILD", b1, b2);
-
-			if (uri.startsWith("qm")) {
-				result = QueueManager.doTmRequest(exec, inp);
+			boolean isOP = r.uri.startsWith("op/");
+			inp.uri = r.uri.substring(3);
+			
+			if (r.nsqm.isQM) {
+				result = QueueManager.doTmRequest(r.exec, inp);
 			} else {
-				inp.uri = uri.substring(3);
-				if (uri.startsWith("od/")){
+				if (!isOP){ // od/
 					inp.taskId = Document.Id.fromURL(inp.uri);
 					inp.operationName = inp.taskId.docclass();
 				} else { // op/ 
 					String op = inp.args.get("op");
 					inp.operationName = op != null ? op  : "Default";
 				}
-				result = exec.go(inp);
+				result = r.exec.go(inp);
 			}
-			exec.closeAll();
-			writeResp(resp, 200, result);
+			r.exec.closeAll();
+			writeResp(r.resp, 200, result);
 		} catch (Throwable t){
 			AppException ex;
 			if (t instanceof AppException)
 				ex = (AppException)t;
 			else
 				ex = new AppException(t, "X0");
-			if (exec != null) {
-				ex.error().addDetail(exec.traces());
-				exec.closeAll();
+			if (r.exec != null) {
+				ex.error().addDetail(r.exec.traces());
+				r.exec.closeAll();
 			}
 			result = new Result();
 			result.text = inp.isGet ? ex.error().toString() : ex.error().toJSON();
 			result.mime = inp.isGet ? "text/plain" : "application/json";
-			writeResp(resp, ex.error().httpStatus, result);
+			writeResp(r.resp, ex.error().httpStatus, result);
 		}
 	}
 		

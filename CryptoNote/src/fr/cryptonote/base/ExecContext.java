@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import javax.servlet.ServletException;
-
 import fr.cryptonote.base.BConfig.Nsqm;
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
@@ -21,9 +19,6 @@ import fr.cryptonote.base.TaskUpdDiff.ItemToCopy;
 import fr.cryptonote.provider.DBProvider;
 
 public class ExecContext {	
-	private static boolean isDebug ;
-		
-	/*******************************************************************************************/
 	private static HashMap<String,int[]> statsOp = new HashMap<String,int[]>();
 	private static HashMap<String,int[]> statsD = new HashMap<String,int[]>();
 	
@@ -81,7 +76,8 @@ public class ExecContext {
 	public static ExecContext current() { return ExecContextTL.get(); }
 	private static final ThreadLocal<ExecContext> ExecContextTL = new ThreadLocal<ExecContext>();
 	
-	private int iLang = 0;
+	private boolean isDebug;
+	private int iLang;
 	private Nsqm nsqm;
 	private Stamp startTime;
 	private Stamp startTime2;
@@ -94,18 +90,16 @@ public class ExecContext {
 	private DBProvider dbProvider;
 	private HashMap<String,Object> appData = new HashMap<String,Object>();
 	
-	ExecContext() throws ServletException {
+	ExecContext() {
 		ExecContextTL.set(this);
 		startTime = Stamp.fromNow(0);
 		chrono = new Chrono(startTime.epoch());
+		isDebug = BConfig.isDebug();		
 	}
 
 	ExecContext setLang(String lang) { iLang = BConfig.lang(lang); return this; }
 	
-	/*
-	 * N'est invoqué que depuis Servlet init / get / post qui ne supporte que du ServletException
-	 */
-	ExecContext setNsqm(Nsqm nsqm) throws ServletException { this.nsqm = nsqm; return this; }
+	ExecContext setNsqm(Nsqm nsqm) { this.nsqm = nsqm; return this; }
 	
 	public int iLang() { return iLang; }
 	public String lang() { return BConfig.lang(iLang); }
@@ -273,7 +267,6 @@ public class ExecContext {
 	Result go(InputData inp) throws AppException {
 		Result result = null;
 		inputData = inp;
-		isDebug = BConfig.isDebug();
 		maxTime = isTask() ? BConfig.TASKMAXTIMEINSECONDS() : BConfig.OPERATIONMAXTIMEINSECONDS();
 		
 		if (!"sync".equalsIgnoreCase(operationName())) {

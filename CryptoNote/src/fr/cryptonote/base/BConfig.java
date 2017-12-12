@@ -15,7 +15,7 @@ import fr.cryptonote.provider.DBProvider;
 
 public class BConfig {
 	private static final String[] defaultLangs = {"fr", "en"};
-	private static final String DVARINSTANCE = "fr.cryptonote.instance";
+	private static final String DVARQM = "fr.cryptonote.QM";
 	private static final String BASECONFIG = "/WEB-INF/base_config.json";
 	private static final String APPCONFIG = "/WEB-INF/app_config.json";
 	private static final String PASSWORDS = "/WEB-INF/passwords.json";
@@ -123,6 +123,7 @@ public class BConfig {
 		
 		String qm;
 		String theme;
+		String lang;
 		HashMap<String,String> options;
 		int build;
 		int off;
@@ -135,6 +136,7 @@ public class BConfig {
 		public boolean isQM() { return isQM; }
 		public String url() { return url != null && url.length() != 0 ? url : g.defaultUrl; }
 		public String base() { return base != null && base.length() != 0 ? base : g.defaultBase; }
+		public String lang() { return g.langs[BConfig.lang(lang)]; }
 		public String pwd() {
 			if (pwd == null || pwd.length() == 0) return "";
 			String px = p == null ? null : p.get(pwd);
@@ -163,15 +165,15 @@ public class BConfig {
 		public S2Storage(String blobsroot, String bucket) { this.blobsroot = blobsroot; this.bucket = bucket; }
 	}
 	
-	public static class Mailer {
-		public String name;
-		public String host;
-		public int port;
-		public String username;
-		public String from;
-		public boolean starttls;
-		public boolean auth;
-		public boolean isDefault;
+	public static class MailerCfg {
+		String name;
+		String host;
+		int port;
+		String username;
+		String from;
+		boolean starttls;
+		boolean auth;
+		boolean isDefault;
 		private String pwd;
 		public String pwd() {
 			if (pwd == null || pwd.length() == 0) return "";
@@ -186,7 +188,7 @@ public class BConfig {
 
 	private static class BaseConfig {
 		private int 		build;
-		private String 		instance = "?";
+		private String 		QM = null;
 		private String 		zone = "Europe/Paris";
 		private String[] 	langs = defaultLangs;
 		private String 		dbProviderClass = "fr.cryptonote.provider.ProviderPG";
@@ -210,7 +212,7 @@ public class BConfig {
 		private HashMap<String,Nsqm> 		queueManagers;
 		private HashMap<String,Nsqm> 		namespaces;
 		private HashMap<String,S2Storage> 	s2Storages;
-		private HashMap<String,Mailer> 		mailers;
+		private HashMap<String,MailerCfg> 		mailers;
 		
 		private String 		mailServer = "simu://alterconsos.fr/tech/server2.php";
 		private String 		adminMails = "daniel@sportes.fr,domi.colin@laposte.net";
@@ -221,7 +223,7 @@ public class BConfig {
 	}
 
 	public static int 			build() { return g.build; }
-	public static String 		instance() { return g.instance; }
+	public static String 		QM() { return g.QM; }
 	public static String 		zone() { return g.zone; }
 	public static TimeZone 		timeZone() { return TimeZone.getTimeZone(g.zone); }
 	public static String[] 		langs() { return g.langs; }
@@ -247,13 +249,15 @@ public class BConfig {
 	public static String 		mailServer() { return g.mailServer; }
 	public static String 		adminMails() { return g.adminMails; }
 	public static String[] 		emailFilter() { return g.emailFilter == null ? new String[0] : g.emailFilter; };
-	public static Mailer		mailer(String code) { return g.mailers == null ? null : g.mailers.get(code); }
+	public static MailerCfg		mailer(String code) { return g.mailers == null ? null : g.mailers.get(code); }
+	public static String[] 		mailers() { return g.mailers == null ? new String[0] : g.mailers.keySet().toArray(new String[g.mailers.size()]);}
 	
-	public static String[] offlinepages() { return g.offlinepages == null ? new String[0] : g.offlinepages ;}
-	public static String shortcut(String s){ return g.shortcuts != null ? g.shortcuts.get((s == null || s.length() == 0) ? "(empty)" : s) : null; }
+	public static String[] 		offlinepages() { return g.offlinepages == null ? new String[0] : g.offlinepages ;}
+	public static String 		shortcut(String s){ return g.shortcuts != null ? g.shortcuts.get((s == null || s.length() == 0) ? "(empty)" : s) : null; }
 		
 	public static String[]		namespaces() { return g.namespaces.keySet().toArray(new String[g.namespaces.size()]);}
 	public static String[]		queueManagers() { return g.queueManagers == null ? new String[0] : g.queueManagers.keySet().toArray(new String[g.queueManagers.size()]);}
+	public static String		password(String code) { return p == null ? null : p.get(code); }
 	
 	public static Nsqm namespace(String ns, boolean fresh) { 
 		Nsqm x = g.namespaces.get(ns);
@@ -272,6 +276,7 @@ public class BConfig {
 	private static BaseConfig g;
 	private static HashMap<String,String> p;
 	private static HashMap<String,ArrayList<String>> namespacesByDB = new HashMap<String,ArrayList<String>>();
+	private static HashMap<String,ArrayList<String>> namespacesByQM = new HashMap<String,ArrayList<String>>();
 	private static HashSet<String> databases = new HashSet<String>();
 	private static String dbProviderName;
 	private static Method dbProviderFactory;
@@ -317,7 +322,7 @@ public class BConfig {
 
 		checkNsqm();
 		
-		g.instance = System.getProperty(DVARINSTANCE);
+		g.QM = System.getProperty(DVARQM);
 		
 		r = Servlet.getResource(PASSWORDS);
 		if (r != null) {
@@ -369,7 +374,8 @@ public class BConfig {
 		} catch (Exception e) {
 			throw exc(e, _format(0, "XRESSOURCECLASS", g.appConfigClass));
 		}
-		ready = true;	
+		ready = true;
+		QueueManager.startQM();
 	}
 			
 	/****************************************************/
@@ -390,6 +396,12 @@ public class BConfig {
 				}
 				al.add(ns);
 			}
+			ArrayList<String> al2 = namespacesByQM.get(x.qm);
+			if (al2 == null) {
+				al2 = new ArrayList<String>();
+				namespacesByQM.put(x.qm, al2);
+			}
+			al2.add(ns);
 		}
 		for(String qm : g.queueManagers.keySet()) {
 			Nsqm x = g.queueManagers.get(qm);
@@ -401,6 +413,7 @@ public class BConfig {
 	}
 	
 	/****************************************************/
+	public static ArrayList<String> namespacesByQM(String qm) { return namespacesByQM.get(qm); }
 	public static ArrayList<String> namespacesByDB(String db) { return namespacesByDB.get(db); }
 	public static String dbProviderName() { return dbProviderName; }
 	public static String[] databases() { return databases.toArray(new String[databases.size()]); }
@@ -451,7 +464,15 @@ public class BConfig {
 
 	private static void compile() throws ServletException {	
 		// TODO : Compiler tout 
-
+		boolean defMailer = false;
+		for(MailerCfg m : g.mailers.values()) {
+			if (m.isDefault) {
+				if (defMailer) throw exc(null, _format(0, "XMAILERCFG1"));
+				defMailer = true;
+			}		
+		}
+		if (defMailer) throw exc(null, _format(0, "XMAILERCFG2"));
+		if (password("mailServer") == null) throw exc(null, _format(0, "XMAILERCFG3"));
 		
 		// déclarer Documents et opérations
 //		DocumentDescr.register(NS.NsDoc.class);

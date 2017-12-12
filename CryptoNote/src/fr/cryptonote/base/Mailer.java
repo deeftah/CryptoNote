@@ -7,7 +7,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -17,10 +16,10 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import fr.cryptonote.base.BConfig.MailerCfg;
+
 public class Mailer {
 
-	private static HashMap<String,String> mailers;
-	
 	private static class MailInfo {
 	 	String name;
 	 	String host;
@@ -30,8 +29,20 @@ public class Mailer {
 	  	boolean starttls = false;
 	  	boolean auth = false;
 	 	String password;
-	 	boolean isDefault;
+	 	@SuppressWarnings("unused")
+		boolean isDefault;
 	 	transient Session session = null;
+	 	
+	 	private MailInfo(MailerCfg m) {
+	 		name = m.name;
+	 		host = m.host;
+	 		port = m.port;
+	 		username = m.username;
+	 		starttls = m.starttls;
+	 		auth = m.auth;
+	 		isDefault = m.isDefault;
+	 		password = m.pwd();
+	 	}
 	 	
 	 	private Session session(){
 	 		if (session == null){
@@ -51,60 +62,20 @@ public class Mailer {
 	 	}
 	}
 	
-	private static class MailConfig {
-		HashMap<String,MailInfo> mailInfos;
-		String mailserver;
-		String adminMails;
-		String[] emailfilter;
-	}
-	private static MailInfo defMI;
-	private static MailConfig mailConfig;
 	private static String subjectPrefix;
 	private static String httpServerPWD;
-	
-	static void initMailers() {
-		mailers = BConfig.mailers();
-		Servlet.Resource r = Servlet.getResource("/WEB-INF/mail.json");
-		if (r != null)
-			try {
-			mailConfig = JSON.fromJson(Util.fromUTF8(r.bytes), MailConfig.class);
-			} catch (Exception ex){
-				Util.log.severe("Configuration mailer.jon mal formée : " + ex.getMessage());
-				return;				
-			}
-		else {
-			Util.log.severe("Configuration mailers absente");
-			return;
-		}
-		for(String key : mailConfig.mailInfos.keySet()){
-			MailInfo mi = mailConfig.mailInfos.get(key);
-			String pwd = mailers.get(key);
-			if (pwd != null)
-				mi.password = pwd;
-			if (mi.isDefault)
-				defMI = mi;
-		}
-		if (defMI == null)
-			Util.log.severe("Configuration mailers : pas de mailer marqué isDefault");
-		subjectPrefix = mailConfig.emailfilter != null && mailConfig.emailfilter.length != 0 ? "[IGNORER (TEST)] " : "";
-		httpServerPWD = mailers.get("httpserver");
-	}
-	
+		
 	static {
-		initMailers();
+		subjectPrefix = BConfig.emailFilter() != null && BConfig.emailFilter().length != 0 ? "[IGNORER (TEST)] " : "";
+		httpServerPWD = BConfig.password("mailServer");
 	}
-	
-	private static MailInfo mailInfo(String code){
-		MailInfo mi = mailConfig.mailInfos.get(code);
-		return mi == null ? defMI : mi;
-	}
-	
+		
 	private static String[] normEMails(String lst, boolean filtered){
 		if (lst == null || lst.length() == 0)
 			return new String[0];
-		if ("ADMIN".equals(lst)) lst = mailConfig.adminMails;
+		if ("ADMIN".equals(lst)) lst = BConfig.adminMails();
 		ArrayList<String> l = new ArrayList<String>();
-		String[] emf = mailConfig.emailfilter;
+		String[] emf = BConfig.emailFilter();
 		if (filtered && (emf == null || emf.length == 0)) filtered = false;
 		String[] mails = lst.split("\\s|,|;");
 		for(String s : mails){
@@ -128,19 +99,21 @@ public class Mailer {
 	public static String sendMail(String mailer, String to, String subject, String text) 
 			throws AppException {
 		boolean ping = mailer == null;
+		MailerCfg x = BConfig.mailer(mailer);
+		if (!ping && x == null)
+			throw new AppException("BMAILNOMAILER", mailer);
+		MailInfo mi = ping ? null : new MailInfo(x);
+
 		String[] toc = normEMails(to, false);
 		String mx = "Send mail : [" + (mailer != null && mailer.length() != 0 ? mailer : "?") 
 				+ "] to:[" + (to != null && to.length() != 0 ? to : "?")
 				+ "] subject:[" + (subject != null && subject.length() != 0 ? subject : "?") 
 				+ "] text:" + (text != null ? text.length() : "0") + "c"
 				+ "\n";
-		if (!ping && (mailer == null || mailer.length() == 0 || toc.length == 0 || subject == null ))
-			throw new AppException("BMAILPARAM", mx);
-		MailInfo mi = mailInfo(mailer);
-		if (mi == null)
+		if (!ping && (toc.length == 0 || subject == null ))
 			throw new AppException("BMAILPARAM", mx);
 
-		String base = mailConfig.mailserver;
+		String base = BConfig.mailServer();
 		
 		if (base.startsWith("simu")) {
 			try { Thread.sleep(500);} catch (InterruptedException e) {}

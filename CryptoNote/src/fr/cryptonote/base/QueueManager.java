@@ -16,29 +16,23 @@ import java.util.logging.Level;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import fr.cryptonote.base.BConfig.Instance;
+import fr.cryptonote.base.BConfig.Nsqm;
 import fr.cryptonote.base.Servlet.InputData;
 import fr.cryptonote.provider.DBProvider;
 
 public class QueueManager implements Runnable {
-	private static boolean isDatastore = (BConfig.config().dbProviderName()).endsWith("DS");
-	public static boolean hostsQM() { 
-		return instance.hostedQM != null && instance.hostedQM.length != 0 && !isDatastore; 
-	}
+	// TODO : configuration applicative du numéro de queue depuis TaskInfo !!!!!
 	
-	private static ArrayList<String> myNs = new ArrayList<String>();
-	
-	private static ArrayList<String> myNs(boolean refresh){
-		if (refresh) try { myNs = NS.nsOfQm(instance.hostedQM); } catch (AppException e) { }
-		return myNs;
-	}
-	
-	private static boolean hostNsQ(String ns){ return ns != null && myNs.indexOf(ns) != -1; }
-	
+	private static boolean isDatastore;
+	private static String myName;
+	private static ArrayList<String> myNS;
+	public static boolean hostsQM; 
 	private static QueueManager qm;
-	private static Instance instance;
-	private static BConfig config;
-	private static int nbQueues = 0;
+	private static int nbQueues;
+	private static Nsqm myNsqm;
+		
+	private static boolean manageNS(String ns){ return myNS.contains(ns); }
+	
 	
 	private BlockingQueue<Integer> qmQueue =  new ArrayBlockingQueue<Integer>(1000) ;
 	private Worker[] workers;
@@ -49,15 +43,14 @@ public class QueueManager implements Runnable {
 	public static String postQM(TaskInfo ti, boolean toQM) throws AppException{
 		try {
 			StringBuffer sb = new StringBuffer();
-			sb.append("key=").append(URLEncoder.encode(config.qmSecretKey(), "UTF-8"));
+			Nsqm nsqm = BConfig.namespace(ti.ns, false);
+			sb.append("key=").append(URLEncoder.encode(nsqm.pwd(), "UTF-8"));
 			if (toQM)
 				sb.append("&param=").append(URLEncoder.encode(JSON.toJson(ti), "UTF-8")).append("&op=inq");
-			String u = config.url();
-			if (toQM) 
-				// notification d'une mise en queue d'une task
-				u += NS.qm(ti.ns) + "/qm";
-			else 
-				// exécution d'une task
+			String u = nsqm.url();
+			if (toQM) // notification d'une mise en queue d'une task
+				u += "/" + nsqm.code + "/op";
+			else // exécution d'une task
 				u += "/" + ti.url();
 		    URL url = new URL(u);
 		    String query = sb.toString();
@@ -97,14 +90,14 @@ public class QueueManager implements Runnable {
 		return n >= nbQueues ? nbQueues - 1 : n;
 	}
 	
-	static void initQ() throws AppException{
-		config = BConfig.config();
-		instance = config.instance();
-		nbQueues = instance.threads.length;
-		if (!hostsQM()) return;
-		
-		myNs(true);
-		
+	static void startQM() {
+		isDatastore = (BConfig.dbProviderName()).endsWith("DS");
+		myName = BConfig.QM();
+		ArrayList<String> myNS = BConfig.namespacesByQM(myName);
+		hostsQM = myName != null && !isDatastore && myNS.size() != 0; 
+		if (!hostsQM) return;
+		myNsqm = BConfig.queueManager(myName, false);
+		nbQueues = myNsqm.threads.length;
 		qm = new QueueManager();
 		Thread t = new Thread(qm);
 		t.setName("TM-Main");
@@ -126,13 +119,18 @@ public class QueueManager implements Runnable {
 		Document.Id id () { return new Document.Id(docclass, docid); }
 	}
 	
+	public static boolean hasQMKey(InputData inp){
+		String key = inp.args().get("key");
+		return key != null && key.equals(myNsqm.pwd());
+	}
+	
 	public static Result doTmRequest(ExecContext exec, InputData inp) throws AppException {
 		if (qm == null) return null;
 		// String qmId = exec.ns(); // par convention le ns de lexecContext est l'identifiant du qm
 		String op = inp.args().get("op");
 
 		if ("inq".equals(op)){
-			if (!exec.hasQmKey()) throw new AppException("SQMKEY");
+			if (!hasQMKey(inp)) throw new AppException("SQMKEY");
 			TaskInfo ti = null;
 			String jsonp = inp.args().get("param");
 			if (jsonp != null) {
@@ -149,13 +147,13 @@ public class QueueManager implements Runnable {
 			}
 			return null;
 		}
-		if (!exec.hasQmKey()) throw new AppException("SQMKEY");
+		if (!hasQMKey(inp)) throw new AppException("SQMKEY");
 		if ("stop".equals(op)){
 			closeQ();
 			return null;
 		}
 		if ("start".equals(op)){
-			initQ();
+			startQM();
 			return null;
 		}
 		if ("list".equals(op)){
@@ -203,7 +201,7 @@ public class QueueManager implements Runnable {
 		if (tiList == null || tiList.size() == 0) return;
 		for(TaskInfo ti : tiList) {
 			if (ti.nextStart > qm.nextFullScan.stamp()) continue;
-			if (qm == null || !hostNsQ(ti.ns))
+			if (qm == null || !manageNS(ti.ns))
 				try {
 					 postQM(ti, true);
 				} catch (Exception e) {}
@@ -286,13 +284,13 @@ public class QueueManager implements Runnable {
 	/** Instance *********************************************/
 	private void wakeup(){ qmQueue.add(new Integer(0)); }
 			
-	private QueueManager() throws AppException{
+	private QueueManager() {
 		int nb = 0;
-		for(int i = 0; i < instance.threads.length; i++) nb += instance.threads[i];
+		for(int i = 0; i < myNsqm.threads.length; i++) nb += myNsqm.threads[i];
 		workers = new Worker[nb];
 		int k = 0;
-		for(int i = 0; i < instance.threads.length; i++)
-			for (int j = 0; j < instance.threads[i]; j++, k++)
+		for(int i = 0; i < myNsqm.threads.length; i++)
+			for (int j = 0; j < myNsqm.threads[i]; j++, k++)
 				workers[k] = new Worker(i, j+1);
 	}
 
@@ -308,7 +306,7 @@ public class QueueManager implements Runnable {
 	public void run() {
 		while (running) {
 			try {
-				qmQueue.poll(instance.scanlapseinseconds, TimeUnit.SECONDS);
+				qmQueue.poll(myNsqm.scanlapseinseconds, TimeUnit.SECONDS);
 				if (!running)
 					break;
 				else {
@@ -329,7 +327,7 @@ public class QueueManager implements Runnable {
 		
 	private ArrayList<TaskInfo> getAllFromDB() {
 		ArrayList<TaskInfo> tmp = new ArrayList<TaskInfo>();
-		nextFullScan = Stamp.fromNow(instance.scanlapseinseconds * 1000);
+		nextFullScan = Stamp.fromNow(myNsqm.scanlapseinseconds * 1000);
 		for(String ns : myNs(true)) {
 			DBProvider provider = null;
 			try {
@@ -398,7 +396,7 @@ public class QueueManager implements Runnable {
 		private TaskInfo ti;
 		private BlockingQueue<TaskInfo> workerQueue =  new ArrayBlockingQueue<TaskInfo>(10);
 		
-		private Worker(int queue, int index) throws AppException{
+		private Worker(int queue, int index) {
 			this.queue = queue;
 			this.index = index;
 		}

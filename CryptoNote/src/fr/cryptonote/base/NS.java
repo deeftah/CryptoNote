@@ -129,6 +129,7 @@ public class NS {
 			int build = 1; 		// build
 			int off = 0;		// si non 0, CP : 1-9 cause d'arrêt, 0-9 durée off prévisible
 			String label = null;// label customisé
+			String lang = null;	// lang préférée
 			HashMap<String,String> options = null;
 		}
 	}
@@ -173,6 +174,7 @@ public class NS {
 			String ns;
 			String theme;
 			String label;
+			String lang;
 			HashMap<String,String> options;
 			int off;
 		}
@@ -188,6 +190,7 @@ public class NS {
 			Cfg cfg = d.cfg();
 			if (param.theme != null && param.theme.length() != 0) cfg.theme = param.theme;
 			if (param.label != null && param.label.length() != 0) cfg.label = param.label;
+			if (param.lang != null && param.lang.length() != 0) cfg.lang = param.lang;
 			if (param.options != null) cfg.options = param.options;
 			if (param.off >= 0 && param.off <= 99) cfg.off = param.off;
 			cfg.commit();
