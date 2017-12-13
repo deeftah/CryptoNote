@@ -1283,56 +1283,125 @@
 <div id="content"><h1>Document DB - API</h1>
 <h1>Requêtes HTTP et Contextes d'exécution</h1>
 <p>Les sessions externes émettent des requêtes HTTPS qui peuvent être des GET ou des POST.</p>
-<p><strong><em>Raccourcis d'URLs</em></strong><br>
-La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le <em>namespace</em>. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.</p>
-<p>Les URLs comportent en tête un <em>context path</em> <code>cp</code> qui selon les options de déploiement peut ne pas exister et,</p>
+<h3>Applications : <code>context-path</code>, ping, build</h3>
+<p>Un serveur ou pool de serveurs accessible par une URL peut servir plusieurs applications d'objets différents. Le début de l'URL après le nom du serveur est le code de cette application :</p>
+<pre><code>https://site.org/theApp/xxx...
+</code></pre>
+<p>Un serveur ou pool de serveurs qui ne sert qu'une unique application a une URL qui ignore <code>theApp</code> :</p>
+<pre><code>https://site.otg/xxx...
+</code></pre>
+<p>Le code <code>theApp</code> ci-dessus est nommé techniquement <code>context-path</code> et peut être &quot;&quot; ou contenir <code>&quot;theApp&quot;</code>.</p>
+<p>Quand il s'agit d'un pool de serveur, il y a en général :</p>
 <ul>
-<li>soit un code de namespace <code>ns</code> obligatoire (le code <code>qm</code> étant interdit):
+<li>une adresse pour le pool sans savoir à quel serveur physique on s'adresse :  <code>https://pool.site.org/...</code> ou le cas échéant <code>https://site.org/...</code> C'est l'utilisation la plus fréquente.</li>
+<li>une adresse indiquant précisément quel serveur physique est à joindre : <code>https://django.site.org/...</code> Cet adressage est réservé à des opérations techniques particulières, typiquement celles de commandes d'un <em>QueueManager</em> gérant les tâches différées des applications.</li>
+</ul>
+<p>Pour déterminer si l'application <code>theApp</code> est en ligne on peut utiliser les commandes :</p>
+<pre><code>1 - https://site.org/theApp/ping
+2 - https://django.site.org/theApp/ping
+</code></pre>
+<p>Dans le cas 1, un serveur du pool répond qu'il est prêt à recevoir des requêtes.<br>
+Dans le cas 2, le serveur spécifique adressé répond qu'il est prêt à recevoir des requêtes.</p>
+<p>Chaque application a une version du logiciel nommée <code>build</code> qui est un numéro toujours croissant au fil du temps : le ping retourne un texte de la forme <code>{t:171205184532456, b:132}</code></p>
 <ul>
-<li><code>htpps://monserveur.mondomaine.fr/cp/ns</code></li>
-<li><code>htpps://monserveur.mondomaine.fr/ns</code></li>
+<li><code>t</code> indique la date-heure courante du serveur en millisecondes UTC : le 5 décembre 2017 à 18:45:32 et 456 millisecondes.</li>
+<li><code>b</code> indique le numéro de build (la version de l'application).</li>
+</ul>
+<h3>Organisations : code stop</h3>
+<p>Une application donnée peut être déployée pour le compte de plusieurs <strong>organisations</strong>, les données de chacune étant étanches de celles des autres mais :</p>
+<ul>
+<li>toutes exécutent la même application sous la même version (build) du logiciel.</li>
+<li>chaque organisation, indépendamment des autres, peut être mise on/off par un administrateur technique.
+<ul>
+<li>quand l'application est <strong>on</strong> son code <code>off</code> vaut 0 (ou est absent).</li>
+<li>quand l'application est <strong>off</strong> son code <code>off</code> a deux chiffres :
+<ul>
+<li>le premier indique la raison de l'arrêt, par exemple :
+<ul>
+<li>1-maintenance technique,</li>
+<li>2-suspension administrative temporaire,</li>
+<li>3-exportation vers un autre site,</li>
+<li>4-opération de sécurité,</li>
+<li>9-clôture définitive.</li>
 </ul>
 </li>
-<li>soit un code Queue Manager :
+<li>le second donne une idée du délai d'interruption estimé, par exemple :
 <ul>
-<li><code>htpps://monserveur.mondomaine.fr/cp/qm1</code></li>
-<li><code>htpps://monserveur.mondomaine.fr/qm1</code></li>
+<li>0-totalement inconnu et non maîtrisé,</li>
+<li>1-très courte durée (secondes),</li>
+<li>2-courte durée, de l'ordre de dizaines de minutes à une heure ou deux,</li>
+<li>3-plusieurs heures,</li>
+<li>4-plusieurs jours,</li>
+<li>5-plusieurs semaines ou mois.</li>
+<li>9-pas de reprise envisagée.</li>
 </ul>
 </li>
 </ul>
-<p>Ceci permet au frontal HTTP de router les requêtes sur les serveurs appropriés du pool et en particulier d'adresser les requêtes techniques pour les Queue Managers sur les instances qui les gèrent effectivement.<br>
-Plusieurs codes <code>qmXXX</code> de Queue Manager peuvent être gérés par une même instance de serveur.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>Datastore / Base de données</strong>
+Une organisation donnée a ses données permanentes gérées par un Datastore / Base de données, sachant que chaque base peut techniquement héberger les données de plusieurs organisations.</p>
+<ul>
+<li>les données d'une organisation sont techniquement étanches de celles des autres même dans le même Datastore / Base de données.</li>
+<li>elles peuvent être techniquement facilement exportées / purgées sans perturbation pour les autres organisations dont les données seraient co-hébergées (mais l'exportation peut être très longue).</li>
+</ul>
+<p>L'URL qui permet d'accéder à l'application d'une organisation a la forme suivante :</p>
+<pre><code>https://site.org/theApp/monOrg/...
+</code></pre>
+<p>La commande <code>https://site.org/theApp/monOrg/ping</code> permet de connaître le statut de l'application pour cette organisation :</p>
+<pre><code>{t:171205184532456, b:132, off:12, db:&quot;PG-10.1 [cna]&quot;}
+</code></pre>
+<p>Le code <code>off</code> est celui décrit ci-dessus et est absent quand l'application est on pour cette organisation.<br>
+Le code <code>db</code> donne le type de Datastore utilisé (Postgresql 10.1) et son identifiant local (cna).<br>
+Le texte du code derrière <code>db</code> peut être un code d'erreur si la base de données est indisponible pour une raison technique.</p>
+<p><strong>Queue Managers</strong>
+Certains serveurs physiques sont chargé de gérer la file des tâches différées pour une ou plusieurs organisations : ces serveur ont un profil de Queue Manager.</p>
+<p>Un Queue Manageur a un code commençant par <code>qm</code>) : qm1 qm7 etc. Dans une URL visant exclusivement un serveur physique (pas l'adresse d'un pool) un administrateur technique peut adresser des requêtes au QueueManager :</p>
+<pre><code>https://django.site.org/theApp/qm7/...
+</code></pre>
+<p>Si ce serveur n'héberge pas de Queue Manager, ou pas celui de code qm7, la requête revient avec un code d'erreur 500.</p>
+<p><strong><em>Raccourcis d'URLs</em></strong> pour un GET<br>
+La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le <em>code de l'organisation</em>. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.</p>
+<pre><code>https://site.org/theApp/app -&gt; https://site.org/theApp/monOrg/page-home.app
+</code></pre>
+<p><strong>URLs possibles</strong> (sans context-path pour simplifier)</p>
+<pre><code>org -&gt; ns
+/ping
+/ns/ping          // ping du namespace et de sa base
+/ns/x.appcache    // ressource MANIFEST d'une appcache
+/ns/x.swjs        // ressource sw.js de Service Worker
+/ns/mapage.app    // page de l'application .app .cloud .local .sync
+/ns/op/...        // opération standard
+/ns/od/taskid     // opération différée (tâche)
+/var/...          // ressource
+/_12_2/...        // ressource versinnée pour éviter les problèmes de cache
+/var/z/...        // ressource dynamique (custom.css custom.js ...)
+/_12_2/...        // ressource dynamique
+</code></pre>
+<p>Une ressource dynamique <code>/var/z/xxx.yyy</code> est d'abord recherchée dans la base dans le namespace nommé <code>namespace</code> dans un document ayant pour docid le code <code>ns</code> du namespace qu'il customise.</p>
+<ul>
+<li>ceci permet de définir des pages plus spécifiques par organisation et de les adapter en runtime et pas seulement sur une livraison de build.</li>
+<li>si la ressource n'est pas trouvée customisée, c'est celle effectivement <code>/var/z/</code> correspondante qui est prise.</li>
+<li>il n'est donc possible de customiser QUE des ressources existantes dans <code>/var/z</code>.</li>
+<li>le namespace <code>namespace</code> ne supporte pas la customisation : en cas d'erreur de script par exemple l'application serait bloquée.</li>
+</ul>
 <h3>Invocation d'opérations</h3>
-<p>URLs : <code>cp/ns/op/p1/p2 ...</code><br>
-Les autres arguments sont passés soit en <code>application/x-www-form-urlencoded</code> (sur un GET) ou en <code>multipart/form-data</code> (sur un POST) :</p>
+<p>URLs : <code>cp/ns/op/p1/p2 ...</code>  ou <code>cp/ns/od/taskid</code></p>
+<p>Les autres arguments sont passés soit en <code>application/x-www-form-urlencoded</code> (sur un GET) ou en <code>multipart/form-data</code> (sur un POST) :</p>
 <ul>
-<li><code>op/</code> :  obligatoire, signale un appel d'opération. Ce code est <code>od/</code> pour une opération différée <em>émise</em> par le Queue Manager et <code>qm/</code> pour une opération <em>gérée</em> par le Queue Manager ;</li>
+<li><code>op/</code> :  obligatoire, signale un appel d'opération. Ce code est <code>od/</code> pour une opération différée <em>émise</em> par le Queue Manager.</li>
 <li><code>p1 p2 ...</code> sont facultatifs. Ils peuvent être obtenus par <code>inputData.uri()</code> qui retourne un <code>String[]</code>;</li>
 <li>les <strong><em>arguments</em></strong> sont récupérables par <code>inputData.args().get(&quot;nom argument&quot;)</code>:
 <ul>
 <li>l'argument de nom <strong><code>op</code></strong> donne le nom de l'opération et permet de trouver la classe de l'opération à instancier.</li>
-<li>les arguments de nom <strong><code>account key admin</code></strong> sont en général utilisés pour gérer les habilitations à effectuer l'opération.</li>
+<li>les arguments de nom <strong><code>account key sudo</code></strong> sont en général utilisés pour gérer les habilitations à effectuer l'opération.</li>
 <li>l'argument de nom <strong><code>param</code></strong> est traité spécifiquement : c'est un JSON et il est dé-sérialisé dans le champ de nom <code>param</code> de l'opération.</li>
 <li><strong><em>dans le cas d'un POST des pièces jointes peuvent être transmises</em></strong> : elles sont récupérables par <code>inputData.attachments().get(&quot;name&quot;)</code> qui retourne un objet (ou <code>null</code>) portant les informations <code>name, fileName, contentType, bytes</code>.</li>
 </ul>
 </li>
 </ul>
-<h3>URLs spéciales de GET</h3>
-<p><strong>URL : <code>cp/build</code></strong> et <strong><code>cp/ns/build</code></strong><br>
-Elle retourne le numéro de build : cette URL fait office de <code>ping</code> et permet de tester la disponibilité effective du serveur (en particulier pour gérer le load balancing sur une ferme de serveurs).<br>
-Chaque namespace a en plus de la build standard du logiciel un numéro complémentaire de sa propre build : on l'obtient par l'URL <code>cp/ns/build</code>.</p>
-<p><strong>URL : <code>cp/ns.appcache</code> et <code>cp/ns.swjs</code></strong><br>
-Elles retournent la ressource <code>manifest</code> de l'application cache ou le script du <em>service worker</em> qui permettent de fonctionner offline. Ces ressources ont un texte généré depuis les fichiers trouvés dans le <code>war</code>.</p>
-<p><strong>URL : <code>cp/ns/page.app</code> ou <code>.cloud</code> ou <code>.local</code> ou <code>.local2</code> ou <code>.sync</code> ou <code>.sync2</code></strong><br>
-Elles retournent le texte de la page <code>page.html</code> de l'application transformée afin d'être utilisable <em>online</em> (<code>app cloud</code>), en mode <em>avion</em> (<code>local local2</code>) ou en mode <em>synchronisé</em> (<code>sync sync2</code>).</p>
-<ul>
-<li><code>local</code> et <code>sync</code> correspondent à la gestion par <em>service worker</em>.</li>
-<li><code>local2</code> et <code>sync2</code> correspondent à la gestion par <em>appcache</em>.</li>
-</ul>
-<p><strong>URL : <code>cp/ns/var/...</code> ou <code>cp/ns/_build_nsVersion_/...</code></strong><br>
-Elles retournent les ressources de l'application.<br>
-La seconde URL permet d'éviter les problèmes de rafraîchissement de cache des browsers en changeant d'URL à chaque évolution de build ou de version de configuration du namespace.<br>
-Dans ces ressources celles qui commencent par <code>z/</code> (comme <code>z/custom.css</code>) indique d'aller chercher le texte de la ressource en base en tant que pièce jointe du document de configuration du namespace, puis seulement si elle n'existe pas de prendre la ressource de la build <code>z/..</code>.</p>
 <h2><code>ExecContext</code></h2>
 <p>Un objet de la classe <code>ExecContext</code> est créé par l'arrivée d'une requête et suit son thread durant sa vie.<br>
 Cet objet se récupère par <code>ExecContext.current()</code> à n'importe quel endroit du code.</p>

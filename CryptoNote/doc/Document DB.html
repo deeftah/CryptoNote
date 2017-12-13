@@ -1538,10 +1538,10 @@ Le résultat d'une opération de reporting peut avoir n'importe quelle forme : <
 <p>Certains traitements peuvent être constitués d'une séquence, possiblement longue, d'opérations. D'autres sont à lancer périodiquement.<br>
 Comme une opération doit avoir un temps d'exécution réduit et surtout ne pas accéder à trop de documents en tolérance 0, ces traitements s'exécutent sous la forme d'une suite d'opérations distinctes et différées.<br>
 Par ailleurs une opération <em>principale</em> peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations <code>secondaires</code> différées par rapport à l'opération principale.</p>
-<p>Le <strong>Queue Manager</strong> est un ensemble de threads chargés d'envoyer des requêtes HTTP correspondant aux opérations différées inscrites et d'en récupérer le status d'exécution. Le Queue Manager est une session utilisatrice un peu spéciale dans la mesure où,</p>
+<p>Le <strong>Queue Manager</strong> est un ensemble de threads chargés d'envoyer des requêtes HTTP correspondant aux opérations différées inscrites et d'en récupérer le status d'exécution. Le Queue Manager joue un rôle de session externe mais non humaine :</p>
 <ul>
-<li>elle n'a que faire d'un quelconque résultat, il n'y pas d'humain pour en interpréter le résultat.</li>
-<li>elle doit gérer les erreurs d'exécution des opérations, ce qu'un humain effectue derrière une session interactive,
+<li>elle n'a que faire d'un quelconque résultat.</li>
+<li>elle doit gérer les erreurs d'exécution des opérations,
 <ul>
 <li>en relançant les traitements tombés en exception : si la cause était fugitive, ça s'arrange tout seul. Typiquement un lapse de temps croissant est laissé entre les relances afin de contourner un éventuel problème de contention sur les données ou une indisponibilité technique un peu longue ;</li>
 <li>en alertant un administrateur technique par e-mail si un traitement échoue à sa n-ième relance. Ce dernier peut,
@@ -1553,40 +1553,153 @@ Par ailleurs une opération <em>principale</em> peut avoir besoin d'être suivie
 </ul>
 </li>
 </ul>
-<h3>Document associé à une opération différée</h3>
-<p>Un document est à créer avec pour fonction de contenir les données / paramètres nécessaires à l’exécution d'une ou d'une succession d'opérations <strong>différées</strong>.<br>
-La classe d'un tel document est comme les autres mais contient une classe interne statique <code>Task</code> qui étend <code>Operation</code> et qui définit le traitement à appliquer au document-paramètre.</p>
-<h3>Principe d'exécution</h3>
-<p>Une opération principale qui veut déclencher une exécution différée procède ainsi :</p>
+<h3>Création d'une tâche</h3>
+<p>Une tâche est inscrite dans une table <code>TaskQueue</code> (<em>entity</em> en Datastore) au commit de l'opération qui l'a créé avec les données suivantes :</p>
 <ul>
-<li>elle stocke les paramètres d'exécution dans un document ayant une ID <code>cl1.id1</code>. La seule ID est parfois suffisante pour porter les quelques paramètres nécessaires à l'exécution différée et dans ce cas le document correspondant n'est pas créé.</li>
-<li>elle déclare qu'une opération différée doit s'exécuter avec cette ID <code>cl1.id1</code> au plus tôt à une date-heure dite <code>nextStart</code>. Cette opération récupérera en paramètre d'entrée (dans son URL) l'ID <code>cl1.id1</code> : cette ID comporte un nom de classe de document ayant une classe interne <code>Task</code> étendant <code>Operation</code> dont la méthode <code>work()</code> lira le cas échéant le document correspondant (ou se contentera de l'ID).</li>
-<li>une opération peut déclarer plusieurs exécutions différées (5 au plus).</li>
-<li>les opérations différées ne sont effectivement lancées qu'après la validation de l'opération et bénéficient de la sécurité transactionnelle de celle-ci (inscription pour lancement validée ou non).</li>
+<li><code>ns</code> : son namespace.</li>
+<li><code>taskid</code> : son identification aléatoire tirée à la création.</li>
+<li><code>opName</code> : le nom de l'opération en charge du traitement.</li>
+<li><code>param</code> : un JSON contenant les paramètres requis. Si ceux-ci sont très volumineux, on créé un document et <code>param</code> en contient juste l'identification.</li>
+<li><code>info</code> : texte d'information indexé permettant des filtrages pour l'administrateur.</li>
+<li><code>retry</code> : son numéro d'ordre d'exécution. 0 à la création il est incrémenté à chaque relance par le Queue Manager.</li>
+<li><code>nextStart</code> : la date-heure de son lancement / relance au plus tôt.</li>
+<li><code>startTime</code> : la date-heure de sa demande d'exécution par le Queue Manager. <code>null</code> quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.</li>
+<li><code>qn</code> : numéro de queue : le Queue Manager a plusieurs queues numérotées de 0 à N pour des usages différents, par exemple :
+<ul>
+<li>0:<em>rapide</em>, plusieurs threads pour des tâches courtes,</li>
+<li>1:<em>standard</em>, 2 threads pour des tâches plus longues,</li>
+<li>3:<em>background</em>, un seul thread pour des tâches peu fréquentes et peu prioritaires.</li>
 </ul>
-<p>Une opération différée est comme les autres opérations avec quelques nuances :</p>
+</li>
+<li><code>exc</code> : code d'exception du dernier traitement en erreur. <code>null</code> au lancement / relance.</li>
+<li><code>report</code> : texte d'information sur la dernière exception.</li>
+</ul>
+<h3>Opération associée à une tâche</h3>
+<p>C'est une opération normale. L'objet <code>param</code> et le nom de l'opération <code>opName</code> ont été récupérés de <code>TaskQueue</code> avec les deux informations <code>startTime</code> et <code>retry</code> rendues disponibles dans <code>InputData.args</code>.</p>
 <ul>
 <li>elle ne retourne aucun résultat, n'effectue pas de calcul de synchronisation, et n'a pas de phase <code>afterwork()</code> : elle ne fait <em>que</em> des mises à jour de documents dans sa phase <code>work()</code>.</li>
-<li>elle peut inscrire des opérations différées et en particulier se réinscrire elle-même.</li>
+<li>elle peut inscrire des opérations différées.</li>
 <li>elle bénéficie d'un quota de temps plus long pour son exécution.</li>
-<li>elle peut itérer plusieurs cycles <strong><code>work()</code> / validation</strong>. au cours de la même requête HTTPS initiale (voir ci-dessous).</li>
-<li>elle est en charge de détruire, ou non, le / les documents contenant ses paramètres d'exécution : ceux-ci peuvent tout aussi bien servir de compte-rendu après traitement si la logique métier le prévoit.</li>
+<li>elle peut itérer plusieurs cycles <strong><code>work()</code> / validation</strong> au cours de la même requête HTTPS initiale (voir ci-dessous).</li>
 </ul>
-<h3>Relance sur exception : retry</h3>
-<p>Une tâche qui se termine en exception (ne retourne pas un status 200) est traitée par le Queue Manager :</p>
+<h3>Principe d'exécution nominal</h3>
+<p>Une opération inscrit une nouvelle tâche en ayant fourni <code>ns taskid opName param qn info.</code><br>
+Au commit :</p>
 <ul>
-<li>le compteur <code>retry</code> de la tâche est incrémenté de 1.</li>
-<li>le texte de retour (l'exception le cas échéant accompagnée de traces accumulées au cours de l'exécution) est mémorisé pour être lisible par un administrateur.</li>
-<li>l'exécution est relancée plus tard : le délai augmente avec l'indice de <code>retry</code>.</li>
-<li>au delà d'un certain nombre de <code>retry</code> la tâche est différée jusqu'à la fin du siècle laissant l'administrateur agir pour en changer la date de relance et/ou la supprimer, voire effectuer les opérations requises pour une relance efficace.</li>
+<li>la tâche est inscrite dans la table <code>TaskQueue</code>.</li>
+<li>pour un Datastore, <strong>avant le commit</strong>, une tâche est mise en queue avec pour URL d'invocation <code>/ns/od/taskid?key=...</code>.</li>
+<li>pour une base de données, <strong>après le commit</strong>, si la <code>nexstart</code> est proche (moins de X minutes : le scan lapse du Queue Manager), le Queue Manager associé au namespace (<code>qm7</code>) reçoit une requête HTTP <code>/qm7/qm/taskid?key=...&amp;op=inq&amp;nextStart=...&amp;retry=0</code> pour inscription de la tâche à relancer sans attendre le prochain scan.</li>
 </ul>
-<h3>Redemande de la même tâche</h3>
-<p>Si le document contenant les paramètres d'exécution est mis à jour au cours d'une tâche et que corrélativement la même ID est inscrite à nouveau en exécution différée, cette tâche donne l'impression d'itérer en épuisant sa liste d'objets à traiter.<br>
-En supposant qu'une exception intervienne,</p>
+<p><strong>Quand le Queue Manager peut / doit lancer la tâche</strong>, il cherche un thread worker libre qui émet vers le serveur du namespace une requête HTTP avec <code>/ns/od/taskid?key=...</code> :</p>
 <ul>
-<li>le document modifié ne sera pas validé (donc sera inchangé),</li>
-<li>la demande d'inscription de la nouvelle tâche ne sera pas validée non plus,</li>
-<li>la tâche précédente sera bel et bien relancée.</li>
+<li><code>ns</code> : le namespace (comme pour toute requête),</li>
+<li><code>od</code> au lieu de op pour identifier qu'il s'agit d'une opération différée,</li>
+<li><code>taskid</code> dans l'URL.</li>
+<li>le paramètre <code>key</code> : mot de passe permettant de s'assurer que c'est bien le Queue Manager qui a émis la requête et non une session externe (en fait sur un POST <code>key</code> n'apparaît pas dans l'URL comme ci-dessus qui est employée en test).</li>
+</ul>
+<p>Quand le Datastore lance la tâche il émet une requête HTTP sur l'URL <code>/ns/od/taskid?key=...</code>.</p>
+<p>La requête HTTP arrive dans le serveur et recherche dans <code>TaskQueue</code> le descriptif de la tâche :</p>
+<ul>
+<li>si elle n'y est pas la requête se termine : la tâche s'était bien terminée :
+<ul>
+<li>soit c'était une relance intempestive,</li>
+<li>soit l'administrateur l'a supprimée. Dans le cas du Datastore c'est un moyen donné à l'administrateur de supprimer une tâche.</li>
+</ul>
+</li>
+<li>si elle y est avec une <code>nextStart</code> pas encore atteinte (et assez lointaine) c'est que l'administrateur l'a reculée :
+<ul>
+<li>en Datastore il a fait inscrire une nouvelle tâche avec la nouvelle valeur de <code>nextStart</code>.</li>
+<li>la requête se termine en 200.</li>
+<li>en base de données, si la <code>nextStart</code> est proche le Queue Manager reçoit une notification.</li>
+</ul>
+</li>
+<li>si elle y est avec une <code>startTime</code> la requête se termine : la tâche est déjà en exécution ailleurs.</li>
+<li>sinon la tâche est à exécuter :
+<ul>
+<li>la requête récupère <code>param</code> et <code>retry</code>.</li>
+<li>la requête inscrit dans <code>TaskQueue</code> une <code>startTime</code> qui marque le fait que la tâche est en exécution.</li>
+</ul>
+</li>
+</ul>
+<p>L'opération souhaitée s'exécute ensuite :</p>
+<ul>
+<li>traitement OK :
+<ul>
+<li>la tâche <code>ns.taskid</code> est supprimée de la table <code>TaskQueue</code> au commit.</li>
+<li>le retour est un status 200 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle tâche ou signale au Datastore que la tâche est finie.</li>
+</ul>
+</li>
+<li>traitement en Exception :
+<ul>
+<li>la tâche <code>ns.taskid</code> est mise à jour dans <code>TaskQueue</code> :
+<ul>
+<li><code>starTime</code> y est mise à <code>null</code>;</li>
+<li><code>retry</code> est incrémenté;</li>
+<li><code>exc</code> et <code>report</code> sont renseignés;</li>
+<li><code>nextStart</code> est calculée à une valeur future d'autant plus lointaine que le numéro de <code>retry</code> est élevé, voire finalement infinie.</li>
+</ul>
+</li>
+<li>le retour est un status 500 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle tâche ou signale au Datastore qu'il faudra relancer.</li>
+<li>sauf Datastore, si la <code>nexstart</code> est proche (moins de X minutes : le scan lapse du Queue Manager), le Queue Manager associé au namespace reçoit une requête HTTP pour inscription de la tâche à relancer sans attendre le prochain scan.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Scan périodique des TaskQueue par le Queue Manager</strong>
+Un Queue Manager gère un ou plusieurs namespaces et fait face à une ou plusieurs base de données.<br>
+Seule les tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :</p>
+<ul>
+<li>une <code>nextStart</code> antérieure à la date-heure du scan suivant,</li>
+<li>ayant l'un des namespaces dont il est en charge,</li>
+<li>ayant une <code>startTime</code> <code>null</code> (tâche pas en cours).</li>
+</ul>
+<p>Ce scan lui permet de récupérer les tâches à relancer autant que celle à lancer une première fois.</p>
+<h3>Situations anormales</h3>
+<h5>Perte de contact par le worker du Queue Manager qui suit l'exécution d'une tâche</h5>
+<p>Sa requête HTTP sort prématurément en exception : la notification de fin ne lui parviendra pas.</p>
+<ul>
+<li>le worker considère la tâche comme terminée.</li>
+<li>le worker n'est en fait pas intéressé par le status de bonne ou mauvaise fin d'une tâche.</li>
+</ul>
+<p>Si la tâche se termine bien, elle disparaîtra de <code>TaskQueue</code>.<br>
+Si la tâche sort en exception elle sera modifiée en <code>TaskQueue</code> pour une future relance et si cette relance est proche le Queue Manager sera notifié par HTTP pour accélérer la relance.</p>
+<h5>Tâches perdues</h5>
+<p>Il s'agit de tâches qui ont été lancées (ou relancées),</p>
+<ul>
+<li>ayant une <code>startTime</code> ancienne,</li>
+<li>dont le Queue Manager n'a pas de trace en exécution dans un worker.</li>
+</ul>
+<p>La tâche est supposée s'être mal terminée sans que son exception n'ait pu être enregistrée dans <code>TaskQueue</code>.</p>
+<p>Le Queue Manager au cours d'un scan va récupérer ces tâches supposée encore en exécution depuis longtemps et pour chacune :</p>
+<ul>
+<li>si un worker indique être encore à l'écoute, elle est ignorée : elle n'était pas perdue bien qu'elle aurait dû sortir en timeout.</li>
+<li>sinon la tâche est marquée en exception <code>LOST</code> et dans <code>TaskQueue</code> :
+<ul>
+<li><code>startTime</code> est mis à <code>null</code>, <code>retry</code> est incrémenté, <code>nextStart</code> est calculée.</li>
+<li>le cas échéant elle est réinscrite pour relance proche.</li>
+</ul>
+</li>
+</ul>
+<h5>Tâche perdue retrouvée</h5>
+<p>Une tâche a été perdue, son worker a perdu le contact et le Queue Manager a inscrit un <code>retry</code>.<br>
+Mais la tâche finalement se termine :</p>
+<ul>
+<li>bien : elle est supprimée de <code>TaskQueue</code>.</li>
+<li>mal : <code>TaskQueue</code> n'est pas mis à jour, elle y reste marquée <code>LOST</code>.</li>
+</ul>
+<p>Le Queue Manager,</p>
+<ul>
+<li>soit a déjà relancé cette tâche après l'avoir détectée perdue : elle est à nouveau en cours d'exécution.</li>
+<li>soit ne l'a pas encore fait :
+<ul>
+<li>si elle était OK, elle a disparu de <code>TaskQueue</code>, le Queue Manager n'arrivera pas à la relancer : elle est effacée des tâches candidates.</li>
+<li>si elle était KO, elle est déjà planifié en relance.</li>
+</ul>
+</li>
+</ul>
+<p>Une tâche courre le risque (rare) d'être lancée une seconde fois après une première exécution en succès, tout comme n'importe quelle opération peut être relancée par une session : la logique applicative doit s'en prémunir :</p>
+<ul>
+<li>pour une opération classique une date-heure d'opération donnée par la session cliente permet de détecter cette situation quand elle est stockée dans les documents.</li>
+<li>pour une opération différée la <code>startTime</code> peut être employée.</li>
 </ul>
 <h3>L'objet <code>taskCheckPoint</code></h3>
 <p>Une opération différée reçoit en entrée un <code>Object</code> dans sa propriété <code>taskCheckpoint</code> :</p>
@@ -1603,9 +1716,9 @@ En supposant qu'une exception intervienne,</p>
 Un document contient une liste d'organisations à traiter.<br>
 Chaque exécution de <code>work()</code> traite une organisation et l'enlève de la liste :</p>
 <ul>
-<li>si la liste est vide le document est détruit et le <code>taskCheckpoint</code> est mis à <code>null</code>.</li>
+<li>si la liste est vide le <code>taskCheckpoint</code> est mis à <code>null</code>.</li>
 <li>sinon le compteur d'organisations traitées est incrémenté de 1 dans le <code>taskCheckpoint</code>. Ainsi après validation de l'opération une nouvelle opération dans la même requête repart immédiatement en phase <code>work()</code>.</li>
-<li>si ce compteur atteint 100 par exemple, l'exécution d'une opération de même ID est demandée pour dans une minute et l'objet <code>taskCheckPoint</code> est mis à <code>null</code>.</li>
+<li>si ce compteur atteint 100 par exemple, une nouvelle tâche différée est inscrite et ne comporte en <code>param</code> que la liste résiduelle des organisations restant à traiter : l'objet <code>taskCheckPoint</code> est mis à <code>null</code>.</li>
 </ul>
 <p>Ceci est un moyen d'assurer une reprise de traitement organisation par organisation tout en évitant à la fois, a) des requêtes HTTP trop courtes, b) de trop mobiliser les ressources au profit d'une tâche de fond au détriment des tâches de front.</p>
 <h3>La classe <code>Cron</code></h3>
@@ -1629,6 +1742,29 @@ Une tâche peut <em>calculer</em> cette date-heure de prochaine relance mais peu
 <li><code>Y11100425</code> : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.</li>
 </ul>
 <p>Normalement un traitement dont la <code>nextStart</code> a été calculée depuis <code>Cron</code> avec le paramètre <code>D0425</code> n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le <code>Cron</code>.</p>
+<h2>Administration des tâches</h2>
+<p>Un certain nombre d'opérations permettent d'assurer les services sur le serveur et des pages spécifiques permettent d'en assurer l'interface : le namespace est le code du Queue Manager géré.   - ce namespace n'a pas de base données directement associée et agit avec toutes les bases de données de tous les namespaces qu'il gère.</p>
+<p>La liste des tâches peut être consultée et filtrée depuis <code>TaskQueue</code>.</p>
+<ul>
+<li>tous namespaces confondus avec seulement des filtres sur <code>startTime retry opName</code>.</li>
+<li>par namespace avec un filtre plus fonctionnel sur <code>opName info</code> qui est un champ indexé.</li>
+</ul>
+<p>Une tâche peut être supprimée :</p>
+<ul>
+<li>en Datastore elle sera toutefois lancée mais se terminera immédiatement.</li>
+<li>en base de données en général elle ne sera pas lancée, si le Queue Manager est notifié à temps.</li>
+</ul>
+<p>Une tâche peut être avancée :</p>
+<ul>
+<li>en Datastore une autre tâche sera créée plus tôt, la seconde sera ignorée à l'exécution.</li>
+<li>en base de données le Queue Manager est notifié.</li>
+</ul>
+<p>Une tâche peut être reculée :</p>
+<ul>
+<li>en Datastore une autre tâche sera créée plus tard, la première sera ignorée à l'exécution.</li>
+<li>en base de données le Queue Manager est notifié, en général à temps avant lancement.</li>
+</ul>
+<p>En Datastore c'est aussi un moyen de faire une relance de tâche après erreur quand lui a renoncé de le faire.</p>
 <h1>Réplications différées d'items</h1>
 <p>Une opération ne doit travailler que sur peu de documents : en conséquence un document A1 ayant à répliquer son état synthétique sur des dizaines / centaines d'autres documents ne peut pas le faire dans le cadre d'une opération unique. L'usage d'une tâche différée permet d'y remédier.</p>
 <p>Un cas particulièrement fréquent a toutefois fait l'objet d'un traitement générique. Exemple :</p>
@@ -1681,7 +1817,7 @@ Une tâche peut <em>calculer</em> cette date-heure de prochaine relance mais peu
 <li>les items sont insérés en base <em>sans lecture des dossiers</em>.</li>
 <li>chaque dossier impliqué a désormais une version <code>dh2</code> supérieure à <code>dh1</code> (chacun des dossiers ayant leur propre date-heure de mise à jour).</li>
 <li>chaque item mis à jour a pour version <code>dh2</code> et pour <code>vop</code> <code>dh1</code> : il est ainsi possible de savoir de combien la réplication a été retardée.</li>
-<li>comme les réplications sont désynchronisées rien n'interdirait qu'une seconde opération de date-heur <code>dh3</code> ait sa réplication doublant celle de <code>dh1</code> pour un item donné : ce dernier n'est mis à jour que si sa <code>vop</code> mémorisée est inférieure à la <code>vop</code> proposée en mise à jour, bref un état retardé n'écrase pas un état plus récent.</li>
+<li>comme les réplications sont désynchronisées rien n'interdirait qu'une seconde opération de date-heure <code>dh3</code> ait sa réplication doublant celle de <code>dh1</code> pour un item donné : ce dernier n'est mis à jour que si sa <code>vop</code> mémorisée est inférieure à la <code>vop</code> proposée en mise à jour, bref un état retardé n'écrase pas un état plus récent.</li>
 <li>les mises à jours désynchronisées ne sont soumises à aucun contrôle fonctionnel.</li>
 </ul>
 <h1>Identification / authentification</h1>

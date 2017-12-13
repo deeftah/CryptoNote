@@ -67,13 +67,11 @@ public class Servlet extends HttpServlet {
 	
 	@Override public void destroy() {
 		try {
-			// QueueManager.closeQ();
+			QueueManager.closeQ();
 			// new ExecContext().setNS(AConfig.config().nsz()).dbProvider().shutdwon();
 		} catch (Exception e) {	}
 	}
 
-	
-	
 	/********************************************************************************/	
 	private final class ReqCtx {
 		HttpServletRequest req;
@@ -147,17 +145,15 @@ public class Servlet extends HttpServlet {
 		}
 		
 		private void appcache() throws IOException {
-			String p1 = contextPath + "/" + nsqm.code;
-			String v = "_" + build;
-			String p2 = p1 + "/" + v + "/";
+			String p1 = contextPath + "/" + nsqm.code + "/";
+			String p2 = p1 + "_" + build + "/";
 			StringBuffer sb = new StringBuffer();
-			sb.append("CACHE MANIFEST\n#").append(v).append("\nCACHE:\n");
+			sb.append("CACHE MANIFEST\n#").append(build).append("\nCACHE:\n");
 			for(String s : var())
 				sb.append(p2 + s + "\n");
 			for(String s : BConfig.offlinepages())
-				sb.append(p1).append('/').append(s).append(".local2\n").append(p1).append('/').append(s).append(".sync2\n");	
-			byte[] bytes = sb.toString().getBytes("UTF-8");
-			sendRes(new Servlet.Resource(bytes, "text/cache-manifest"), req, resp);
+				sb.append(p1).append(s).append(".local2\n").append(p1).append(s).append(".sync2\n");	
+			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), "text/cache-manifest"), req, resp);
 			fini = true;
 		}
 
@@ -168,9 +164,8 @@ public class Servlet extends HttpServlet {
 				fini = true;
 				return;
 			}
-			String p1 = "\"" + contextPath + "/" + nsqm.code;
-			String v = "_" + build;
-			String p2 = p1 + "/" + v + "/";
+			String p1 = "\"" + contextPath + "/" + nsqm.code + "/";
+			String p2 = p1 + "_" + build + "/";
 
 			StringBuffer sb = new StringBuffer();
 			sb.append("'use strict';\n");
@@ -182,11 +177,9 @@ public class Servlet extends HttpServlet {
 			for(String s : var())
 				sb.append(p2 + s + "\",\n");
 			for(String s : BConfig.offlinepages())
-				sb.append(p1).append('/').append(s).append(".local\",\n").append(p1).append('/').append(s).append(".sync\",\n");	
-			sb.append("];\n");
-			sb.append(new String(c.bytes, "UTF-8"));
-			byte[] bytes = sb.toString().getBytes("UTF-8");
-			sendRes(new Servlet.Resource(bytes, " text/javascript"), req, resp);	
+				sb.append(p1).append(s).append(".local\",\n").append(p1).append(s).append(".sync\",\n");	
+			sb.append("];\n").append(c.toString());
+			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), " text/javascript"), req, resp);	
 			fini = true;
 		}
 		
@@ -233,7 +226,7 @@ public class Servlet extends HttpServlet {
 			sb.append("<!DOCTYPE html>");
 			
 			if (ext.endsWith("2")) 
-				sb.append("<html manifest=\"").append(contextPath).append("/").append(nsqm.code).append(".appcache\">");
+				sb.append("<html manifest=\"").append(contextPath).append("/").append(nsqm.code).append("/x.appcache\">");
 			else
 				sb.append("<html>");
 			

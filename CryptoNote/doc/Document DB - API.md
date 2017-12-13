@@ -82,37 +82,38 @@ La configuration permet de définir des URLs raccourcies correspondant aux charg
 
     https://site.org/theApp/app -> https://site.org/theApp/monOrg/page-home.app
 
+**URLs possibles** (sans context-path pour simplifier)
 
+    org -> ns
+    /ping
+    /ns/ping          // ping du namespace et de sa base
+    /ns/x.appcache    // ressource MANIFEST d'une appcache
+    /ns/x.swjs        // ressource sw.js de Service Worker
+    /ns/mapage.app    // page de l'application .app .cloud .local .sync
+    /ns/op/...        // opération standard
+    /ns/od/taskid     // opération différée (tâche)
+    /var/...          // ressource
+    /_12_2/...        // ressource versinnée pour éviter les problèmes de cache
+    /var/z/...        // ressource dynamique (custom.css custom.js ...)
+    /_12_2/...        // ressource dynamique
+
+Une ressource dynamique `/var/z/xxx.yyy` est d'abord recherchée dans la base dans le namespace nommé `namespace` dans un document ayant pour docid le code `ns` du namespace qu'il customise.
+- ceci permet de définir des pages plus spécifiques par organisation et de les adapter en runtime et pas seulement sur une livraison de build.
+- si la ressource n'est pas trouvée customisée, c'est celle effectivement `/var/z/` correspondante qui est prise.
+- il n'est donc possible de customiser QUE des ressources existantes dans `/var/z`.
+- le namespace `namespace` ne supporte pas la customisation : en cas d'erreur de script par exemple l'application serait bloquée.
 
 ### Invocation d'opérations
-URLs : `cp/ns/op/p1/p2 ...`  
+URLs : `cp/ns/op/p1/p2 ...`  ou `cp/ns/od/taskid`
+
 Les autres arguments sont passés soit en `application/x-www-form-urlencoded` (sur un GET) ou en `multipart/form-data` (sur un POST) :
-- `op/` :  obligatoire, signale un appel d'opération. Ce code est `od/` pour une opération différée *émise* par le Queue Manager et `qm/` pour une opération *gérée* par le Queue Manager ;
+- `op/` :  obligatoire, signale un appel d'opération. Ce code est `od/` pour une opération différée *émise* par le Queue Manager.
 - `p1 p2 ...` sont facultatifs. Ils peuvent être obtenus par `inputData.uri()` qui retourne un `String[]`;
 - les ***arguments*** sont récupérables par `inputData.args().get("nom argument")`:
     - l'argument de nom **`op`** donne le nom de l'opération et permet de trouver la classe de l'opération à instancier.
-    - les arguments de nom **`account key admin`** sont en général utilisés pour gérer les habilitations à effectuer l'opération.
+    - les arguments de nom **`account key sudo`** sont en général utilisés pour gérer les habilitations à effectuer l'opération.
     - l'argument de nom **`param`** est traité spécifiquement : c'est un JSON et il est dé-sérialisé dans le champ de nom `param` de l'opération.
     - ***dans le cas d'un POST des pièces jointes peuvent être transmises*** : elles sont récupérables par `inputData.attachments().get("name")` qui retourne un objet (ou `null`) portant les informations `name, fileName, contentType, bytes`.
-
-### URLs spéciales de GET
-
-**URL : `cp/build`** et **`cp/ns/build`**   
-Elle retourne le numéro de build : cette URL fait office de `ping` et permet de tester la disponibilité effective du serveur (en particulier pour gérer le load balancing sur une ferme de serveurs).  
-Chaque namespace a en plus de la build standard du logiciel un numéro complémentaire de sa propre build : on l'obtient par l'URL `cp/ns/build`.
-
-**URL : `cp/ns.appcache` et `cp/ns.swjs`**  
-Elles retournent la ressource `manifest` de l'application cache ou le script du *service worker* qui permettent de fonctionner offline. Ces ressources ont un texte généré depuis les fichiers trouvés dans le `war`.
-
-**URL : `cp/ns/page.app` ou `.cloud` ou `.local` ou `.local2` ou `.sync` ou `.sync2`**  
-Elles retournent le texte de la page `page.html` de l'application transformée afin d'être utilisable *online* (`app cloud`), en mode *avion* (`local local2`) ou en mode *synchronisé* (`sync sync2`).  
-- `local` et `sync` correspondent à la gestion par *service worker*.
-- `local2` et `sync2` correspondent à la gestion par *appcache*.
-
-**URL : `cp/ns/var/...` ou `cp/ns/_build_nsVersion_/...`**  
-Elles retournent les ressources de l'application.  
-La seconde URL permet d'éviter les problèmes de rafraîchissement de cache des browsers en changeant d'URL à chaque évolution de build ou de version de configuration du namespace.  
-Dans ces ressources celles qui commencent par `z/` (comme `z/custom.css`) indique d'aller chercher le texte de la ressource en base en tant que pièce jointe du document de configuration du namespace, puis seulement si elle n'existe pas de prendre la ressource de la build `z/..`.
 
 ## `ExecContext`
 Un objet de la classe `ExecContext` est créé par l'arrivée d'une requête et suit son thread durant sa vie.  
