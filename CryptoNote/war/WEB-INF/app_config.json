@@ -1,4 +1,7 @@
 {			
+
+	"queueIndexByOp": {"op1":1, "op4":3},
+
 	"REMORDAVANTCLOTUREMINUTES": 1, 
 	"NBHEURESENCREATION": 72,
 	"Q1CPARDEFAUT": 1,

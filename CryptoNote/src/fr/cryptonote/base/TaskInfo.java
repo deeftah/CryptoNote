@@ -1,39 +1,44 @@
 package fr.cryptonote.base;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+public class TaskInfo {
 
-public class TaskInfo implements Comparable<TaskInfo> {
-
-	public String ns;
-	public Document.Id id;
-	public long nextStart;
-	public int retry;
-	public String info;
-	public transient int queue;
-	public transient int workerIndex;
-	public transient String report;
-	public transient String stampKey;
+	public String 	ns;
+	public String 	taskid;
+	public long 	nextStart;
+	public String	opName;
+	public String 	info;
+	public int 		retry;
+	public String 	exc;
+	public String 	report;
+	public long		starTime;
 	
-	public TaskInfo(String ns, Document.Id id, long nextStart, int retry, String info) {
+	public TaskInfo(String ns, String opName, String info, long nextStart) {
 		this.ns = ns;
-		this.id = id;
+		this.taskid = Crypto.randomB64(2);
 		this.nextStart = nextStart;
-		this.retry = retry;
 		this.info = info;
-		stampKey = nextStart().toString() + "/" + pk();
-	}
-	
-	public String pk() { return ns + "/" + id.toString() + "/" ; }
-	
-	public String url(){
-		try { return ns + "/od/" + URLEncoder.encode(id.docid(), "UTF-8") + "/" + id.docclass();
-		} catch (UnsupportedEncodingException e) { return null; }
+		this.opName = opName;
 	}
 		
-	public Stamp nextStart(){ return Stamp.fromStamp(nextStart); }
+	public static class TaskMin implements Comparable<TaskMin> {
+		public String 	ns;
+		public String 	taskid;
+		public long 	startAt;
+		public int		qn;
+		public transient int workerIndex;
+		public TaskMin() {}
+		public TaskMin(TaskInfo ti) { ns = ti.ns; taskid = ti.taskid; startAt = ti.nextStart; qn = BConfig.queueIndexByOp(ti.opName); }
+		
+		public long startAtEpoch() { return Stamp.fromStamp(startAt).epoch(); }
+		
+		public String pk() { return ns + "." + taskid; }
+		public String stampKey() { return "" + startAt + "." + pk(); }
+		
+		@Override
+		public int compareTo(TaskMin o) { 
+			return startAt > o.startAt ? 1 : (startAt < o.startAt ? -1 : taskid.compareTo(o.taskid)); 
+		}
 
-	@Override
-	public int compareTo(TaskInfo o) { return stampKey.compareTo(o.stampKey); }
-
+	}
+	
 }

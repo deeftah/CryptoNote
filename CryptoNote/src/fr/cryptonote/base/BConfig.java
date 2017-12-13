@@ -14,6 +14,7 @@ import javax.servlet.ServletException;
 import fr.cryptonote.provider.DBProvider;
 
 public class BConfig {
+	
 	private static final String[] defaultLangs = {"fr", "en"};
 	private static final String DVARQM = "fr.cryptonote.QM";
 	private static final String BASECONFIG = "/WEB-INF/base_config.json";
@@ -112,6 +113,14 @@ public class BConfig {
 		}
 	}
 	
+	private static String normUrl(String url){
+		String s = url == null || url.length() == 0 ? g.defaultUrl : url;
+		if (!s.endsWith("/")) s += "/";
+		String cp = Servlet.contextPath();
+		if (cp == null || cp.length() == 0) return s;
+		return cp.endsWith("/") ? s + cp : url + cp + "/";
+	}
+	
 	/*******************************************************************************/
 	public static class Nsqm {
 		String code;
@@ -134,7 +143,7 @@ public class BConfig {
 		
 		public String label() { return label != null && label.length() != 0 ? label : code; }
 		public boolean isQM() { return isQM; }
-		public String url() { return url != null && url.length() != 0 ? url : g.defaultUrl; }
+		public String url() { return normUrl(url); }
 		public String base() { return base != null && base.length() != 0 ? base : g.defaultBase; }
 		public String lang() { return g.langs[BConfig.lang(lang)]; }
 		public String pwd() {
@@ -198,7 +207,7 @@ public class BConfig {
 		private boolean 	isDistrib = true;
 		private boolean 	isMonoServer = false;
 		private String 		defaultUrl = "http://localhost:8080/";
-		private String 		byeAndBack = "https://test.sportes.fr:8443/byeAndBack";
+		private String 		byeAndBack = "https://test.sportes.fr:8443/byeAndBack.html";
 		
 		private int 		TASKMAXTIMEINSECONDS = 1800;
 		private int 		OPERATIONMAXTIMEINSECONDS = 120;
@@ -233,7 +242,7 @@ public class BConfig {
 	public static boolean 		isDistrib() { return g.isDistrib;}
 	public static boolean 		isDebug() { return g.isDebug;}
 	public static boolean 		isMonoServer() { return g.isMonoServer;}
-	public static String 		defaultUrl() { return g.defaultUrl; }
+	public static String 		defaultUrl() { return normUrl(g.defaultUrl); }
 	public static String 		byeAndBack() { return g.byeAndBack; }
 	public static String 		defaultBase() { return g.defaultBase; }
 
@@ -258,6 +267,7 @@ public class BConfig {
 	public static String[]		namespaces() { return g.namespaces.keySet().toArray(new String[g.namespaces.size()]);}
 	public static String[]		queueManagers() { return g.queueManagers == null ? new String[0] : g.queueManagers.keySet().toArray(new String[g.queueManagers.size()]);}
 	public static String		password(String code) { return p == null ? null : p.get(code); }
+	public static int			queueIndexByOp(String op) { return appConfig.queueIndexByOp(op); }
 	
 	public static Nsqm namespace(String ns, boolean fresh) { 
 		Nsqm x = g.namespaces.get(ns);
@@ -275,11 +285,12 @@ public class BConfig {
 	/***************************************************************************************/
 	private static BaseConfig g;
 	private static HashMap<String,String> p;
-	private static HashMap<String,ArrayList<String>> namespacesByDB = new HashMap<String,ArrayList<String>>();
-	private static HashMap<String,ArrayList<String>> namespacesByQM = new HashMap<String,ArrayList<String>>();
+	private static HashMap<String,ArrayList<Nsqm>> namespacesByDB = new HashMap<String,ArrayList<Nsqm>>();
+	private static HashMap<String,ArrayList<Nsqm>> namespacesByQM = new HashMap<String,ArrayList<Nsqm>>();
 	private static HashSet<String> databases = new HashSet<String>();
 	private static String dbProviderName;
 	private static Method dbProviderFactory;
+	private static IConfig appConfig;
 	
 	static ServletException exc(Exception e, String msg) {
 		if (e != null) msg += "\n" + e.getMessage() + "\n" + Util.stack(e);
@@ -351,29 +362,26 @@ public class BConfig {
 		
 		compile();
 
-		try {
-			Class<?> appCfg = Class.forName(g.appConfigClass);
-			r = Servlet.getResource(APPCONFIG);
-			if (r != null) {
-				Object appConfig;
-				try {
-					appConfig = JSON.fromJson(r.toString(), appCfg);
-				} catch (Exception ex) {
-					throw exc(ex, _format(0, "XRESSOURCEJSON", APPCONFIG));
-				}
-				try {
-					Method startup = appCfg.getMethod("startup", Object.class);
-					if (!Modifier.isStatic(startup.getModifiers())) 
-						throw exc(null, _format(0, "XAPPCONFIG", g.appConfigClass));
-					startup.invoke(appConfig); 
-				} catch (Exception e) {
-					throw exc(e, _format(0, "XAPPCONFIG", g.appConfigClass));				
-				}
-			} else
-				throw exc(null, _format(0, "XRESSOURCEABSENTE", APPCONFIG));
-		} catch (Exception e) {
-			throw exc(e, _format(0, "XRESSOURCECLASS", g.appConfigClass));
-		}
+		Class<?> appCfg = Util.hasClass(g.appConfigClass, IConfig.class);
+		if (appCfg == null) throw exc(null, _format(0, "XRESSOURCECLASS", g.appConfigClass));
+		r = Servlet.getResource(APPCONFIG);
+		if (r != null) {
+			try {
+				appConfig = (IConfig)JSON.fromJson(r.toString(), appCfg);
+			} catch (Exception ex) {
+				throw exc(ex, _format(0, "XRESSOURCEJSON", APPCONFIG));
+			}
+			try {
+				Method startup = appCfg.getMethod("startup", Object.class);
+				if (!Modifier.isStatic(startup.getModifiers())) 
+					throw exc(null, _format(0, "XAPPCONFIG", g.appConfigClass));
+				startup.invoke(appConfig); 
+			} catch (Exception e) {
+				throw exc(e, _format(0, "XAPPCONFIG", g.appConfigClass));				
+			}
+		} else
+			throw exc(null, _format(0, "XRESSOURCEABSENTE", APPCONFIG));
+
 		ready = true;
 		QueueManager.startQM();
 	}
@@ -389,19 +397,19 @@ public class BConfig {
 			if (x.pwd == null || x.pwd.length() == 0) throw exc(null, _format(0, "XNAMESPACEPWD", ns));
 			if (x.base != null && x.base.length() != 0) {
 				databases.add(x.base);
-				ArrayList<String> al = namespacesByDB.get(x.base);
+				ArrayList<Nsqm> al = namespacesByDB.get(x.base);
 				if (al == null) {
-					al = new ArrayList<String>();
+					al = new ArrayList<Nsqm>();
 					namespacesByDB.put(x.base, al);
 				}
-				al.add(ns);
+				al.add(x);
 			}
-			ArrayList<String> al2 = namespacesByQM.get(x.qm);
+			ArrayList<Nsqm> al2 = namespacesByQM.get(x.qm);
 			if (al2 == null) {
-				al2 = new ArrayList<String>();
+				al2 = new ArrayList<Nsqm>();
 				namespacesByQM.put(x.qm, al2);
 			}
-			al2.add(ns);
+			al2.add(x);
 		}
 		for(String qm : g.queueManagers.keySet()) {
 			Nsqm x = g.queueManagers.get(qm);
@@ -413,8 +421,8 @@ public class BConfig {
 	}
 	
 	/****************************************************/
-	public static ArrayList<String> namespacesByQM(String qm) { return namespacesByQM.get(qm); }
-	public static ArrayList<String> namespacesByDB(String db) { return namespacesByDB.get(db); }
+	public static ArrayList<Nsqm> namespacesByQM(String qm) { return namespacesByQM.get(qm); }
+	public static ArrayList<Nsqm> namespacesByDB(String db) { return namespacesByDB.get(db); }
 	public static String dbProviderName() { return dbProviderName; }
 	public static String[] databases() { return databases.toArray(new String[databases.size()]); }
 	public static boolean hasDatabase(String n) { return databases.contains(n); }

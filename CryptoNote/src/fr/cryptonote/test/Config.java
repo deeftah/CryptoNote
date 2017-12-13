@@ -1,8 +1,11 @@
 package fr.cryptonote.test;
 
-import fr.cryptonote.base.DocumentDescr;
+import java.util.HashMap;
 
-public class Config {
+import fr.cryptonote.base.DocumentDescr;
+import fr.cryptonote.base.IConfig;
+
+public class Config implements IConfig {
 	private static Config c = null;
 	public static void startup(Object config) throws Exception {
 		c = (Config)config;
@@ -10,9 +13,15 @@ public class Config {
 	}
 	
 	private String foo;
+	private HashMap<String,Integer>	queueIndexByOp;
 	
 	public static String foo() { return c.foo; }
 	
+	@Override public int queueIndexByOp(String op) { 
+		Integer i = c.queueIndexByOp == null ? null : c.queueIndexByOp.get(op); 
+		return i == null ? 0 : i; 
+	}
+
 	/****************************************************/
 
 	private static void declareDocumentsAndOperations() throws Exception{

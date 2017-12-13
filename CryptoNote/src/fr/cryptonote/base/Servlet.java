@@ -67,8 +67,8 @@ public class Servlet extends HttpServlet {
 	
 	@Override public void destroy() {
 		try {
-			QueueManager.closeQ();
-			// new ExecContext().setNS(AConfig.config().nsz()).dbProvider().shutdwon();
+			QueueManager.stopQM();
+			// TODO : fermer toutes les connexions / datasources ?;
 		} catch (Exception e) {	}
 	}
 

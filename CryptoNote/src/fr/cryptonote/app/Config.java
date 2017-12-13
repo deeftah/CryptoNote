@@ -2,11 +2,13 @@ package fr.cryptonote.app;
 
 import java.util.HashMap;
 
+import fr.cryptonote.base.IConfig;
 import fr.cryptonote.base.Stamp;
 
-public class Config {
+public class Config implements IConfig {
 	private static Config g;
 	
+	private HashMap<String,Integer>	queueIndexByOp;
 	private int NBHEURESENCREATION;
 	private int NBHEURESENZOMBIE;
 	private int REMORDAVANTCLOTUREMINUTES;
@@ -35,6 +37,11 @@ public class Config {
 	public long RV2() { return g.RV2; }
 	public int RV1PC() { return g.RV1PC; }
 	public int RV2PC() { return g.RV2PC; }
+	
+	@Override public int queueIndexByOp(String op) { 
+		Integer i = g.queueIndexByOp == null ? null : g.queueIndexByOp.get(op); 
+		return i == null ? 0 : i; 
+	}
 
 	public static void startup(Object config) throws Exception {
 		g = (Config)config;

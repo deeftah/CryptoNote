@@ -43,7 +43,7 @@
 			"retriesInMin":[1, 10, 60, 180]
 		}
 	},
-	
+		
 	"mailServer":"simu://alterconsos.fr/tech/server2.php",
 	"adminMails":"daniel@sportes.fr,domi.colin@laposte.net",
 	"emailFilter":["sportes.fr"],

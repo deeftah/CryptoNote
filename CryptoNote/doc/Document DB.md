@@ -251,12 +251,13 @@ Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au co
 - `param` : un JSON contenant les paramètres requis. Si ceux-ci sont très volumineux, on créé un document et `param` en contient juste l'identification.
 - `info` : texte d'information indexé permettant des filtrages pour l'administrateur.
 - `retry` : son numéro d'ordre d'exécution. 0 à la création il est incrémenté à chaque relance par le Queue Manager.
-- `nextStart` : la date-heure de son lancement / relance au plus tôt.
+- `startAt` : la date-heure de son lancement / relance au plus tôt.
 - `startTime` : la date-heure de sa demande d'exécution par le Queue Manager. `null` quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.
 - `qn` : numéro de queue : le Queue Manager a plusieurs queues numérotées de 0 à N pour des usages différents, par exemple : 
     - 0:*rapide*, plusieurs threads pour des tâches courtes,
     - 1:*standard*, 2 threads pour des tâches plus longues,
     - 3:*background*, un seul thread pour des tâches peu fréquentes et peu prioritaires.
+    - pour chaque code d'opération la configuration d'application définit le numéro de queue (quand il n'est pas 0).
 - `exc` : code d'exception du dernier traitement en erreur. `null` au lancement / relance.
 - `report` : texte d'information sur la dernière exception.
 
@@ -268,54 +269,54 @@ C'est une opération normale. L'objet `param` et le nom de l'opération `opName`
 - elle peut itérer plusieurs cycles **`work()` / validation** au cours de la même requête HTTPS initiale (voir ci-dessous).
 
 ### Principe d'exécution nominal
-Une opération inscrit une nouvelle tâche en ayant fourni `ns taskid opName param qn info.`  
+Une opération inscrit une nouvelle tâche en ayant fourni `ns opName param info` : `taskid` est générée et `qn` obtenu de la configuration.  
 Au commit :
 - la tâche est inscrite dans la table `TaskQueue`.
 - pour un Datastore, **avant le commit**, une tâche est mise en queue avec pour URL d'invocation `/ns/od/taskid?key=...`.
-- pour une base de données, **après le commit**, si la `nexstart` est proche (moins de X minutes : le scan lapse du Queue Manager), le Queue Manager associé au namespace (`qm7`) reçoit une requête HTTP `/qm7/qm/taskid?key=...&op=inq&nextStart=...&retry=0` pour inscription de la tâche à relancer sans attendre le prochain scan.
+- pour une base de données, **après le commit**, si la `startAt` est proche (moins de X minutes : X est le scan lapse du Queue Manager), le Queue Manager associé au namespace (`qm7`) reçoit une requête HTTP `/qm7/op?key=...&op=inq&param={ns:..,taskid:..,startAt:..,qn:..}` pour inscription de la tâche à relancer sans attendre le prochain scan.
 
 **Quand le Queue Manager peut / doit lancer la tâche**, il cherche un thread worker libre qui émet vers le serveur du namespace une requête HTTP avec `/ns/od/taskid?key=...` :
 - `ns` : le namespace (comme pour toute requête),
 - `od` au lieu de op pour identifier qu'il s'agit d'une opération différée,
 - `taskid` dans l'URL.
-- le paramètre `key` : mot de passe permettant de s'assurer que c'est bien le Queue Manager qui a émis la requête et non une session externe (en fait sur un POST `key` n'apparaît pas dans l'URL comme ci-dessus qui est employée en test).
+- le paramètre `key` : mot de passe permettant de s'assurer que c'est bien le Queue Manager qui a émis la requête et non une session externe (en fait sur un POST, `key` n'apparaît pas dans l'URL comme dans celle ci-dessus qui est employée en test).
 
 Quand le Datastore lance la tâche il émet une requête HTTP sur l'URL `/ns/od/taskid?key=...`.
 
 La requête HTTP arrive dans le serveur et recherche dans `TaskQueue` le descriptif de la tâche :
-- si elle n'y est pas la requête se termine : la tâche s'était bien terminée :
+- si il n'y est pas la requête se termine en 200. La tâche s'était bien terminée :
     - soit c'était une relance intempestive,
     - soit l'administrateur l'a supprimée. Dans le cas du Datastore c'est un moyen donné à l'administrateur de supprimer une tâche.
-- si elle y est avec une `nextStart` pas encore atteinte (et assez lointaine) c'est que l'administrateur l'a reculée :
-    - en Datastore il a fait inscrire une nouvelle tâche avec la nouvelle valeur de `nextStart`.
+- si elle y est avec une `startAt` pas encore atteinte (avec un minimum de tolérance) c'est que l'administrateur l'a reculée :
+    - en Datastore il a fait inscrire une nouvelle tâche avec la nouvelle valeur de `startAt`.
     - la requête se termine en 200.
     - en base de données, si la `nextStart` est proche le Queue Manager reçoit une notification.
-- si elle y est avec une `startTime` la requête se termine : la tâche est déjà en exécution ailleurs.
+- si elle y est avec une `startTime` (ça ne devrait pas arriver en Datastore) la requête se termine en 200 : la tâche est déjà en exécution ailleurs.
 - sinon la tâche est à exécuter :
     - la requête récupère `param` et `retry`.
     - la requête inscrit dans `TaskQueue` une `startTime` qui marque le fait que la tâche est en exécution. 
 
 L'opération souhaitée s'exécute ensuite :
-- traitement OK :
+- **traitement OK** :
     - la tâche `ns.taskid` est supprimée de la table `TaskQueue` au commit.
     - le retour est un status 200 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle tâche ou signale au Datastore que la tâche est finie.
-- traitement en Exception :
+- **traitement en Exception** :
     - la tâche `ns.taskid` est mise à jour dans `TaskQueue` :
         - `starTime` y est mise à `null`;
         - `retry` est incrémenté;
         - `exc` et `report` sont renseignés;
-        - `nextStart` est calculée à une valeur future d'autant plus lointaine que le numéro de `retry` est élevé, voire finalement infinie.
+        - `startAt` est calculée à une valeur future d'autant plus lointaine que le numéro de `retry` est élevé, voire finalement infinie.
     - le retour est un status 500 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle tâche ou signale au Datastore qu'il faudra relancer.
-    - sauf Datastore, si la `nexstart` est proche (moins de X minutes : le scan lapse du Queue Manager), le Queue Manager associé au namespace reçoit une requête HTTP pour inscription de la tâche à relancer sans attendre le prochain scan.
+    - sauf Datastore, si la `nexstart` est proche (moins de X minutes), le Queue Manager associé au namespace reçoit une requête HTTP pour inscription de la tâche à relancer sans attendre le prochain scan.
 
 **Scan périodique des TaskQueue par le Queue Manager**
-Un Queue Manager gère un ou plusieurs namespaces et fait face à une ou plusieurs base de données.  
+Un Queue Manager gère un ou plusieurs namespaces et fait donc face à une ou plusieurs base de données.  
 Seule les tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :
-- une `nextStart` antérieure à la date-heure du scan suivant,
+- une `startAt` antérieure à la date-heure du scan suivant,
 - ayant l'un des namespaces dont il est en charge,
 - ayant une `startTime` `null` (tâche pas en cours).
 
-Ce scan lui permet de récupérer les tâches à relancer autant que celle à lancer une première fois.
+Ce scan permet au Queue Manager de récupérer les tâches à relancer autant que celle à lancer une première fois.
 
 ### Situations anormales
 ##### Perte de contact par le worker du Queue Manager qui suit l'exécution d'une tâche
@@ -390,7 +391,7 @@ Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi
 - `M100425` : soit le 10 de ce mois si on est avant le 10 à 4h25, soit le 10 du mois suivant à 4h25 ;
 - `Y11100425` : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.
 
-Normalement un traitement dont la `nextStart` a été calculée depuis `Cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le `Cron`.
+Normalement un traitement dont la `startAt` a été calculée depuis `Cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le `Cron`.
 
 ## Administration des tâches
 Un certain nombre d'opérations permettent d'assurer les services sur le serveur et des pages spécifiques permettent d'en assurer l'interface : le namespace est le code du Queue Manager géré.   - ce namespace n'a pas de base données directement associée et agit avec toutes les bases de données de tous les namespaces qu'il gère.
@@ -412,6 +413,11 @@ Une tâche peut être reculée :
 - en base de données le Queue Manager est notifié, en général à temps avant lancement.
 
 En Datastore c'est aussi un moyen de faire une relance de tâche après erreur quand lui a renoncé de le faire.
+
+Hors Datastore, l'administrateur peut,
+- suspendre un Queue Manager,
+- lever sa suspension, 
+- interroger son *backlog* en mémoire (tâches à lancer très prochainement et en cours).
 
 # Réplications différées d'items
 Une opération ne doit travailler que sur peu de documents : en conséquence un document A1 ayant à répliquer son état synthétique sur des dizaines / centaines d'autres documents ne peut pas le faire dans le cadre d'une opération unique. L'usage d'une tâche différée permet d'y remédier.

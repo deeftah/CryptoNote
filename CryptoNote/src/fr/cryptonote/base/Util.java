@@ -2,22 +2,26 @@ package fr.cryptonote.base;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import javax.servlet.ServletException;
+import javax.net.ssl.HttpsURLConnection;
+
+import fr.cryptonote.base.BConfig.Nsqm;
 
 public class Util {
 	public static final Logger log = Logger.getLogger("fr.cryptonote");
@@ -223,16 +227,13 @@ public class Util {
 		} catch (Exception e) { return null; }
 	}
 
-	public static Class<?> hasClass(String name, Class<?> type) throws ServletException{
+	public static Class<?> hasClass(String name, Class<?> type) {
 		try {
 			Class<?> c = Class.forName(name);
-			if (c != type && !type.isAssignableFrom(c)) 
-				throw new Exception("x");
+			if (c != type && !type.isAssignableFrom(c)) return null;
 			return c;
 		} catch (Exception e) {
-			String msg1 = BConfig.format("XSERVLETCLASS", name, type.getCanonicalName());
-			log.log(Level.SEVERE, msg1);
-			throw new ServletException(msg1, e);
+			return null;
 		}
 	}
 
@@ -259,6 +260,41 @@ public class Util {
 		t.printStackTrace(new PrintStream(bos));
 		return bos.toString();
 	}
+	
+	/**
+	 * Poste une requête au serveur indiqué par ns avec les arguments cités et ne retourne qu'un statut (pas de résultat).
+	 * @param ns désigne soit un namespace soit un queue manager
+	 * @param endUrl dans l'URL ce qui suit http://.../cp/ns/ (ou http://.../ns/). Pas de / en tête
+	 * @param args les arguments String à passer qui seront URL encodés
+	 * @return 0:succès (200) 1:réponse négative (pas 200) 2:exception technique, donc inconnu sur la réception / le traitement
+	 */
+	public static int postSrv(String ns, String endUrl, HashMap<String,String> args) {
+		try {
+			StringBuffer sb = new StringBuffer();
+			Nsqm nsqm = BConfig.nsqm(ns, false);
+			sb.append("key=").append(URLEncoder.encode(nsqm.pwd(), "UTF-8"));
+			if (args != null) 
+				for(String k : args.keySet()) 
+					sb.append("&").append(k).append("=").append(URLEncoder.encode(args.get(k), "UTF-8"));
+			String u = nsqm.url() + ns + "/" + (endUrl != null ? endUrl : "");
+		    URL url = new URL(u);
+		    String query = sb.toString();
+		    HttpURLConnection con = url.getProtocol().equals("https") ?
+		    		(HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
+		    con.setRequestMethod("POST");
+		    con.setRequestProperty("Content-length", String.valueOf(query.length())); 
+		    con.setRequestProperty("Content-Type","application/x-www-form-urlencoded"); 
+		    con.setDoOutput(true); 
+		    DataOutputStream output = new DataOutputStream(con.getOutputStream()); 
+		    output.writeBytes(query);
+		    output.close();    
+		    int status = con.getResponseCode();
+		    return status == 200 ? 0 : 1;
+		} catch (Exception e) {
+			return 2;
+		}
+	}
+
 
 	public static void main(String[] args){
 		String s = "toto titi tutu";

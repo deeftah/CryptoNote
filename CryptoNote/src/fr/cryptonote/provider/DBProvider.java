@@ -13,6 +13,7 @@ import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.TaskInfo;
+import fr.cryptonote.base.TaskInfo.TaskMin;
 import fr.cryptonote.base.TaskUpdDiff.ByTargetClkey;
 
 public interface DBProvider {
@@ -155,7 +156,9 @@ public interface DBProvider {
 	 * @throws AppException
 	 */
 	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException ;
-		
+
+	public Collection<TaskMin> candidateTasks(long before, Collection<String> listNs) throws AppException ;
+
 	/**
 	 * Retourne le report d'une task 
 	 * @param ti
