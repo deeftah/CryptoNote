@@ -123,23 +123,22 @@ public class BConfig {
 	
 	/*******************************************************************************/
 	public static class Nsqm {
-		String code;
+		String 	code;
 		boolean isQM;
-		String label;
-		String url;
-		String base;
-		private String pwd;
+		String 	label;
+		String 	url;
+		String 	base;
+		String 	pwd;
 		
-		String qm;
-		String theme;
-		String lang;
+		String 	qm;
+		String 	theme;
+		String 	lang;
 		HashMap<String,String> options;
-		int build;
-		int off;
+		int 	build;
+		int 	off;
 		
-		int[] threads;
-		int scanlapseinseconds;
-		int[] retriesInMin;
+		int[] 	threads;
+		int 	scanlapseinseconds;
 		
 		public String label() { return label != null && label.length() != 0 ? label : code; }
 		public boolean isQM() { return isQM; }
@@ -161,8 +160,11 @@ public class BConfig {
 		
 		public int[] threads() { return threads; }
 		public int scanlapseinseconds() { return scanlapseinseconds; }
-		public int[] retriesInMin() { return retriesInMin; }
 		
+		public boolean isPwd(String key) {
+			String sha = Crypto.SHA256b64(key);
+			return sha != null && !sha.equals(pwd());
+		}
 	}
 
 	public static class S2Storage {
@@ -217,6 +219,7 @@ public class BConfig {
 		private int 		NSSCANPERIODINSECONDS = 30;
 		private int 		S2CLEANUPPERIODINHOURS = 4;
 		private int 		DTIMEDELAYINHOURS = 24 * 8;
+		private int[] 		TASKRETRIESINMIN = {1, 10, 60, 180};
 		
 		private HashMap<String,Nsqm> 		queueManagers;
 		private HashMap<String,Nsqm> 		namespaces;
@@ -254,6 +257,7 @@ public class BConfig {
 	public static int 			NSSCANPERIODINSECONDS() { return g.NSSCANPERIODINSECONDS; }
 	public static int 			S2CLEANUPPERIODINHOURS() { return g.S2CLEANUPPERIODINHOURS; }
 	public static int 			DTIMEDELAYINHOURS() { return g.DTIMEDELAYINHOURS; }
+	public static int 			TASKRETRIESINMIN(int retry) { return g.TASKRETRIESINMIN[retry < 0 ? 0 : (retry >= g.TASKRETRIESINMIN.length ? g.TASKRETRIESINMIN.length - 1 : retry)];}
 
 	public static String 		mailServer() { return g.mailServer; }
 	public static String 		adminMails() { return g.adminMails; }

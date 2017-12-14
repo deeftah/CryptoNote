@@ -17,6 +17,7 @@
 	"NSSCANPERIODINSECONDS":3600,
 	"S2CLEANUPPERIODINHOURS":4,
 	"DTIMEDELAYINHOURS":24,
+	"TASKRETRIESINMIN":[1, 10, 60, 180],
 	
 	"namespaces" : {
 		"namespace":{"label":"Espace de noms", "url": "http://192.168.0.10:8090/cn", "base":"cna", "pwd":"ns", "qm":"A"},
@@ -39,8 +40,7 @@
 			"base":"nca",
 			"pwd":"qm",
 			"threads": [2,1],
-			"scanlapseinseconds":60,
-			"retriesInMin":[1, 10, 60, 180]
+			"scanlapseinseconds":60
 		}
 	},
 		

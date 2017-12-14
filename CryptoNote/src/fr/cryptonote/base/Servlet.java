@@ -24,6 +24,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import fr.cryptonote.base.BConfig.Nsqm;
+import fr.cryptonote.provider.DBProvider;
 
 public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -372,45 +373,49 @@ public class Servlet extends HttpServlet {
 		try {
 			String ct = r.req.getContentType();
 			boolean mpfd = !r.isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
-			inp = !mpfd ? getInputData(r.req) : postInputData(r.req);
+			inp = r.isTask ? taskInputData(r) : (!mpfd ? getInputData(r.req) : postInputData(r.req));
+			inp.uri = r.uri.substring(3);
+			String op = inp.args.get("op");
+			inp.operationName = op != null ? op  : "Default";
+
 			String b1 = r.req.getHeader("build");
 			String b2 = "" + BConfig.build();
 			if (b1 != null && !b2.equals(b1))
 				throw new AppException("DBUILD", b1, b2);
-			boolean isOP = r.uri.startsWith("op/");
-			inp.uri = r.uri.substring(3);
 			
-			if (r.nsqm.isQM) {
-				result = QueueManager.doTmRequest(r.exec, inp);
-			} else {
-				if (!isOP){ // od/
-					inp.taskId = Document.Id.fromURL(inp.uri);
-					inp.operationName = inp.taskId.docclass();
-				} else { // op/ 
-					String op = inp.args.get("op");
-					inp.operationName = op != null ? op  : "Default";
-				}
-				result = r.exec.go(inp);
-			}
+			result = r.nsqm.isQM ? QueueManager.doTmRequest(r.exec, inp) :  r.exec.go(inp);
 			r.exec.closeAll();
-			writeResp(r.resp, 200, result);
+			if (r.isTask)
+				respTask(r, inp.taskInfo, null);
+			else 
+				writeResp(r.resp, 200, result);
 		} catch (Throwable t){
-			AppException ex;
-			if (t instanceof AppException)
-				ex = (AppException)t;
-			else
-				ex = new AppException(t, "X0");
-			if (r.exec != null) {
-				ex.error().addDetail(r.exec.traces());
-				r.exec.closeAll();
-			}
+			AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
+			if (r.isTask) ex.error().addDetail(r.exec.traces());
+			r.exec.closeAll();
 			result = new Result();
-			result.text = inp.isGet ? ex.error().toString() : ex.error().toJSON();
-			result.mime = inp.isGet ? "text/plain" : "application/json";
-			writeResp(r.resp, ex.error().httpStatus, result);
+			if (r.isTask)
+				respTask(r, inp.taskInfo, ex.error());
+			else {
+				result.text = inp.isGet ? ex.error().toString() : ex.error().toJSON();
+				result.mime = inp.isGet ? "text/plain" : "application/json";
+				writeResp(r.resp, ex.error().httpStatus, result);
+			}
 		}
 	}
-		
+
+	/********************************************************************************/
+	private void respTask(ReqCtx r, TaskInfo ti, AppException.Error err) {
+		r.resp.setStatus(err == null ? 200 : err.httpStatus);
+		try {
+			DBProvider provider = BConfig.getDBProvider(r.nsqm.base).ns(r.nsqm.code);
+			if (err == null)
+				provider.removeTask(ti.ns, ti.taskid);
+			else
+				provider.excTask(ti.ns, ti.taskid, err.minor, err.toJSON(), Stamp.fromNow(BConfig.TASKRETRIESINMIN(ti.retry - 1) * 60000).stamp());
+		} catch (Exception e) { }
+	}
+
 	/********************************************************************************/
 	private void writeResp(HttpServletResponse resp, int status, Result r){
 		resp.setStatus(status);
@@ -451,6 +456,19 @@ public class Servlet extends HttpServlet {
 		}
 	}
 
+	/*********************************************************************************/
+	private InputData taskInputData(ReqCtx r) throws AppException {
+		String key = r.req.getParameter("key");
+		if (!r.nsqm.pwd().equals(key)) throw new AppException("STASKKEY");
+		InputData inp = new InputData();
+		DBProvider provider = BConfig.getDBProvider(r.nsqm.base).ns(r.nsqm.code);
+		inp.taskInfo = provider.taskInfo(r.nsqm.code, r.uri.substring(3));
+		inp.args.put("op", inp.taskInfo.opName);
+		inp.taskInfo.startTime = Stamp.fromNow(0).stamp();
+		provider.startTask(inp.taskInfo.ns, inp.taskInfo.taskid, inp.taskInfo.startTime);
+		return inp;
+	}
+	
 	/********************************************************************************/
 	private InputData getInputData(HttpServletRequest req) {
 		InputData inp = new InputData();
@@ -542,15 +560,17 @@ public class Servlet extends HttpServlet {
 	/********************************************************************************/
 	public static class InputData {
 		private String operationName;
-		private Document.Id taskId;
-		private boolean isGet;	
+		private TaskInfo taskInfo;
+		private boolean isGet;
+		private boolean isTask;
 		private String uri;
 		private Hashtable<String, String> args = new Hashtable<String, String>();
 		private Hashtable<String, Attachment> attachments = new Hashtable<String, Attachment>();		
 
 		public boolean isGet() { return isGet; };	
+		public boolean isTask() { return isTask; };	
 		public String operationName() {return operationName; }	
-		public Document.Id taskId() { return taskId; }
+		public TaskInfo taskInfo() { return taskInfo; }
 		public String uri() { return uri;}
 		public Hashtable<String, String> args() { return args; };
 		public Hashtable<String, Attachment> attachments() { return attachments; };		

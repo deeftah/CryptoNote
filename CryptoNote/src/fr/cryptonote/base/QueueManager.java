@@ -78,9 +78,9 @@ public class QueueManager implements Runnable {
 		if (!hostsQM) return null;
 		String op = inp.args().get("op");
 		String key = inp.args().get("key");
-		if (key == null || !key.equals(myNsqm.pwd())) throw new AppException("SQMKEY");
 
 		if ("inq".equals(op)){
+			if (key == null || !key.equals(myNsqm.pwd())) throw new AppException("SQMKEY");
 			String jsonp = inp.args().get("param");
 			if (jsonp != null) {
 				try {
@@ -94,6 +94,7 @@ public class QueueManager implements Runnable {
 			return null;
 		}
 		
+		if (!myNsqm.isPwd(key)) throw new AppException("SQMKEY");
 		if ("suspend".equals(op)){
 			suspendQM();
 			return null;

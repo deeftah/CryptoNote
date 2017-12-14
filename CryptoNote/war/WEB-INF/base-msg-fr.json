@@ -76,6 +76,7 @@
 "ANSEMPTY":"Pas de fichier joint",
 
 "SQMKEY":"Clé d''accès au Queue Manager non reconnue",
+"STASKKEY":"Clé de lancement de tâche non reconnue",
 "BQMJSONTI":"Erreur de syntaxe sur TaskInfo json :[{0}]",
 "BQMOP":"Queue Manager : opération [{0}] inconnue",
 "XQMPOST":"Queue Manager : post [{0}] ",
