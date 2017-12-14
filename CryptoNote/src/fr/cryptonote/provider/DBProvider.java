@@ -129,43 +129,58 @@ public interface DBProvider {
 	 */
 	public void insertTask(TaskInfo ti) throws AppException ;
 
-	/**
-	 * Mise à jour de nexstart / retry / report d'une task
-	 * Fin d'exécution en erreur (qm) ou relance (qm-admin)
-	 * @param ti
-	 * @throws AppException
-	 */
-	public void updateNRRTask(Document.Id id, long nextStart, int retry, String report) throws AppException ;
+	public TaskInfo taskInfo(String ns, String taskid) throws AppException;
 
 	/**
-	 * Suppression d'une task
-	 * Fin d'exécution OK (qm) ou renoncement à une tâche (qm-admin / app)
-	 * @param ti
+	 * Lancement d'une task, fixe startTime et incrémente retry. startAt, exc et report sont mis à null.
+	 * @param ns
+	 * @param taskid
+	 * @param startTime
 	 * @throws AppException
 	 */
-	public void removeTask(Document.Id id) throws AppException ;
+	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException ;
 
 	/**
-	 * Liste les tasks en attente filtré le cas échéant par les paramètres de ti
-	 * @param ti
-	 * ti.id.docclass : restreint aux tasks de cette classe
-	 * ti.id.docid : restreint à celles commençant par ce docid
-	 * ti.nexstart : restreint à celles à lancer avant et à cette stamp
-	 * ti.cron : restreint à celles de ce cron
-	 * @return
+	 * Sortie d'une task en exception
+	 * @param ns
+	 * @param taskid
+	 * @param exc code de l'exception
+	 * @param report
+	 * @param startAt date-heure de relance
 	 * @throws AppException
 	 */
-	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException ;
+	public void excTask(String ns, String taskid, String exc, String report, long startAt) throws AppException ;
+
+	/**
+	 * Suppression d'une task, soit sur fin normale, soit sur demande de l'administeur
+	 * @param ns
+	 * @param taskid
+	 * @throws AppException
+	 */
+	public void removeTask(String ns, String taskid) throws AppException ;
+
+//	/**
+//	 * Liste les tasks en attente filtré le cas échéant par les paramètres de ti
+//	 * @param ti
+//	 * ti.id.docclass : restreint aux tasks de cette classe
+//	 * ti.id.docid : restreint à celles commençant par ce docid
+//	 * ti.nexstart : restreint à celles à lancer avant et à cette stamp
+//	 * ti.cron : restreint à celles de ce cron
+//	 * @return
+//	 * @throws AppException
+//	 */
+//	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException ;
 
 	public Collection<TaskMin> candidateTasks(long before, Collection<String> listNs) throws AppException ;
 
 	/**
 	 * Retourne le report d'une task 
-	 * @param ti
+	 * @param ns
+	 * @param taskid
 	 * @return
 	 * @throws AppException
 	 */
-	public String taskReport(Document.Id id) throws AppException;
+	public String taskReport(String ns, String taskid) throws AppException;
 
 	/*************************************************************************************/
 	/**
@@ -188,9 +203,11 @@ public interface DBProvider {
 	/**
 	 * Planifie le prochain cleanup à exécuter. C'est une transaction
 	 * indépendante ou incluse dans celle de validation selon le cas.
-	 * @param ti. docid=hour du cleanup (AAMMJJhh du nextStart); docclass=s2cleanup
+	 * Le startAt de la task donne le hour du cleanup
+	 * @param ti TaskInfo de la tâche à insérer
+	 * @param clid id du document à nettoyer
 	 * @throws AppException
 	 */
-	public void setS2Cleanup(TaskInfo ti) throws AppException ;
+	public void setS2Cleanup(TaskInfo ti, String clid) throws AppException ;
 
 }

@@ -29,34 +29,56 @@ Dans JETTY_RUN/start.ini
 la ligne --module=ext (qui référence JETTY_HOME/modules/ext.mod) indique comment étendre le classpath
  
 /*********************************************************/
-
+/* une table unique par base */
 DROP TABLE IF EXISTS dbinfo;
 CREATE TABLE dbinfo (
 	info text NOT NULL
 );
 ALTER TABLE dbinfo OWNER TO "docdb";
-
 insert into dbinfo values('postgreSQL 10.1');
 
-DROP TABLE IF EXISTS s2cleanup;
-CREATE TABLE s2cleanup (
+/* une table unique par base */
+DROP TABLE IF EXISTS taskqueue;
+CREATE TABLE taskqueue (
+  	ns varchar(16) NOT NULL,
+  	taskid varchar(255) NOT NULL,
+	startat bigint, 
+  	opname varchar(16) NOT NULL,
+  	param text,
+  	info varchar(255),
+	qn int NOT NULL,
+	retry int NOT NULL,
+  	exc varchar(255),
+	report text,
+	starttime bigint, 
+	CONSTRAINT taskqueue_pk PRIMARY KEY (ns, taskid)
+);
+ALTER TABLE taskqueue OWNER TO "docdb";
+DROP INDEX IF EXISTS taskqueue_startat;
+CREATE INDEX taskqueue_startat on taskqueue (startat, ns, taskid);
+
+/* une table pour chaque namespace NS hébergé dans la base*/
+DROP TABLE IF EXISTS s2cleanup_NS;
+CREATE TABLE s2cleanup_NS (
   	clid varchar(255) NOT NULL,
   	hour int,
-  	CONSTRAINT s2cleanup_pk PRIMARY KEY (clid, hour)
+  	CONSTRAINT s2cleanup_NS_pk PRIMARY KEY (clid, hour)
 );
-ALTER TABLE s2cleanup OWNER TO "docdb";
+ALTER TABLE s2cleanup_NS OWNER TO "docdb";
 
+/* une table doc_NS (hérite de doc) pour chaque namespace NS hébergé dans la base*/
 DROP TABLE IF EXISTS doc;
 CREATE TABLE doc (
 	clid varchar(255) NOT NULL,
 	version bigint NOT NULL,
 	ctime bigint NOT NULL,
 	dtime bigint NOT NULL,
-	CONSTRAINT doc_pk PRIMARY KEY (clid)
+	CONSTRAINT doc_NS_pk PRIMARY KEY (clid)
 );
 ALTER TABLE doc OWNER TO "docdb";
 
-DROP INDEX IF EXISTS item_v;
+/* une table item_NS_DC (hérite de item) pour chaque document DC de chaque namespace NS hébergé dans la base */
+/* PLUS une table item_NS_DC_IT (hérite de item_NS_DC) pour chaque item IT ayant des champs exportés */
 DROP TABLE IF EXISTS item;
 CREATE TABLE item (
   	docid varchar(255) NOT NULL,
@@ -69,42 +91,67 @@ CREATE TABLE item (
 	CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
 );
 ALTER TABLE item OWNER TO "docdb";
-CREATE INDEX item_v on item (docid, version, clkey);
-CREATE INDEX item_p on item (docid, sha) where sha is NOT NULL;
 
-DROP INDEX IF EXISTS taskqueue_ns;
-DROP TABLE IF EXISTS taskqueue;
-CREATE TABLE taskqueue (
+/* index item_NS_DC_v et _p pour chaque document DC de chaque namespace NS hébergé dans la base */
+DROP INDEX IF EXISTS item_v;
+CREATE INDEX item_NS_DC_v on item_NS_DC (docid, version, clkey);
+CREATE INDEX item_NS_DC_p on item_NS_DC (docid, sha) where sha is NOT NULL;
+
+
+/*********************************************************/
+/* seulement dans la base qui héberge le namespace "namespace" */
+DROP TABLE IF EXISTS doc_namespace;
+CREATE TABLE doc_namespace () INHERITS (doc);
+ALTER TABLE doc_namespace OWNER TO "docdb";
+
+DROP TABLE IF EXISTS item_namespace_nsdoc;
+CREATE TABLE item_namespace_nsdoc () INHERITS (item);
+ALTER TABLE item_namespace_nsdoc OWNER TO "docdb";
+CREATE INDEX item_namespace_nsdoc_v on item_namespace_nsdoc (docid, version, clkey);
+CREATE INDEX item_namespace_nsdoc_p on item_namespace_nsdoc (docid, sha) where sha is NOT NULL;
+
+/*********************************************************/
+DROP TABLE IF EXISTS s2cleanup_test;
+CREATE TABLE s2cleanup_test (
   	clid varchar(255) NOT NULL,
-	nextstart bigint NOT NULL, 
-	retry int NOT NULL,
-  	info varchar(255),
-	report text,
-	CONSTRAINT taskqueue_pk PRIMARY KEY (docid)
+  	hour int,
+  	CONSTRAINT s2cleanup_test_pk PRIMARY KEY (clid, hour)
 );
-ALTER TABLE taskqueue OWNER TO "docdb";
-CREATE INDEX taskqueue_ns on taskqueue (nextstart, clid);
+ALTER TABLE s2cleanup_test OWNER TO "docdb";
 
-DROP TABLE IF EXISTS namespace;
-CREATE TABLE namespace () INHERITS (item);
-ALTER TABLE namespace OWNER TO "docdb";
+DROP TABLE IF EXISTS doc_test;
+CREATE TABLE doc_test () INHERITS (doc);
+ALTER TABLE doc_test OWNER TO "docdb";
 
 /*********************************************************/
 
-DROP TABLE IF EXISTS livrc3;
-CREATE TABLE livrc3() INHERITS (item);
-ALTER TABLE livrc3 OWNER TO "docdb";
 
-DROP INDEX IF EXISTS livrc3_gac_prixc;
-DROP INDEX IF EXISTS livrc3_gac_prixd;
-DROP TABLE IF EXISTS livrc3_Gac;
-CREATE TABLE livrc3_gac (
+
+
+
+
+
+
+
+
+
+
+
+
+DROP TABLE IF EXISTS item_livrc3;
+CREATE TABLE item_livrc3() INHERITS (item);
+ALTER TABLE item_livrc3 OWNER TO "docdb";
+
+DROP INDEX IF EXISTS item_test_livrc3_gac_prixc;
+DROP INDEX IF EXISTS livrc3_test_gac_prixd;
+DROP TABLE IF EXISTS livrc3_test_gac;
+CREATE TABLE livrc3__test_gac (
 	prixc int, 
 	prixd int
 ) INHERITS (livrc3);
 ALTER TABLE livrc3_gac OWNER TO "docdb";
 CREATE INDEX livrc3_gac_prixc on livrc3_gac (prixc, groupid, docid);
-CREATE INDEX livrc3_Gac_prixd on livrc3_gac (prixd, groupid, docid);
+CREATE INDEX livrc3_gac_prixd on livrc3_gac (prixd, groupid, docid);
 
 /*********************************************************/
 

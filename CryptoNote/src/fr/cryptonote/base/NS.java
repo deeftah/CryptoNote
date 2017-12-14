@@ -6,7 +6,7 @@ import java.util.HashSet;
 
 import fr.cryptonote.base.BConfig.Nsqm;
 import fr.cryptonote.base.Document.P;
-import fr.cryptonote.base.NS.Namespace.Cfg;
+import fr.cryptonote.base.NS.Nsdoc.Cfg;
 import fr.cryptonote.base.Servlet.Attachment;
 import fr.cryptonote.base.Servlet.Resource;
 import fr.cryptonote.provider.DBProvider;
@@ -43,7 +43,7 @@ public class NS {
 						for(DeltaDocument dd : lst) {
 							NS ns = namespaces.get(dd.id.docid());
 							if (ns != null) {
-								Namespace doc = (Namespace)Cache.cacheOf(NAMESPACE).document(dd.id, st, ns.version);
+								Nsdoc doc = (Nsdoc)Cache.cacheOf(NAMESPACE).document(dd.id, st, ns.version);
 								if (doc != null)
 									ns.refresh(doc);
 							}
@@ -54,10 +54,10 @@ public class NS {
 		}
 	}
 	
-	private void refresh(Namespace d) throws AppException {
+	private void refresh(Nsdoc d) throws AppException {
 		version = d.version();
-		Namespace.Cfg cfg = d.cfg();
-		cfg = (Namespace.Cfg)cfg.getCopy();
+		Nsdoc.Cfg cfg = d.cfg();
+		cfg = (Nsdoc.Cfg)cfg.getCopy();
 		HashSet<String> resok = new HashSet<String>();
 		for(String name : d.getPKeys()){
 			resok.add(name);
@@ -117,11 +117,11 @@ public class NS {
 	}
 
 	/*********************************************************************/
-	private static Document.Id id(String ns) throws AppException { return new Document.Id(Namespace.class, ns); }
+	private static Document.Id id(String ns) throws AppException { return new Document.Id(Nsdoc.class, ns); }
 	
-	public static class Namespace extends Document {
-		private static Namespace document(String ns) throws AppException { return (Namespace)Document.getOrNew(NS.id(ns)); }
-		private static Namespace existingDocument(String ns) throws AppException { return (Namespace)Document.get(NS.id(ns), 0); }
+	public static class Nsdoc extends Document {
+		private static Nsdoc document(String ns) throws AppException { return (Nsdoc)Document.getOrNew(NS.id(ns)); }
+		private static Nsdoc existingDocument(String ns) throws AppException { return (Nsdoc)Document.get(NS.id(ns), 0); }
 		private Cfg cfg() throws AppException {	return (Cfg)singletonOrNew(Cfg.class); }
 		
 		public static class Cfg extends Singleton {
@@ -150,7 +150,7 @@ public class NS {
 			Attachment a = inputData().attachments().get("resource");
 			if (a == null || a.bytes == null || a.bytes.length == 0) throw new AppException("ANSEMPTY");
 			
-			Namespace d = Namespace.existingDocument(param.ns);
+			Nsdoc d = Nsdoc.existingDocument(param.ns);
 			if (d == null) throw new AppException("ANSUNKNOWN", param.ns);
 			if (!Servlet.isZres(param.name)) throw new AppException("ANSZRES", param.name);;
 			
@@ -186,7 +186,7 @@ public class NS {
 			String nsc = ExecContext.current().nsqm().code;
 			if (!nsc.equals(NAMESPACE)) throw new AppException("ANSBADNS", NAMESPACE, nsc);
 				
-			Namespace d = Namespace.document(param.ns);
+			Nsdoc d = Nsdoc.document(param.ns);
 			Cfg cfg = d.cfg();
 			if (param.theme != null && param.theme.length() != 0) cfg.theme = param.theme;
 			if (param.label != null && param.label.length() != 0) cfg.label = param.label;

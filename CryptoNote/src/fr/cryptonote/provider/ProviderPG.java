@@ -30,6 +30,7 @@ import fr.cryptonote.base.ExecContext.IuCDoc;
 import fr.cryptonote.base.S2Cleanup;
 import fr.cryptonote.base.Stamp;
 import fr.cryptonote.base.TaskInfo;
+import fr.cryptonote.base.TaskInfo.TaskMin;
 import fr.cryptonote.base.TaskUpdDiff.ByTargetClkey;
 import fr.cryptonote.base.Util;
 
@@ -218,12 +219,12 @@ public class ProviderPG implements DBProvider {
 	}
 
 	/***********************************************************************************************/
-	private static final String SELDOCS = "select clid, version, ctime, dtime from namespace ";
+	private static final String SELDOCS = "select clid, version, ctime, dtime from doc_";
 
 	@Override public Collection<DeltaDocument> listDoc(String BEGINclid, long AFTERversion) throws AppException {
 		ArrayList<DeltaDocument> lst = new ArrayList<DeltaDocument>();
 		StringBuffer sb = new StringBuffer();
-		sb.append(SELDOCS);
+		sb.append(SELDOCS).append(ns).append(" ");
 		boolean p = true;
 		if (BEGINclid != null) { p = false; sb.append("where clid >= ? and clid < ?"); }
 		if (AFTERversion != 0) {sb.append(p ? "where " : " and ").append("version > ?"); p = false;}
@@ -256,12 +257,13 @@ public class ProviderPG implements DBProvider {
 	}
 	
 	/***********************************************************************************************/
-	private static final String SELDOC = "select version, ctime, dtime from doc where clid = ?;";
+	private static final String SELDOC1 = "select version, ctime, dtime from doc_";
+	private static final String SELDOC2 = " where clid = ?;";
 	
 	private DeltaDocument getDoc(Id id) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
-		sql = SELDOC; 
+		sql = SELDOC1 + ns + SELDOC2; 
 		DeltaDocument dd = null;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
@@ -299,7 +301,7 @@ public class ProviderPG implements DBProvider {
 	private DeltaDocument cas12(DeltaDocument dd) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
-		sql = SELITEMS1 + dd.id.docclass() + SELITEMS2 + ";"; 
+		sql = SELITEMS1 + ns + "_" + dd.id.docclass() + SELITEMS2 + ";"; 
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, dd.id.docid());
@@ -318,7 +320,7 @@ public class ProviderPG implements DBProvider {
 	private DeltaDocument cas3(DeltaDocument dd, long version, boolean commit) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
-		sql = SELITEMS1 + dd.id.docclass() + SELITEMS2 + " and version > ?;"; 
+		sql = SELITEMS1 + ns + "_" + dd.id.docclass() + SELITEMS2 + " and version > ?;"; 
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, dd.id.docid());
@@ -345,7 +347,7 @@ public class ProviderPG implements DBProvider {
 	private DeltaDocument cas4(DeltaDocument dd, long version) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
-		sql = SELITEMS3 + dd.id.docclass() + SELITEMS4; 
+		sql = SELITEMS3 + ns + "_" + dd.id.docclass() + SELITEMS4; 
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, dd.id.docid());
@@ -420,8 +422,9 @@ public class ProviderPG implements DBProvider {
 		return st;
 	}
 
-	private static final String LOCKDOC1 = "select clid, version from doc where clid in (";
-	private static final String LOCKDOC2 = ") for update nowait;";
+	private static final String LOCKDOC1 = "select clid, version from doc_";
+	private static final String LOCKDOC2 = " where clid in (";
+	private static final String LOCKDOC3 = ") for update nowait;";
 		
 	/*
 	 * Retourne null si tout est OK.
@@ -430,9 +433,9 @@ public class ProviderPG implements DBProvider {
 	private HashMap<String,Long> checkAndLock(HashMap<String,Long> docs) throws AppException {
 		StringBuffer sb = new StringBuffer();
 		HashMap<String,Long> badDocs = new HashMap<String,Long>();
-		sb.append(LOCKDOC1);
+		sb.append(LOCKDOC1).append(ns).append(LOCKDOC2);
 		for(int i = 0; i < docs.size(); i++) sb.append(i == 0 ? "?" : ",?");
-		String sql = sb.append(LOCKDOC2).toString();
+		String sql = sb.append(LOCKDOC3).toString();
 		
 		// tri des groupes pour limiter les apparitions de deadlocks
 		String[] clids = docs.keySet().toArray(new String[docs.size()]);
@@ -467,18 +470,18 @@ public class ProviderPG implements DBProvider {
 
 	/***********************************************************************************************/
 	private static final String DELITEMS = " where docid = ?;";
-	private static final String DELDOC = "delete from doc where clid = ?;";
+	private static final String DELDOC = " where clid = ?;";
 
 	private void purge(String clid) throws AppException {
 		Id id = new Id(clid);
 		PreparedStatement preparedStatement = null;
-		String sql = "delete from " + id.docclass() + DELITEMS;
+		String sql = "delete from item_" + ns + "_" + id.docclass() + DELITEMS;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(2, id.docid());
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
-			sql = DELDOC;
+			sql = "delete from doc_" + ns + DELDOC;
 			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, id.toString());
 			preparedStatement.executeUpdate();
@@ -490,11 +493,11 @@ public class ProviderPG implements DBProvider {
 	}
 
 	/***********************************************************************************************/
-	private static final String INSDOC ="insert into doc (clid, version, ctime, dtime) values (?,?,?,?);";
+	private static final String INSDOC = " (clid, version, ctime, dtime) values (?,?,?,?);";
 
 	private void insertDoc(IuCDoc x, long version) throws AppException {
 		PreparedStatement preparedStatement = null;
-		String sql = INSDOC;
+		String sql = "insert into doc_" + ns + INSDOC;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
@@ -510,11 +513,11 @@ public class ProviderPG implements DBProvider {
 
 	}
 	/***********************************************************************************************/
-	private static final String UPDDOC ="update doc set version = ?, ctime = ?, dtime = ? where clid = ?;";
+	private static final String UPDDOC = " set version = ?, ctime = ?, dtime = ? where clid = ?;";
 
 	private void updateDoc(String clid, long version, long ctime, long dtime) throws AppException {
 		PreparedStatement preparedStatement = null;
-		String sql = UPDDOC;
+		String sql = "update doc_" + ns + UPDDOC;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
@@ -552,7 +555,7 @@ public class ProviderPG implements DBProvider {
 		}
 		
 		StringBuffer sb = new StringBuffer();
-		sb.append("insert into " + x.id.docclass());
+		sb.append("insert into item_" + ns + "_" + x.id.docclass());
 		if (fields != null)	sb.append("_" + x.name);
 		sb.append(INSITEM1);
 		if (fields != null)
@@ -595,7 +598,7 @@ public class ProviderPG implements DBProvider {
 		}
 		
 		StringBuffer sb = new StringBuffer();
-		sb.append("update " + x.id.docclass());
+		sb.append("update item_ " + ns + "_" + x.id.docclass());
 		if (fields != null)	sb.append("_" + x.name);
 		sb.append(UPDITEM1);
 		if (fields != null)
@@ -636,7 +639,7 @@ public class ProviderPG implements DBProvider {
 
 	private void del(ItemIUD x) throws AppException {
 		PreparedStatement preparedStatement = null;
-		String sql = "delete from " + x.id.docclass() + DELITEM;
+		String sql = "delete from item_" + ns + "_" + x.id.docclass() + DELITEM;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
@@ -746,8 +749,8 @@ public class ProviderPG implements DBProvider {
 	}
 	
 	/***********************************************************************************************/
-	private static final String SQLSEARCH1 = "select distinct docid from ";
-	private static final String SQLSEARCH2 = "select docid, version, clkey, contentt, contentb from ";
+	private static final String SQLSEARCH1 = "select distinct docid from item_";
+	private static final String SQLSEARCH2 = "select docid, version, clkey, contentt, contentb from item_";
 
 	@Override
 	public Collection<Id> searchDocIdsByIndexes(Class<?> docClass, Class<?> itemClass, Cond<?>... ffield) throws AppException {
@@ -760,7 +763,7 @@ public class ProviderPG implements DBProvider {
 		ResultSet rs = null;
 		
 		StringBuffer sb = new StringBuffer();
-		sb.append(SQLSEARCH1).append(docClass.getSimpleName()).append("_").append(itemClass.getSimpleName()).append(" where ");
+		sb.append(SQLSEARCH1).append(ns).append("_").append(docClass.getSimpleName()).append("_").append(itemClass.getSimpleName()).append(" where ");
 		boolean pf = true;
 		for(Cond<?> c : ffield) {
 			if (pf) pf = false; else sb.append(" and ");
@@ -794,7 +797,7 @@ public class ProviderPG implements DBProvider {
 		ResultSet rs = null;
 		
 		StringBuffer sb = new StringBuffer();
-		sb.append(SQLSEARCH2).append(docClass.getSimpleName()).append("_").append(itemClass.getSimpleName()).append(" where ");
+		sb.append(SQLSEARCH2).append(ns).append("_").append(docClass.getSimpleName()).append("_").append(itemClass.getSimpleName()).append(" where ");
 		boolean pf = true;
 		for(Cond<?> c : ffield) {
 			if (pf) pf = false; else sb.append(" and ");
@@ -822,7 +825,8 @@ public class ProviderPG implements DBProvider {
 	}
 
 	/***********************************************************************************************/
-	private static final String INSERTTASK = "insert into taskqueue (clid, nextstart, retry, info) values (?,?,?,?);";
+	private static final String INSERTTASK = 
+		"insert into taskqueue (ns, taskid, startat, opname, info, qn, retry, exc, report, starttime, param) values (?,?,?,?,?,?,?,?,?,?,?);";
 		
 	@Override 
 	public void insertTask(TaskInfo ti) throws AppException{
@@ -831,11 +835,17 @@ public class ProviderPG implements DBProvider {
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
-			preparedStatement.setString(j++, ti.id.toString());
-			preparedStatement.setLong(j++, ti.nextStart);
+			preparedStatement.setString(j++, ti.ns);
+			preparedStatement.setString(j++, ti.taskid);
+			preparedStatement.setLong(j++, ti.startAt);
+			preparedStatement.setString(j++, ti.opName);
+			preparedStatement.setString(j++, ti.info == null ? "" : ti.info);
+			preparedStatement.setInt(j++, ti.qn);
 			preparedStatement.setInt(j++, 0);
-			preparedStatement.setString(j++, ti.info);
 			preparedStatement.setString(j++, null);
+			preparedStatement.setString(j++, null);
+			preparedStatement.setLong(j++, 0);
+			preparedStatement.setString(j++, ti.param);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 		} catch(Exception e){
@@ -843,35 +853,64 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-	private static final String UPDTASK = "update taskqueue set nextstart = ?, retry = ?, report = ? where clid = ?;";
+	private static final String UPDTASK1 = "update taskqueue set exc = ?, report = ?, startat = ?, starttime = ?, retry = retry + 1 where ns = ? and taskid = ?;";
 
-	@Override
-	public void updateNRRTask(Id id, long nextStart, int retry, String report) throws AppException {
+	@SuppressWarnings("null")
+	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException {
+		TaskInfo ti = taskInfo(ns, taskid);
 		PreparedStatement preparedStatement = null;
-		sql = UPDTASK;
+		sql = UPDTASK1;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
-			preparedStatement.setLong(j++, nextStart);
-			preparedStatement.setInt(j++, retry);
-			preparedStatement.setString(j++, report);
-			preparedStatement.setString(j++, id.toString());
+			preparedStatement.setString(j++, null);
+			preparedStatement.setString(j++, null);
+			preparedStatement.setLong(j++, (Long)null);
+			preparedStatement.setLong(j++, startTime);
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			return ti;
 		} catch(Exception e){
-			throw err(preparedStatement, null, e, "updateNRRTaskInfo");
+			throw err(preparedStatement, null, e, "startTask");
 		}
 	}
 
-	private static final String DELTASK = "delete from taskqueue where clid = ?;";
+	private static final String UPDTASK2 = "update taskqueue set exc = ?, report = ?, startat = ?, starttime = ? where ns = ? and taskid = ?;";
+
+	@SuppressWarnings("null")
+	@Override
+	public void excTask(String ns, String taskid, String exc, String report, long startAt) throws AppException {
+		PreparedStatement preparedStatement = null;
+		sql = UPDTASK2;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, exc);
+			preparedStatement.setString(j++, report);
+			preparedStatement.setLong(j++, startAt);
+			preparedStatement.setLong(j++, (Long)null);
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "excTask");
+		}
+	}
+
+	private static final String DELTASK = "delete from taskqueue where ns = ? and taskid = ?;";
 
 	@Override
-	public void removeTask(Id id) throws AppException {
+	public void removeTask(String ns, String taskid) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = DELTASK;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
-			preparedStatement.setString(1, id.toString());
+			int j = 1;
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 		} catch(Exception e){
@@ -879,58 +918,125 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-	private static final String SELTI1 = "select clid, nextstart, retry, info from taskqueue ";
+//	public static class TaskMin implements Comparable<TaskMin> {
+//		public String 	ns;
+//		public String 	taskid;
+//		public long 	startAt;
+//		public int		qn;
 
+	private static final String SELTI2 = "select ns, taskid, startat, qn from taskqueue where startat is not null and startat <= ?;";
+	
 	@Override
-	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException {
-		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
-		StringBuffer sb = new StringBuffer();
-		sb.append(SELTI1);
-		int j = 1;
-		if (BEGINclid != null) sb.append("where clid >= ? and clid < ?");
-		if (AFTERnextstart != 0) {sb.append(j++ == 1 ? "where " : " and ").append("nextstart <= ?");}
-		if (MINretry != 0) {sb.append(j++ == 1 ? "where " : " and ").append("retry >= ?");}
-		if (CONTAINSinfo != null) {sb.append(j++ == 1 ? "where " : " and ").append("info CONTAINS ?");}
-		sql = sb.append(";").toString();
+	public Collection<TaskMin> candidateTasks(long before, Collection<String> listNs) throws AppException {
+		ArrayList<TaskMin> lst = new ArrayList<TaskMin>();
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
+		sql = SELTI2;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
-			j = 1;
-			if (BEGINclid != null) {
-				preparedStatement.setString(j++, BEGINclid);
-				preparedStatement.setString(j++, BEGINclid + '\u1FFF');
-			}
-			if (AFTERnextstart != 0) preparedStatement.setLong(j++, AFTERnextstart);
-			if (MINretry != 0) preparedStatement.setInt(j++, MINretry);
-			if (CONTAINSinfo != null) preparedStatement.setString(j++, CONTAINSinfo);
+			preparedStatement.setLong(1, before);
 			rs = preparedStatement.executeQuery();
-			while (rs.next()){
-				long nextStart = rs.getLong("nextstart");
-				Id id = new Id(rs.getString("clid"));
-				int retry = rs.getInt("retry");
-				String info = rs.getString("info");
-				tiList.add(new TaskInfo(ns(), id, nextStart, retry, info));
-			}
+			while (rs.next())
+				lst.add(new TaskMin(rs.getString("ns"), rs.getString("taskid"), rs.getLong("startAt"), rs.getInt("qn")));
 			rs.close();
 			preparedStatement.close();
-			return tiList;
+			return lst;
 		} catch(Exception e){
-			throw err(preparedStatement, rs, e, "listTask");
+			throw err(preparedStatement, rs, e, "taskReport");
 		}
 	}
 
-	private static String SELTIREP = "select report from task where clid = ? ;";
+	private static final String SELTI3 = 
+		"select startat, opname, param, info, qn, retry, exc, report, startTime from taskqueue where ns = ? and taskid = ?;";
+	
+	@Override
+	public TaskInfo taskInfo(String ns, String taskid) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		TaskInfo ti = null;
+		sql = SELTI3;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
+			rs = preparedStatement.executeQuery();
+			if (rs.next()) {
+				ti = new TaskInfo();
+				ti.ns = ns;
+				ti.taskid = taskid;;
+				ti.startAt = rs.getLong("startAt");
+				ti.opName = rs.getString("opname");
+				ti.param = rs.getString("param");
+				ti.info = rs.getString("info");
+				ti.qn = rs.getInt("qn");
+				ti.retry = rs.getInt("retry");
+				ti.exc = rs.getString("exc");
+				ti.report = rs.getString("report");
+				ti.startTime = rs.getLong("startTime");
+			}
+			rs.close();
+			preparedStatement.close();
+			return ti;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "taskReport");
+		}
+	}
+
+//	private static final String SELTI1 = "select clid, nextstart, retry, info from taskqueue ";
+//
+//	@Override
+//	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException {
+//		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
+//		StringBuffer sb = new StringBuffer();
+//		sb.append(SELTI1);
+//		int j = 1;
+//		if (BEGINclid != null) sb.append("where clid >= ? and clid < ?");
+//		if (AFTERnextstart != 0) {sb.append(j++ == 1 ? "where " : " and ").append("nextstart <= ?");}
+//		if (MINretry != 0) {sb.append(j++ == 1 ? "where " : " and ").append("retry >= ?");}
+//		if (CONTAINSinfo != null) {sb.append(j++ == 1 ? "where " : " and ").append("info CONTAINS ?");}
+//		sql = sb.append(";").toString();
+//		PreparedStatement preparedStatement = null;
+//		ResultSet rs = null;
+//		try {
+//			preparedStatement = conn().prepareStatement(sql);
+//			j = 1;
+//			if (BEGINclid != null) {
+//				preparedStatement.setString(j++, BEGINclid);
+//				preparedStatement.setString(j++, BEGINclid + '\u1FFF');
+//			}
+//			if (AFTERnextstart != 0) preparedStatement.setLong(j++, AFTERnextstart);
+//			if (MINretry != 0) preparedStatement.setInt(j++, MINretry);
+//			if (CONTAINSinfo != null) preparedStatement.setString(j++, CONTAINSinfo);
+//			rs = preparedStatement.executeQuery();
+//			while (rs.next()){
+//				long nextStart = rs.getLong("nextstart");
+//				Id id = new Id(rs.getString("clid"));
+//				int retry = rs.getInt("retry");
+//				String info = rs.getString("info");
+//				tiList.add(new TaskInfo(ns(), id, nextStart, retry, info));
+//			}
+//			rs.close();
+//			preparedStatement.close();
+//			return tiList;
+//		} catch(Exception e){
+//			throw err(preparedStatement, rs, e, "listTask");
+//		}
+//	}
+
+	private static String SELTIREP = "select report from task where ns = ? and taskid = ? ;";
 
 	@Override
-	public String taskReport(Id id) throws AppException {
+	public String taskReport(String ns, String taskid) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String report = "";
+		sql = SELTIREP;
 		try {
-			beginTransaction();
-			preparedStatement = conn().prepareStatement(SELTIREP);
-			preparedStatement.setString(1, id.toString());
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
 			rs = preparedStatement.executeQuery();
 			if (rs.next())
 				report = rs.getNString("report");
@@ -942,6 +1048,8 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
+	/****************************************************************************************/
+	
 	private static final String SELPITEM1 = "select distinct sha from item_";
 	private static final String SELPITEM2 = " where sha is not null and docid = ? ;";
 
@@ -950,7 +1058,7 @@ public class ProviderPG implements DBProvider {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		HashSet<String> res = new HashSet<String>();
-		sql = SELPITEM1 + id.docclass() + SELPITEM2;
+		sql = SELPITEM1 + ns + "_" + id.docclass() + SELPITEM2;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, id.docid());
@@ -966,14 +1074,15 @@ public class ProviderPG implements DBProvider {
 	}
 
 	/***********************************************************************************************/
-	private static final String SELS2 = "select hour from s2cleanup where clid = ?;";
+	private static final String SELS21 = "select hour from s2cleanup_";
+	private static final String SELS22 = " where clid = ?;";
 
 	@Override
 	public int lastS2Cleanup(String clid) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		int hour = 0;
-		sql = SELS2;
+		sql = SELS21 + ns + SELS22;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			preparedStatement.setString(1, clid);
@@ -988,20 +1097,20 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-	private static final String UPDS2 = "update s2cleanup set hour = ? where clid = ?;";
-
+	private static final String UPDS2 = " set hour = ? where clid = ?;";
+	
 	@Override
-	public void setS2Cleanup(TaskInfo ti) throws AppException {
+	public void setS2Cleanup(TaskInfo ti, String clid) throws AppException {
 		PreparedStatement preparedStatement = null;
-		int hour = (int)(ti.nextStart / 10000000L);
-		sql = UPDS2;
+		int hour = (int)(ti.startAt / 10000000L);
+		sql = "update s2cleanup_" + ns + UPDS2;
 		boolean transaction = inTransaction;
 		try {
 			if (!transaction) beginTransaction();
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setInt(j++, hour);
-			preparedStatement.setString(j++, ti.id.toString());
+			preparedStatement.setString(j++, clid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 			insertTask(ti);

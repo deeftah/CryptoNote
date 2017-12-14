@@ -68,7 +68,6 @@ public class Servlet extends HttpServlet {
 	@Override public void destroy() {
 		try {
 			QueueManager.stopQM();
-			// TODO : fermer toutes les connexions / datasources ?;
 		} catch (Exception e) {	}
 	}
 
@@ -82,10 +81,13 @@ public class Servlet extends HttpServlet {
 		String build;
 		Nsqm nsqm;
 		boolean fini = false;
+		boolean isGet;
+		boolean isTask;
 		
-		ReqCtx(HttpServletRequest req, HttpServletResponse resp) throws IOException { 
+		ReqCtx(HttpServletRequest req, HttpServletResponse resp, boolean isGet) throws IOException { 
 			this.req = req; 
 			this.resp = resp; 
+			this.isGet = isGet;
 			origUri = req.getRequestURI().substring(contextPath.length() + 1);
 			build = ""+ BConfig.build();
 			if ("ping".equals(origUri)) {
@@ -137,7 +139,7 @@ public class Servlet extends HttpServlet {
 				}
 				StringBuffer sb = new StringBuffer();
 				sb.append("\"{t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":").append(build).append(", \"off\":").append(nsqm.off)
-				.append(", \"db\":").append(JSON.toJson(dbInfo)).append("}");
+				.append(", \"db\":").append(dbInfo).append("}");
 				sendText(0, sb.toString(), resp);
 				fini = true;
 				return;
@@ -307,7 +309,7 @@ public class Servlet extends HttpServlet {
 	
 	/********************************************************************************/
 	@Override public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		ReqCtx r = new ReqCtx(req, resp);
+		ReqCtx r = new ReqCtx(req, resp, true);
 		if (r.fini) return;
 		r.checkNsqm();
 		if (r.fini) return;
@@ -317,8 +319,9 @@ public class Servlet extends HttpServlet {
 		r.pages();
 		if (r.fini) return;
 		
-		if (r.uri.startsWith("op/") || r.uri.startsWith("od/")){
-			doGetPost(true, r);
+		r.isTask = r.uri.startsWith("od/");
+		if (r.uri.startsWith("op/") || r.isTask){
+			doGetPost(r);
 			return;
 		}
 		
@@ -327,13 +330,14 @@ public class Servlet extends HttpServlet {
 
 	/********************************************************************************/
 	@Override public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		ReqCtx r = new ReqCtx(req, resp);
+		ReqCtx r = new ReqCtx(req, resp, false);
 		if (r.fini) return;
 		r.checkNsqm();
 		if (r.fini) return;
 				
-		if (r.uri.startsWith("op/") || r.uri.startsWith("od/")){
-			doGetPost(true, r);
+		r.isTask = r.uri.startsWith("od/");
+		if (r.uri.startsWith("op/") || r.isTask){
+			doGetPost(r);
 			return;
 		}
 
@@ -360,14 +364,14 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	private void doGetPost(boolean isGet, ReqCtx r) throws IOException, ServletException {
+	private void doGetPost(ReqCtx r) throws IOException, ServletException {
 		// op/ od/
 		InputData inp = null;
 		Result result = null;
 		
 		try {
 			String ct = r.req.getContentType();
-			boolean mpfd = !isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
+			boolean mpfd = !r.isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
 			inp = !mpfd ? getInputData(r.req) : postInputData(r.req);
 			String b1 = r.req.getHeader("build");
 			String b2 = "" + BConfig.build();

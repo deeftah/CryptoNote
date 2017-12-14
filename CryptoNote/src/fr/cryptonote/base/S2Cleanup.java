@@ -56,25 +56,35 @@ public class S2Cleanup extends Document {
 		// Une tâche a peut-être déjà été lancée pour cette tranche
 		if (h != null && h >= hour) return false;
 	
-		DBProvider dbProvider = ExecContext.current().dbProvider();
-		int hs2 = dbProvider.lastS2Cleanup(clid);
+		ExecContext exec = ExecContext.current();
+		int hs2 = exec.dbProvider().lastS2Cleanup(clid);
 		if (hs2 != 0) {
 			hours.put(clid,  hs2);
 			if (hs2 >= hour) return false;
 		}
-		TaskInfo ti = new TaskInfo(dbProvider.ns(), new Document.Id(S2Cleanup.class, clid + "." + hour), nextStart(shour), 0, "");
-		dbProvider.setS2Cleanup(ti);
+		String param = new DoS2Cleanup.Param(clid).toString();
+		// public TaskInfo(String ns, String opName, String param, String info, long startAt, int qn) {
+		TaskInfo ti = new TaskInfo(exec.nsqm().code, DoS2Cleanup.class.getSimpleName(), param, clid, nextStart(shour), 0);
+		exec.dbProvider().setS2Cleanup(ti, clid);
 		return true;
 	}
 	
-	public static class Task extends Operation {		
+	public static class DoS2Cleanup extends Operation {
+		public static class Param {
+			public String clid;
+			public Param() {}
+			public Param(String clid) { this.clid = clid; }
+			public String toString() { return JSON.toJson(this); }
+		}
+		
+		Param param;
+
 		@Override public void work() throws AppException {
-			String clid = taskId().toString();
 			DBProvider dbProvider = ExecContext.current().dbProvider();
-			HashSet<String> shas = dbProvider.shas(taskId());
-			boolean emptyBasket = dbProvider.blobProvider().cleanup(clid, shas);
+			HashSet<String> shas = dbProvider.shas(new Id(param.clid));
+			boolean emptyBasket = dbProvider.blobProvider().cleanup(param.clid, shas);
 			if (!emptyBasket)
-				startCleanup(clid);
+				startCleanup(param.clid);
 		}
 	}
 	

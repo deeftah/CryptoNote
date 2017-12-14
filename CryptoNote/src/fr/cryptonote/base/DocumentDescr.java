@@ -44,7 +44,6 @@ public class DocumentDescr {
 	
 	private String name;
 	private Class<?> clazz;
-	private Class<?> taskClass;
 	private Class<?> filterClass;
 	private Constructor<?> constructor;
 	private Hashtable<Class<?>, ItemDescr> itemDescrs1 = new Hashtable<Class<?>, ItemDescr>();
@@ -52,8 +51,6 @@ public class DocumentDescr {
 
 	public String name() { return name; }
 	public Class<?> clazz() { return clazz; }
-	public Class<?> taskClass() { return taskClass; }	
-	public boolean isTaskDocument() { return taskClass != null; }	
 	public Class<?> filterClass() { return filterClass; }
 	public Collection<ItemDescr> itemDescrs() { return itemDescrs2.values(); }
 	public ItemDescr itemDescr(String name) { return itemDescrs2.get(name); }
@@ -207,11 +204,7 @@ public class DocumentDescr {
 			};
 			
 			if (Operation.class.isAssignableFrom(cl)) {
-				if (cl.getSimpleName().equals("Task")){
-					dd.taskClass = cl;
-					Operation.register(cl, dd.name);
-				} else
-					Operation.register(cl);
+				Operation.register(cl);
 				continue;
 			}
 			
