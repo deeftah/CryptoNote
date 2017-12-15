@@ -16,10 +16,13 @@ public class TaskInfo {
 	
 	public TaskInfo() { }
 	
+	/*
+	 * Si startAt est "petit" (nombre de secondes en un an) c'est un nombre de secondes par rapport à la date-heure actuelle.
+	 */
 	public TaskInfo(String ns, String opName, String param, String info, long startAt, int qn) {
+		this.startAt =  startAt < 366 * 86400 ? Stamp.fromNow(startAt * 1000).stamp() : startAt;
 		this.ns = ns;
 		this.taskid = Crypto.randomB64(2);
-		this.startAt = startAt;
 		this.info = info;
 		this.opName = opName;
 		this.qn = qn;

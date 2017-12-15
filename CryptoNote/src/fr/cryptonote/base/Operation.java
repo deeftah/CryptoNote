@@ -78,10 +78,7 @@ public abstract class Operation {
 				try { param = JSON.fromJson(json, opd.paramClass);
 				} catch (AppException e){ throw new AppException(e.cause(), "BBADOPERATION1", operationName); }
 				opd.paramField.set(op, param);
-				op.taskId = null;
-			} else
-				op.taskId = op.inputData.taskId();
-			op.taskCheckpoint = op.taskId != null ? taskCheckpoint : null;
+			}
 		} catch (Exception e){
 			throw new AppException(e, "BBADOPERATION0", operationName);			
 		}
@@ -93,7 +90,6 @@ public abstract class Operation {
 	private InputData inputData;
 	private Object taskCheckpoint = null;
 	private Result result = new Result();
-	private Document.Id taskId;
 	private OperationDescriptor opd;
 	
 	public ExecContext execContext() { return execContext;}
@@ -101,17 +97,16 @@ public abstract class Operation {
 	public Object taskCheckpoint() { return taskCheckpoint;}
 	public void taskCheckpoint(Object obj) {taskCheckpoint = obj;}
 	public Result result() { return result;}
-	public Document.Id taskId() { return taskId;}
-	public boolean isTask() { return taskId != null; }
+	public TaskInfo taskInfo() { return inputData.taskInfo();}
+	public boolean isTask() { return inputData.isTask(); }
 	public boolean isReadOnly() { return false; }
-	public Stamp startTime() { return execContext.startTime2(); }
+	public Stamp startTime() { return inputData.isTask() ? Stamp.fromStamp(taskInfo().startTime) : execContext.startTime2(); }
 	public OperationDescriptor descr() { return opd; }
 	public String name() { return opd.operationName; }
 	public boolean isSudo() { return execContext.isSudo(); }
-	public boolean isQM() { return execContext.isQM(); }
 	
-	public void setTask(Document.Id id, long nextStart, String info) throws AppException{ execContext().newTask(id, nextStart, info);}
-	public void setTaskByCron(Document.Id id, String cron) throws AppException { execContext().newTask(id, new Cron(cron).nextStart().stamp(), cron);}
+	public void addTask(String opName, Object param, String info, long startAt, int qn) throws AppException { execContext().addTask(opName, param, info, startAt, qn); }
+	public void addTaskByCron(String opName, Object param, String cron, int qn) throws AppException { execContext().addTask(opName, param, cron, new Cron(cron).nextStart().stamp(), qn); }
 
 	/**********************************************************************************/
 	public String ungzip(Attachment a) throws AppException {

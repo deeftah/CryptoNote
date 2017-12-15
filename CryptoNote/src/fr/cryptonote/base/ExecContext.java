@@ -15,6 +15,7 @@ import fr.cryptonote.base.Document.ExportedFields;
 import fr.cryptonote.base.Document.Id;
 import fr.cryptonote.base.Document.Sync;
 import fr.cryptonote.base.Servlet.InputData;
+import fr.cryptonote.base.TaskInfo.TaskMin;
 import fr.cryptonote.base.TaskUpdDiff.ItemToCopy;
 import fr.cryptonote.provider.DBProvider;
 
@@ -107,7 +108,7 @@ public class ExecContext {
 	public String operationName() { return inputData.operationName(); }
 	public Operation operation() { return operation; }
 	public Nsqm nsqm() { return nsqm; }
-	public boolean isTask() { return inputData.taskId() != null; }
+	public boolean isTask() { return inputData.isTask(); }
 	public InputData inputData() { return inputData; }
 	
 	public Object getAppData(String name) {	return appData.get(name); }
@@ -131,28 +132,16 @@ public class ExecContext {
 	public boolean isSudo() {
 		if (xAdmin == 0) {
 			String sudo = inputData.args().get("sudo");
-			if (sudo == null) 
-				xAdmin = -1;
-			else 
-				try {
-					if (isDebug && sudo.equals("nonuke"))
-						xAdmin = 1;
-					else {
-						String x = Crypto.bytesToBase64(Crypto.SHA256(Crypto.base64ToBytes(sudo)), true);
-						xAdmin = nsqm.pwd().equals(x) ? 1 : -1;
-					}
-				} catch (Exception e) {	xAdmin = -1; }
+			xAdmin = sudo != null && (nsqm.isPwd(sudo) || (isDebug && sudo.equals("nonuke"))) ? 1 : -1;
 		}
 		return xAdmin > 0;
 	}
 	
-	public boolean isQM() { return nsqm.isQM; }
-
 	Stamp startTime2(){ if (startTime2 == null)	startTime2 = Stamp.fromNow(0); return startTime2; }
 
 	/*******************************************************************************************/
 	// tâches à inscrire au QM
-	HashMap<String,TaskInfo> tasks = new HashMap<String,TaskInfo>();
+	ArrayList<TaskInfo> tasks = new ArrayList<TaskInfo>();
 	HashMap<String,Document> docs = new HashMap<String,Document>();
 	HashMap<String,Document> deletedDocuments = new HashMap<String,Document>();
 	HashSet<String> forcedDeletedDocuments = new HashSet<String>();
@@ -160,8 +149,11 @@ public class ExecContext {
 	
 	private void clearCaches(){ tasks.clear(); docs.clear(); deletedDocuments.clear(); forcedDeletedDocuments.clear();}
 
-	public void newTask(Document.Id id, long nextStart, String info) throws AppException{
-		tasks.put(id.toString(), new TaskInfo(nsqm.code, id, nextStart, 0, info));
+	/*
+	 * Si startAt est "petit" (nombre de secondes en un an) c'est un nombre de secondes par rapport à la date-heure actuelle.
+	 */
+	public void addTask(String opName, Object param, String info, long startAt, int qn) throws AppException{
+		tasks.add(new TaskInfo(nsqm.code, opName, JSON.toJson(param), info, startAt, qn));
 	}
 
 	void forcedDeleteDoc(Id id) throws AppException{
@@ -442,7 +434,8 @@ public class ExecContext {
 		
 		public void afterCommit(){
 			Cache.current().afterValidateCommit(version, docsToSave, docsToDelForced);
-			QueueManager.insertAllInQueue(tq == null ? null : tq.values());
+			if (tq != null && tq.size() != 0)
+				for(TaskInfo ti : tq) QueueManager.toQueue(new TaskMin(ti));
 		}
 
 		private void checkVersion(Document doc){
@@ -470,7 +463,7 @@ public class ExecContext {
 		public ArrayList<ItemIUD> itemsIUD = new ArrayList<ItemIUD>();
 
 		// Tasks
-		public HashMap<String,TaskInfo> tq;
+		public ArrayList<TaskInfo> tq;
 
 		private TaskUpdDiff updDiff;
 		private void updDiff(CItem ci){
