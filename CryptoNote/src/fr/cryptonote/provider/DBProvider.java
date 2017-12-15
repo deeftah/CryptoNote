@@ -14,7 +14,7 @@ import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.TaskInfo;
 import fr.cryptonote.base.TaskInfo.TaskMin;
-import fr.cryptonote.base.TaskUpdDiff.ByTargetClkey;
+import fr.cryptonote.base.UpdDiff.ByTargetClkey;
 
 public interface DBProvider {
 	public String ns();
@@ -28,6 +28,8 @@ public interface DBProvider {
 	public Object connection() throws AppException;
 	
 	public String dbInfo(String info) throws AppException ;
+	
+	public void recordHourStats(int hour, String ns, String json) throws AppException;
 	
 	public BlobProvider blobProvider() throws AppException;
 	
@@ -140,6 +142,16 @@ public interface DBProvider {
 	 */
 	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException ;
 
+	/**
+	 * Met exc à LOST, startTime à null startAt à la valeur indiquée pour toutes les tâches
+	 * supposées perdues, ayant un startTime abcien et qui auraient dû se terminer (bien ou mal).
+	 * Elles sont relancées.
+	 * @param minStartTime
+	 * @param startAt
+	 * @throws AppException
+	 */
+	public void lostTask(long minStartTime, long startAt) throws AppException;
+	
 	/**
 	 * Sortie d'une task en exception
 	 * @param ns

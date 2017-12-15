@@ -16,48 +16,60 @@ import fr.cryptonote.base.Document.Id;
 import fr.cryptonote.base.Document.Sync;
 import fr.cryptonote.base.Servlet.InputData;
 import fr.cryptonote.base.TaskInfo.TaskMin;
-import fr.cryptonote.base.TaskUpdDiff.ItemToCopy;
 import fr.cryptonote.provider.DBProvider;
 
 public class ExecContext {	
-	private static HashMap<String,int[]> statsOp = new HashMap<String,int[]>();
-	private static HashMap<String,int[]> statsD = new HashMap<String,int[]>();
+	/* stats d'une heure */
+	private static HashMap<String,HashMap<String,int[]>> stats = new HashMap<String,HashMap<String,int[]>>();
+	private static int hourToSave;
 	
 	/*
-	 * 0 : nb ok retry 0
-	 * 1 : 1
-	 * 2 : 2
-	 * 
-	 * 5 : nb errors
-	 * 6 : lapse op
-	 * 7 : lapse validation
+	 * 0 : nb ok sans retry
+	 * 1 : nb ok avec retry
+	 * 2 : nb ko
+	 * 3 : nb exc CONTENTION
+	 * 4 : lapse total
+	 * 5 : lapse work
+	 * 6 : lapse validation
+	 * 7 : lapse sync
 	 */
 	
-	private static void stats(String ns, String op, int... s){
-		if (op == null || op.length() == 0 || s == null) return;
-		synchronized (statsOp){
-			int[] a = statsOp.get(op);
-			if (a == null) a = new int[8];
-			for(int i = 0; i < s.length && i < 8; i++){
-				int c = s[i];
-				if (c > 0) a[i] += c;
+	private static void stats(String ns, String op, int[] s){
+		if (op == null || op.length() == 0 || s == null || ns == null) return;
+		HashMap<String,String> jsonByNs = null;
+		long now = System.currentTimeMillis();
+		int hour = (int)(Stamp.fromEpoch(now).stamp() / 10000000);
+		int hourToBD = 0;
+		if (hourToSave == 0) hourToSave = hour;
+		synchronized (stats){
+			HashMap<String,int[]> sop = stats.get(ns);
+			if (sop == null) {
+				sop = new HashMap<String,int[]>();
+				stats.put(ns, sop);
 			}
-			statsOp.put(op,  a);
+			int[] a = sop.get(op);
+			if (a == null) {
+				a = new int[8];
+				sop.put(op, a);
+			}
+			for(int i = 0; i < s.length && i < 8; i++) a[i] += s[i];
+			
+			if (hour == hourToSave) return;
+			hourToBD = hourToSave;
+			hourToSave = (int)(Stamp.fromEpoch(now + 3600000).stamp() / 10000000);
+			jsonByNs = new HashMap<String,String>();
+			for(String n : stats.keySet())
+				jsonByNs.put(n, JSON.toJson(stats.get(n)));
+			stats.clear();
 		}
-		if (ns == null || ns.length() == 0) ns = "0";
-		synchronized (statsD){
-			int[] a = statsD.get(ns);
-			if (a == null) a = new int[8];
-			for(int i = 0; i < s.length && i < 8; i++){
-				int c = s[i];
-				if (c > 0) a[i] += c;
-			}
-			statsD.put(ns,  a);
+		// sauver jsonByNs par ns sous la clé hourToDB / ns
+		for(String n : jsonByNs.keySet()) {
+			try {
+				BConfig.getDBProvider(BConfig.namespace(n, false).base).recordHourStats(hourToBD, n, jsonByNs.get(n));
+			} catch (AppException e) {	}
 		}
 	}
 	
-	private static String getStatsOp() { synchronized (statsOp){ return JSON.toJson(statsOp); } }
-	private static String getStatsD() {	synchronized (statsD){ return JSON.toJson(statsD); } }
 
 	/*******************************************************************************************/
 	public class Chrono {
@@ -152,8 +164,8 @@ public class ExecContext {
 	/*
 	 * Si startAt est "petit" (nombre de secondes en un an) c'est un nombre de secondes par rapport à la date-heure actuelle.
 	 */
-	public void addTask(String opName, Object param, String info, long startAt, int qn) throws AppException{
-		tasks.add(new TaskInfo(nsqm.code, opName, JSON.toJson(param), info, startAt, qn));
+	public void addTask(Class<?> op, Object param, String info, long startAt, int qn) {
+		tasks.add(new TaskInfo(nsqm.code, op, param, info, startAt, qn));
 	}
 
 	void forcedDeleteDoc(Id id) throws AppException{
@@ -260,46 +272,44 @@ public class ExecContext {
 		Result result = null;
 		inputData = inp;
 		maxTime = isTask() ? BConfig.TASKMAXTIMEINSECONDS() : BConfig.OPERATIONMAXTIMEINSECONDS();
+		int[] cs = new int[8];
+		/*
+		 * 0 : nb ok 
+		 * 1 : nb ko
+		 * 2 : nb retries
+		 * 3 : nb exc CONTENTION
+		 * 4 : lapse total
+		 * 5 : lapse work
+		 * 6 : lapse validation
+		 * 7 : lapse sync
+		 */
 		
 		if (!"sync".equalsIgnoreCase(operationName())) {
 			Object taskCheckpoint = null;
 			do {
 				phase = 0;
 				for(int retry = 0;;retry++) {
+					if (retry != 0) cs[2]++;
 					startTime2 = null;
 					maxTime();
 					try {
+						long t0 = System.currentTimeMillis();
 						clearCaches();
-
-						if ("statsOp".equals(operationName())){
-							result = new Result();
-							result.mime = "application/json";
-							result.text = isSudo() || isDebug ? ExecContext.getStatsOp() : "{}";
-							return result;
-						}
-						if ("statsD".equals(operationName())){
-							result = new Result();
-							result.mime = "application/json";
-							result.text = isSudo() || isDebug ? ExecContext.getStatsD() : "{}";
-							return result;
-						}
 						operation = Operation.CreateOperation(operationName(), taskCheckpoint);
-
 						phase = 1;
-						long lapseOp = 0;
-						long startop = System.currentTimeMillis();
 						operation.work();
+						long t1 = System.currentTimeMillis();
+						cs[5] += (int)(t1 - t0);
 						taskCheckpoint = operation.taskCheckpoint();
 						ExecCollect collect = new ExecCollect();
-						lapseOp = System.currentTimeMillis() - startop;
 						
-						long lapseVal = 0;
 						if (!collect.nothingToCommit()) {
 							phase = 2;
-							long startVal = System.currentTimeMillis();
 							HashMap<String,Long> badDocs = dbProvider().validateDocument(collect);
-							lapseVal = System.currentTimeMillis() - startVal;
+							long t2 = System.currentTimeMillis();
+							cs[6] += (int)(t2 - t1);
 							if (badDocs != null) {
+								cs[3]++;
 								String lst = Cache.current().refreshCache(badDocs.keySet());
 								throw new AppException("CONTENTION1", this.operationName(), lst);
 							}
@@ -308,18 +318,13 @@ public class ExecContext {
 						phase = 3;	
 						operation.afterWork();
 						result = operation.isTask() ? new Result() : operation.result();
-						
-						int[] st = new int[8];
-						st[6] = (int)lapseOp;
-						st[7] = (int)lapseVal;
-						st[retry] = 1;
-						stats(nsqm.code, operationName(), st);
 						break; // OK : break retry, vers next step
 					} catch (Throwable t){
 						AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
 						if (dbProvider != null)	dbProvider.rollbackTransaction();
 						if (retry == 2 || isDebug || !ex.toRetry()) {
-							stats(nsqm.code, operationName(), 0,0,0,0,0,1,0,0);
+							cs[2] = 1;
+							stats(nsqm.code, operationName(), cs);
 							throw ex; // sortie des retries (éventuellement avant 3)
 						}
 						phase = 0;
@@ -330,6 +335,7 @@ public class ExecContext {
 				}
 				
 			} while(taskCheckpoint != null);
+			
 		}
 
 		if (result == null)
@@ -465,14 +471,13 @@ public class ExecContext {
 		// Tasks
 		public ArrayList<TaskInfo> tq;
 
-		private TaskUpdDiff updDiff;
+		private UpdDiff.Param updDiff;
+		
 		private void updDiff(CItem ci){
-			if (ci.descr().hasDifferedCopy())
-				try {  
-					if (updDiff == null)
-						updDiff = (TaskUpdDiff)Document.newDocument(CDoc.newEmptyCDoc(new Document.Id(TaskUpdDiff.class, Crypto.randomB64(2))));
-					updDiff.add(new ItemToCopy(ci.id().toString(), ci.clkey(), ci.cvalue()));
-				} catch (AppException e) {	}
+			if (ci.descr().hasDifferedCopy()) {
+				if (updDiff == null) updDiff = new UpdDiff.Param();
+				updDiff.addCItem(ci);
+			}
 		}
 		
 		ExecCollect() throws AppException {
@@ -500,13 +505,8 @@ public class ExecContext {
 				checkVersion(doc);
 			}
 			if (updDiff != null) {
-				CItem hdr = updDiff.commit();
-				itemsIUD.add(new ItemIUD(hdr, dtime, s2Cleanup)); 
-				updDiff(hdr);
-				updDiff.summarize();
-				docsToSave.add(new IuCDoc(updDiff));
-				// 	public TaskInfo(String ns, Document.Id id, long nextStart, int retry, String info) {
-				tq.put(updDiff.id().toString(), new TaskInfo(nsqm.code, updDiff.id(), version, 0, null));
+				updDiff.vop = version;
+				tq.add(new TaskInfo(nsqm.code, UpdDiff.class, updDiff, null, 0L, 0));
 			}
 			for(Document doc : deletedDocuments.values()) {
 				checkVersion(doc);

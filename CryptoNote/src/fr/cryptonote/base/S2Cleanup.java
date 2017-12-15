@@ -62,9 +62,7 @@ public class S2Cleanup extends Document {
 			hours.put(clid,  hs2);
 			if (hs2 >= hour) return false;
 		}
-		String param = new DoS2Cleanup.Param(clid).toString();
-		// public TaskInfo(String ns, String opName, String param, String info, long startAt, int qn) {
-		TaskInfo ti = new TaskInfo(exec.nsqm().code, DoS2Cleanup.class.getSimpleName(), param, clid, nextStart(shour), 0);
+		TaskInfo ti = new TaskInfo(exec.nsqm().code, DoS2Cleanup.class, new DoS2Cleanup.Param(clid), clid, nextStart(shour), 0);
 		exec.dbProvider().setS2Cleanup(ti, clid);
 		return true;
 	}
@@ -74,7 +72,6 @@ public class S2Cleanup extends Document {
 			public String clid;
 			public Param() {}
 			public Param(String clid) { this.clid = clid; }
-			public String toString() { return JSON.toJson(this); }
 		}
 		
 		Param param;

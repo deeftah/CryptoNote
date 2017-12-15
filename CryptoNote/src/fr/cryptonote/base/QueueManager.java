@@ -242,10 +242,13 @@ public class QueueManager implements Runnable {
 	private ArrayList<TaskMin> getAllFromDB() {
 		ArrayList<TaskMin> tmp = new ArrayList<TaskMin>();
 		nextFullScan = Stamp.fromNow(myNsqm.scanlapseinseconds * 1000);
+		long minStartTime = Stamp.fromNow(- myNsqm.scanlapseinseconds * 4000).stamp();
+		long startAt = Stamp.fromNow(0).stamp();
 		for(String db : myDBs) {
 			DBProvider provider = null;
 			try {
 				provider = BConfig.getDBProvider(db);
+				provider.lostTask(minStartTime, startAt);
 				Collection<TaskMin> tiList = provider.candidateTasks(nextFullScan.stamp(), myNSnames);
 				for(TaskMin ti : tiList) tmp.add(ti);
 			} catch (AppException e){

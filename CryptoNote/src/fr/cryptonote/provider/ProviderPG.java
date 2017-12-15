@@ -31,7 +31,7 @@ import fr.cryptonote.base.S2Cleanup;
 import fr.cryptonote.base.Stamp;
 import fr.cryptonote.base.TaskInfo;
 import fr.cryptonote.base.TaskInfo.TaskMin;
-import fr.cryptonote.base.TaskUpdDiff.ByTargetClkey;
+import fr.cryptonote.base.UpdDiff.ByTargetClkey;
 import fr.cryptonote.base.Util;
 
 public class ProviderPG implements DBProvider {
@@ -218,6 +218,36 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
+	/***********************************************************************************************/
+	/*
+	DROP TABLE IF EXISTS stats;
+	CREATE TABLE stats (
+		hour int NOT NULL,
+	  	ns varchar(16) NOT NULL,
+	  	stat text,
+		CONSTRAINT stats_pk PRIMARY KEY (hour, ns)
+	);
+	 */
+	
+	private static final String INSSTATS = "insert into stats (hour, ns, stat) values (?,?,?);";
+	
+	public void recordHourStats(int hour, String ns, String json) throws AppException {
+		PreparedStatement preparedStatement = null;
+		String sql = INSSTATS;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setInt(j++, hour);
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, json);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "insertDoc");
+		}		
+		
+	}
+	
 	/***********************************************************************************************/
 	private static final String SELDOCS = "select clid, version, ctime, dtime from doc_";
 
@@ -700,7 +730,7 @@ public class ProviderPG implements DBProvider {
 			}
 
 			if (collect.s2Purge != null) for(String clid : collect.s2Purge) blobProvider().blobDeleteAll(clid);
-			if (collect.tq != null) for(TaskInfo ti : collect.tq.values()) insertTask(ti);
+			if (collect.tq != null) for(TaskInfo ti : collect.tq) insertTask(ti);
 			if (collect.s2Cleanup != null) for(String clid : collect.s2Cleanup) S2Cleanup.startCleanup(clid);
 			commitTransaction();
 			collect.afterCommit();
@@ -825,6 +855,29 @@ public class ProviderPG implements DBProvider {
 	}
 
 	/***********************************************************************************************/
+	/*
+	DROP TABLE IF EXISTS taskqueue;
+	CREATE TABLE taskqueue (
+	  	ns varchar(16) NOT NULL,
+	  	taskid varchar(255) NOT NULL,
+		startat bigint, 
+	  	opname varchar(16) NOT NULL,
+	  	param text,
+	  	info varchar(255),
+		qn int NOT NULL,
+		retry int NOT NULL,
+	  	exc varchar(255),
+		report text,
+		starttime bigint, 
+		CONSTRAINT taskqueue_pk PRIMARY KEY (ns, taskid)
+	);
+	ALTER TABLE taskqueue OWNER TO "docdb";
+	DROP INDEX IF EXISTS taskqueue_startat;
+	CREATE INDEX taskqueue_startat on taskqueue (startat, ns, taskid) where startat is not null;
+	DROP INDEX IF EXISTS taskqueue_starttime;
+	CREATE INDEX taskqueue_starttime on taskqueue (starttime, ns, taskid) where starttime is not null;
+	*/
+	
 	private static final String INSERTTASK = 
 		"insert into taskqueue (ns, taskid, startat, opname, info, qn, retry, exc, report, starttime, param) values (?,?,?,?,?,?,?,?,?,?,?);";
 		
@@ -877,6 +930,24 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
+	private static final String UPDTASK3 = "update taskqueue set exc = 'LOST', startat = ?, starttime = null where starttime is not null and starttime < ?;";
+
+	@Override
+	public void lostTask(long minStartTime, long startAt) throws AppException {
+		PreparedStatement preparedStatement = null;
+		sql = UPDTASK3;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setLong(j++, startAt);
+			preparedStatement.setLong(j++, minStartTime);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "excTask");
+		}
+	}
+	
 	private static final String UPDTASK2 = "update taskqueue set exc = ?, report = ?, startat = ?, starttime = ? where ns = ? and taskid = ?;";
 
 	@SuppressWarnings("null")

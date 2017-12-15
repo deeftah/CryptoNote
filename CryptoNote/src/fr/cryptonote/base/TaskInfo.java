@@ -19,12 +19,13 @@ public class TaskInfo {
 	/*
 	 * Si startAt est "petit" (nombre de secondes en un an) c'est un nombre de secondes par rapport à la date-heure actuelle.
 	 */
-	public TaskInfo(String ns, String opName, String param, String info, long startAt, int qn) {
+	public TaskInfo(String ns, Class<?> op, Object param, String info, long startAt, int qn) {
+		this.param = JSON.toJson(param);
 		this.startAt =  startAt < 366 * 86400 ? Stamp.fromNow(startAt * 1000).stamp() : startAt;
 		this.ns = ns;
 		this.taskid = Crypto.randomB64(2);
 		this.info = info;
-		this.opName = opName;
+		this.opName = op.getSimpleName();
 		this.qn = qn;
 	}
 		

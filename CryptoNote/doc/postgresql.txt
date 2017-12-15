@@ -37,6 +37,14 @@ CREATE TABLE dbinfo (
 ALTER TABLE dbinfo OWNER TO "docdb";
 insert into dbinfo values('postgreSQL 10.1');
 
+DROP TABLE IF EXISTS stats;
+CREATE TABLE stats (
+	hour int NOT NULL,
+  	ns varchar(16) NOT NULL,
+  	stat text,
+	CONSTRAINT stats_pk PRIMARY KEY (hour, ns)
+);
+
 /* une table unique par base */
 DROP TABLE IF EXISTS taskqueue;
 CREATE TABLE taskqueue (
@@ -55,7 +63,9 @@ CREATE TABLE taskqueue (
 );
 ALTER TABLE taskqueue OWNER TO "docdb";
 DROP INDEX IF EXISTS taskqueue_startat;
-CREATE INDEX taskqueue_startat on taskqueue (startat, ns, taskid);
+CREATE INDEX taskqueue_startat on taskqueue (startat, ns, taskid) where startat is not null;
+DROP INDEX IF EXISTS taskqueue_starttime;
+CREATE INDEX taskqueue_starttime on taskqueue (starttime, ns, taskid) where starttime is not null;
 
 /* une table pour chaque namespace NS hébergé dans la base*/
 DROP TABLE IF EXISTS s2cleanup_NS;
