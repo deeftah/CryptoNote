@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
@@ -29,8 +30,16 @@ import fr.cryptonote.provider.DBProvider;
 public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 		
-	private static final String[] ext2 = {".cloud", ".app", ".local", ".sync", ".local2"};	
-
+	private static final HashSet<String> ext2 = new HashSet<String>();	
+	private static final HashSet<String> webinffiles = new HashSet<String>();		
+	
+	static {
+		String[] x1 = {".cloud", ".app", ".local", ".sync", ".local2"};
+		for(String s : x1) ext2.add(s);
+		String[] x2 = {"mimetypes.json", "build.js", "final.js", "init.js"};
+		for(String s : x2) webinffiles.add(s);
+	}
+	
 	private static Boolean done = false;
 	private static String contextPath;
 	private static ServletContext servletContext;
@@ -44,6 +53,17 @@ public class Servlet extends HttpServlet {
 	public static boolean isZres(String name) { for (String n : zres) if (n.equals(name)) return true; return false; }
 
 	/********************************************************************************/
+	private void lpath(ArrayList<String> var, String root){
+		Set<String> paths = servletContext.getResourcePaths(root);
+		if (paths != null)
+			for(String s : paths)
+				if (s.endsWith("/"))
+					lpath(var, s);
+				else if (MimeType.mimeOf(s) != null) 
+					var.add(s);
+	}
+
+	/********************************************************************************/
 	@Override public void init(ServletConfig servletConfig) throws ServletException {
 		synchronized (done) {
 			if (done) return;
@@ -51,15 +71,17 @@ public class Servlet extends HttpServlet {
 			String s  = servletContext.getContextPath();
 			contextPath = s == null || s.length() <= 1 ? "" : s;
 			
-			BConfig.startup();			
-			
+			MimeType.init();
+
 			ArrayList<String> varx = new ArrayList<String>();
-			lpath(new BConfig.ResFilter(), varx, "/var/");
+			lpath(varx, "/var/");
 			var = varx.toArray(new String[varx.size()]);
 			Arrays.sort(var);
 			ArrayList<String> zresx = new ArrayList<String>();
 			for(String x : var) if (x.startsWith("z/"))	zresx.add(x.substring(2));
 			zres = zresx.toArray(new String[zresx.size()]);
+	
+			BConfig.startup();			
 			
 			done = true;
 		}
@@ -92,11 +114,11 @@ public class Servlet extends HttpServlet {
 			origUri = req.getRequestURI().substring(contextPath.length() + 1);
 			build = ""+ BConfig.build();
 			if ("ping".equals(origUri)) {
-				String x = "\"{t\":" + Stamp.fromNow(0).stamp() + ", \"b\":" + build + "}";
+				String x = "{\"t\":" + Stamp.fromNow(0).stamp() + ", \"b\":\"" + build + "\"}";
 				sendText(0, x, resp);
 				fini = true;
 			}
-			String shortcut = BConfig.shortcut(uri);
+			String shortcut = BConfig.shortcut(origUri);
 			if (shortcut != null) origUri = shortcut;
 			exec = new ExecContext().setLang(req.getHeader("lang"));
 		}
@@ -130,7 +152,7 @@ public class Servlet extends HttpServlet {
 			}
 			exec.setNsqm(nsqm);
 			
-			uri = uri.substring(i + 1);
+			uri = origUri.substring(i + 1);
 			if ("ping".equals(uri)) {
 				String dbInfo;
 				try {
@@ -139,8 +161,8 @@ public class Servlet extends HttpServlet {
 					dbInfo = BConfig.label("XDBINFO");			
 				}
 				StringBuffer sb = new StringBuffer();
-				sb.append("\"{t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":").append(build).append(", \"off\":").append(nsqm.off)
-				.append(", \"db\":").append(dbInfo).append("}");
+				sb.append("{\"t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":\"").append(build).append("\", \"off\":").append(nsqm.off)
+				.append(", \"db\":\"").append(dbInfo).append("\"}");
 				sendText(0, sb.toString(), resp);
 				fini = true;
 				return;
@@ -190,7 +212,6 @@ public class Servlet extends HttpServlet {
 			String ext = null;	for(String s : ext2) if (uri.endsWith(s)) ext = s;
 			if (ext == null) return;
 			String page = uri.substring(0, uri.length() - ext.length());
-			Resource res = NS.resource(nsqm.code, "custom.css");
 			String rp = "/var/" + page + ".html";
 			Resource r = getResource(rp);
 			if (r == null){
@@ -233,20 +254,12 @@ public class Servlet extends HttpServlet {
 			else
 				sb.append("<html>");
 			
-			sb.append("<head><base href=\"").append(contextPath).append("/").append(nsqm.code).append("/_").append(build).append("_").append(build).append("/\">\n");
-			
-			sb.append(head);
-			sb.append("<style is=\"custom-style\">\n");
-			r = getResource("/var/themes/default.css");
-			if (r != null) sb.append(r.toString()).append("\n");
-			r = getResource("/var/themes/" + nsqm.theme + ".css");
-			if (r != null) sb.append(r.toString()).append("\n");
-			
-			if (res != null) 
-				sb.append("\n\n/***** theme spécifique de ").append(nsqm.code).append(" ************/\n").append(res.toString()).append("\n");
-			sb.append("</style>\n");
-
+			sb.append("<head><base href=\"").append(contextPath).append("/").append(nsqm.code).append("/_").append(build).append("/\">\n");
+			sb.append("<script src=\"init.js\"></script>\n");
 			sb.append("<script src=\"build.js\"></script>\n");
+
+			sb.append(head);
+			sb.append("<link rel='import' href='themes/" + nsqm.theme + "-theme.html'>\n");
 
 			sb.append("\n<script type=\"text/javascript\">\n");
 			sb.append("'use strict';\n");
@@ -270,7 +283,7 @@ public class Servlet extends HttpServlet {
 				sb.append("SRV.byeAndBack = \"").append(b).append("\";\n");
 			sb.append("</script>\n");
 			
-			sb.append("<script src=\"z/custom.js\"></script>\n");
+			sb.append("<link rel='import' href='z/custom.html'>\n");
 			sb.append("<script src=\"final.js\"></script>\n");
 
 			sb.append(body);
@@ -301,7 +314,7 @@ public class Servlet extends HttpServlet {
 			if (uri.startsWith("z/"))
 				res = NS.resource(nsqm.code, uri.substring(2));
 			if (res == null)
-				res = getResource("/var/" + uri);
+				res = getResource(webinffiles.contains(uri) ? "/WEB-INF/" + uri : "/var/" + uri);
 			if (res == null)
 				resp.sendError(404);
 			sendRes(res, req, resp);
@@ -350,6 +363,7 @@ public class Servlet extends HttpServlet {
 		if (text == null) text = "";
 		resp.setStatus(200);
 		resp.setContentType("text/plain");
+		resp.setCharacterEncoding("UTF-8");
 		resp.addHeader("build", "" + BConfig.build());
 		if (code == 0 || code == 200) {
 			try {
@@ -601,20 +615,6 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	private static final int lvar = "/var/".length();
-	private void lpath(BConfig.ResFilter rf, ArrayList<String> var, String root){
-		Set<String> paths = servletContext.getResourcePaths(root);
-		if (paths != null)
-			for(String s : paths)
-				if (rf.filterDir(s, s.substring(root.length()))) {
-					if (s.endsWith("/"))
-						lpath(rf, var, s);
-					else if (MimeType.mimeOf(s) != null && rf.filterFile(s)) 
-							var.add(s.substring(lvar));
-				}
-	}
-
-	
 	private static Resource emptyResource = new Resource((byte[])null, null);
 	private static Hashtable<String, Resource> resources = new Hashtable<String, Resource>();
 
@@ -628,12 +628,16 @@ public class Servlet extends HttpServlet {
 		public String toString(){ String s = Util.fromUTF8(bytes); return s == null ? "" : s; }
 	}
 
+	static byte[] getRawResource(String name) {
+		return Util.bytesFromStream(servletContext.getResourceAsStream(name));
+	}
+	
 	public static Resource getResource(String name){
 		if (name == null || name.length() == 0) return null;
 		Resource r = resources.get(name);
 		if (r != null)
 			return r == emptyResource ? null : r;
-		String mime = name.endsWith(".json") ? "application/json" : MimeType.mimeOf(name);
+		String mime = MimeType.mimeOf(name);
 		if (mime == null) mime = MimeType.defaultMime;
 		byte[] b = Util.bytesFromStream(servletContext.getResourceAsStream(name));
 		if (b == null){

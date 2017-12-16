@@ -7,7 +7,7 @@ import fr.cryptonote.base.IConfig;
 
 public class Config implements IConfig {
 	private static Config c = null;
-	public static void startup(Object config) throws Exception {
+	public static void startup(IConfig config) throws Exception {
 		c = (Config)config;
 		declareDocumentsAndOperations();
 	}

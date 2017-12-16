@@ -14,6 +14,7 @@
         </New>
      </Arg>
   </New>
+  <!-- 
   <New id="cnz" class="org.eclipse.jetty.plus.jndi.Resource">
      <Arg></Arg>
      <Arg>java:comp/env/jdbc/cnz</Arg>
@@ -27,6 +28,7 @@
         </New>
      </Arg>
   </New>
+   -->
   <Set name="contextPath">/cn</Set>
   <Set name="war"><Property name="jetty.webapps" default="."/>/../../git/CryptoNote/CryptoNote/war/</Set>
   <Set name="gzipHandler">

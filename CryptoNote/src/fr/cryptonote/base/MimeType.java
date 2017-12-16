@@ -22,13 +22,13 @@ public class MimeType {
 	private static HashMap<String,Ext> byExt = new HashMap<String,Ext>();
 	private static HashMap<String,Ext> byMime = new HashMap<String,Ext>();
 	
-	private static final String MT = "/var/mimetypes.json";
+	private static final String MT = "/WEB-INF/mimetypes.json";
 	
 	static void init() throws ServletException {
-		Servlet.Resource r = Servlet.getResource(MT);
+		byte[] r = Servlet.getRawResource(MT);
 		if (r != null)
 			try {
-				Extensions extensions = JSON.fromJson(Util.fromUTF8(r.bytes), Extensions.class);
+				Extensions extensions = JSON.fromJson(Util.fromUTF8(r), Extensions.class);
 				HashMap<String,String> t = extensions.get("text");
 				if (t != null){
 					for(String ext : t.keySet()){
@@ -50,10 +50,10 @@ public class MimeType {
 					}
 				}
 			} catch (Exception ex){
-				throw BConfig.exc(ex, BConfig.format("XRESSOURCEJSON", MT, ex.getMessage()));
+				throw BConfig.exc(ex, BConfig._format(0, "XRESSOURCEJSON", MT, ex.getMessage()));
 			}
 		else
-			throw BConfig.exc(null, BConfig.format("XRESSOURCEABSENTE", MT));
+			throw BConfig.exc(null, BConfig._format(0, "XRESSOURCEABSENTE", MT));
 	}
 	
 	public static String extOf(String mime) {

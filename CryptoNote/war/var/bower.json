@@ -1,0 +1,9 @@
+{
+  "name": "cryptnshare",
+  "version": "0.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^2.0.0",
+    "iron-input": "PolymerElements/iron-input#^2.0.0"
+   }
+}

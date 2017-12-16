@@ -3,7 +3,7 @@
 	"langs":["fr", "en"],
 	"dbProviderClass":"fr.cryptonote.provider.ProviderPG",
 	"defaultBase":"cna",
-	"appConfigClass":"fr.cryptonote.app.config",
+	"appConfigClass":"fr.cryptonote.test.Config",
 	"isDebug":true,
 	"isDistrib":false,
 	"defaultUrl":"http://192.168.0.10:8090/cn",
@@ -20,7 +20,7 @@
 	"TASKRETRIESINMIN":[1, 10, 60, 180],
 	
 	"namespaces" : {
-		"namespace":{"label":"Espace de noms", "url": "http://192.168.0.10:8090/cn", "base":"cna", "pwd":"ns", "qm":"A"},
+		"namespace":{"label":"Espace de noms", "url": "http://192.168.0.10:8090/cn", "base":"cna", "pwd":"ns", "qm":"qm1"},
 		"test":{
 			"label":"Test : associations et groupes de travail", 
 			"url": "http://192.168.0.10:8090/cn",
@@ -37,7 +37,7 @@
 		"qm1":{
 			"label":"QM de test", 
 			"url": "http://192.168.0.10:8090/cn",
-			"base":"nca",
+			"base":"cna",
 			"pwd":"qm",
 			"threads": [2,1],
 			"scanlapseinseconds":60
@@ -75,13 +75,13 @@
 		"nca": {"blobsroot":"/tmp/blobsroot", "bucket":"bk1" }
 	},
 	
-	"offlinepages":["go","g2"],
+	"offlinepages":["index"],
 	
 	"shortcuts":{
-		"(empty)":"a/go.app",
-		"z":"z/go.app",
-		"a/p":"a/go.app",
-		"a/s":"a/go.ws"
+		"(empty)":"a/index.app",
+		"z":"z/index.app",
+		"a/p":"a/index.app",
+		"a/s":"a/index.ws"
 	}
 	
 }

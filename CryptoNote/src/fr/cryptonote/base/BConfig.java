@@ -20,7 +20,7 @@ public class BConfig {
 	private static final String BASECONFIG = "/WEB-INF/base_config.json";
 	private static final String APPCONFIG = "/WEB-INF/app_config.json";
 	private static final String PASSWORDS = "/WEB-INF/passwords.json";
-	private static final String BUILDJS = "/var/build.js";
+	private static final String BUILDJS = "/WEB-INF/build.js";
 
 	private static class TxtDic extends HashMap<String,String> { 
 		private static final long serialVersionUID = 1L;			
@@ -77,7 +77,7 @@ public class BConfig {
 		public DefMsg(String code, String[] args) { this.code = code; this.args = args; }
 	}
 
-	private static final String _format(int il, String code, String... args) {
+	static final String _format(int il, String code, String... args) {
 		MessageFormat mf = mfDics[il].get(code);
 		if (mf == null && il != 0) mf = mfDics[0].get(code);
 		return mf == null ? JSON.toJson(new DefMsg(code, args)) : mf.format(args);
@@ -193,10 +193,6 @@ public class BConfig {
 		}
 	}
 	
-//	protected static class Passwords {
-//		private HashMap<String,String> passwords;
-//	}
-
 	private static class BaseConfig {
 		private int 		build;
 		private String 		QM = null;
@@ -302,12 +298,9 @@ public class BConfig {
 		return new ServletException(msg);
 	}
 	
-	private static boolean ready = false;
 	@SuppressWarnings("unchecked")
 	static void startup() throws ServletException {	
-		if (ready) return;
 		try { Crypto.startup(); } catch (Exception e) { throw exc(null, _format(0, "BCRYPTOSTARTUP")); }
-		MimeType.init();
 		
 		Servlet.Resource r = Servlet.getResource(BASECONFIG);
 		if (r != null) {
@@ -327,7 +320,9 @@ public class BConfig {
 				String s = rb.toString();
 				int i = s.indexOf("=");
 				if (i == -1 || i == s.length() - 1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "1"));
-				try { g.build = Integer.parseInt(s.substring(i+ 1)); } catch (Exception e) { throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));}
+				int j = s.indexOf(";", i + 2);
+				if (j == -1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));
+				try { g.build = Integer.parseInt(s.substring(i+ 1, j)); } catch (Exception e) { throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "3"));}
 			}
 			else 
 				throw exc(null, _format(0, "XRESSOURCEABSENTE", BUILDJS));
@@ -354,7 +349,7 @@ public class BConfig {
 			dbProviderName = g.dbProviderClass.substring(i + 1);
 			Class<?> c = Class.forName(g.dbProviderClass);
 			try {
-				Method dbProviderFactory = c.getMethod("getProvider", String.class, String.class);
+				dbProviderFactory = c.getMethod("getProvider", String.class, String.class);
 				if (!Modifier.isStatic(dbProviderFactory.getModifiers())) 
 					throw exc(null, _format(0, "XDBPROVIDERFACTORY", g.dbProviderClass));
 			} catch (Exception e) {
@@ -376,17 +371,16 @@ public class BConfig {
 				throw exc(ex, _format(0, "XRESSOURCEJSON", APPCONFIG));
 			}
 			try {
-				Method startup = appCfg.getMethod("startup", Object.class);
+				Method startup = appCfg.getMethod("startup", IConfig.class);
 				if (!Modifier.isStatic(startup.getModifiers())) 
 					throw exc(null, _format(0, "XAPPCONFIG", g.appConfigClass));
-				startup.invoke(appConfig); 
+				startup.invoke(null, appConfig); 
 			} catch (Exception e) {
 				throw exc(e, _format(0, "XAPPCONFIG", g.appConfigClass));				
 			}
 		} else
 			throw exc(null, _format(0, "XRESSOURCEABSENTE", APPCONFIG));
 
-		ready = true;
 		QueueManager.startQM();
 	}
 			
@@ -436,7 +430,7 @@ public class BConfig {
 			if (!databases.contains(db)) throw new AppException("BDBNAME");
 			String pwd = p.get(db);
 			if (pwd == null) throw new AppException("BDBNAME");
-			return (DBProvider) dbProviderFactory.invoke(db, pwd);
+			return (DBProvider) dbProviderFactory.invoke(null, db, pwd);
 		} catch (Exception e) {
 			throw new AppException(e, "XDBPROVIDERFACTORY", g.dbProviderClass);
 		}
@@ -449,29 +443,30 @@ public class BConfig {
 	}
 	
 	/****************************************************/
-	private static final String[] ignore = {"bower.json", ".gitignore", ".yml", ".md", ".log", "Makefile", "index.html", ".js.map", "LICENSE.txt"};
-	public static class ResFilter {
-
-		public boolean filterDir(String dir, String name) {
-			if (!g.isDistrib)
-				return !(dir.startsWith("/var/bower_components/iron-flex-layout/classes/") ||
-						(dir.startsWith("/var/bower_components/") &&
-							(name.equals("test/") || name.equals("demo/") || name.equals("/.github/"))));
-			else
-				return !(dir.startsWith("/var/bower_components/") ||
-						dir.startsWith("/var/app_components/") ||
-						dir.startsWith("/var/base_components/"));
-		}
-
-		public boolean filterFile(String fullpath) {
-			for(String x : ignore)
-				if (fullpath.endsWith(x)) 
-					return false;
-			return true;
-		}
-
-	}
-	
+//	private static final String[] ignore = {"bower.json", ".gitignore", ".yml", ".md", ".log", "Makefile", "index.html", ".js.map", "LICENSE.txt"};
+//	public static class ResFilter {
+//
+//		public boolean filterDir(String dir, String name) {
+//			if (!g.isDistrib)
+//				return !(dir.startsWith("/var/bower_components/iron-flex-layout/classes/") ||
+//						(dir.startsWith("/var/bower_components/") &&
+//							(name.equals("test/") || name.equals("demo/") || name.equals("/.github/"))));
+//			else
+//				return !(dir.startsWith("/var/bower_components/") ||
+//						dir.startsWith("/var/app_components/") ||
+//						dir.startsWith("/var/base_components/"));
+//			return true;
+//		}
+//
+//		public boolean filterFile(String fullpath) {
+//			for(String x : ignore)
+//				if (fullpath.endsWith(x)) 
+//					return false;
+//			return true;
+//		}
+//
+//	}
+//	
 	/****************************************************/
 
 	private static void compile() throws ServletException {	
@@ -483,7 +478,7 @@ public class BConfig {
 				defMailer = true;
 			}		
 		}
-		if (defMailer) throw exc(null, _format(0, "XMAILERCFG2"));
+		if (!defMailer) throw exc(null, _format(0, "XMAILERCFG2"));
 		if (password("mailServer") == null) throw exc(null, _format(0, "XMAILERCFG3"));
 		
 		// déclarer Documents et opérations

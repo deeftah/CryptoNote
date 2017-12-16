@@ -43,8 +43,8 @@ public class QueueManager implements Runnable {
 		isDatastore = (BConfig.dbProviderName()).endsWith("DS");
 		myName = BConfig.QM();
 		myNSs = BConfig.namespacesByQM(myName); 
-		for(Nsqm x : myNSs) { myDBs.add(x.base()); myNSnames.add(x.code); }
-		hostsQM = myName != null && !isDatastore && myNSs.size() != 0; 
+		if (myNSs != null) for(Nsqm x : myNSs) { myDBs.add(x.base()); myNSnames.add(x.code); }
+		hostsQM = myName != null && myNSs != null && !isDatastore && myNSs.size() != 0; 
 		if (!hostsQM) return;
 		myNsqm = BConfig.queueManager(myName, false);
 		nbQueues = myNsqm.threads.length;
@@ -133,7 +133,6 @@ public class QueueManager implements Runnable {
 	}
 
 	public static void toQueue(TaskMin tm) {
-		if (tm == null) return;
 		Nsqm ns = BConfig.namespace(tm.ns, false);
 		if (ns == null) return;
 		Nsqm nsqm = BConfig.queueManager(ns.qm, false);
