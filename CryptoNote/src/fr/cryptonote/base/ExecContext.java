@@ -70,20 +70,6 @@ public class ExecContext {
 		}
 	}
 	
-
-	/*******************************************************************************************/
-	public class Chrono {
-		private long start;		
-		public Chrono() { start = System.currentTimeMillis(); }	
-		public Chrono(long start) {	this.start = start;}
-		public int lapse(){	return (int)(System.currentTimeMillis() - start);}
-		public String toString(){
-			String l = "" + lapse();
-			if (l.length() < 3) return l + "ms";
-			return l.substring(0,  l.length() - 3) + "." + l.substring(l.length() - 3) + "s";
-		}
-	}
-
 	/*******************************************************************************************/
 
 	public static ExecContext current() { return ExecContextTL.get(); }
@@ -93,21 +79,19 @@ public class ExecContext {
 	private int iLang;
 	private Nsqm nsqm;
 	private Stamp startTime;
-	private Stamp startTime2;
-	private Chrono chrono;
 	private long maxTime;
 	private InputData inputData;
 	private Operation operation;
-	protected int phase = 0;
+	protected int phase = 0; // 0:initiale 1:operation 2:validation 3:afterwork 4:sync 5:finale
 	private StringWriter sw;
 	private DBProvider dbProvider;
 	private HashMap<String,Object> appData = new HashMap<String,Object>();
-	
+	private long ti = 0L;
+
 	ExecContext() {
 		ExecContextTL.set(this);
-		startTime = Stamp.fromNow(0);
-		chrono = new Chrono(startTime.epoch());
-		isDebug = BConfig.isDebug();		
+		isDebug = BConfig.isDebug();
+		ti = System.currentTimeMillis();
 	}
 
 	ExecContext setLang(String lang) { iLang = BConfig.lang(lang); return this; }
@@ -130,13 +114,15 @@ public class ExecContext {
 	public final boolean hasTraces() { return sw == null; }
 	public final String traces() { return sw == null ? "" : sw.toString();}
 	public void trace(String msg){
-		if (sw == null) { sw = new StringWriter(); sw.append(startTime.toString()).append(" - Start\n"); }
-		sw.append(chrono.toString() + " - ").append(msg).append("\n");
+		if (isTask()) {
+			if (sw == null) { sw = new StringWriter(); sw.append(Stamp.fromEpoch(ti).toString()).append(" - Start\n"); }
+			sw.append((System.currentTimeMillis() - ti) + " - ").append(msg).append("\n");
+		}
 	}
 	
 	public DBProvider dbProvider() throws AppException{	if (dbProvider == null)	dbProvider = BConfig.getDBProvider(nsqm.base()); return dbProvider; }
 
-	public void maxTime() throws AppException { if (!isDebug && startTime.lapseInMs() > maxTime) throw new AppException("XMAXTIME", operationName()); }
+	public void maxTime() throws AppException { if (!isDebug && (System.currentTimeMillis() - ti) > maxTime) throw new AppException("XMAXTIME", operationName()); }
 
 	void closeAll() { if (dbProvider != null) dbProvider.closeConnection(); }
 		
@@ -149,7 +135,7 @@ public class ExecContext {
 		return xAdmin > 0;
 	}
 	
-	Stamp startTime2(){ if (startTime2 == null)	startTime2 = Stamp.fromNow(0); return startTime2; }
+	Stamp startTime(){ if (startTime == null)	startTime = Stamp.fromNow(0); return startTime; }
 
 	/*******************************************************************************************/
 	// tâches à inscrire au QM
@@ -197,7 +183,7 @@ public class ExecContext {
 		String n = id.toString();
 		if (emptyDocs.contains(n)) return null; // on avait déjà cherché en base et il n'y en avait pas
 		boolean ro = maxDelayInSeconds != 0;
-		Stamp minTime = ro ? Stamp.fromEpoch(startTime2().epoch() - maxDelayInSeconds * 1000) : startTime2();
+		Stamp minTime = ro ? Stamp.fromEpoch(startTime().epoch() - maxDelayInSeconds * 1000) : startTime();
 		Document d = deletedDocuments.get(n);
 		if (d != null) return d;
 		d = docs.get(n);
@@ -283,14 +269,15 @@ public class ExecContext {
 		 * 6 : lapse validation
 		 * 7 : lapse sync
 		 */
-		
+
 		if (!"sync".equalsIgnoreCase(operationName())) {
 			Object taskCheckpoint = null;
+			
 			do {
-				phase = 0;
+				
 				for(int retry = 0;;retry++) {
 					if (retry != 0) cs[2]++;
-					startTime2 = null;
+					startTime = null;
 					maxTime();
 					try {
 						long t0 = System.currentTimeMillis();
@@ -306,8 +293,7 @@ public class ExecContext {
 						if (!collect.nothingToCommit()) {
 							phase = 2;
 							HashMap<String,Long> badDocs = dbProvider().validateDocument(collect);
-							long t2 = System.currentTimeMillis();
-							cs[6] += (int)(t2 - t1);
+							cs[6] += (int)(System.currentTimeMillis() - t1);
 							if (badDocs != null) {
 								cs[3]++;
 								String lst = Cache.current().refreshCache(badDocs.keySet());
@@ -317,13 +303,13 @@ public class ExecContext {
 						
 						phase = 3;	
 						operation.afterWork();
-						result = operation.isTask() ? new Result() : operation.result();
 						break; // OK : break retry, vers next step
 					} catch (Throwable t){
 						AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
 						if (dbProvider != null)	dbProvider.rollbackTransaction();
 						if (retry == 2 || isDebug || !ex.toRetry()) {
 							cs[2] = 1;
+							cs[4] += (int)(System.currentTimeMillis() - ti);		
 							stats(nsqm.code, operationName(), cs);
 							throw ex; // sortie des retries (éventuellement avant 3)
 						}
@@ -335,34 +321,37 @@ public class ExecContext {
 				}
 				
 			} while(taskCheckpoint != null);
-			
+			cs[0] = 1;
 		}
 
-		if (result == null)
-			result = new Result();
-
-		if (inputData.args().size() != 0) {
+		if (!isTask()) {
 			String json = inputData.args().get("syncs");
 			if (json != null && json.length() != 0) {
+				phase = 4;
 				Sync[] syncs;
 				try {
+					long t2 = System.currentTimeMillis();
 					syncs = JSON.fromJson(json,  Sync[].class);
+					cs[7] += (int)(System.currentTimeMillis() - t2);
 				} catch (AppException e){
 					throw new AppException(e.cause(), "BEXECSYNCSPARSE", operationName());
 				}
-				phase = 4;
+				if (result == null)	result = new Result();
 				result.syncs = sync(syncs);
 			}
 		}
+		
 		phase = 5;
 		if (hasTraces()) trace("End");
+		cs[4] += (int)(System.currentTimeMillis() - ti);		
+		stats(nsqm.code, operationName(), cs);
 		return result;
 	}
 		
 	/*********************************************************************************************/
 	private String sync(Sync[] syncs) throws AppException {
 		Cache cache = Cache.current();
-		Stamp minTime = Stamp.fromEpoch(startTime2().epoch());
+		Stamp minTime = Stamp.fromEpoch(startTime().epoch());
 		StringBuffer sb = new StringBuffer().append("[");
 		for(Sync sync : syncs){
 			Document.Id id = sync.id();

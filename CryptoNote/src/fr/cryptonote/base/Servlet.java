@@ -419,7 +419,7 @@ public class Servlet extends HttpServlet {
 	/********************************************************************************/
 	private void writeResp(HttpServletResponse resp, int status, Result r){
 		resp.setStatus(status);
-		if (r.isEmpty())
+		if (r == null || r.isEmpty())
 			r.out = new Object();
 		if (r.out != null || r.syncs != null) {
 			StringBuffer sb = new StringBuffer();

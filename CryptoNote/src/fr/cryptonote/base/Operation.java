@@ -100,7 +100,7 @@ public abstract class Operation {
 	public TaskInfo taskInfo() { return inputData.taskInfo();}
 	public boolean isTask() { return inputData.isTask(); }
 	public boolean isReadOnly() { return false; }
-	public Stamp startTime() { return inputData.isTask() ? Stamp.fromStamp(taskInfo().startTime) : execContext.startTime2(); }
+	public Stamp startTime() { return inputData.isTask() ? Stamp.fromStamp(taskInfo().startTime) : execContext.startTime(); }
 	public OperationDescriptor descr() { return opd; }
 	public String name() { return opd.operationName; }
 	public boolean isSudo() { return execContext.isSudo(); }

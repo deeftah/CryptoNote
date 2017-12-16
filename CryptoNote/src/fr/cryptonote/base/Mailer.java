@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -136,16 +135,11 @@ public class Mailer {
 				byte[] body = null;
 				if (!ping) {
 					StringBuffer sb = new StringBuffer();
-					sb.append("mailer=");
-					sb.append(URLEncoder.encode(mailer, "UTF-8"));
-					sb.append("&to=");
-					sb.append(URLEncoder.encode(stox.toString(), "UTF-8"));
-					sb.append("&subject=");
-					sb.append(URLEncoder.encode(subjectPrefix + subject, "UTF-8"));
-					sb.append("&text=");
-					sb.append(URLEncoder.encode(text, "UTF-8"));
-					sb.append("&cle=");
-					sb.append(URLEncoder.encode(httpServerPWD, "UTF-8"));
+					sb.append("mailer=").append(Util.urlEnc(mailer));
+					sb.append("&to=").append(Util.urlEnc(stox.toString()));
+					sb.append("&subject=").append(Util.urlEnc(subjectPrefix + subject));
+					sb.append("&text=").append(Util.urlEnc(text));
+					sb.append("&cle=").append(Util.urlEnc(httpServerPWD));
 					body = sb.toString().getBytes("UTF-8");
 				}
 				int retry = 0;
