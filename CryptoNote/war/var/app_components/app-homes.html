@@ -1,0 +1,22 @@
+<link rel="import" href="home1-home.html">
+<link rel="import" href="home2-home.html">
+
+<dom-module id="app-homes">
+	<template>
+	<style>
+	  	:host { margin:0; padding:0; width:100vw; height:100vh; overflow-x:auto; min-width:360px; background-color:white; }
+  	</style>
+	<iron-pages attr-for-selected="id" selected="[[home]]">
+		<home1-home id="home1" owner="Scott"></home1-home>
+		<home2-home id="home2"></home2-home>
+	</iron-pages>
+	</template>
+	<script>
+    class AppHomes extends Polymer.Element {
+		static get is() { return "app-homes"; }
+		static get properties() { return { home: {String, value:"home1"} } ; }
+      	constructor() { super(); this.home = APP.home; }
+    }
+	customElements.define(AppHomes.is, AppHomes);
+	</script>
+</dom-module>

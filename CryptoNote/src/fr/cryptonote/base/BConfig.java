@@ -6,6 +6,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
@@ -22,7 +23,7 @@ public class BConfig {
 	private static final String PASSWORDS = "/WEB-INF/passwords.json";
 	private static final String BUILDJS = "/WEB-INF/build.js";
 
-	private static class TxtDic extends HashMap<String,String> { 
+	static class TxtDic extends HashMap<String,String> { 
 		private static final long serialVersionUID = 1L;			
 	}
 	
@@ -33,6 +34,7 @@ public class BConfig {
 	private static MFDic mfDic0 = new MFDic();
 	private static MFDic mfDic1 = new MFDic();
 	private static MFDic[] mfDics = {mfDic0, mfDic1};
+	private static HashMap<String,TxtDic> exportDics = new HashMap<String,TxtDic>();
 
 	static {
 		mfDic0.put("XSERVLETCONFIG", new MessageFormat("Classe de configuration d'a n'est pas donnée en paramètre dans web.xml"));
@@ -102,13 +104,21 @@ public class BConfig {
 	
 	private static void setMF(String lang, String n) throws ServletException {
 		Servlet.Resource r = Servlet.getResource(n);
+		TxtDic dx = exportDics.get(lang);
+		if (dx == null){
+			dx = new TxtDic();
+			exportDics.put(lang,  dx);
+		}
 		if (r != null) {
 			try {
 				TxtDic d = (TxtDic)JSON.fromJson(r.toString(), TxtDic.class);
 				MFDic dic = mfDics[lang(lang)];
-				for(String k : d.keySet())
-					try { if (!dic.containsKey(k)) dic.put(k,  new MessageFormat(d.get(k)));
+				for(String k : d.keySet()) {
+					String s = d.get(k);
+					try { if (!dic.containsKey(k)) dic.put(k,  new MessageFormat(s));
 					} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEMSGFMT", n, k)); }
+					if (!dx.containsKey(k)) dx.put(k, s);
+				}
 			} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEJSONPARSE", n, ex.getMessage())); }
 		}
 	}
@@ -205,7 +215,7 @@ public class BConfig {
 		private boolean 	isDistrib = true;
 		private boolean 	isMonoServer = false;
 		private String 		defaultUrl = "http://localhost:8080/";
-		private String 		byeAndBack = "https://test.sportes.fr:8443/byeAndBack.html";
+		private String 		byeAndBack = "https://test.sportes.fr:8443/byeAndBack";
 		
 		private int 		TASKMAXTIMEINSECONDS = 1800;
 		private int 		OPERATIONMAXTIMEINSECONDS = 120;
@@ -226,7 +236,7 @@ public class BConfig {
 		private String 		adminMails = "daniel@sportes.fr,domi.colin@laposte.net";
 		private String[] 	emailFilter = {"sportes.fr"};
 		
-		private String[] 	offlinepages;
+		private HashMap<String,Integer> 	homes;
 		private HashMap<String,String> 		shortcuts;
 	}
 
@@ -261,13 +271,16 @@ public class BConfig {
 	public static MailerCfg		mailer(String code) { return g.mailers == null ? null : g.mailers.get(code); }
 	public static String[] 		mailers() { return g.mailers == null ? new String[0] : g.mailers.keySet().toArray(new String[g.mailers.size()]);}
 	
-	public static String[] 		offlinepages() { return g.offlinepages == null ? new String[0] : g.offlinepages ;}
+	public static Set<String>	homes() { return g.homes.keySet() ;}
+	public static int 			homeMode(String home) { Integer i = g.homes.get(home); return i == null ? 0 : i; }
 	public static String 		shortcut(String s){ return g.shortcuts != null ? g.shortcuts.get((s == null || s.length() == 0) ? "(empty)" : s) : null; }
 		
 	public static String[]		namespaces() { return g.namespaces.keySet().toArray(new String[g.namespaces.size()]);}
 	public static String[]		queueManagers() { return g.queueManagers == null ? new String[0] : g.queueManagers.keySet().toArray(new String[g.queueManagers.size()]);}
 	public static String		password(String code) { return p == null ? null : p.get(code); }
 	public static int			queueIndexByOp(String op) { return appConfig.queueIndexByOp(op); }
+	
+	public static TxtDic 		exportDic(String lang) { return exportDics.get(lang); }
 	
 	public static Nsqm namespace(String ns, boolean fresh) { 
 		Nsqm x = g.namespaces.get(ns);
