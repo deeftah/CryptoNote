@@ -21,8 +21,8 @@ const APP = {
 			"httpget":"Réponse d''erreur du serveur [{0}].",
 			"httpget2":"Réponse d''erreur du serveur [{0}]. Status-HTTP:{1} Message:{2}",
 			"newbuild":"Une version de L''application ({0}) plus récente que celle qui s'exécute ({1}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
-			"regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
-			"regko":"Echec de l''enregistrement auprès du service worker. Scope:[{0}]",
+			"regok":"Succès de l''enregistrement auprès du service worker : [{0}]",
+			"regko":"Echec de l''enregistrement auprès du service worker : [{0}]",
 			"pingko":"Echec de la récupération de la build du serveur",
 			"reload":"Une version de L''application plus récente que celle qui s'exécute ({0}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
 			"cachebuildok":"Build connue du service worker : {1} ({0})",
@@ -48,8 +48,9 @@ const APP = {
 			if (APP.hasServiceWorker)
 				APP_Util.regSW(); 
 			else 
-				APP_Util.updCache()
-		} else
+				APP_Util.updCache();
+		}
+		if (APP.mode != 2)
 			APP_Util.checkSrvVersion();
 	},
 	
@@ -92,12 +93,11 @@ const APP = {
 		return x;
 	},
 
-	ctxNsSlash : function() { return (!this.contextpath ? "" : this.contextpath + "/") + (this.namespace ? this.namespace + "/" : "");},
+	ctxNsSlash : function() { return (!this.contextpath ? "/" : "/" + this.contextpath + "/") + (this.namespace ? this.namespace + "/" : "");},
 	
 	decoder : new TextDecoder("utf-8"),
 	
-}
-
+};
 /*****************************************************/
 class StringBuffer {
 	constructor() { this.buffer = []; }
@@ -214,42 +214,15 @@ class APP_Util {
 		});
 	}
 	
-	static reloadApp(b) {
-		if (b != APP.build) {
-			setTimeout(function() {
-				alert(APP.format("newbuild", b, APP.build));
-				if (APP.byeAndBack)
-					window.location.href = APP.byeAndBack + "_" + APP.lang + ".html";
-			}, 300);
-		}		
-	}
-	
-	static checkSrvVersion(){
-		this.get("ping")
-		.then(r  => {
-			this.reloadApp(r.json.b);
-		}).catch(e => {
-			const er = APP_Error.err(e, "pingko"); console.error(er.log()); 
-		});
-	}
-	
-	static regSW() {
-		const scope = APP.ctxNsSlash();
-		navigator.serviceWorker.register(scope + "x.swjs", { scope:scope })
-		.then(reg => { 
-			console.log(APP.format("regok", scope));
-			if (APP.mode == 1 && navigator.serviceWorker.controller) { // activated : répond aux messages
-				this.sendMessageToCache({command:"getBuild"})
-				.then(resp => { // Build: resp.build
-					APP_Util.reloadApp(resp.build);
-				}).catch(e => { 
-					const er = APP_Error.err(e, "regko", scope); console.error(er.log());
-				});
-			};
-		}).catch(e => {
-			const er = APP_Error.err(e, "regko", scope); console.error(er.log()); 
-		});
-	}
+//	static reloadApp(b) {
+//		if (b != APP.build) {
+//			setTimeout(function() {
+//				alert(APP.format("newbuild", b, APP.build));
+//				if (APP.byeAndBack)
+//					window.location.href = APP.byeAndBack + "_" + APP.lang + ".html";
+//			}, 300);
+//		}		
+//	}
 
 	static updCache(){
 		window.applicationCache.addEventListener('updateready', function(e) {
@@ -258,47 +231,96 @@ class APP_Util {
 		    	window.location.reload();
 		    }
 		}, false);
+		if (APP.mode != 2)
+			APP.checkSrvVersion()()
 	}
 
-	static sendMessageToCache(message) {
-		return new Promise(function(resolve, reject) {
-			var messageChannel = new MessageChannel();
-			messageChannel.port1.onmessage = function(event) {
-				if (event.data.error) {
-					reject(event.data.error);
-				} else {
-					resolve(event.data);
-				}
-			};
-			const swc = navigator.serviceWorker.controller;
-			if (swc)
-				swc.postMessage(message, [messageChannel.port2]);
+	static checkSrvVersion(){
+		this.get("ping")
+		.then(r  => {
+			const b = r.json.b;
+			if (b != APP.build) {
+				setTimeout(function() {
+					alert(APP.format("newbuild", b, APP.build));
+					if (APP.byeAndBack)
+						window.location.href = APP.byeAndBack + "_" + APP.lang + ".html";
+				}, 300);
+			}		
+		}).catch(e => {
+			const er = APP_Error.err(e, "pingko"); console.error(er.log()); 
+		});
+	}
+	
+	static regSW() {
+		const js = APP.ctxNsSlash() + "x.swjs";
+//		navigator.serviceWorker.register(js, {scope:APP.ctxNsSlash()})
+		navigator.serviceWorker.register(js)
+		.then(reg => { 
+			console.log(APP.format("regok", js));
+		}).catch(e => {
+			const er = APP_Error.err(e, "regko", js); console.error(er.log() + "\n" + e.stack); 
 		});
 	}
 
-	static getCacheVersion(){
-		return new Promise((resolve, reject) => {
-			if (navigator.serviceWorker && navigator.serviceWorker.controller) { // activated : répond aux messages
-				this.sendMessageToCache({command:"getBuild"})
-				.then(resp => { // Build: resp.build
-					console.log(APP.format("cachebuildok", 1, resp.build));
-					resolve(resp.build);
-				}).catch(e => { 
-					setTimeout(function() {
-						APP_Util.sendMessageToCache({command:"getBuild"})
-						.then(resp => {
-							console.log(APP.format("cachebuildok", 2, resp.build));
-							resolve(resp.build);
-						}).catch(e => {
-							const er = APP_Error.err(e, "cachebuildko1", -1, APP.format("cachebuildko1")); console.error(er.log()); reject(er);
-						});
-					}, 5000);
-				});
-			} else {
-				const er = new APP_Error("cachebuildko2", -1, APP.format("cachebuildko2")); console.error(er.log()); reject(er);
-			};
-		});
-	}
+	
+//	static regSW() {
+//		const scope = APP.ctxNsSlash();
+//		const js = APP.ctxNsSlash() + "x.swjs";
+//		navigator.serviceWorker.register(js)
+//		.then(reg => { 
+//			console.log(APP.format("regok", scope));
+//			if (APP.mode == 1 && navigator.serviceWorker.controller) { // activated : répond aux messages
+//				this.sendMessageToCache({command:"getBuild"})
+//				.then(resp => { // Build: resp.build
+//					APP_Util.reloadApp(resp.build);
+//				}).catch(e => { 
+//					const er = APP_Error.err(e, "regko", scope); console.error(er.log());
+//				});
+//			};
+//		}).catch(e => {
+//			const er = APP_Error.err(e, "regko", scope); console.error(er.log() + "\n" + e.stack); 
+//		});
+//	}
+//
+//	static sendMessageToCache(message) {
+//		return new Promise(function(resolve, reject) {
+//			var messageChannel = new MessageChannel();
+//			messageChannel.port1.onmessage = function(event) {
+//				if (event.data.error) {
+//					reject(event.data.error);
+//				} else {
+//					resolve(event.data);
+//				}
+//			};
+//			const swc = navigator.serviceWorker.controller;
+//			if (swc)
+//				swc.postMessage(message, [messageChannel.port2]);
+//		});
+//	}
+//
+//	static getCacheVersion(){
+//		return new Promise((resolve, reject) => {
+//			if (navigator.serviceWorker && navigator.serviceWorker.controller) { // activated : répond aux messages
+//				this.sendMessageToCache({command:"getBuild"})
+//				.then(resp => { // Build: resp.build
+//					console.log(APP.format("cachebuildok", 1, resp.build));
+//					resolve(resp.build);
+//				}).catch(e => { 
+//					setTimeout(function() {
+//						APP_Util.sendMessageToCache({command:"getBuild"})
+//						.then(resp => {
+//							console.log(APP.format("cachebuildok", 2, resp.build));
+//							resolve(resp.build);
+//						}).catch(e => {
+//							const er = APP_Error.err(e, "cachebuildko1", -1, APP.format("cachebuildko1")); console.error(er.log()); reject(er);
+//						});
+//					}, 5000);
+//				});
+//			} else {
+//				const er = new APP_Error("cachebuildko2", -1, APP.format("cachebuildko2")); console.error(er.log()); reject(er);
+//			};
+//		});
+//	}
 
 	static init() {
 		this.defaultDRM = [
