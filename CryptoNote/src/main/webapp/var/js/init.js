@@ -3,13 +3,14 @@
 const APP = {
 	build:1000,
 	home:"index",
-	homemode:0,
+	homemode:1,
 	srvbuild:0,
 	contextpath:"", 
 	namespace:"", 
 	mode:0, 
-	debug:false, 
-	hasServiceWorker:navigator.serviceWorker ? true : false, 
+	offline:false,
+	debug:false,
+	isSW:true,
 	langs:["fr","en"], 
 	lang:"fr", 
 	zone:"Europe/Paris",
@@ -19,9 +20,10 @@ const APP = {
 			"exc":"Code:{0} Message:[{1}]",
 			"jsonparseurl":"Le retour du serveur [{0}] a une erreur de syntxe JSON",
 			"httpget":"Réponse d''erreur du serveur [{0}].",
+			"httpgetto":"Pas de réponse du serveur [{0}] après {1}s d'attente",
 			"httpget2":"Réponse d''erreur du serveur [{0}]. Status-HTTP:{1} Message:{2}",
 			"newbuild":"Une version de L''application ({0}) plus récente que celle qui s'exécute ({1}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
-			"regok":"Succès de l''enregistrement auprès du service worker : [{0}]",
+			"regok":"Succès de l''enregistrement auprès du service worker : [{0}] (scope:[{1}])",
 			"regko":"Echec de l''enregistrement auprès du service worker : [{0}]",
 			"pingko":"Echec de la récupération de la build du serveur",
 			"reload":"Une version de L''application plus récente que celle qui s'exécute ({0}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
@@ -36,16 +38,13 @@ const APP = {
 	},
 	
 	init : function() {
-		const i = window.location.pathname.lastIndexOf(".");
-		const ext = i == -1 ? "" : window.location.pathname.substring(i + 1);
-		APP.mode = ext == "sync" || ext == "sync2" ? 1 : (ext == "local" || ext == "local2" ? 2 : 0);
-		APP.isAppCache = ext.endsWith("2");
-		if (!APP.hasServiceWorker && !ext.endsWith("2")) window.location = window.location.pathname + "2" + window.location.search + window.location.hash;
+		// Pour Apple et Edge 
+		if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
 		//Pour Safari / IOS !!!
 		if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) window.crypto.subtle = window.crypto.webkitSubtle;
 		// window.Polymer = { dom:'shadow'};
 		if (APP.mode){
-			if (APP.hasServiceWorker)
+			if (APP.isSW)
 				APP_Util.regSW(); 
 			else 
 				APP_Util.updCache();
@@ -54,20 +53,18 @@ const APP = {
 			APP_Util.checkSrvVersion();
 	},
 	
-	addMsg : function(lang, code, msg){
+	setMsg : function(lang, code, msg, force){
 		const d = this.dics[lang];
-		if (d && code && msg) d[code] = msg;
+		if (d && code && msg && (force || !d[code])) d[code] = msg;
 	},
-	
-	add2Dic : function(lang, texts){
+
+	setDic : function(lang, texts, force){
 		const d = this.dics[lang];
 		if (!d || !texts) return;
-		for(code in texts) {
-			if (d[code]) continue;
-			d[code] = texts[code];
-		}
+		for(code in texts)
+			if (force || !d[code]) d[code] = texts[code];
 	},
-	
+
 	format : function(code, args) { // 0 à N arguments après le code
 		if (!code) return "?";
 		let x = APP.dics[APP.lang][code];
@@ -97,6 +94,14 @@ const APP = {
 	
 	decoder : new TextDecoder("utf-8"),
 	
+	baseUrl : function(lvl) { // 0:/cp/ 1:/cp/ns/ 2:/cp/ns/var9999/
+		let u = window.location.origin + (window.location.origin.endsWith("/") ? "" : "/") + (!APP.contextpath ? "" : APP.contextpath + "/")
+		if (!lvl) return u;
+		u += !APP.namespace ? "" : APP.namespace + "/";
+		if (lvl == 1) return u;
+		return u + "var" + APP.build + "/";
+	}
+
 };
 /*****************************************************/
 class StringBuffer {
@@ -153,77 +158,95 @@ class APP_Error {
 }
 
 /*****************************************************/
-class APP_Util {
-	static baseUrl() {
-		const orig = window.location.origin + (window.location.origin.endsWith("/") ? "" : "/");
-		return orig + (!APP.contextpath ? "" : APP.contextpath + "/") + (!APP.namespace ? "" : APP.namespace + "/");
+class APP_ReqGet {
+	constructor(lvl, url) {
+		this.urlx = APP.baseUrl(lvl) + url;	
+		this.TIME_OUT_MS = APP.debug ? 10000 : 7000;
 	}
 	
-	static get(url) {
-		return new Promise((resolve, reject) => {
-			let done = false;
-			const urlx = this.baseUrl() + url;
-			try {
-				const xhr = new XMLHttpRequest();
-				xhr.open("GET", urlx, true);
-				xhr.responseType = "arraybuffer";
-				xhr.onerror = function(e) {		
-					if (this.done) return;
-					done = true;
-					const er = APP_Error.err(e, "httpget", -1, APP.format("httpget", urlx)); console.error(er.log()); reject(er);
-				}
-				xhr.onreadystatechange = function() {
-					if (xhr.readyState != 4) return;
-					done = true;
-					const ct = xhr.getResponseHeader("Content-Type");
-					let contentType = ct;
-					let charset = null;
-					let i = ct ? ct.indexOf(";") : -1;
-					if (i != -1) {
-						contentType = ct.substring(0, i);
-						i = ct.indexOf("charset=", i);
-						if (i != -1)
-							charset = ct.substring(i + 8);
+	setTimeOut(timeOut) {
+		this.TIME_OUT_MS = timeOut;
+		return this;
+	}
+	
+	go() {
+		this.done = false;
+		let tim;
+		return Promise.race([
+			new Promise((resolve, reject) => {
+				tim = setTimeout(() => {
+						reject(APP_Error.err(null, "httpget", -1, APP.format("httpgetto", this.urlx, Math.round(this.TIME_OUT_MS / 1000)))); 
+					},	
+					this.TIME_OUT_MS); 
+			}),
+			
+			new Promise((resolve, reject) => {
+				try {
+					const xhr = new XMLHttpRequest();
+					xhr.open("GET", this.urlx, true);
+					xhr.responseType = "arraybuffer";
+					xhr.onerror = function(e) {	
+						if (tim) clearTimeout(tim);
+						if (this.done) return;
+						this.done = true;
+						const er = APP_Error.err(e, "httpget", -1, APP.format("httpget", this.urlx)); 
+						console.error(er.log()); 
+						reject(er);
 					}
-					const isJson = contentType && contentType == "application/json" ;
-					const uint8 = xhr.response ? new Uint8Array(xhr.response) : null;
-					const text = isJson && uint8 ? APP.decoder.decode(uint8) : {};
-					let json = null;
-					if (isJson) {
-						try {
-							json = {json:JSON.parse(isJson && uint8 ? APP.decoder.decode(uint8) : {})};
-						} catch (e) {
-							const er = APP_Error.err(e, "jsonparseurl", -1, APP.format("jsonparseurl", urlx)); console.error(er.log()); reject(er);
+					xhr.onreadystatechange = function() {
+						if (xhr.readyState != 4) return;
+						if (tim) clearTimeout(tim);
+						this.done = true;
+						const ct = xhr.getResponseHeader("Content-Type");
+						let contentType = ct;
+						let charset = null;
+						let i = ct ? ct.indexOf(";") : -1;
+						if (i != -1) {
+							contentType = ct.substring(0, i);
+							i = ct.indexOf("charset=", i);
+							if (i != -1)
+								charset = ct.substring(i + 8);
 						}
+						const isJson = contentType && contentType == "application/json" ;
+						const uint8 = xhr.response ? new Uint8Array(xhr.response) : null;
+						const text = isJson && uint8 ? APP.decoder.decode(uint8) : {};
+						let json = null;
+						if (isJson) {
+							try {
+								json = {json:JSON.parse(isJson && uint8 ? APP.decoder.decode(uint8) : {})};
+							} catch (e) {
+								const er = APP_Error.err(e, "jsonparseurl", -1, APP.format("jsonparseurl", this.urlx)); 
+								console.error(er.log()); 
+								reject(er);
+							}
+						}
+		
+						if (xhr.status == 200) {					    
+							resolve(isJson ? json : {uint8:uint8, charset:charset, contentType:contentType});
+							return;
+						} 
+						
+						const er = json ? error = new APP_Error(json.name, json.phase, json.message, json.detail)
+							: new APP_Error("httpget", -1, APP.format("httpget2", this.urlx, xhr.status, xhr.statusText));
+						console.error(er.log());
+						reject(er);
 					}
-
-					if (xhr.status == 200) {					    
-						resolve(isJson ? json : {uint8:uint8, charset:charset, contentType:contentType});
-						return;
-					} 
-					
-					const er = json ? error = new APP_Error(json.name, json.phase, json.message, json.detail)
-						: new APP_Error("httpget", -1, APP.format("httpget2", urlx, xhr.status, xhr.statusText));
-					console.error(er.log());
+					xhr.send();
+				} catch(e) {
+					if (tim) clearTimeout(tim);
+					const er =  new APP_Error.err(e, "httpget", -1, APP.format("httpget", this.urlx)); 
+					console.error(er.log()); 
 					reject(er);
 				}
-				xhr.send();
-			} catch(e) {
-				const er =  new APP_Error.err(e, "httpget", -1, APP.format("httpget", urlx)); console.error(er.log()); reject(er);
-			}
-		});
+		})
+	  ]);
 	}
-	
-//	static reloadApp(b) {
-//		if (b != APP.build) {
-//			setTimeout(function() {
-//				alert(APP.format("newbuild", b, APP.build));
-//				if (APP.byeAndBack)
-//					window.location.href = APP.byeAndBack + "_" + APP.lang + ".html";
-//			}, 300);
-//		}		
-//	}
-
+}
+/*****************************************************/
+class APP_Util {	
+	/*
+	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
+	 */
 	static updCache(){
 		window.applicationCache.addEventListener('updateready', function(e) {
 		    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
@@ -231,57 +254,60 @@ class APP_Util {
 		    	window.location.reload();
 		    }
 		}, false);
-		if (APP.mode != 2)
-			APP.checkSrvVersion()()
 	}
 
-	static checkSrvVersion(){
-		this.get("ping")
-		.then(r  => {
-			const b = r.json.b;
-			if (b != APP.build) {
-				setTimeout(function() {
-					alert(APP.format("newbuild", b, APP.build));
-					if (APP.byeAndBack)
-						window.location.href = APP.byeAndBack + "_" + APP.lang + ".html";
-				}, 300);
-			}		
-		}).catch(e => {
-			const er = APP_Error.err(e, "pingko"); console.error(er.log()); 
+	static ping() {
+		return new Promise((resolve, reject) => {
+			new APP_ReqGet(1,"ping").go()
+			.then(r  => {
+				APP.offline = false;
+				resolve(r);
+			}).catch(e => {
+				APP.offline = true;
+				resolve(null);
+			});	
 		});
 	}
 	
+	static checkSrvVersion(){
+		this.ping()
+		.then(r  => {
+			if (r) {
+				const b = r.json.b;
+				if (b != APP.build) {
+					setTimeout(function() {
+						alert(APP.format("newbuild", b, APP.build));
+						if (APP.byeAndBack)
+							window.location.href = APP.byeAndBack + "_" + APP.lang + ".html";
+					}, 300);
+				}
+			}
+		});
+	}
+	
+	/*
+	 * Le service worker est une application INDEPENDANTE de la page.
+	 * Le script sw.js qui l'anime est déclaré : ça lancera le service worker S'IL N'ETAIT PAS DEJA LANCE.
+	 * S'il était lancé, il continue de vivre avec la version actuelle (donc d'une version potentiellement retardée).
+	 * Si le sw.js a changé par rapport à celui en exécution, un noveau service est préparé et
+	 * RESTE EN ATTENTE jusqu'à la fin de toutes les pages qui ont déclaré ce service.
+	 * IL Y A UN SERVICE WORKER PAR "namespace" : /cp/nsB/sw.js et /cp/nsA/sw.js définissent DEUX services indépendants.
+	 * Le "scope" de /cp/nsA/sw.js n'est PAS réduit : il interceptent TOUTES les URLs /cp/nsA/...
+	 * MAIS en conséquence IGNORE les URLs de la navigation privée /cp/nsA$/...
+	 * Une EXCEPTION "Request failed" signifie qu'une des URLs citée dans addAll() N'EST PAS ACCESSIBLE (404)
+	 * MAIS one sait PAS laquelle (joie !)
+	 */
 	static regSW() {
-		const js = APP.ctxNsSlash() + "x.swjs";
-//		navigator.serviceWorker.register(js, {scope:APP.ctxNsSlash()})
+		const js = APP.ctxNsSlash() + "sw.js";
 		navigator.serviceWorker.register(js)
 		.then(reg => { 
-			console.log(APP.format("regok", js));
+			console.log(APP.format("regok", js, reg.scope));
 		}).catch(e => {
 			const er = APP_Error.err(e, "regko", js); console.error(er.log() + "\n" + e.stack); 
 		});
 	}
 
-	
-//	static regSW() {
-//		const scope = APP.ctxNsSlash();
-//		const js = APP.ctxNsSlash() + "x.swjs";
-//		navigator.serviceWorker.register(js)
-//		.then(reg => { 
-//			console.log(APP.format("regok", scope));
-//			if (APP.mode == 1 && navigator.serviceWorker.controller) { // activated : répond aux messages
-//				this.sendMessageToCache({command:"getBuild"})
-//				.then(resp => { // Build: resp.build
-//					APP_Util.reloadApp(resp.build);
-//				}).catch(e => { 
-//					const er = APP_Error.err(e, "regko", scope); console.error(er.log());
-//				});
-//			};
-//		}).catch(e => {
-//			const er = APP_Error.err(e, "regko", scope); console.error(er.log() + "\n" + e.stack); 
-//		});
-//	}
-//
+//	// ça eu servi un jour !!!	
 //	static sendMessageToCache(message) {
 //		return new Promise(function(resolve, reject) {
 //			var messageChannel = new MessageChannel();
@@ -411,7 +437,7 @@ class APP_Util {
 	    ];
 	}
 	
-	removeDiacritics(str) {
+	static removeDiacritics(str) {
 		if (!this.defaultDRM) this.init();
 		for(var i=0; i<this.defaultDRM.length; i++)
 			str = str.replace(this.defaultDRM[i].letters, this.defaultDRM[i].base);

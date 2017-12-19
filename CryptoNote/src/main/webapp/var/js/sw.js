@@ -1,4 +1,3 @@
-
 /*
 const CONTEXTPATH = "cp"; // ou ""
 const BUILD = "6000"; 
@@ -17,15 +16,23 @@ this.addEventListener('install', function(event) {
 	event.waitUntil(
 		caches.open(CACHENAME)
 		.then(cache => {
-			if (TRACEON2) console.log("Install avant addAll " + CACHENAME);
-			return cache.addAll(RESSOURCES);
+			if (TRACEON2) console.log("Install addAll demandé ... " + CACHENAME);
+			const res = cache.addAll(RESSOURCES);
+			if (TRACEON2) console.log("Install addAll OK " + CACHENAME);
+			return res;
 		}).catch(error => {
-			if (TRACEON) console.log("Install adAll KO " + CACHENAME + " - " + error.message);
+			// Une des URLs citées est NOT FOUND, on ne sait pas laquelle
+			if (TRACEON) console.log("Install addAll KO " + CACHENAME + " - " + error.message);
 		})
 	);
 });
 
+/*
+ * Objectif : supprimer les caches de versions plus anciennes. 
+ * Attention, il se peut qu'une encore plus récente puisse, éventuellement être présente
+ */
 this.addEventListener('activate', function(event) {
+	const b1 = parseInt(BUILD, 10);
 	event.waitUntil(
 		caches.keys()
 		.then(cacheNames => {
@@ -33,8 +40,11 @@ this.addEventListener('activate', function(event) {
 				return Promise.all(
 					cacheNames.map(cacheName => {
 						if (cacheName.startsWith(PREFIX) && cacheName != CACHENAME) {
-							if (TRACEON) console.log("Activate delete " + cacheName + "/" + CACHENAME);
-							return caches.delete(cacheName);
+							const b = parseInt(cacheName.substring(PREFIX.length), 10);
+							if (b < b1) {
+								if (TRACEON) console.log("Activate delete " + cacheName + "/" + CACHENAME);
+								return caches.delete(cacheName);
+							}
 						}
 					})
 				);
@@ -44,16 +54,47 @@ this.addEventListener('activate', function(event) {
 	);
 });
 
+const fetchWithTimeout = (url, options, TIME_OUT_MS) => Promise.race([
+	  fetch(url, options),
+	  new Promise((resolve, reject) => {setTimeout(() => reject('timeout'), TIME_OUT_MS ? TIME_OUT_MS : 7000);})
+	  ]);
+
+/*
+ * Une home page .../home1_ (locale) a le même texte que son homologue normale .../home.
+ * DOIT laisser passer les opérations passées par GET : cp/ns/od/... cp/ns/op/... cp/ping cp/ns/ping    ns/od/.. ns/op/..  ping  ns/ping
+ */
 this.addEventListener('fetch', event => {
-	event.respondWith(
-			caches.match(event.request.url)
+	let url = event.request.url;
+	if (url.endsWith("_")) url = url.substring(0, url.length - 1); // page "locale" (même texte que "normale")
+	
+	const i = url.indexOf("/", 10); // laisse passer https://...
+	const x = !CONTEXTPATH ? url.substring(i + 1) : url.substring(i + 2 + CONTEXTPATH.length);
+	const op =  x == "ping" || x ==  NS + "/ping" || x.startsWith(NS + "/od/") || x.startsWith(NS + "/op/");
+	
+	if (op) {
+		event.respondWith(
+			fetchWithTimeout(url)
 			.then(response => {
-				return response || fetch(event.request.url);
+				return response;
+			}).catch(e => {
+				return null;
 			})
 		);
-	});
+	} else {
+		event.respondWith(
+			caches.match(url)
+			.then(response => {
+				if (response && TRACEON2) console.log("fetch OK trouvée dans " + CACHENAME + " - " + url);
+				if (!response && TRACEON) console.log("fetch KO non trouvée dans " + CACHENAME + " - " + url);
+				return response;
+			})
+		);
+	}
+});
 
-
+/*
+ * ça eu servi !
+ */
 this.addEventListener('message', function(event) {
 	let cmd = event.data.command;
 	if (cmd == "getBuild") {

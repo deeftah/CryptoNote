@@ -7,7 +7,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Set;
 
@@ -30,13 +29,7 @@ import fr.cryptonote.provider.DBProvider;
 
 public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	
-	private static final HashMap<String,Integer> ext2 = new HashMap<String,Integer>();	
-	
-	static {
-		ext2.put("net", 0); ext2.put("sync", 1); ext2.put("sync2", 1); ext2.put("local", 2); ext2.put("local2", 2); 
-	}
-	
+		
 	private static Boolean done = false;
 	private static String contextPath;
 	private static ServletContext servletContext;
@@ -104,6 +97,8 @@ public class Servlet extends HttpServlet {
 		boolean fini = false;
 		boolean isGet;
 		boolean isTask;
+		boolean isSW;
+		int mode; // navigation ... // 0:privée(incognito) 1:normale(cache+net) 2:locale(cache seulement)
 		String lang;
 		
 		ReqCtx(HttpServletRequest req, HttpServletResponse resp, boolean isGet) throws IOException { 
@@ -117,6 +112,7 @@ public class Servlet extends HttpServlet {
 			this.resp = resp; 
 			this.isGet = isGet;
 			String s =  req.getRequestURI();
+			// /contextPath/namespace/...
 			origUri = s.substring(contextPath.length() + 2);
 			build = BConfig.build();
 			if ("ping".equals(origUri)) {
@@ -130,16 +126,20 @@ public class Servlet extends HttpServlet {
 		}
 		
 		void checkNsqm() throws IOException {
+			// namespace/...
 			int i = origUri.indexOf('/');
 			if (i == -1 || i == origUri.length() - 1) {
 				sendText(500, BConfig.format("500URLMF1" + (hasCP() ? "cp" : ""), origUri), resp);
 				fini = true;
 				return;
 			}
-			String x = origUri.substring(0, i);
-			nsqm = BConfig.nsqm(x, true);
+			uri = origUri.substring(i + 1);
+			// si namespace est suivi de $ : navigation privée/incognito
+			mode = origUri.charAt(i - 1) == '$' ? 0 : 1;
+			String ns = origUri.substring(0, mode == 1 ? i : i -1);
+			nsqm = BConfig.nsqm(ns, true);
 			if (nsqm == null) {
-				sendText(500, BConfig.format("500URLMF2" + (hasCP() ? "cp" : ""), origUri, x), resp);
+				sendText(500, BConfig.format("500URLMF2" + (hasCP() ? "cp" : ""), origUri, ns), resp);
 				return;			
 			}
 			if (nsqm.isQM) {
@@ -158,7 +158,6 @@ public class Servlet extends HttpServlet {
 			}
 			exec.setNsqm(nsqm);
 			
-			uri = origUri.substring(i + 1);
 			if ("ping".equals(uri)) {
 				String dbInfo;
 				try {
@@ -176,14 +175,13 @@ public class Servlet extends HttpServlet {
 		}
 		
 		private void appcache() throws IOException {
-			String p = contextPath + "/" + nsqm.code + "/var" + build + "/";
+			String p1 = "\"/" + contextPath + "/" + nsqm.code + "/";
+			String p2 = p1 + "var" + build + "/";
 			StringBuffer sb = new StringBuffer();
 			sb.append("CACHE MANIFEST\n#").append(build).append("\nCACHE:\n");
-			int n = "/var/".length();
-			for(String s : var())
-				sb.append(p + s.substring(n) + "\n");
-			for(String x : BConfig.offlineHomes()) 
-				sb.append(p).append(x).append("2\",\n");	
+			for(String x : BConfig.homes(false)) sb.append(p1).append(x).append(".a\",\n");	
+			for(String x : BConfig.homes(true)) sb.append(p1).append(x).append("_.a\",\n");	
+			for(String s : var()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
 			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), "text/cache-manifest"), req, resp);
 			fini = true;
 		}
@@ -204,11 +202,8 @@ public class Servlet extends HttpServlet {
 			sb.append("const BUILD = \"").append(BConfig.build()).append("\";\n");
 			sb.append("const NS = \"").append(nsqm.code).append("\";\n");
 			sb.append("let RESSOURCES = [\n");
-			for(String x : BConfig.offlineHomes()) 
-				sb.append(p1).append(x).append("\",\n");	
-			int n = "/var/".length();
-			for(String s : var()) 
-				sb.append(p2 + s.substring(n) + "\",\n");
+			for(String x : BConfig.homes(false)) sb.append(p1).append(x).append("\",\n");	
+			for(String s : var()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
 			sb.setLength(sb.length() - 2);
 			sb.append("];\n").append(c.toString());
 			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), " text/javascript"), req, resp);	
@@ -233,32 +228,16 @@ public class Servlet extends HttpServlet {
 		}
 
 		void page() throws IOException{
-			int i = uri.indexOf('.');
-			String home = null;
-			String ext = null;
-			if (i == -1) {
-				ext = "net";
-				home = uri;
-			} else {
-				ext = uri.substring(i + 1);
-				home = uri.substring(0, i);
+			isSW = !uri.endsWith(".a");
+			if (!isSW) uri = uri.substring(0, uri.length() - 2);
+			if (uri.endsWith("_")){
+				mode = 2;
+				uri = uri.substring(0, uri.length() - 1);
 			}
-			if (!BConfig.homes().contains(home)){
-				sendText(404, BConfig.format("404HOME2", home), resp);
+			if (!BConfig.homes(true).contains(uri) && !BConfig.homes(false).contains(uri)){
+				sendText(404, BConfig.format("404HOME2", uri), resp);
 				fini = true;
 				return;
-			}
-			int mx = BConfig.homeMode(home);
-			Integer mode = ext2.get(ext);
-			if (mode == null) {
-				sendText(404, BConfig.format("404HOME1", ext), resp);
-				fini = true;
-				return;				
-			}
-			if (mode > mx) {
-				sendText(404, BConfig.format("404HOME3", home), resp);
-				fini = true;
-				return;				
 			}
 
 			Resource r = getResource(BConfig.INDEX);
@@ -297,22 +276,28 @@ public class Servlet extends HttpServlet {
 			StringBuffer sb = new StringBuffer();
 			sb.append("<!DOCTYPE html>");
 			
-			if (ext.endsWith("2")) 
-				sb.append("<html manifest=\"").append(contextPathSlash()).append(nsqm.code).append("/x.appcache\">");
-			else
+			if (isSW)
 				sb.append("<html>");
+			else
+				sb.append("<html manifest=\"").append(contextPathSlash()).append(nsqm.code).append("/x.appcache\">");
 			
 			sb.append("<head><base href=\"").append(contextPathSlash()).append(nsqm.code).append("/var").append(build).append("/\">\n");
 			sb.append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n");
+			sb.append("<link rel='icon' type='image/png' href='z/icon.png'>\n");
+
 			sb.append("<script src=\"js/init.js\"></script>\n");
 			sb.append("<script src=\"js/build.js\"></script>\n");
 
 			sb.append("\n<script type=\"text/javascript\">\n");
 			sb.append("'use strict';\n");
-			sb.append("APP.home = \"").append(home).append("\";\n");
-			sb.append("APP.homemode = ").append(mode).append(";\n");
-			sb.append("APP.srvbuild = ").append(BConfig.build()).append(";\n");
 			sb.append("APP.contextpath = \"").append(contextPath).append("\";\n");
+			sb.append("APP.namespace = \"").append(nsqm.code).append("\";\n");
+			sb.append("APP.nslabel = \"").append(nsqm.label).append("\";\n");
+			sb.append("APP.srvbuild = ").append(BConfig.build()).append(";\n");
+			sb.append("APP.zone = \"").append(BConfig.zone()).append("\";\n");
+			sb.append("APP.home = \"").append(uri).append("\";\n");
+			sb.append("APP.mode = ").append(mode).append(";\n");
+			sb.append("APP.isSW = ").append(isSW).append(";\n");
 			
 			sb.append("APP.langs = [");
 			String[] lx = BConfig.langs();
@@ -323,22 +308,19 @@ public class Servlet extends HttpServlet {
 			sb.append("];\n");
 			
 			sb.append("APP.lang = \"").append(lang).append("\";\n");
-			sb.append("APP.zone = \"").append(BConfig.zone()).append("\";\n");
-			sb.append("APP.namespace = \"").append(nsqm.code).append("\";\n");
-			sb.append("APP.nslabel = \"").append(nsqm.label).append("\";\n");
+			String b = BConfig.byeAndBack();
+			if (b != null)
+				sb.append("APP.byeAndBack = \"").append(b).append("\";\n");
 			
 			for(int l = 0; l < lx.length; l++){
 				TxtDic dic = BConfig.exportDic(lx[l]);
 				for(String k : dic.keySet()){
 					String m = dic.get(k);
 					String s = m.replace("\"", "\\\"").replace("\n", "\\n");
-					sb.append("APP.addMsg(\"").append(lx[l]).append("\", \"").append(k).append("\", \"").append(s).append("\");\n");
+					sb.append("APP.setMsg(\"").append(lx[l]).append("\", \"").append(k).append("\", \"").append(s).append("\", true);\n");
 				}
 			}
 			
-			String b = BConfig.byeAndBack();
-			if (b != null)
-				sb.append("APP.byeAndBack = \"").append(b).append("\";\n");
 			sb.append("APP.init();\n");
 			sb.append("</script>\n");
 
@@ -363,7 +345,7 @@ public class Servlet extends HttpServlet {
 		if (r.fini) return;
 		
 		if (r.uri.endsWith("x.appcache")) { r.appcache(); return; }
-		if (r.uri.endsWith("x.swjs")) { r.swjs();	return;	}
+		if (r.uri.endsWith("sw.js")) { r.swjs(); return;	}
 		
 		r.isTask = r.uri.startsWith("od/");
 		if (r.uri.startsWith("op/") || r.isTask){

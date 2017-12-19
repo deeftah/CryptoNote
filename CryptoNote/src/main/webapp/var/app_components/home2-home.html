@@ -9,11 +9,15 @@
 	  		
 	  	}
   </style>
-  	<p>This is <b>[[owner]]</b>'s name-tag element.</p>
+  	<p>This is <b>[[owner]] [[build]]</b>'s name-tag element.</p>
      <iron-input bind-value="{{owner}}">
       <input is="iron-input" placeholder="Your name here...">
     </iron-input>
-  
+  <div><button on-click="ping2">Ping</button>&nbsp;<button on-click="ping">Bower.json</button><span>[[pingres]]</span></div>
+   <a href="bower.json" target="_blank">Lien (relatif) vers bower.json!</a><br>
+   <a href="[[lkbower]]" target="_blank">Lien (absolu) vers bower.json!</a><br>
+   <a href="[[lkping]]" target="_blank">Lien (absolu) vers ping!</a> 
+    
   </template>
   <script>
     class Home2Home extends Polymer.Element {
@@ -21,14 +25,27 @@
       
       static get properties() {
           return {
-            owner: {
-              type: String,
-              value: 'Daniel'
-            }
+            owner: {type:String, value:'Daniel' },
+        	build: {type:Number, value:APP.build},
+        	lkbower: {type:String, value:APP.baseUrl(2) + "bower.json"},
+        	lkping: {type:String, value:APP.baseUrl(1) + "ping"}
           };
       }
       constructor() {
         super();
+      }
+      ping() {
+			new APP_ReqGet(2, "bower.json").go()
+			.then(r  => {
+				this.pingres = JSON.stringify(r);
+			}).catch(e => {
+				console.log(e.message);
+			});	
+      }
+      ping2() {
+    	  APP_Util.ping().then(r => {
+    		  this.pingres = !r ? "Erreur" : JSON.stringify(r);
+    	  });
       }
     }
   customElements.define(Home2Home.is, Home2Home);

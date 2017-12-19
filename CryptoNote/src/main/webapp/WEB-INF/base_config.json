@@ -75,7 +75,8 @@
 		"nca": {"blobsroot":"/tmp/blobsroot", "bucket":"bk1" }
 	},
 	
-	"homes":{"index":0, "home1":2, "home2":2, "demo":0},
+	"homes":["index", "admin"],
+	"offlineHomes":["home1", "home2"],
 	
 	"shortcuts":{
 		"(empty)":"a/index.app",

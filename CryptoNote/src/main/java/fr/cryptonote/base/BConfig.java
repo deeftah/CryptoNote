@@ -6,7 +6,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
@@ -239,7 +238,8 @@ public class BConfig {
 		private String 		adminMails = "daniel@sportes.fr,domi.colin@laposte.net";
 		private String[] 	emailFilter = {"sportes.fr"};
 		
-		private HashMap<String,Integer> 	homes;
+		private ArrayList<String> 		homes;
+		private ArrayList<String> 		offlineHomes;
 		private HashMap<String,String> 		shortcuts;
 	}
 
@@ -273,29 +273,14 @@ public class BConfig {
 	public static String[] 		emailFilter() { return g.emailFilter == null ? new String[0] : g.emailFilter; };
 	public static MailerCfg		mailer(String code) { return g.mailers == null ? null : g.mailers.get(code); }
 	public static String[] 		mailers() { return g.mailers == null ? new String[0] : g.mailers.keySet().toArray(new String[g.mailers.size()]);}
-	
-	public static Set<String>	homes() { return g.homes.keySet() ;}
-	public static int 			homeMode(String home) { Integer i = g.homes.get(home); return i == null ? 0 : i; }
-	public static String 		shortcut(String s){ return g.shortcuts != null ? g.shortcuts.get((s == null || s.length() == 0) ? "(empty)" : s) : null; }
-		
+	public static String 		shortcut(String s){ return g.shortcuts != null ? g.shortcuts.get((s == null || s.length() == 0) ? "(empty)" : s) : null; }		
 	public static String[]		namespaces() { return g.namespaces.keySet().toArray(new String[g.namespaces.size()]);}
 	public static String[]		queueManagers() { return g.queueManagers == null ? new String[0] : g.queueManagers.keySet().toArray(new String[g.queueManagers.size()]);}
 	public static String		password(String code) { return p == null ? null : p.get(code); }
 	public static int			queueIndexByOp(String op) { return appConfig.queueIndexByOp(op); }
 	
 	public static TxtDic 		exportDic(String lang) { return exportDics.get(lang); }
-	
-	public static ArrayList<String>	offlineHomes() {
-		ArrayList<String> r = new ArrayList<String>();
-		for(String h : g.homes.keySet()){
-			int i = g.homes.get(h);
-			if (i > 0) {
-				r.add(h + ".sync");
-				if (i == 2) r.add(h + ".local");
-			}
-		}
-		return r;
-	}
+	public static ArrayList<String>	homes(boolean offline) { return offline ? g.homes : g.offlineHomes;}
 	
 	public static Nsqm namespace(String ns, boolean fresh) { 
 		Nsqm x = g.namespaces.get(ns);

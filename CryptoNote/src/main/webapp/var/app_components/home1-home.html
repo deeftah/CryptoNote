@@ -9,7 +9,7 @@
 	  		
 	  	}
   </style>
-  	<p>This is <b>[[owner]]</b>'s name-tag element.</p>
+  	<p>This is <b>[[owner]] [[build]]</b>'s name-tag element.</p>
      <iron-input bind-value="{{owner}}">
       <input is="iron-input" placeholder="Your name here...">
     </iron-input>
@@ -31,7 +31,8 @@
             owner: {
               type: String,
               value: 'Daniel'
-            }
+            },
+          	build: {typr:Number, value:APP.build}
           };
       }
       // set this element's employees property
