@@ -1,110 +1,5 @@
-'use strict';
-
-const APP = {
-	build:1000,
-	home:"index",
-	homemode:1,
-	srvbuild:0,
-	contextpath:"", 
-	namespace:"", 
-	mode:0, 
-	offline:false,
-	debug:false,
-	isSW:true,
-	langs:["fr","en"], 
-	lang:"fr", 
-	zone:"Europe/Paris",
-	dics:{
-		"fr":{
-			"script":"Erreur d''exécution d''un script dans le navigateur. Code:{0}",
-			"exc":"Code:{0} Message:[{1}]",
-			"jsonparseurl":"Le retour du serveur [{0}] a une erreur de syntxe JSON",
-			"httpget":"Réponse d''erreur du serveur [{0}].",
-			"httpgetto":"Pas de réponse du serveur [{0}] après {1}s d'attente",
-			"httpget2":"Réponse d''erreur du serveur [{0}]. Status-HTTP:{1} Message:{2}",
-			"newbuild":"Une version de L''application ({0}) plus récente que celle qui s'exécute ({1}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
-			"regok":"Succès de l''enregistrement auprès du service worker : [{0}] (scope:[{1}])",
-			"regko":"Echec de l''enregistrement auprès du service worker : [{0}]",
-			"pingko":"Echec de la récupération de la build du serveur",
-			"reload":"Une version de L''application plus récente que celle qui s'exécute ({0}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
-			"cachebuildok":"Build connue du service worker : {1} ({0})",
-			"cachebuildko1":"Echec de récupération de la Build connue du service worker",
-			"cachebuildko2":"Echec de récupération de la Build connue du service worker : PAS de service worker",
-			"truc":"truc"
-		}, 
-		"en":{
-			
-		},
-	},
-	
-	init : function() {
-		// Pour Apple et Edge 
-		if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
-		//Pour Safari / IOS !!!
-		if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) window.crypto.subtle = window.crypto.webkitSubtle;
-		// window.Polymer = { dom:'shadow'};
-		if (APP.mode){
-			if (APP.isSW)
-				APP_Util.regSW(); 
-			else 
-				APP_Util.updCache();
-		}
-		if (APP.mode != 2)
-			APP_Util.checkSrvVersion();
-	},
-	
-	setMsg : function(lang, code, msg, force){
-		const d = this.dics[lang];
-		if (d && code && msg && (force || !d[code])) d[code] = msg;
-	},
-
-	setDic : function(lang, texts, force){
-		const d = this.dics[lang];
-		if (!d || !texts) return;
-		for(code in texts)
-			if (force || !d[code]) d[code] = texts[code];
-	},
-
-	format : function(code, args) { // 0 à N arguments après le code
-		if (!code) return "?";
-		let x = APP.dics[APP.lang][code];
-		if (!x && APP.lang != APP.langs[0])
-			x = APP.dics[APP.lang[0]][code];
-		if (!x) {
-			x = code;
-			if (arguments.length > 1)
-				for(let i = 1; i < arguments.length; i++) {
-					let t = arguments[i] ? arguments[i] : "";
-					x += " " + i + ":[" + t + "]";
-				}
-			return x;
-		}
-		if (arguments.length == 1) return x;
-		for(let i = 1; i < arguments.length; i++) {
-			let t = typeof arguments[i] != 'undefined' ? arguments[i] : "";
-			let y = "{" + (i - 1) + "}";
-			let j = x.indexOf(y);
-			if (j != -1)
-				x = x.substring(0, j) + t + x.substring(j + y.length);
-		}
-		return x;
-	},
-
-	ctxNsSlash : function() { return (!this.contextpath ? "/" : "/" + this.contextpath + "/") + (this.namespace ? this.namespace + "/" : "");},
-	
-	decoder : new TextDecoder("utf-8"),
-	
-	baseUrl : function(lvl) { // 0:/cp/ 1:/cp/ns/ 2:/cp/ns/var9999/
-		let u = window.location.origin + (window.location.origin.endsWith("/") ? "" : "/") + (!APP.contextpath ? "" : APP.contextpath + "/")
-		if (!lvl) return u;
-		u += !APP.namespace ? "" : APP.namespace + "/";
-		if (lvl == 1) return u;
-		return u + "var" + APP.build + "/";
-	}
-
-};
 /*****************************************************/
-class StringBuffer {
+export class StringBuffer {
 	constructor() { this.buffer = []; }
 	append(string) { this.buffer.push(string); return this; }
 	toString() { return this.buffer.join(""); }
@@ -114,15 +9,15 @@ class StringBuffer {
 }
 
 /*****************************************************/
-class APP_Error {
+export class Err {
 	static err(e, name, phase, message, detail){
-		if (e && e instanceof APP_Error) return e;
-		if (!e) return new APP_Error(name, phase, message, detail);
+		if (e && e instanceof Err) return e;
+		if (!e) return new Err(name, phase, message, detail);
 		const code = e.code ? e.ced : "?";
 		const msg = e.message ? e.message : "?";
 		if (!message) message = "";
-		message += APP.format("exc", code, msg);
-		return new APP_Error(name ? name : "script", phase ? phase : -1, message, detail, e.stack);
+		message += App.format("exc", code, msg);
+		return new Err(name ? name : "script", phase ? phase : -1, message, detail, e.stack);
 	}
 	
 	constructor(name, phase, message, detail, stack) {
@@ -149,19 +44,19 @@ class APP_Error {
 		return "NABXDCOS".indexOf(m) != -1 && this.phase >= 0 ? m : "s"
 	}
 		
-	log(panel) { 
+	log(onPanel) { 
 		const m = this.name + this.message ? " -" + this.message : "";
-		if (panel && APP.TracePanel) APP.TracePanel.trace(m); 
+		if (onPanel && App.TracePanel) App.TracePanel.trace(m); 
 		return new Date().format("Y-m-d H:i:s.S") + " - " + m + (this.stack ? "\n" + this.stack : "");
 	}
 	
 }
 
 /*****************************************************/
-class APP_ReqGet {
+export class Req {
 	constructor(lvl, url) {
-		this.urlx = APP.baseUrl(lvl) + url;	
-		this.TIME_OUT_MS = APP.debug ? 10000 : 7000;
+		this.urlx = App.baseUrl(lvl) + url;	
+		this.TIME_OUT_MS = 300000;
 	}
 	
 	setTimeOut(timeOut) {
@@ -169,35 +64,34 @@ class APP_ReqGet {
 		return this;
 	}
 	
-	go() {
+	GET() {
 		this.done = false;
-		let tim;
 		return Promise.race([
 			new Promise((resolve, reject) => {
-				tim = setTimeout(() => {
-						reject(APP_Error.err(null, "httpget", -1, APP.format("httpgetto", this.urlx, Math.round(this.TIME_OUT_MS / 1000)))); 
+				this.tim = setTimeout(() => {
+						reject(Err.err(null, "httpget", -1, App.format("httpgetto", this.urlx, Math.round(this.TIME_OUT_MS / 1000)))); 
 					},	
 					this.TIME_OUT_MS); 
 			}),
 			
 			new Promise((resolve, reject) => {
 				try {
-					const xhr = new XMLHttpRequest();
-					xhr.open("GET", this.urlx, true);
-					xhr.responseType = "arraybuffer";
-					xhr.onerror = function(e) {	
-						if (tim) clearTimeout(tim);
+					this.xhr = new XMLHttpRequest();
+					this.xhr.open("GET", this.urlx, true);
+					this.xhr.responseType = "arraybuffer";
+					this.xhr.onerror = (e) => {	
+						if (this.tim) clearTimeout(this.tim);
 						if (this.done) return;
 						this.done = true;
-						const er = APP_Error.err(e, "httpget", -1, APP.format("httpget", this.urlx)); 
+						const er = Err.err(e, "httpget", -1, App.format("httpget", this.urlx)); 
 						console.error(er.log()); 
 						reject(er);
 					}
-					xhr.onreadystatechange = function() {
-						if (xhr.readyState != 4) return;
-						if (tim) clearTimeout(tim);
+					this.xhr.onreadystatechange = () => {
+						if (this.xhr.readyState != 4) return;
+						if (this.tim) clearTimeout(this.tim);
 						this.done = true;
-						const ct = xhr.getResponseHeader("Content-Type");
+						const ct = this.xhr.getResponseHeader("Content-Type");
 						let contentType = ct;
 						let charset = null;
 						let i = ct ? ct.indexOf(";") : -1;
@@ -208,32 +102,32 @@ class APP_ReqGet {
 								charset = ct.substring(i + 8);
 						}
 						const isJson = contentType && contentType == "application/json" ;
-						const uint8 = xhr.response ? new Uint8Array(xhr.response) : null;
-						const text = isJson && uint8 ? APP.decoder.decode(uint8) : {};
-						let json = null;
+						const uint8 = this.xhr.response ? new Uint8Array(this.xhr.response) : null;
+						let jsonObj = null;
 						if (isJson) {
 							try {
-								json = {json:JSON.parse(isJson && uint8 ? APP.decoder.decode(uint8) : {})};
+								const text = uint8 ? Util.toUtf8(uint8) : "{}";
+								jsonObj = JSON.parse(text);
 							} catch (e) {
-								const er = APP_Error.err(e, "jsonparseurl", -1, APP.format("jsonparseurl", this.urlx)); 
+								const er = Err.err(e, "jsonparseurl", -1, App.format("jsonparseurl", this.urlx)); 
 								console.error(er.log()); 
 								reject(er);
 							}
 						}
 		
-						if (xhr.status == 200) {					    
-							resolve(isJson ? json : {uint8:uint8, charset:charset, contentType:contentType});
+						if (this.xhr.status == 200) {					    
+							resolve(isJson ? {json:jsonObj} : {uint8:uint8, charset:charset, contentType:contentType});
 							return;
 						} 
 						
-						const er = json ? error = new APP_Error(json.name, json.phase, json.message, json.detail)
-							: new APP_Error("httpget", -1, APP.format("httpget2", this.urlx, xhr.status, xhr.statusText));
+						const er = jsonObj ? error = new Err(jsonObj.name, jsonObj.phase, jsonObj.message, jsonObj.detail)
+							: new Err("httpget", -1, App.format("httpget2", this.urlx, this.xhr.status, this.xhr.statusText));
 						console.error(er.log());
 						reject(er);
 					}
-					xhr.send();
+					this.xhr.send();
 				} catch(e) {
-					if (tim) clearTimeout(tim);
+					if (this.tim) clearTimeout(this.tim);
 					const er =  new APP_Error.err(e, "httpget", -1, APP.format("httpget", this.urlx)); 
 					console.error(er.log()); 
 					reject(er);
@@ -242,15 +136,34 @@ class APP_ReqGet {
 	  ]);
 	}
 }
+App.Req = Req;
 /*****************************************************/
-class APP_Util {	
+export class Util {	
+	static register() {
+		// Pour Apple et Edge 
+		if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
+		//Pour Safari / IOS !!!
+		if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) window.crypto.subtle = window.crypto.webkitSubtle;
+		// window.Polymer = { dom:'shadow'};
+		if (App.mode){
+			if (App.isSW)
+				this.regSW(); 
+			else 
+				this.updCache();
+		}
+		if (this.mode != 2)
+			this.checkSrvVersion();
+	}
+
+	static toUtf8(bytes) { return bytes ? this.decoder.decode(bytes) : ""; }
+
 	/*
 	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
 	 */
 	static updCache(){
 		window.applicationCache.addEventListener('updateready', function(e) {
 		    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-		    	alert(APP.format("reload", APP.build));
+		    	alert(this.format("reload", this.build));
 		    	window.location.reload();
 		    }
 		}, false);
@@ -258,30 +171,31 @@ class APP_Util {
 
 	static ping() {
 		return new Promise((resolve, reject) => {
-			new APP_ReqGet(1,"ping").go()
+			new Req(1,"ping").GET()
 			.then(r  => {
-				APP.offline = false;
+				App.offline = false;
 				resolve(r);
 			}).catch(e => {
-				APP.offline = true;
+				App.offline = true;
 				resolve(null);
 			});	
 		});
 	}
 	
+	static reload(b) {
+		if (b != App.build)
+			setTimeout(function() {
+				alert(App.format("newbuild", b, App.build));
+				if (App.byeAndBack)
+					window.location.href = App.byeAndBack + "_" + App.lang + ".html";
+			}, 300);		
+	}
+	
 	static checkSrvVersion(){
+		this.reload(App.buildAtPageGeneration);
 		this.ping()
 		.then(r  => {
-			if (r) {
-				const b = r.json.b;
-				if (b != APP.build) {
-					setTimeout(function() {
-						alert(APP.format("newbuild", b, APP.build));
-						if (APP.byeAndBack)
-							window.location.href = APP.byeAndBack + "_" + APP.lang + ".html";
-					}, 300);
-				}
-			}
+			if (r) this.reload(r.json.b);
 		});
 	}
 	
@@ -298,12 +212,12 @@ class APP_Util {
 	 * MAIS one sait PAS laquelle (joie !)
 	 */
 	static regSW() {
-		const js = APP.ctxNsSlash() + "sw.js";
+		const js = App.ctxNsSlash() + "sw.js";
 		navigator.serviceWorker.register(js)
 		.then(reg => { 
-			console.log(APP.format("regok", js, reg.scope));
+			console.log(App.format("regok", js, reg.scope));
 		}).catch(e => {
-			const er = APP_Error.err(e, "regko", js); console.error(er.log() + "\n" + e.stack); 
+			const er = Err.err(e, "regko", js); console.error(er.log() + "\n" + e.stack); 
 		});
 	}
 
@@ -348,7 +262,9 @@ class APP_Util {
 //		});
 //	}
 
-	static init() {
+	static setup() {
+		this.decoder = new TextDecoder("utf-8");
+
 		this.defaultDRM = [
 	    {'base':'A', 'letters':/[\u0041\u24B6\uFF21\u00C0\u00C1\u00C2\u1EA6\u1EA4\u1EAA\u1EA8\u00C3\u0100\u0102\u1EB0\u1EAE\u1EB4\u1EB2\u0226\u01E0\u00C4\u01DE\u1EA2\u00C5\u01FA\u01CD\u0200\u0202\u1EA0\u1EAC\u1EB6\u1E00\u0104\u023A\u2C6F]/g},
 	    {'base':'AA','letters':/[\uA732]/g},
@@ -445,9 +361,10 @@ class APP_Util {
 	}
 
 }
-
+Util.setup();
+App.Util = Util;
 /*****************************************************/
-class APP_B64 {
+export class B64 {
 	static get chars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; }
 	static get chars2() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"; }
 	static get egal() { return "=".charCodeAt(0); }
@@ -541,7 +458,7 @@ class APP_B64 {
 			}
 		}
 
-		return GEN.Crypt.decoder.decode(u8);
+		return Util.toUtf8(u8);
 	}
 	
 	static decode(strBase64) {
@@ -601,55 +518,6 @@ class APP_B64 {
 		const t2 = new Date().getTime();
 		console.log((t2 - t1) + "ms");
 	}
-}
-
-/*****************************************************/
-Date.prototype.format = function(format) {
-	let fullYear = this.getYear();
-	if (fullYear < 1000)
-		fullYear = fullYear + 1900;
-	const hour =this.getHours(); 
-	const day = this.getDate();
-	const month = this.getMonth() + 1;
-	const minute = this.getMinutes();
-	const seconde = this.getSeconds();
-	const ms = this.getMilliseconds();
-	const reg = new RegExp('(d|m|Y|H|i|s|S)', 'g');
-	const replacement = new Array();
-	replacement['d'] = day < 10 ? '0' + day : day;
-	replacement['m'] = month < 10 ? '0' + month : month;
-	replacement['S'] = ms < 10 ? '00' + ms : (ms < 100 ? '0' + ms : ms);
-	replacement['Y'] = fullYear;
-	replacement['H'] = hour < 10 ? '0' + hour : hour;
-	replacement['i'] = minute < 10 ? '0' + minute : minute;
-	replacement['s'] = seconde < 10 ? '0' + seconde : seconde;
-	return format.replace(reg, function($0) {
-		return ($0 in replacement) ? replacement[$0] : $0.slice(1, $0.length - 1);
-	});
-};
-
-Date.prototype.compact = function(now) {
-	if (!now) now = new Date();
-	let a1 = now.getYear();
-	if (a1 < 1000) a1 += 1900;
-	const m1 = now.getMonth() + 1;
-	const j1 = now.getDate();
-	let a2 = this.getYear();
-	if (a2 < 1000) a2 += 1900;
-	const m2 = this.getMonth() + 1;
-	const j2 = this.getDate();
-	const h = this.getHours();
-	const m = this.getMinutes();
-	let res = "";
-	if (a1 != a2) {
-		res = "" + a2 + "-" + (m2 < 10 ? '0' + m2 : m2) + "-" + (j2 < 10 ? '0' + j2 : j2) + " ";
-	} else if (m1 != m2) {
-		res = "" + (m2 < 10 ? '0' + m2 : m2) + "-" + (j2 < 10 ? '0' + j2 : j2) + " ";
-	} else if (j1 != j2) {
-		res = "" + (j2 < 10 ? '0' + j2 : j2) + " ";
-	}
-	res += "" + (h < 10 ? '0' + h : h) + ":" + (m < 10 ? '0' + m : m);
-	return res;
 }
 
 /*****************************************************/

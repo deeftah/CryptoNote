@@ -34,6 +34,10 @@
 "XMAILJAVAMAIL":"Echec d''envoi (JAVAMAIL) du mail : [{0}]",
 "BMAILTYPE":"Paramètres du mail incorrects. url : [{0}]",
 
+"XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}] sql:[{3}]\nmessage:[{4}]",
+"XSQLDS":"Datasource pour la base [{0}] non initialisable.\nmessage:[{1}]",
+"XSQLDSNS":"Demande d''un DBProvider pour une base [{0}] non déclarée",
+
 "script":"Erreur d''exécution d''un script dans le navigateur. Code:{0}",
 "exc":"Code:{0} Message:[{1}]",
 "jsonparseurl":"Le retour du serveur [{0}] a une erreur de syntxe JSON",
@@ -106,10 +110,6 @@
 
 "BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
 
-"XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}] sql:[{3}]",
-"XSQLCFG":"Erreur de syntaxe dans /WEB-INF/dbconfig.json",
-"XSQLDS":"Datasource pour la base [{0}] non initialisable",
-"XSQLDSNS":"Demande d''un DBProvider pour une base [{0}] non déclarée",
 
 "BUPDDIFF1":"Mise à jour différée sans id et/ou item",
 "BUPDDIFF2":"Mise à jour différée : item sans classe connue [{0}]",

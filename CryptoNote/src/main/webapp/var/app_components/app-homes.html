@@ -15,7 +15,7 @@
     class AppHomes extends Polymer.Element {
 		static get is() { return "app-homes"; }
 		static get properties() { return { home: {String, value:"home1"} } ; }
-      	constructor() { super(); this.home = APP.home; }
+      	constructor() { super(); this.home = App.home; }
     }
 	customElements.define(AppHomes.is, AppHomes);
 	</script>

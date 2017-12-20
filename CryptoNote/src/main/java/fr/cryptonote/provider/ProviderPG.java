@@ -64,7 +64,7 @@ public class ProviderPG implements DBProvider {
 				ds.setPassword(pwd);
 				dataSources.put(dbname, ds);
 			} catch (Exception e){
-				throw new AppException(e, "XSQLDS", dbname);
+				throw new AppException("XSQLDS", dbname, e.getMessage());
 			}
 		}
 		ProviderPG p = new ProviderPG();
@@ -85,12 +85,24 @@ public class ProviderPG implements DBProvider {
 	/*************************************************************************************/
 	@Override public Object connection() throws AppException { return conn(); }
 	
+	// "XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}]\nsql:[{3}]\nmessage:[{4}]",
+
+	protected AppException err(PreparedStatement preparedStatement, ResultSet rs, Exception e, String meth) {
+		if (preparedStatement != null)
+			try { preparedStatement.close(); } catch (SQLException e1) {}
+		if (rs != null)
+			try { rs.close(); } catch (SQLException e1) {}
+		closeConnection();
+		return (e instanceof AppException) ? (AppException)e : new AppException("XSQL0", operationName, meth, ns(), sql, e.getMessage());
+	}
+
 	protected Connection conn() throws AppException{ 
 		if (conn == null)
 			try {
+				sql = "";
 				conn = (Connection)dataSource.getConnection();
 			} catch (SQLException e){
-				throw new AppException(e, "XSQL0", operationName, ns, "Connexion");
+				throw err(null, null, e, "conn");
 			}
 		return conn; 
 	}
@@ -99,19 +111,21 @@ public class ProviderPG implements DBProvider {
 		if (inTransaction)
 			return;
 		try {
+			sql = "";
 			conn().setAutoCommit(false);
 			inTransaction = true;
 		} catch (SQLException e) {
-			throw new AppException(e, "XSQL0", operationName, ns, "begin transaction");
+			throw err(null, null, e, "beginTransaction");
 		}
 	}
 
 	private void commitTransaction() throws AppException {
 		if (inTransaction && conn != null) {
 			try {
+				sql = "";
 				conn.commit();
 			} catch (SQLException e) {
-				throw new AppException(e, "XSQL0", operationName, ns, "commit transaction");
+				throw err(null, null, e, "commitTransaction");
 			}
 			try {
 				conn.setAutoCommit(true);
@@ -158,15 +172,6 @@ public class ProviderPG implements DBProvider {
 		if (content != null) return content;
 		byte[] bytes = rs.getBytes("contentb");
 		return bytes != null ? Util.ungzipText(bytes) : null;
-	}
-
-	protected AppException err(PreparedStatement preparedStatement, ResultSet rs, Exception e, String meth) {
-		if (preparedStatement != null)
-			try { preparedStatement.close(); } catch (SQLException e1) {}
-		if (rs != null)
-			try { rs.close(); } catch (SQLException e1) {}
-		closeConnection();
-		return (e instanceof AppException) ? (AppException)e : new AppException(e, "XSQL0", operationName, meth, ns(), sql);
 	}
 
 	private static int setPS(Cond<?> c, PreparedStatement preparedStatement, int j) throws SQLException{

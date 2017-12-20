@@ -335,7 +335,8 @@ public class BConfig {
 				if (i == -1 || i == s.length() - 1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "1"));
 				int j = s.indexOf(";", i + 2);
 				if (j == -1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));
-				try { g.build = Integer.parseInt(s.substring(i+ 1, j)); } catch (Exception e) { throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "3"));}
+				String x = s.substring(i+ 1, j).trim();
+				try { g.build = Integer.parseInt(x); } catch (Exception e) { throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "3"));}
 			}
 			else 
 				throw exc(null, _format(0, "XRESSOURCEABSENTE", BUILDJS));

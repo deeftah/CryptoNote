@@ -5,11 +5,10 @@
   <style include="shared-styles"></style>
     <style>
 	  	:host { 
-	  		font-family: var(--font-mono);
-	  		
+	  		font-family: var(--font-mono);	
 	  	}
   </style>
-  	<p>This is <b>[[owner]] [[build]]</b>'s name-tag element.</p>
+  	<p>[[bonjour]] <b>[[owner]] [[build]]</b>'s name-tag element.</p>
      <iron-input bind-value="{{owner}}">
       <input is="iron-input" placeholder="Your name here...">
     </iron-input>
@@ -26,16 +25,17 @@
       static get properties() {
           return {
             owner: {type:String, value:'Daniel' },
-        	build: {type:Number, value:APP.build},
-        	lkbower: {type:String, value:APP.baseUrl(2) + "bower.json"},
-        	lkping: {type:String, value:APP.baseUrl(1) + "ping"}
+        	build: {type:Number, value:App.build},
+        	lkbower: {type:String, value:App.baseUrl(2) + "bower.json"},
+        	lkping: {type:String, value:App.baseUrl(1) + "ping"}
           };
       }
       constructor() {
         super();
+        this.bonjour = App.bonjour ? App.bonjour : "Salut" ;
       }
       ping() {
-			new APP_ReqGet(2, "bower.json").go()
+			new App.Req(2, "bower.json").GET()
 			.then(r  => {
 				this.pingres = JSON.stringify(r);
 			}).catch(e => {
@@ -43,7 +43,7 @@
 			});	
       }
       ping2() {
-    	  APP_Util.ping().then(r => {
+    	  App.Util.ping().then(r => {
     		  this.pingres = !r ? "Erreur" : JSON.stringify(r);
     	  });
       }

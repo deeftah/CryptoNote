@@ -54,10 +54,24 @@ this.addEventListener('activate', function(event) {
 	);
 });
 
-const fetchWithTimeout = (url, options, TIME_OUT_MS) => Promise.race([
-	  fetch(url, options),
-	  new Promise((resolve, reject) => {setTimeout(() => reject('timeout'), TIME_OUT_MS ? TIME_OUT_MS : 7000);})
-	  ]);
+const fetchWithTimeout = function(url, options, TIME_OUT_MS) {
+	let tim;
+	return Promise.race([
+		new Promise((resolve, reject) => {
+			fetch(url, options)
+			.then(response => {
+				if (tim) clearTimeout(tim);
+				resolve(response);
+			}).catch(e => {
+				if (tim) clearTimeout(tim);
+				reject(e);
+			})
+		}),
+		new Promise((resolve, reject) => {
+			tim = setTimeout(() => reject('timeout'), TIME_OUT_MS ? TIME_OUT_MS : 7000);
+		})
+	]);
+}
 
 /*
  * Une home page .../home1_ (locale) a le même texte que son homologue normale .../home.

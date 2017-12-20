@@ -163,7 +163,7 @@ public class Servlet extends HttpServlet {
 				try {
 					dbInfo = exec.dbProvider().dbInfo(null);
 				} catch (AppException e) {
-					dbInfo = BConfig.label("XDBINFO");			
+					dbInfo = "?";			
 				}
 				StringBuffer sb = new StringBuffer();
 				sb.append("{\"t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":").append(build).append(", \"off\":").append(nsqm.off)
@@ -285,21 +285,20 @@ public class Servlet extends HttpServlet {
 			sb.append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n");
 			sb.append("<link rel='icon' type='image/png' href='z/icon.png'>\n");
 
-			sb.append("<script src=\"js/init.js\"></script>\n");
-			sb.append("<script src=\"js/build.js\"></script>\n");
+			sb.append("<script src='js/root.js'></script>\n");
+			sb.append("<script src='js/build.js'></script>\n");
 
-			sb.append("\n<script type=\"text/javascript\">\n");
-			sb.append("'use strict';\n");
-			sb.append("APP.contextpath = \"").append(contextPath).append("\";\n");
-			sb.append("APP.namespace = \"").append(nsqm.code).append("\";\n");
-			sb.append("APP.nslabel = \"").append(nsqm.label).append("\";\n");
-			sb.append("APP.srvbuild = ").append(BConfig.build()).append(";\n");
-			sb.append("APP.zone = \"").append(BConfig.zone()).append("\";\n");
-			sb.append("APP.home = \"").append(uri).append("\";\n");
-			sb.append("APP.mode = ").append(mode).append(";\n");
-			sb.append("APP.isSW = ").append(isSW).append(";\n");
+			sb.append("\n<script type='text/javascript'>\n");
+			sb.append("App.contextpath = \"").append(contextPath).append("\";\n");
+			sb.append("App.namespace = \"").append(nsqm.code).append("\";\n");
+			sb.append("App.nslabel = \"").append(nsqm.label).append("\";\n");
+			sb.append("App.buildAtPageGeneration = ").append(BConfig.build()).append(";\n");
+			sb.append("App.zone = \"").append(BConfig.zone()).append("\";\n");
+			sb.append("App.home = \"").append(uri).append("\";\n");
+			sb.append("App.mode = ").append(mode).append(";\n");
+			sb.append("App.isSW = ").append(isSW).append(";\n");
 			
-			sb.append("APP.langs = [");
+			sb.append("App.langs = [");
 			String[] lx = BConfig.langs();
 			for(int l = 0; l < lx.length; l++){
 				if (l != 0) sb.append(",");
@@ -307,27 +306,27 @@ public class Servlet extends HttpServlet {
 			}
 			sb.append("];\n");
 			
-			sb.append("APP.lang = \"").append(lang).append("\";\n");
+			sb.append("App.lang = \"").append(lang).append("\";\n");
 			String b = BConfig.byeAndBack();
 			if (b != null)
-				sb.append("APP.byeAndBack = \"").append(b).append("\";\n");
+				sb.append("App.byeAndBack = \"").append(b).append("\";\n");
 			
 			for(int l = 0; l < lx.length; l++){
 				TxtDic dic = BConfig.exportDic(lx[l]);
 				for(String k : dic.keySet()){
 					String m = dic.get(k);
 					String s = m.replace("\"", "\\\"").replace("\n", "\\n");
-					sb.append("APP.setMsg(\"").append(lx[l]).append("\", \"").append(k).append("\", \"").append(s).append("\", true);\n");
+					sb.append("App.setMsg(\"").append(lx[l]).append("\", \"").append(k).append("\", \"").append(s).append("\");\n");
 				}
 			}
 			
-			sb.append("APP.init();\n");
 			sb.append("</script>\n");
 
 			sb.append(head);
 			sb.append("<link rel='import' href='themes/" + nsqm.theme + "-theme.html'>\n");
 			sb.append("<link rel='import' href='z/custom.html'>\n");
-			sb.append("<script src='js/final.js'></script>\n");
+
+			sb.append("<script src='js/final.js' type='module'></script>\n");
 
 			sb.append(body);
 			

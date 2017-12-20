@@ -6,10 +6,9 @@
     <style>
 	  	:host { 
 	  		font-family: var(--font-mono);
-	  		
 	  	}
   </style>
-  	<p>This is <b>[[owner]] [[build]]</b>'s name-tag element.</p>
+  	<p>[[bonjour]] <b>[[owner]] [[build]]</b>'s name-tag element.</p>
      <iron-input bind-value="{{owner}}">
       <input is="iron-input" placeholder="Your name here...">
     </iron-input>
@@ -28,16 +27,14 @@
       
       static get properties() {
           return {
-            owner: {
-              type: String,
-              value: 'Daniel'
-            },
-          	build: {typr:Number, value:APP.build}
+            owner: { type: String, value: 'Daniel'},
+          	build: {typr:Number, value:App.build}
           };
       }
       // set this element's employees property
       constructor() {
         super();
+        this.bonjour = App.bonjour ? App.bonjour : "Salut" ;
         this.employees = [
           {first: 'Bob', last: 'Li'},
           {first: 'Ayesha', last: 'Johnson'},
