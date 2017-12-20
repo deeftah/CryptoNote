@@ -80,7 +80,7 @@ class App {
 
 	static ctxNsSlash() { return (!this.contextpath ? "/" : "/" + this.contextpath + "/") + (this.namespace ? this.namespace + "/" : "");}
 		
-	static baseUrl(lvl) { // 0:/cp/ 1:/cp/ns/ 2:/cp/ns/var9999/
+	static baseUrl(lvl) { // 0:/cp/ns/ 1:/cp/ns/var9999/
 		let u = window.location.origin + (window.location.origin.endsWith("/") ? "" : "/") + (!this.contextpath ? "" : this.contextpath + "/")
 		if (!lvl) return u;
 		u += !this.namespace ? "" : this.namespace + "/";

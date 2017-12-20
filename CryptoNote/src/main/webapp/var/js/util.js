@@ -54,18 +54,87 @@ export class Err {
 
 /*****************************************************/
 export class Req {
-	constructor(lvl, url) {
-		this.urlx = App.baseUrl(lvl) + url;	
+	constructor(isGet) {
+		this.isGet = isGet ? true : false;
 		this.TIME_OUT_MS = 300000;
+		this.url = new StringBuffer().append(App.baseUrl());
+		this.retry = 0;
+		this.hasArgs = false;
+		if (!this.isGet()) this.formData = new FormData();
 	}
 	
-	setTimeOut(timeOut) {
-		this.TIME_OUT_MS = timeOut;
+	// GET seulement (si ressource, pas op)
+	setUrl(url) { this.url.append(url); return this; } // relative a /cp/ns
+
+	// POST seulement
+	setFormData() { this.formData = formData; return this; } // premier à citer
+	setSyncs(syncs) { if (syncs) this.formData.append("syncs", JSON.stringify(syncs)); return this;}
+
+	// GET et POST
+	setTimeOut(timeOut) { this.TIME_OUT_MS = timeOut; return this; }
+	setOp(op, param, url) { 
+		this.op = op; 
+		this.param = JSON.stringify(param); 
+		this.url.append("op/").append(url ? url : "");
+		if (this.isGet)
+			this.url.append(this.hasArgs ? "?op=" : "&op=").append(this.op);
+		else
+			this.formData.append("op", this.op);
+		this.hasArgs = true;
 		return this;
 	}
+	setOp(op, param, url) { 
+		this.op = op; 
+		this.param = JSON.stringify(param); 
+		this.url.append("od/").append(url ? url : "");
+		if (this.isGet)
+			this.url.append(this.hasArgs ? "?op=" : "&op=").append(this.op);
+		else
+			this.formData.append("op", this.op);
+		this.hasArgs = true;
+		return this;
+	}
+	setArgs(args) {
+		if (!args) return;
+		for(let a : in args) {
+			let v = args[a];
+			if (this.isGet)
+				this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
+			else
+				this.formData.append(a,v);
+			this.hasArgs = true;
+		}
+		return this;
+	}
+	setCred(cred) { 
+		if (!cred) return;
+		for(let a : in cred) {
+			let v = cred[a];
+			if (this.isGet)
+				this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
+			else
+				this.formData.append(a,v);
+			this.hasArgs = true;
+		}
+		return this;
+	}
+	set.NoCatch(noCatch) { this.noCatch = noCatch; return this; }
 	
-	GET() {
+	go(){
+		new Retry(this).send();
+		return this;
+	}
+}
+
+export class Retry {
+	constructor(req) {
+		this.req = req;
+		this.retry = this.req.retry++;
+		this.req.currentRetry = this;
 		this.done = false;
+	}
+
+	send() {
 		return Promise.race([
 			new Promise((resolve, reject) => {
 				this.tim = setTimeout(() => {
@@ -77,7 +146,7 @@ export class Req {
 			new Promise((resolve, reject) => {
 				try {
 					this.xhr = new XMLHttpRequest();
-					this.xhr.open("GET", this.urlx, true);
+					this.xhr.open("GET", this.req.url, true);
 					this.xhr.responseType = "arraybuffer";
 					this.xhr.onerror = (e) => {	
 						if (this.tim) clearTimeout(this.tim);
