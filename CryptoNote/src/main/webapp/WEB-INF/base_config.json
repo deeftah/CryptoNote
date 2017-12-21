@@ -7,7 +7,6 @@
 	"isDebug":true,
 	"isDistrib":false,
 	"defaultUrl":"http://192.168.0.10:8090/cn",
-	"byeAndBack":"https://test.sportes.fr:8443/byeAndBack",
 
 	"TASKMAXTIMEINSECONDS":1800,
 	"OPERATIONMAXTIMEINSECONDS":1200,

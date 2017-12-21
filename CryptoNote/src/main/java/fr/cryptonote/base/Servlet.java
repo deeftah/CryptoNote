@@ -297,26 +297,14 @@ public class Servlet extends HttpServlet {
 			sb.append("App.home = \"").append(uri).append("\";\n");
 			sb.append("App.mode = ").append(mode).append(";\n");
 			sb.append("App.isSW = ").append(isSW).append(";\n");
-			
-			sb.append("App.langs = [");
-			String[] lx = BConfig.langs();
-			for(int l = 0; l < lx.length; l++){
-				if (l != 0) sb.append(",");
-				sb.append("\"").append(lx[l]).append("\"");
-			}
-			sb.append("];\n");
-			
+			sb.append("App.langs = ").append(JSON.toJson(BConfig.langs())).append(";\n");
 			sb.append("App.lang = \"").append(lang).append("\";\n");
-			String b = BConfig.byeAndBack();
-			if (b != null)
-				sb.append("App.byeAndBack = \"").append(b).append("\";\n");
 			
-			for(int l = 0; l < lx.length; l++){
-				TxtDic dic = BConfig.exportDic(lx[l]);
+			for(String lg : BConfig.langs()){
+				TxtDic dic = BConfig.exportDic(lg);
 				for(String k : dic.keySet()){
-					String m = dic.get(k);
-					String s = m.replace("\"", "\\\"").replace("\n", "\\n");
-					sb.append("App.setMsg(\"").append(lx[l]).append("\", \"").append(k).append("\", \"").append(s).append("\");\n");
+					String s = dic.get(k).replace("\"", "\\\"").replace("\n", "\\n");
+					sb.append("App.setMsg(\"").append(lg).append("\", \"").append(k).append("\", \"").append(s).append("\");\n");
 				}
 			}
 			

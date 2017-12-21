@@ -1,0 +1,61 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+#p { font-family:sans-serif; font-size:15px; margin:10px;}
+.ici {font-size:18px; text-decoration: underline; font-weight:bold; color:blue; cursor:pointer; }
+.app {font-size:18px; font-weight:bold; }
+.red {font-size:16px; font-weight:bold; color:red;}
+</style>
+</head>
+<body>
+<div id="p"></div>
+<script>
+var lib = {
+	fr:"La page de l'application <span class='app'>{2}</span> correspond à la version <span class='red'>{1}</span> "
+	+ "alors que celle actuellement en ligne est la <span class='red'>{0}</span>.<br>" 
+	+ "Pour éviter des problèmes d'incompatibilité, elle doit être rechargée avec la nouvelle version.<br>"
+	+ "Fermer, s'il y en a, les onglets ou pages ouvertes sur cette application dans ce navigateur (ceci ne peut pas être fait automatiquement) "
+	+ "puis cliquer <a class='ici' href='{3}'>ici</a>.",
+	en:""
+}
+
+function format(lang, args) { // 0 à N arguments après le code
+	let x = lib[lang];
+	if (!x) x = lib.fr;
+	for(let i = 1; i < arguments.length; i++) {
+		let t = typeof arguments[i] != 'undefined' ? arguments[i] : "";
+		let y = "{" + (i - 1) + "}";
+		let j = x.indexOf(y);
+		if (j != -1)
+			x = x.substring(0, j) + t + x.substring(j + y.length);
+	}
+	return x;
+}
+
+function editb(b) {
+	var b1 = Math.floor(b / 1000);
+	var b2 = b % 1000;
+	return "" + b1 + "/" + b2;
+}
+var s = window.location.search.substring(1);
+x = JSON.parse(decodeURI(s));
+var p = document.getElementById("p");
+// 	const x = {lang:App.lang, build:b, ns:App.namespace, nslabel:App.nslabel, b:build dans la page actuelle, home:App.homeUrl()}
+var m = format(x.lang, editb(x.build), editb(x.b), x.nslabel, window.location.origin + "/" + x.home);
+p.innerHTML = m;
+// var n = 5;
+// function f() {
+// 	p.innerHTML = m + n + "s.";
+// 	setTimeout(function() {
+// 		n--;
+// 		if (n <= 0)	
+// 			history.back(); 
+// 		else
+// 		f();
+// 	}, 1000);
+// }
+// f();
+</script>
+</body>
+</html>

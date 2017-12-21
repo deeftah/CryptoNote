@@ -53,14 +53,32 @@ export class Err {
 }
 
 /*****************************************************/
+/*
+ * Le Tracker est un objet qui :
+ * - suit l'exécution de la requête et est notifié de ses départ, changements d'état, sortie en en succès / erreur.
+ * - pendant que la requête tourne, peut l'interrompre par kill().
+ * - quand la requête sort en succès : invoque le resolve mémorisé dans la requête pour que son demandeur obtienne le résultat.
+ * - quand la requête est sortie en erreur, peut,
+ * a) soit retourner l'erreur au demandeur initial en faisant invoquer son reject().
+ * b) soit demander un retry().
+ * Methodes d'un Tracker : onStart(req) onProgress(req) onSuccess(req, resp) onError(req, err)
+ * Méthodes de Req qu'un Tracker peut appeler: kill() (ce qui en génral lui provoquera un appel onError)
+ */
 export class Req {
 	constructor(isGet) {
 		this.isGet = isGet ? true : false;
 		this.TIME_OUT_MS = 300000;
-		this.url = new StringBuffer().append(App.baseUrl());
-		this.retry = 0;
+		this.url = new StringBuffer().append(App.baseUrl(0));
+		this.currentRetry = null;
 		this.hasArgs = false;
-		if (!this.isGet()) this.formData = new FormData();
+		if (!this.isGet) this.formData = new FormData();
+		this.cred = 0;
+	}
+	
+	setTracker(tracker) { 
+		if (tracker && tracker.onStart && tracker.onError && tracker.onSuccess && tracker.onProgress)
+			this.tracker = tracker; 
+		return this; 
 	}
 	
 	// GET seulement (si ressource, pas op)
@@ -96,7 +114,7 @@ export class Req {
 	}
 	setArgs(args) {
 		if (!args) return;
-		for(let a : in args) {
+		for(let a in args) {
 			let v = args[a];
 			if (this.isGet)
 				this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
@@ -106,60 +124,120 @@ export class Req {
 		}
 		return this;
 	}
+	
+	/*
+	 * !cred : pas de crédential
+	 * cred = 1 crédential standard simple (propriétés account / key de App)
+	 * cred = 2 crédential privilégié (account / key / sudo de App)
+	 * cred = {c1:... c2:... } crédential spécifique
+	 */
 	setCred(cred) { 
-		if (!cred) return;
-		for(let a : in cred) {
-			let v = cred[a];
-			if (this.isGet)
-				this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
+		if (cred) {
+			if (cred == 1)
+				this.cred = {account:App.account, key:App.key}
+			else if (cred == 2)
+				this.cred = {account:App.account, key:App.key, sudo:App.sudo}
 			else
-				this.formData.append(a,v);
-			this.hasArgs = true;
+				this.cred = cred;
 		}
 		return this;
 	}
-	set.NoCatch(noCatch) { this.noCatch = noCatch; return this; }
+	
+	setNoCatch(noCatch) { this.noCatch = noCatch; return this; }
 	
 	go(){
-		new Retry(this).send();
-		return this;
+		return new Promise((resolve, reject) => {
+			if (this.cred) {
+				for(let a in cred) {
+					let v = cred[a];
+					if (this.isGet)
+						this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
+					else
+						this.formData.append(a,v);
+					this.hasArgs = true;
+				}
+			}
+			this.resolve = resolve;
+			this.reject = reject;
+			this.currentRetry = new Retry();
+			this.currentRetry.req = this;
+			if (this.tracker) 
+				this.tracker.onStart(this);
+			this.currentRetry.send().then(resp => {
+				this.currentRetry.req = null;
+				this.currentRetry= null;
+				if (this.tracker == null)
+					this.resolve(resp);
+				else
+					this.tracker.onSuccess(this, resp);
+			}).catch(err => {
+				this.currentRetry.req = null;
+				this.currentRetry= null;
+				if (this.tracker == null)
+					this.reject(err);
+				else
+					this.tracker.onError(this, err);
+			});
+		});
+	}
+		
+	kill() {
+		if (this.currentRetry)
+			this.currentRetry.kill();
 	}
 }
 
-export class Retry {
-	constructor(req) {
-		this.req = req;
-		this.retry = this.req.retry++;
-		this.req.currentRetry = this;
-		this.done = false;
+class Retry {
+	kill() {
+		if (this.done) return;
+		this.killed = true;
+		if (this.xhr) {
+			this.xhr.abort();
+			this.xhr.onreadystatechange();
+		}
 	}
-
+	
 	send() {
+		const tracker = this.req.tracker;
+		const url = this.req.url.toString();
 		return Promise.race([
 			new Promise((resolve, reject) => {
 				this.tim = setTimeout(() => {
-						reject(Err.err(null, "httpget", -1, App.format("httpgetto", this.urlx, Math.round(this.TIME_OUT_MS / 1000)))); 
+						reject(Err.err(null, "httpget", -1, App.format("httpgetto", url, Math.round(this.req.TIME_OUT_MS / 1000)))); 
 					},	
-					this.TIME_OUT_MS); 
+					this.req.TIME_OUT_MS); 
 			}),
 			
 			new Promise((resolve, reject) => {
 				try {
 					this.xhr = new XMLHttpRequest();
-					this.xhr.open("GET", this.req.url, true);
+					this.xhr.open(this.req.isGet ? "GET" : "POST", url, true);
 					this.xhr.responseType = "arraybuffer";
 					this.xhr.onerror = (e) => {	
 						if (this.tim) clearTimeout(this.tim);
 						if (this.done) return;
 						this.done = true;
-						const er = Err.err(e, "httpget", -1, App.format("httpget", this.urlx)); 
+						const er = this.killed ? Err.err(e, "interrupted", -1, App.format("interrupted", url))
+								: Err.err(e, "httpget", -1, App.format("httpget", url)); 
 						console.error(er.log()); 
 						reject(er);
 					}
+					this.xhr.onerror = (e) => {	
+						if (this.done || !tracker) return;
+						tracker.onProgress(this.req, e.loaded, e.total);
+					}
 					this.xhr.onreadystatechange = () => {
+						if (this.done) return;
 						if (this.xhr.readyState != 4) return;
 						if (this.tim) clearTimeout(this.tim);
 						this.done = true;
+						
+						if (this.killed) {
+							const er = Err.err(e, "interrupted", -1, App.format("interrupted", url)); 
+							console.error(er.log()); 
+							reject(er);
+						};
+
 						const ct = this.xhr.getResponseHeader("Content-Type");
 						let contentType = ct;
 						let charset = null;
@@ -178,7 +256,7 @@ export class Retry {
 								const text = uint8 ? Util.toUtf8(uint8) : "{}";
 								jsonObj = JSON.parse(text);
 							} catch (e) {
-								const er = Err.err(e, "jsonparseurl", -1, App.format("jsonparseurl", this.urlx)); 
+								const er = Err.err(e, "jsonparseurl", -1, App.format("jsonparseurl", url)); 
 								console.error(er.log()); 
 								reject(er);
 							}
@@ -194,10 +272,13 @@ export class Retry {
 						console.error(er.log());
 						reject(er);
 					}
-					this.xhr.send();
+					if (this.req.isGet)
+						this.xhr.send();
+					else
+						this.xhr.send(this.req.formData);
 				} catch(e) {
 					if (this.tim) clearTimeout(this.tim);
-					const er =  new APP_Error.err(e, "httpget", -1, APP.format("httpget", this.urlx)); 
+					const er =  new APP_Error.err(e, "httpget", -1, APP.format("httpget", url)); 
 					console.error(er.log()); 
 					reject(er);
 				}
@@ -226,21 +307,28 @@ export class Util {
 
 	static toUtf8(bytes) { return bytes ? this.decoder.decode(bytes) : ""; }
 
+	static reload(b) {
+		setTimeout(function() {
+			const x = {lang:App.lang, build:b, ns:App.namespace, nslabel:App.nslabel, b:App.buildAtPageGeneration, home:App.homeUrl()}
+			window.location = App.reloadUrl() + "reload.html?" + encodeURI(JSON.stringify(x));
+		}, 3000);		
+	}
+
 	/*
 	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
 	 */
 	static updCache(){
 		window.applicationCache.addEventListener('updateready', function(e) {
 		    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-		    	alert(this.format("reload", this.build));
-		    	window.location.reload();
+		    	location.reload(true);
 		    }
 		}, false);
 	}
 
-	static ping() {
+	// ping du namespace ou du serveur (notns est true)
+	static ping(notns) {
 		return new Promise((resolve, reject) => {
-			new Req(1,"ping").GET()
+			new Req(true).setUrl(notns ? "../ping" : "ping").go()
 			.then(r  => {
 				App.offline = false;
 				resolve(r);
@@ -250,21 +338,17 @@ export class Util {
 			});	
 		});
 	}
-	
-	static reload(b) {
-		if (b != App.build)
-			setTimeout(function() {
-				alert(App.format("newbuild", b, App.build));
-				if (App.byeAndBack)
-					window.location.href = App.byeAndBack + "_" + App.lang + ".html";
-			}, 300);		
-	}
-	
+		
 	static checkSrvVersion(){
-		this.reload(App.buildAtPageGeneration);
+		// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build);
+		if (App.buildAtPageGeneration != App.build)
+			this.reload(App.build);
 		this.ping()
 		.then(r  => {
-			if (r) this.reload(r.json.b);
+			if (r && r.json.b != App.build) {
+				// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build + " ping.b:" + r.json.b);
+				this.reload(r.json.b);
+			}
 		});
 	}
 	

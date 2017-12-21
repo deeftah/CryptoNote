@@ -81,11 +81,24 @@ class App {
 	static ctxNsSlash() { return (!this.contextpath ? "/" : "/" + this.contextpath + "/") + (this.namespace ? this.namespace + "/" : "");}
 		
 	static baseUrl(lvl) { // 0:/cp/ns/ 1:/cp/ns/var9999/
-		let u = window.location.origin + (window.location.origin.endsWith("/") ? "" : "/") + (!this.contextpath ? "" : this.contextpath + "/")
-		if (!lvl) return u;
-		u += !this.namespace ? "" : this.namespace + "/";
-		if (lvl == 1) return u;
-		return u + "var" + this.build + "/";
+		return window.location.origin 
+		+ (window.location.origin.endsWith("/") ? "" : "/") 
+		+ (!this.contextpath ? "" : this.contextpath + "/")
+		+ (!this.namespace ? "" : this.namespace + "/") 
+		+ (!lvl ? "" : "var" + this.build + "/");
+	}
+
+	static homeUrl() { 
+		return (!this.contextpath ? "" : this.contextpath + "/")
+		+ (!this.namespace ? "" : this.namespace + (this.mode ? "/" : "$/")) 
+		+ this.home;
+	}
+	
+	static reloadUrl() { 
+		return window.location.origin 
+		+ (window.location.origin.endsWith("/") ? "" : "/")
+		+ (!this.contextpath ? "" : this.contextpath + "/")
+		+ this.namespace + "$/var" + this.build + "/";
 	}
 
 };

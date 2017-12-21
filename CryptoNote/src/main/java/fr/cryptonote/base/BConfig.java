@@ -217,7 +217,6 @@ public class BConfig {
 		private boolean 	isDistrib = true;
 		private boolean 	isMonoServer = false;
 		private String 		defaultUrl = "http://localhost:8080/";
-		private String 		byeAndBack = "https://test.sportes.fr:8443/byeAndBack";
 		
 		private int 		TASKMAXTIMEINSECONDS = 1800;
 		private int 		OPERATIONMAXTIMEINSECONDS = 120;
@@ -255,7 +254,6 @@ public class BConfig {
 	public static boolean 		isDebug() { return g.isDebug;}
 	public static boolean 		isMonoServer() { return g.isMonoServer;}
 	public static String 		defaultUrl() { return normUrl(g.defaultUrl); }
-	public static String 		byeAndBack() { return g.byeAndBack; }
 	public static String 		defaultBase() { return g.defaultBase; }
 
 	public static int 			TASKMAXTIMEINSECONDS() { return g.TASKMAXTIMEINSECONDS;}
