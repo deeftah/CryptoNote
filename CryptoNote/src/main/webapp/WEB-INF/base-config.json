@@ -19,9 +19,15 @@
 	"TASKRETRIESINMIN":[1, 10, 60, 180],
 	
 	"namespaces" : {
-		"namespace":{"label":"Espace de noms", "url": "http://192.168.0.10:8090/cn", "base":"cna", "pwd":"ns", "qm":"qm1"},
+		"namespace":{
+			"url": "http://192.168.0.10:8090/cn", 
+			"base":"cna", 
+			"pwd":"ns", 
+			"qm":"qm1",
+			"theme":"z",
+			"lang":"fr"
+			},
 		"test":{
-			"label":"Test : associations et groupes de travail", 
 			"url": "http://192.168.0.10:8090/cn",
 			"base":"cna", 
 			"pwd":"test", 

@@ -291,7 +291,6 @@ public class Servlet extends HttpServlet {
 			sb.append("\n<script type='text/javascript'>\n");
 			sb.append("App.contextpath = \"").append(contextPath).append("\";\n");
 			sb.append("App.namespace = \"").append(nsqm.code).append("\";\n");
-			sb.append("App.nslabel = \"").append(nsqm.label).append("\";\n");
 			sb.append("App.buildAtPageGeneration = ").append(BConfig.build()).append(";\n");
 			sb.append("App.zone = \"").append(BConfig.zone()).append("\";\n");
 			sb.append("App.home = \"").append(uri).append("\";\n");

@@ -23,5 +23,5 @@ En cas de sortie en exception :
 - son détail complet (et stack) est enregsitré en detail.
 - son indice de retry est incrémenté. Cet indice est remis à 0 à chaque point de reprise sorti en succès, exc et detail étant remis à null.
 
-
+Ecrire un tracker qui gère les erreurs et utilise spinner-box.
  

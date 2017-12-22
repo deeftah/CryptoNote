@@ -309,7 +309,7 @@ export class Util {
 
 	static reload(b) {
 		setTimeout(function() {
-			const x = {lang:App.lang, build:b, ns:App.namespace, nslabel:App.nslabel, b:App.buildAtPageGeneration, home:App.homeUrl()}
+			const x = {lang:App.lang, build:b, nslabel:App.nslabel(), applabel:App.applabel(), b:App.buildAtPageGeneration, home:App.homeUrl()}
 			window.location = App.reloadUrl() + "reload.html?" + encodeURI(JSON.stringify(x));
 		}, 3000);		
 	}

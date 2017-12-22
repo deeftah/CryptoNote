@@ -82,6 +82,6 @@
     "commit": "4711ddfdd982833ff922f1b1cb6f45a637aeeca3"
   },
   "_source": "https://github.com/PolymerElements/neon-animation.git",
-  "_target": "^2.0.0",
+  "_target": "1 - 2",
   "_originalSource": "PolymerElements/neon-animation"
 }

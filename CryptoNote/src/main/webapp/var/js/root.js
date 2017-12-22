@@ -78,6 +78,10 @@ class App {
 		return x;
 	}
 
+	static nslabel() { return App.lib("ns_" + App.namespace);}
+
+	static applabel() { return App.lib("application");}
+
 	static ctxNsSlash() { return (!this.contextpath ? "/" : "/" + this.contextpath + "/") + (this.namespace ? this.namespace + "/" : "");}
 		
 	static baseUrl(lvl) { // 0:/cp/ns/ 1:/cp/ns/var9999/

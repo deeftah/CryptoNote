@@ -6,23 +6,24 @@
   <style include="shared-styles"></style>
     <style>
 	  	:host { 
-	  		font-family: var(--font-mono);	
+	  		font-family: var(--font-std);	
 	  	}
+	  	:host .cf {@apply --cf-lite; font-size:1.2rem; }
   </style>
-  	<p>[[bonjour]] <b>[[owner]] [[build]]</b>'s name-tag element.</p>
+  	<div class="cf">[[bonjour]] <b>[[owner]] [[build]]</b>'s name-tag element.</div>
      <iron-input bind-value="{{owner}}">
       <input is="iron-input" placeholder="Your name here...">
     </iron-input>
-  <div>
-  	<button on-click="ping2">Ping</button>&nbsp;
-  	<button on-click="ping">Bower.json</button><span>[[pingres]]</span>&nbsp;
-  	<button on-click="checkSrvVersion">Check Version</button>
-  </div>
-  <div style="position:relative;">
-  <spinner-box></spinner-box>
-   <a href="bower.json" target="_blank">Lien (relatif) vers bower.json!</a><br>
-   <a href="[[lkbower]]" target="_blank">Lien (absolu) vers bower.json!</a><br>
-   <a href="[[lkping]]" target="_blank">Lien (absolu) vers ping!</a> 
+	<div style="position:relative;">
+		<spinner-box id="spin"></spinner-box>
+		<div>
+		  	<button on-click="ping">Ping</button>&nbsp;
+		  	<button on-click="bover">Bower.json</button><span>[[pingres]]</span>&nbsp;
+		  	<button on-click="checkSrvVersion">Check Version</button>
+		</div>
+	   <a href="bower.json" target="_blank">Lien (relatif) vers bower.json!</a><br>
+	   <a href="[[lkbower]]" target="_blank">Lien (absolu) vers bower.json!</a><br>
+	   <a href="[[lkping]]" target="_blank">Lien (absolu) vers ping!</a> 
    </div>
     
   </template>
@@ -43,7 +44,7 @@
         super();
         this.bonjour = App.bonjour ? App.bonjour : "Salut" ;
       }
-      ping() {
+      bower() {
 			new App.Req(true).setUrl("bower.json").go()
 			.then(r  => {
 				this.pingres = JSON.stringify(r);
@@ -51,10 +52,22 @@
 				console.log(e.message);
 			});	
       }
-      ping2() {
-    	  App.Util.ping().then(r => {
-    		  this.pingres = !r ? "Erreur" : JSON.stringify(r);
-    	  });
+      ping() {
+    	  this.$.spin.start(this, "hello !");
+    	  setTimeout(() => {
+    		  this.$.spin.progress("Traitement du serveur");
+        	  setTimeout(() => {
+            	  App.Util.ping().then(r => {
+            		  this.pingres = !r ? "Erreur" : JSON.stringify(r);
+            		  this.$.spin.stop();
+            	  }).catch(err => {
+            		  this.$.spin.stop();            		  
+            	  });        		  
+        	  }, 2000);    		  
+    	  }, 2000);
+      }
+      kill() {
+    	  console.log("kill");
       }
       checkSrvVersion() {
     	  App.Util.checkSrvVersion();

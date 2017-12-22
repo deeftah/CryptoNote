@@ -1,11 +1,30 @@
 <custom-style>
-	<style>
-		/* Define a document-wide default—will not override a :host rule in  */
-		html {
-			--mybg-color : lightgrey;
-			--font-mono : 'Roboto Mono';
-			--font-std : 'Roboto';
-			
-		}
-	</style>
+<style>
+	/* Define a document-wide default—will not override a :host rule in  */
+	html {
+		font-size: 14px;
+		--mybg-color : lightgrey;
+		--font-mono : 'Roboto Mono';
+		--font-std : 'Roboto';
+		--font-cf : 'Comfortaa';
+		--cf-lite : { font-family:var(--font-cf); font-weight:300;};
+		--cf-reg : { font-family:var(--font-cf); font-weight:400;};
+		--cf-bold : { font-family:var(--font-cf); font-weight:700;};
+	}
+
+	@media (max-width: 900px) {
+	  html { font-size: 13px; }
+	}
+	@media (max-width: 760px) {
+	  html { font-size: 10px; }
+	}
+	body {  margin:0; 
+		margin: 0;
+		padding: 0; 
+		min-width: 560px; 
+		overflow-x: auto; 
+		background-color: white; 
+	}
+		
+</style>
 </custom-style>

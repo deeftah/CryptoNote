@@ -17,9 +17,11 @@ public class BConfig {
 	
 	private static final String[] defaultLangs = {"fr", "en"};
 	private static final String DVARQM = "fr.cryptonote.QM";
-	private static final String BASECONFIG = "/WEB-INF/base_config.json";
-	private static final String APPCONFIG = "/WEB-INF/app_config.json";
+	private static final String BASECONFIG = "/WEB-INF/base-config.json";
+	private static final String APPCONFIG = "/WEB-INF/app-config.json";
 	private static final String PASSWORDS = "/WEB-INF/passwords.json";
+	private static final String APPDICS = "/WEB-INF/app-msg-";
+	private static final String BASEDICS = "/WEB-INF/base-msg-";
 	private static final String BUILDJS = "/var/js/build.js";
 	static final String SWJS = "/var/js/sw.js";
 	static final String INDEX = "/var/index.html";
@@ -99,8 +101,8 @@ public class BConfig {
 		if (g.langs.length > 1) mfDics[1] = mfDic1;
 		for (int i = 2; i < g.langs.length; i++) mfDics[i] = new MFDic();
 		for(String lang : g.langs) {
-			setMF(lang, "/WEB-INF/app-msg-" + lang + ".json");
-			setMF(lang, "/WEB-INF/base-msg-" + lang + ".json");
+			setMF(lang, APPDICS + lang + ".json");
+			setMF(lang, BASEDICS + lang + ".json");
 		}
 	}
 	
@@ -137,7 +139,6 @@ public class BConfig {
 	public static class Nsqm {
 		String 	code;
 		boolean isQM;
-		String 	label;
 		String 	url;
 		String 	base;
 		String 	pwd;
@@ -152,7 +153,6 @@ public class BConfig {
 		int[] 	threads;
 		int 	scanlapseinseconds;
 		
-		public String label() { return label != null && label.length() != 0 ? label : code; }
 		public boolean isQM() { return isQM; }
 		public String url() { return normUrl(url); }
 		public String base() { return base != null && base.length() != 0 ? base : g.defaultBase; }

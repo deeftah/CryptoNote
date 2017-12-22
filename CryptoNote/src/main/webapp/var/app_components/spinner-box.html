@@ -1,26 +1,36 @@
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/neon-animation/web-animations.html">
-<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
 <link rel="import" href="../bower_components/neon-animation/animations/fade-in-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
 
 <dom-module id="spinner-box">
 <template>
-	<style include="shared-styles"></style>
-	<style is="custom-style" include="iron-flex iron-flex-alignment"></style>
+	<style is="custom-style" include="iron-flex iron-flex-alignment">
+ 		paper-spinner-lite.myspin {
+ 		 	margin:0.5em;
+      		--paper-spinner-color: var(--paper-green-500);
+    	}		
+	</style>
     <style>
-		:host { position:absolute; width:100%; height:100%; margin:0; padding:0; }
-	    :host .top {background-color:rgba(200,200,200,0.1); width:100%; height:100%; }
-	    :host .msg {font-size:0.6em; font-style:italic; background-color:var(--paper-grey-50); width:120px; padding:0.5em; text-align:center; cursor:pointer;}
-	    :host .spin { position:absolute;}
+		:host { position:absolute; width:100%; height:100%; margin:0; padding:0; background-color:rgba(230,230,230,0.1); display:none; }
+	    :host .top { height:100%; }
+	    :host #msg { animation:2s fadein; opcacity:0; font-size:0.8rem; background-color:var(--paper-grey-50); 
+	    	width:15rem; padding:0.2rem; text-align:center; cursor:pointer;}
+	    @keyframes fadein { from {opacity:0;} to {opacity:1;} }
+		:host .m1 {color:var(--paper-blue-700); text-decoration: underline; font-style:italic; }
+		:host .info { height:1.2rem; overflow:hidden; }
     </style>
 	<div class="top layout horizontal center-center">
-		<div class="layout vertical center-center msg" on-click="opendialog">
-			<div>[[lib("sb_npa",lang)]]</div>
-			<paper-spinner-lite class="green spin" active></paper-spinner-lite>
+		<div id="msg" on-click="opendialog">
+			<div class="layout vertical center-center">
+				<div class="m1">[[lib("sb_npa",lang)]]</div>
+				<paper-spinner-lite class="myspin" active></paper-spinner-lite>
+				<div class="info">[[info]]</div>
+			</div>
 		</div>
 	</div>
-	<paper-dialog id="actions" entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+	<paper-dialog id="actions">
 		<p>[[lib("sb_texte", lang)]]</p>
 		<div class="buttons">
 	    	<paper-button dialog-dismiss>[[lib("sb_int", lang)]]</paper-button>
@@ -34,18 +44,58 @@
 	      
 		static get properties() { return {
 			lang : {type:String, value:"xx"},
+			info : {type:String, value:"info ici"},
 			};
 		}
+		
 		constructor() { 
 			super();
-			App.setMsg("fr", "sb_npa", "Pour ne plus  attendre cliquer ici.");
+			App.setMsg("fr", "sb_npa", "Ne plus attendre");
 			App.setMsg("fr", "sb_texte", "Interrompre correspond à renoncer à l'action engagée qui sera traitée comme un échec."
 					+ "L'autre option est d'avoir plus de patience.");
 			App.setMsg("fr", "sb_att", "Attendre encore");
 			App.setMsg("fr", "sb_int", "Interrompre");
 		}
+		
 		lib(code, lang) { return App.lib(code);}
-		opendialog() { this.$.actions.open(); }
+		
+		ready() {
+			super.ready();
+			this.$.actions.animationConfig =  {
+				'entry': { name: 'fade-in-animation', node: this.$.actions, timing: {duration: 1000} },
+				'exit': { name: 'fade-out-animation', node: this.$.actions, timing: {duration: 1000} }
+			};
+			this.$.actions.addEventListener("iron-overlay-closed", (e) => { this.onDialogClose(e); });		
+		}
+
+		opendialog() { 
+			this.$.actions.open();
+		}
+		
+		onDialogClose(e) { 
+			if (!e.detail.confirmed && !e.detail.canceled) {
+				if (this.request && this.request.kill) this.request.kill();
+				this.stop();
+			}
+			// console.log(e.detail); 
+		}
+
+		start(request, info) {
+			this.request = request; 
+			this.info = info;
+			this.style.display = "block";
+			this.$.msg.style.opacity = 1;
+		}
+		
+		progress(info) { 
+			this.info = info; 
+		}
+
+		stop() {
+			this.style.display = "none";
+			this.$.msg.style.opacity = 0;
+		}
+		
     }
 	customElements.define(SpinnerBox.is, SpinnerBox);
 </script>

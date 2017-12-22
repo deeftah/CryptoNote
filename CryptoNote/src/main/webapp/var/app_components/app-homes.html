@@ -1,25 +1,23 @@
-<link rel="import" href="../bower_components/paper-styles/color.html">
-<link rel="import" href="../bower_components/neon-animation/web-animations.html">
-<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
-<link rel="import" href="../bower_components/neon-animation/animations/fade-in-animation.html">
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
-
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 
 <dom-module id="app-homes">
-	<template>
+<template>
 	<style>
-	  	:host { margin:0; padding:0; width:100vw; height:100vh; overflow-x:auto; min-width:360px; background-color:white; }
+	  	:host { margin:0; padding:0;}
   	</style>
 	<iron-pages attr-for-selected="id" selected="[[home]]">
 		<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
 		<home2-home id="home2" lang="[[lang]]"></home2-home>
 	</iron-pages>
-	</template>
-	<script>
+</template>
+<script>
     class AppHomes extends Polymer.Element {
 		static get is() { return "app-homes"; }
 		static get properties() { return { home: {String, value:"home1"}, lang:{type:String, value:App.lang} } ; }
@@ -27,5 +25,5 @@
       	setLang(lang) { this.lang = lang; }
     }
 	customElements.define(AppHomes.is, AppHomes);
-	</script>
+</script>
 </dom-module>
