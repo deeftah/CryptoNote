@@ -1,22 +1,31 @@
-<link rel="import"  href="../bower_components/iron-input/iron-input.html">
+<link rel="import"  href="../bower_components/paper-input/paper-input.html">
+<link rel="import"  href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" 	href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" 	href="../bower_components/paper-input/paper-input.html">
+<link rel="import" 	href="../bower_components/paper-icon-button/paper-icon-button.html">
+
 <link rel="import"  href="spinner-box.html">
 
 <dom-module id="home2-home">
   <template>
   <style include="shared-styles"></style>
     <style>
-	  	:host { 
-	  		font-family: var(--font-std);	
-	  	}
+	  	:host { font-family: var(--font-std); }
 	  	:host .cf {@apply --cf-lite; font-size:1.2rem; }
+	  	:host .ic1 {height:3rem; width:3rem; color:red; }
   </style>
   	<div class="cf">[[bonjour]] <b>[[owner]] [[build]]</b>'s name-tag element.</div>
-     <iron-input bind-value="{{owner}}">
-      <input is="iron-input" placeholder="Your name here...">
-    </iron-input>
-	<div style="position:relative;">
+    <div>
+    	<paper-input always-float-label label="My floating label" value="{{owner}}">
+  			<iron-icon class="ic1" icon="mail" slot="prefix"></iron-icon>
+  			<div slot="suffix">@email.com</div>
+  			 <paper-icon-button slot="suffix" onclick="clearInput()" icon="clear" alt="clear" title="clear"></paper-icon-button>
+		</paper-input>
+    </div>
+	<div style="position:relative;display:inline-block;">
 		<spinner-box id="spin"></spinner-box>
 		<div>
+			<iron-icon icon="mail"></iron-icon>
 		  	<button on-click="ping">Ping</button>&nbsp;
 		  	<button on-click="bover">Bower.json</button><span>[[pingres]]</span>&nbsp;
 		  	<button on-click="checkSrvVersion">Check Version</button>
@@ -53,15 +62,17 @@
 			});	
       }
       ping() {
-    	  this.$.spin.start(this, "hello !");
+    	  const spin = this.$.spin;
+//    	  const spin = App.globalSpinner;
+    	  spin.start(this, "hello !");
     	  setTimeout(() => {
-    		  this.$.spin.progress("Traitement du serveur");
+    		  spin.progress("Traitement du serveur");
         	  setTimeout(() => {
             	  App.Util.ping().then(r => {
             		  this.pingres = !r ? "Erreur" : JSON.stringify(r);
-            		  this.$.spin.stop();
+            		  spin.stop();
             	  }).catch(err => {
-            		  this.$.spin.stop();            		  
+            		  spin.stop();            		  
             	  });        		  
         	  }, 2000);    		  
     	  }, 2000);

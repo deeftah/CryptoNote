@@ -2,8 +2,9 @@
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
 
+<link rel="import"  href="spinner-box.html">
+<link rel="import"  href="reqerr-panel.html">
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 
@@ -11,18 +12,32 @@
 <template>
 	<style>
 	  	:host { margin:0; padding:0;}
+	  	:host .top { margin:0; padding:0; height: 100vh; width: 100vw; position:relative; }
   	</style>
-	<iron-pages attr-for-selected="id" selected="[[home]]">
-		<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
-		<home2-home id="home2" lang="[[lang]]"></home2-home>
-	</iron-pages>
+	<div class="top">
+		<spinner-box id="spin"></spinner-box>
+		<reqerr-panel id="reqerr" lang="[[lang]]"></reqerr-panel>
+		<iron-pages class="top" attr-for-selected="id" selected="[[home]]">
+			<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
+			<home2-home id="home2" lang="[[lang]]"></home2-home>
+		</iron-pages>
+	</div>
 </template>
 <script>
     class AppHomes extends Polymer.Element {
 		static get is() { return "app-homes"; }
 		static get properties() { return { home: {String, value:"home1"}, lang:{type:String, value:App.lang} } ; }
-      	constructor() { super(); this.home = App.home; }
+      	constructor() { 
+      		super(); 
+      		this.home = App.home;
+      	}
       	setLang(lang) { this.lang = lang; }
+      	ready() {
+      		super.ready();
+      		App.globalSpinner = this.$.spin;
+      		App.globalReqErr = this.$.reqerr;
+      		
+      	}
     }
 	customElements.define(AppHomes.is, AppHomes);
 </script>

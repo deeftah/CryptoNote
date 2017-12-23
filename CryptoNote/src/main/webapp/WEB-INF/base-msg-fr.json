@@ -15,18 +15,14 @@
 "404IDX3":"Ressource index.html mal formée : une section <head> non vide est requise",
 "404IDX4":"Ressource index.html mal formée : une section <body> et le tag de fin </html> sont requis",
 
+"SADMINOP":"Opération requérant une clé d''administrateur",
+
+"XRESSOURCECLASS":"Classe [{0}] non trouvée ou sans constructeur par défaut",
+
 "BNAMESPACENO":"Aucune organisation (namespace) déclérée à la configuration",
-"BNAMESPACEPWD":"Organisation (namespace) [{0}] : mot de passe non déclaré à la configuration",
-"BNAMESPACEBASE":"Organisation (namespace) [{0}] : base non déclaré à la configuration",
-"BQMPWD":"Queue Manager [{0}] : mot de passe non déclaré à la configuration",
-"BQMBASE":"Queue Manager [{0}] : base non déclaré à la configuration",
 "XMAILERCFG1":"Deux mailers déclarés ''par défaut''",
 "XMAILERCFG2":"Aucun mailer déclaré ''par défaut''",
 "XMAILERCFG3":"Password requis pour ''mailServer''",
-
-"XRESSOURCEND":"Ressource [{0}] temporairement indisponible (base hors service)",
-"XRESSOURCEMF":"Nom de ressource mal formé [{0}] : devrait se terminer par .appcache ou .wsjs)",
-"XNSNA":"L''application pour [{0}] est temporairement inaccessible",
 
 "BMAILPARAM":"Paramètres du mail incorrects : [{0}]",
 "BMAILNOMAILER":"Nom de mailer non déclaré : [{0}]",
@@ -36,21 +32,47 @@
 
 "XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}] sql:[{3}]\nmessage:[{4}]",
 "XSQLDS":"Datasource pour la base [{0}] non initialisable.\nmessage:[{1}]",
-"XSQLDSNS":"Demande d''un DBProvider pour une base [{0}] non déclarée",
 
-"script":"Erreur d''exécution d''un script dans le navigateur. Code:{0}",
-"exc":"Code:{0} Message:[{1}]",
-"jsonparseurl":"Le retour du serveur [{0}] a une erreur de syntxe JSON",
-"httpget":"Réponse d''erreur du serveur [{0}].",
-"httpget2":"Réponse d''erreur du serveur [{0}]. Status-HTTP:{1} Message:{2}",
-"newbuild":"Une version de L''application ({0}) plus récente que celle qui s'exécute ({1}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
+"X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
+"TIMEOUT":"Dépassement du temps maximum d'''attente dans le navigateur {1}ms pour l''URL {0}",
+"INTERRUPTED":"Fin d''attente dans le navigateur par clic au bout de {1}s pour l'URL {0}",
+"BJSONRESP":"Erreur de syntaxe dans la réponse du serveur pour l''URL [{0}] - Cause : [{1}] ",
+"XHTTP":"Réponse d''erreur inattendue du serveur pour l''URL [{0}]. Status-HTTP:{1} Message:{2}",
+"XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
 "regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
 "regko":"Echec de l''enregistrement auprès du service worker. Scope:[{0}]",
-"reload":"Une version de L''application plus récente que celle qui s'exécute ({0}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
-"cachebuildok":"Build connue du service worker : {1} ({0})",
-"cachebuildko1":"Echec de récupération de la Build connue du service worker",
-"cachebuildko2":"Echec de récupération de la Build connue du service worker : PAS de service worker",
 
+
+"X0":"Exception inattendue sur le serveur [cause : {0}]",
+"TMAXTIME":"Dépassement du temps maximum d'exécution sur le serveur {1}ms pour l''opération {0}",
+"DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
+"BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
+
+"CONTENTION1":"Opération [{0}] : contention sur la base de données. Validation impossible : locks:[{1}]. Réessayer plus tard",
+"CONTENTION2":"Opération [{0}] : contention sur la base de données. Document [{1}] détruit depuis le début de l''opération. Réessayer plus tard",
+"CONTENTION3":"Opération [{0}] : contention sur la base de données. Document [{1}] modifié en base depuis le début de l''opération:. Réessayer plus tard",
+
+"ANSBADNS":"Opération uniquement accessible depuis l''espace de noms [{0}] (pas depuis [{1}])",
+"ANSUNKNOWN":"Espace de noms [{0}] non reconnu",
+"ANSZRES":"Ressource de nom [{0}] sans valeur par défaut dans l'application",
+"ANSEMPTY":"Pas de fichier joint",
+
+"SQMKEY":"Clé d''accès au Queue Manager non reconnue",
+"STASKKEY":"Clé de lancement de tâche non reconnue",
+"BQMJSONTI":"Erreur de syntaxe sur TaskInfo json :[{0}]",
+"BQMOP":"Queue Manager : opération [{0}] inconnue",
+
+"BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
+
+"BEXECSYNCSPARSE":"Opération [{0}] : syncs non parsable",
+
+"BBADOPERATION2":"Opération [{0}] : classe n''étendant pas Operation",
+"BBADOPERATION0":"Opération [{0}] inconnue",
+"BBADOPERATION1":"Opération [{0}] : param non parsable",
+"XGZIPEXC":"Opération [{0}] : gzip du résultat en erreur",
+"XUNGZIPEXC":"Opération [{0}] : ungzip de l''attachement [{0}] en erreur",
+
+"XFILE0":"Erreur I/O sur [{0}]",
 
 "BDOCUMENTCLASS0":"Tentative d''enrigistrement d''une classe de Document vide",
 "BDOCUMENTCLASS1":"Tentative d''enrigistrement d''une classe de Document [{0}] n''étendant pas Document",
@@ -63,14 +85,9 @@
 "BDOCUMENTCLASS9":"Classe de document [{0}] : constructeur non accessible",
 "BDOCUMENTCLASS10":"Classe d''item [{0}] : constructeur non accessible",
 "BDOCUMENTITEM":"Classe d''item [{0}] non instantiable",
-"BITEMJSONPARSE":"JSON mal formé pour l'''item [{0}]",
 
 "BITEMDETACHED":"Méthode non applicable à un item non attaché à un document (class {0})",
 "BITEMATTACHED":"Méthode non applicable à un item attaché à un document (class {0})",
-"BITEMSTATUSDEL":"Méthode interdite sur un item / document supprimé [{0}]",
-"BITEMSINGL":"Méthode interdite sur un item singleton  [{0}]",
-"BITEMSRAW":"Méthode interdite sur un item raw  [{0}]",
-"BITEMSNRAW":"Méthode interdite sur un item non raw  [{0}]",
 "BITEMCLASS":"Classe d''item [{0}] inconnue",
 "BITEMPRAW":"Méthode ne s'appliquant ni aux items P ni aux raw : classe [{0}]",
 "BITEMCLASSCOL":"Classe d''item collection [{0}] inconnue",
@@ -80,114 +97,8 @@
 "BMIMEBLOB":"BlobStore sans mime pour [{0}] [{1}]",
 "BKEYBLOB":"BlobStore sans nom pour [{0}]",
 
-"BBADOPERATION2":"Opération [{0}] : classe n''étendant pas Operation",
-"BBADOPERATION0":"Opération [{0}] inconnue",
-"BBADOPERATION1":"Opération [{0}] : param non parsable",
-"XGZIPEXC":"Opération [{0}] : gzip du résultat en erreur",
-"XUNGZIPEXC":"Opération [{0}] : ungzip de l''attachement [{0}] en erreur",
-
-"ODOMAINOFF":"Serveur en maintenance : [{0}]. Réessayer plus tard",
-"SADMINOP":"Opération requérant une clé d''administrateur",
-
-"ANSBADNS":"Opération uniquement accessible depuis l''espace de noms [{0}] (pas depuis [{1}])",
-"ANSSRVCFG":"Paramètre srvcfg de la configuration [{0}] non parsable",
-"ANSUNKNOWN":"Espace de noms [{0}] non reconnu",
-"ANSZRES":"Ressource de nom [{0}] sans valeur par défaut dans l'application",
-"ANSEMPTY":"Pas de fichier joint",
-
-"SQMKEY":"Clé d''accès au Queue Manager non reconnue",
-"STASKKEY":"Clé de lancement de tâche non reconnue",
-"BQMJSONTI":"Erreur de syntaxe sur TaskInfo json :[{0}]",
-"BQMOP":"Queue Manager : opération [{0}] inconnue",
-"XQMPOST":"Queue Manager : post [{0}] ",
-
-"BTASKDOCUMENTID":"ID de task mal formée [{0}]",
-
-"X0":"Exception inattendue",
-"XMAXTIME":"Dépassement du temps maximum d'exécution pour l''opération : [{0}]",
-"DBUILD":"Version d''application [{0}] incompatible avec celle du serveur [{1}]",
-"BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
-
-"BDOCUMENTCACHE0":"Demande d''un document d''identifiant null",
-
-
-"BUPDDIFF1":"Mise à jour différée sans id et/ou item",
-"BUPDDIFF2":"Mise à jour différée : item sans classe connue [{0}]",
-"BUPDDIFF3":"Mise à jour différée  : item de classe [{0}] sans key",
-"BDELDOC":"ExecContext.deleteDoc() sans id",
-
-
-
-
-"ST0":"en création", 
-"ST1":"actif", 
-"ST2":"zombie", 
-"ST3":"résilié (en cours)", 
-"ST4":"résilié", 
-"ST5":"inconnu",
-
-"RA0":"lecture/écriture",
-"RA1":"lecture/destruction",
-"RA2":"lecture seulement",
-"RA3": "bloqué",
-"RA4": "N/A",
-
-"MC0":"404 non trouvé",
-"MC1":"incohérence applicative", 
-"MC2":"bug", 
-"MC3":"exception inattendue", 
-"MC4":"build retardée", 
-"MC5":"contention sur les données", 
-"MC6":"espace off", 
-"MC7":"session non autorisée",
-
-"XRESSOURCEURL":"Ressource /WEB-INF/config.json : url absente ou vide ou incorrecte",
-"XRESSOURCECLASS":"Classe [{0}] non trouvée ou sans constructeur par défaut",
-"XDBACCESSTEST":"Test d'accès à [z] {0} : [{1}]",
-"XDBPROVIDERFAILURE":"Echec d''instanciation du dbProvider",
-
-"BBUG":"Bug",
-"BEXECSYNCSPARSE":"Opération [{0}] : syncs non parsable",
-"CONTENTION1":"Opération [{0}] : contention sur la base de données. Validation impossible : locks:[{1}]. Réessayer plus tard",
-"CONTENTION2":"Opération [{0}] : contention sur la base de données. Document [{1}] détruit depuis le début de l''opération. Réessayer plus tard",
-"CONTENTION3":"Opération [{0}] : contention sur la base de données. Document [{1}] modifié en base depuis le début de l''opération:. Réessayer plus tard",
-"SQM":"Opération requérant un privilège de Queue Manager [{0}]",
-	
-"X1":"URL d'opération incorrecte, op absent : [{0}]",
-	
-"BHEADERJSONPARSE":"JSON mal formé pour le header du document [{0}]",
-"BDSTATEJSONPARSE":"JSON mal formé pour le DState [{0}]",
-	
-"BGDSTATEJSONPARSE":"JSON mal formé pour le GDState [{0}]",
-	
-"ADOCINE":"Document inexistant [{0}]",
-	
-	
-"BDOCUMENTIDCLASS6":"Document [{0}] mal identifié : groupid null/vide",
-"BDOCUMENTIDCLASS7":"Document [{0}] mal identifié : docid null/vide",
-"BDOCUMENTIDCLASS8":"Document [{0}] mal identifié : groupid [{1}] invalide ou trop long (32c)",
-"BDOCUMENTIDCLASS9":"Document [{0}] mal identifié : docid [{1}] invalide ou trop long (200c)",
-"BDOCUMENTIDCLASS10":"Document  mal identifié : classe [{0}] ne correspondant pas à celle d''un document",
-"BDOCUMENTIDCLASS11":"Document  mal identifié : id null ou vide",
-"BDOCUMENTIDCLASS12":"Document  mal identifié : id [{0}] ne respectant pas la syntaxe \"groupid/docid@classname\"",
-	
-	
-
-
-
-
-"XFILE0":"Erreur I/O sur [{0}]",
-	
-"XDSCFG":"Erreur de syntaxe dans /WEB-INF/dbconfig.json",
-"XDS0":"Echec Datastore - opération [{0}] - namespace  [{1}] - détail [{2}]",
-"XDSGZIP":"GZIP de l''entité [{0}]",
-"XDSUNGZIP":"UNGZIP de l''entité [{0}]",
-"XDSENQUE":"Echec de la mise en queue de task [{0} - {1}]",
-"APHOTOFAILURE":"Echec du redimmensionnement de l''image",
-"XBLOBDS0":"Echec de stockage du blob [{0}]",
-"XBLOBDS1":"Echec de lecture du blob [{0}]",
-"XBLOBDS2":"Echec de desctruction du blob [{0}]",
-
+"reqStarted":"envoi au serveur",
+"reqRec":"reçus %0 de %1",
 
 "RIEN":"rien"
 }

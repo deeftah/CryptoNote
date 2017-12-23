@@ -1,6 +1,5 @@
 package fr.cryptonote.base;
 
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,7 +82,6 @@ public class ExecContext {
 	private InputData inputData;
 	private Operation operation;
 	protected int phase = 0; // 0:initiale 1:operation 2:validation 3:afterwork 4:sync 5:finale
-	private StringWriter sw;
 	private DBProvider dbProvider;
 	private HashMap<String,Object> appData = new HashMap<String,Object>();
 	private long ti = 0L;
@@ -110,19 +108,13 @@ public class ExecContext {
 	public Object getAppData(String name) {	return appData.get(name); }
 	public void setAppData(String name, Object obj) { appData.put(name, obj); }
 	public Set<String> getAppDataNames() { return appData.keySet(); }
-
-	public final boolean hasTraces() { return sw == null; }
-	public final String traces() { return sw == null ? "" : sw.toString();}
-	public void trace(String msg){
-		if (isTask()) {
-			if (sw == null) { sw = new StringWriter(); sw.append(Stamp.fromEpoch(ti).toString()).append(" - Start\n"); }
-			sw.append((System.currentTimeMillis() - ti) + " - ").append(msg).append("\n");
-		}
-	}
 	
 	public DBProvider dbProvider() throws AppException{	if (dbProvider == null)	dbProvider = BConfig.getDBProvider(nsqm.base()); return dbProvider; }
 
-	public void maxTime() throws AppException { if (!isDebug && (System.currentTimeMillis() - ti) > maxTime) throw new AppException("XMAXTIME", operationName()); }
+	public void maxTime() throws AppException { 
+		if (!isDebug && (System.currentTimeMillis() - ti) > maxTime) 
+			throw new AppException("TMAXTIME", operationName(), "" + maxTime); 
+	}
 
 	void closeAll() { if (dbProvider != null) dbProvider.closeConnection(); }
 		
@@ -342,7 +334,6 @@ public class ExecContext {
 		}
 		
 		phase = 5;
-		if (hasTraces()) trace("End");
 		cs[4] += (int)(System.currentTimeMillis() - ti);		
 		stats(nsqm.code, operationName(), cs);
 		return result;

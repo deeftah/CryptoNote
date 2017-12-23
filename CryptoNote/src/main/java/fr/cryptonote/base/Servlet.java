@@ -410,36 +410,35 @@ public class Servlet extends HttpServlet {
 			if (r.isTask)
 				respTask(r, inp.taskInfo, null);
 			else 
-				writeResp(r.resp, 200, result);
+				writeResp(r.resp, 200, result, r.build);
 		} catch (Throwable t){
 			AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
-			if (r.isTask) ex.error().addDetail(r.exec.traces());
 			r.exec.closeAll();
 			result = new Result();
 			if (r.isTask)
-				respTask(r, inp.taskInfo, ex.error());
+				respTask(r, inp.taskInfo, ex);
 			else {
-				result.text = inp.isGet ? ex.error().toString() : ex.error().toJSON();
-				result.mime = inp.isGet ? "text/plain" : "application/json";
-				writeResp(r.resp, ex.error().httpStatus, result);
+				result.text = ex.toJson();
+				result.mime = "application/json";
+				writeResp(r.resp, ex.httpStatus(), result, r.build);
 			}
 		}
 	}
 
 	/********************************************************************************/
-	private void respTask(ReqCtx r, TaskInfo ti, AppException.Error err) {
-		r.resp.setStatus(err == null ? 200 : err.httpStatus);
+	private void respTask(ReqCtx r, TaskInfo ti, AppException err) {
+		r.resp.setStatus(err == null ? 200 : err.httpStatus());
 		try {
 			DBProvider provider = BConfig.getDBProvider(r.nsqm.base).ns(r.nsqm.code);
 			if (err == null)
 				provider.removeTask(ti.ns, ti.taskid);
 			else
-				provider.excTask(ti.ns, ti.taskid, err.minor, err.toJSON(), Stamp.fromNow(BConfig.TASKRETRIESINMIN(ti.retry - 1) * 60000).stamp());
+				provider.excTask(ti.ns, ti.taskid, err.code, err.toJson(), Stamp.fromNow(BConfig.TASKRETRIESINMIN(ti.retry - 1) * 60000).stamp());
 		} catch (Exception e) { }
 	}
 
 	/********************************************************************************/
-	private void writeResp(HttpServletResponse resp, int status, Result r){
+	private void writeResp(HttpServletResponse resp, int status, Result r, int build){
 		resp.setStatus(status);
 		if (r == null || r.isEmpty())
 			r.out = new Object();
@@ -470,6 +469,7 @@ public class Servlet extends HttpServlet {
 		if (r.mime == null)
 			r.mime = "application/octet-stream";
 		if (r.bytes != null){
+			resp.addHeader("build", "" + build);
 			resp.setContentType(r.mime);
 			resp.setContentLength(r.bytes.length);
 			if (r.encoding != null)

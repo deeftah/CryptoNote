@@ -1,7 +1,5 @@
 package fr.cryptonote.base;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -59,16 +57,6 @@ public class Document {
 				return descr().defaultFilter();
 		}
 		
-		public static Document.Id fromURL(String url) throws AppException {
-			try {
-				Document.Id id = new Document.Id(URLDecoder.decode(url == null ? "" : url, "UTF-8"));
-				if (id.descr == null) throw new AppException("BTASKDOCUMENTID", url);
-				return id;
-			} catch (UnsupportedEncodingException e) {
-				throw new AppException("BTASKDOCUMENTID", url);
-			}
-		}
-
 	}
 
 	/********************************************************************************/

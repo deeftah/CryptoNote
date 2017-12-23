@@ -1,32 +1,24 @@
 /*****************************************************/
-export class StringBuffer {
-	constructor() { this.buffer = []; }
-	append(string) { this.buffer.push(string); return this; }
-	toString() { return this.buffer.join(""); }
-	join(arg) { return this.buffer.join(arg); }
-	isEmpty() { return this.buffer.length != 0; }
-	clear() { this.buffer = []; }
-}
-
-/*****************************************************/
-export class Err {
-	static err(e, name, phase, message, detail){
-		if (e && e instanceof Err) return e;
-		if (!e) return new Err(name, phase, message, detail);
-		const code = e.code ? e.ced : "?";
-		const msg = e.message ? e.message : "?";
-		if (!message) message = "";
-		message += App.format("exc", code, msg);
-		return new Err(name ? name : "script", phase ? phase : -1, message, detail, e.stack);
+class ReqErr {
+	constructor(code, phase, message, detail) {
+		this.code = code ? "LX" : name;
+		this.phase = phase < -1 || phase > 6 ? 9 : phase;
+		this.message = message ? message : this.code;
+		this.detail = detail ? detail : [];
 	}
 	
-	constructor(name, phase, message, detail, stack) {
-		this.name = name ? "script" : name;
-		this.phase = phase ? phase : -1;
-		this.message = message ? message : this.name;
-		this.detail = detail ? detail : [];
-		this.stack = stack;
-	}
+	/*
+	 * Phase 
+	 * -1 : connexion au serveur
+	 * 0 : avant opération dans le serveur
+	 * 1 : dans l'opération (work)
+	 * 2 : au cours de la validation
+	 * 3 : après validation (afterwork)
+	 * 4 : au cours de la synchronisation
+	 * 5 : lors de l'envoi de la réponse
+	 * 6 : dans le script d'interprétation de la réponse
+	 * 9 : inconnu entre 0 et 5
+	 */
 	
 	/*
 	 * N : notfound -> 1 : 404 : not found. Document ou attachment non trouvé
@@ -37,17 +29,13 @@ export class Err {
 	 * C : contention -> 5 : 400 : trop de contention sur la base de données
 	 * O : espace off -> 6 : 400 : espace en maintenance
 	 * S : session non autorisée -> 7 : 400 : ou résiliée ou trop longue ...
-	 * s : erreur d'exécution d'un script
+	 * T : timeout -> 8
+	 * I : interrupted -> 9
+	 * L : erreur d'exécution d'un script local (avant ou après) -> 0
 	 */
 	major() {
-		const m = this.code.charAt(0);
-		return "NABXDCOS".indexOf(m) != -1 && this.phase >= 0 ? m : "s"
-	}
-		
-	log(onPanel) { 
-		const m = this.name + this.message ? " -" + this.message : "";
-		if (onPanel && App.TracePanel) App.TracePanel.trace(m); 
-		return new Date().format("Y-m-d H:i:s.S") + " - " + m + (this.stack ? "\n" + this.stack : "");
+		const i = "NABXDCOSTI".indexOf(this.code.charAt(0));
+		return m == -1 ? 0 : m;
 	}
 	
 }
@@ -73,10 +61,13 @@ export class Req {
 		this.hasArgs = false;
 		if (!this.isGet) this.formData = new FormData();
 		this.cred = 0;
+		this.tracker = new Tracker(); // par défaut
 	}
 	
-	setTracker(tracker) { 
-		if (tracker && tracker.onStart && tracker.onError && tracker.onSuccess && tracker.onProgress)
+	setTracker(tracker) {
+		if (!tracker)
+			this.tracker = null;
+		else if (tracker instanceof Tracker)
 			this.tracker = tracker; 
 		return this; 
 	}
@@ -169,14 +160,14 @@ export class Req {
 				if (this.tracker == null)
 					this.resolve(resp);
 				else
-					this.tracker.onSuccess(this, resp);
+					this.tracker.onSuccess(resp);
 			}).catch(err => {
 				this.currentRetry.req = null;
 				this.currentRetry= null;
 				if (this.tracker == null)
 					this.reject(err);
 				else
-					this.tracker.onError(this, err);
+					this.tracker.onError(err);
 			});
 		});
 	}
@@ -200,10 +191,11 @@ class Retry {
 	send() {
 		const tracker = this.req.tracker;
 		const url = this.req.url.toString();
+		const t0 = new Date().getTime();
 		return Promise.race([
 			new Promise((resolve, reject) => {
 				this.tim = setTimeout(() => {
-						reject(Err.err(null, "httpget", -1, App.format("httpgetto", url, Math.round(this.req.TIME_OUT_MS / 1000)))); 
+						reject(new ReqErr("TIMEOUT", 9, App.format("TIMEOUT", url, Math.round(this.req.TIME_OUT_MS / 1000)))); 
 					},	
 					this.req.TIME_OUT_MS); 
 			}),
@@ -217,14 +209,14 @@ class Retry {
 						if (this.tim) clearTimeout(this.tim);
 						if (this.done) return;
 						this.done = true;
-						const er = this.killed ? Err.err(e, "interrupted", -1, App.format("interrupted", url))
-								: Err.err(e, "httpget", -1, App.format("httpget", url)); 
-						console.error(er.log()); 
+						const d = new Date().getTime() - t0;
+						const er = this.killed ? new ReqErr("INTERRUPTED", 9, App.format("INTERRUPTED", url, d), [url, d])
+								: new ReqErr("X1", 9, App.format("X1", url, e.message), [url, e]); 
 						reject(er);
 					}
-					this.xhr.onerror = (e) => {	
+					this.xhr.onprogress = (e) => {	
 						if (this.done || !tracker) return;
-						tracker.onProgress(this.req, e.loaded, e.total);
+						tracker.onProgress(e.loaded, e.total);
 					}
 					this.xhr.onreadystatechange = () => {
 						if (this.done) return;
@@ -233,11 +225,13 @@ class Retry {
 						this.done = true;
 						
 						if (this.killed) {
-							const er = Err.err(e, "interrupted", -1, App.format("interrupted", url)); 
-							console.error(er.log()); 
+							const d = new Date().getTime() - t0;
+							const er = new ReqErr("INTERRUPTED", 9, App.format("INTERRUPTED", url, d), [url, d]);
 							reject(er);
 						};
 
+						const b = this.xhr.getResponseHeader("build");
+						if (b) App.srvbuild = parseInt(b);
 						const ct = this.xhr.getResponseHeader("Content-Type");
 						let contentType = ct;
 						let charset = null;
@@ -251,13 +245,13 @@ class Retry {
 						const isJson = contentType && contentType == "application/json" ;
 						const uint8 = this.xhr.response ? new Uint8Array(this.xhr.response) : null;
 						let jsonObj = null;
+						let text;
 						if (isJson) {
 							try {
-								const text = uint8 ? Util.toUtf8(uint8) : "{}";
+								text = uint8 ? Util.toUtf8(uint8) : "{}";
 								jsonObj = JSON.parse(text);
 							} catch (e) {
-								const er = Err.err(e, "jsonparseurl", -1, App.format("jsonparseurl", url)); 
-								console.error(er.log()); 
+								const er = new ReqErr("BJSONRESP", 6, App.format("BJSONRESPOK", url, e.message), [url, text]); 
 								reject(er);
 							}
 						}
@@ -267,9 +261,8 @@ class Retry {
 							return;
 						} 
 						
-						const er = jsonObj ? error = new Err(jsonObj.name, jsonObj.phase, jsonObj.message, jsonObj.detail)
-							: new Err("httpget", -1, App.format("httpget2", this.urlx, this.xhr.status, this.xhr.statusText));
-						console.error(er.log());
+						const er = jsonObj ? error = new ReqErr(jsonObj.code, jsonObj.phase, jsonObj.message, jsonObj.detail)
+							: new ReqErr("XHTTP", 9, App.format("XHTTP", url, this.xhr.status, this.xhr.statusText), [url, this.xhr.status, this.xhr.statusText]);
 						reject(er);
 					}
 					if (this.req.isGet)
@@ -278,8 +271,7 @@ class Retry {
 						this.xhr.send(this.req.formData);
 				} catch(e) {
 					if (this.tim) clearTimeout(this.tim);
-					const er =  new APP_Error.err(e, "httpget", -1, APP.format("httpget", url)); 
-					console.error(er.log()); 
+					const er =  new ReqErr("XSEND", -1, APP.format("XSEND", url, e.message), [url, e]); 
 					reject(er);
 				}
 		})
@@ -287,8 +279,75 @@ class Retry {
 	}
 }
 App.Req = Req;
+
+/*****************************************************/
+class Tracker {
+	constructor(reqErr, spinner){
+		this.reqErr = reqErr ? reqErr : App.globalReqErr;
+		this.spinner = spinner ? spinner : App.globalSpinner;
+	}
+	
+	onStart(request) {
+		this.request = request;
+		this.spinner.start(this.request, App.lib("reqStarted"));
+	}
+	
+	onProgress(loaded, total){
+		this.spinner.progress(App.format("reqRec", Util.editPC(loaded, total), Util.editVol(total)));
+	}
+	
+	onSuccess(resp) {
+		this.spinner.stop();
+		this.request.resolve(resp);
+	}
+	
+	onError(err) {
+		this.spinner.stop();
+		if (err.code == "DBUILD") {
+			Util.reload(App.srvbuild);
+			return;
+		}
+		if (request && request.noCatch) {
+			if (request.noCatch.indexOf(err.code + "") != -1) {
+				this.request.reject(err);
+				return;
+			}
+		}
+		this.reqErr.open(this, err);
+	}
+	
+	onRetry() {
+		this.spinner.start(this.request, App.lib("reqStarted"));
+		this.request.go();
+	}
+	
+	onReturnToApp(err) {
+		this.request.reject(err);		
+	}
+
+}
+App.Tracker = Tracker;
+
 /*****************************************************/
 export class Util {	
+	static editPC(n1, n2){
+		if (n2 <= 0 || n1 >= n2) return "100%";
+		if (!n1 || n1 < 0) return "0%";
+		return "" + Math.round((n1 * 100) / n2) + "%";
+	}
+	
+	static editVol(v) {
+		if (!v || v <= 0) return "0o";
+		v = Math.round(v);
+		if (v < 1000) return "" + v + "o";
+		const s = "" + v;
+		if (v < 10000) return s.substring(0,1) + "," + s.substring(1,3) + "Ko";
+		if (v < 100000) return s.substring(0,2) + "," + s.substring(2,3) + "Ko";
+		if (v < 1100000) return s.substring(0,1) + "," + s.substring(1,3) + "Mo";
+		if (v < 10000000) return s.substring(0,2) + "," + s.substring(2,3) + "Mo";
+		return s.substring(0,3) + "Mo";
+	}
+	
 	static register() {
 		// Pour Apple et Edge 
 		if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
@@ -305,6 +364,15 @@ export class Util {
 			this.checkSrvVersion();
 	}
 
+	/*
+	 * Réservé aux messages fonctionnels (qui apparaissent à l'écran (sauf si notOnPanel est true)
+	 * Usage : console.log(Util.log("Mon beau message"));
+	 */
+	static log(message, notOnPanel) { 
+		if (!notOnPanel && message && App.TracePanel) App.TracePanel.trace(message); 
+		return new Date().format("Y-m-d H:i:s.S") + " - " + message;
+	}
+
 	static toUtf8(bytes) { return bytes ? this.decoder.decode(bytes) : ""; }
 
 	static reload(b) {
@@ -314,7 +382,14 @@ export class Util {
 		}, 3000);		
 	}
 
-	/*
+
+	static bye() {
+		setTimeout(function() {
+			const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
+			window.location = App.reloadUrl() + "bye.html?" + encodeURI(JSON.stringify(x));
+		}, 3000);		
+	}
+/*
 	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
 	 */
 	static updCache(){
@@ -331,6 +406,7 @@ export class Util {
 			new Req(true).setUrl(notns ? "../ping" : "ping").go()
 			.then(r  => {
 				App.offline = false;
+				App.srvbuild = r.b;
 				resolve(r);
 			}).catch(e => {
 				App.offline = true;
@@ -370,7 +446,7 @@ export class Util {
 		.then(reg => { 
 			console.log(App.format("regok", js, reg.scope));
 		}).catch(e => {
-			const er = Err.err(e, "regko", js); console.error(er.log() + "\n" + e.stack); 
+			console.log(App.format("regko", js, reg.scope));
 		});
 	}
 
@@ -672,5 +748,5 @@ export class B64 {
 		console.log((t2 - t1) + "ms");
 	}
 }
-
+App.B64 = B64;
 /*****************************************************/

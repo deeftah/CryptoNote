@@ -1,4 +1,5 @@
-Vérifier tous les messages (inutiles et oubliés)
+reqerr-panel à compléter / tester
+
 Doc serveur à ajuster
 Test / exemple
 
@@ -22,6 +23,3 @@ En cas de sortie en exception :
 - le code de l'exception exc est enregistré.
 - son détail complet (et stack) est enregsitré en detail.
 - son indice de retry est incrémenté. Cet indice est remis à 0 à chaque point de reprise sorti en succès, exc et detail étant remis à null.
-
-Ecrire un tracker qui gère les erreurs et utilise spinner-box.
- 

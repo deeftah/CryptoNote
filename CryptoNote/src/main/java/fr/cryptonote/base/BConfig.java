@@ -121,7 +121,7 @@ public class BConfig {
 					String s = d.get(k);
 					try { if (!dic.containsKey(k)) dic.put(k,  new MessageFormat(s));
 					} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEMSGFMT", n, k)); }
-					if (!dx.containsKey(k)) dx.put(k, s);
+					if (!dx.containsKey(k)) dx.put(k, s.replaceAll("''", "'"));
 				}
 			} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEJSONPARSE", n, ex.getMessage())); }
 		}

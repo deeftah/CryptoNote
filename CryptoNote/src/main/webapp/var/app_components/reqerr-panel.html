@@ -1,0 +1,71 @@
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-from-right-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-right-animation.html">
+
+
+<dom-module id="reqerr-panel">
+<template>
+	<style is="custom-style" include="iron-flex iron-flex-alignment">
+		paper-dialog.size-position-right-panel { margin:0 !important;
+			position:fixed; top:0; right:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
+	</style>
+    <style>
+	  	:host { margin:0; padding:0; }
+	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; }
+	  	:host .bar { padding:0.5rem 1rem; margin:0; background-color:white; @apply --cf-bold; font-size:1.2rem;
+			color:var(--paper-orange-900); border-bottom: 2px solid var(--paper-orange-900);
+		}	
+	  	:host .body { overflow-y:auto; @apply --std-reg;}
+	</style>
+	<paper-dialog id="panel" class="size-position-right-panel" modal entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
+	<div class="top layout vertical flex-start">
+		<div class="bar">[[topInfo]]</div>
+		<div class="body layout vertical flex flex-start">
+		(panel à écrire)
+		</div>
+	</div>
+	</paper-dialog>
+</template>
+<script>
+	class ReqerrPanel extends Polymer.Element {
+		static get is() { return "reqerr-panel"; }
+      
+		static get properties() { return {
+        	  lang:{type:String, value:App.lang},
+        	  topInfo:{type:String, value:"?"},
+          };
+		}
+		
+		constructor() {
+			super();
+		}
+		
+		open(tracker, err) {
+			this.tracker = tracker;
+			this.err = err;
+			this.$.panel.open();
+			// TODO - préparer le panel
+		}
+		
+		onRetry() {
+			this.close();
+			this.tracker.retry();
+		}
+		
+		onReturnToApp(err) {
+			this.close();
+			this.tracker.onReturnToApp(this.err);		
+		}
+		
+		onBye() {
+			this.close();
+			App.Util.bye();
+		}
+
+		close() { this.$.panel.close(); }
+		
+	}
+	customElements.define(ReqerrPanel.is, ReqerrPanel);
+</script>
+</dom-module>

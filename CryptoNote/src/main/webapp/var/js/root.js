@@ -4,6 +4,7 @@ class App {
 		this.home = "index";
 		this.mode = 1;
 		this.buildAtPageGeneration = 0;
+		this.srvbuild = 0;
 		this.contextpath = ""; 
 		this.namespace = ""; 
 		this.mode = 0; 
@@ -155,6 +156,15 @@ Date.prototype.compact = function(now) {
 	}
 	res += "" + (h < 10 ? '0' + h : h) + ":" + (m < 10 ? '0' + m : m);
 	return res;
+}
+/*****************************************************/
+class StringBuffer {
+	constructor() { this.buffer = []; }
+	append(string) { this.buffer.push(string); return this; }
+	toString() { return this.buffer.join(""); }
+	join(arg) { return this.buffer.join(arg); }
+	isEmpty() { return this.buffer.length != 0; }
+	clear() { this.buffer = []; }
 }
 
 /*****************************************************/
