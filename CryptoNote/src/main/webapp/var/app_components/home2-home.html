@@ -11,7 +11,7 @@
   <style include="shared-styles"></style>
     <style>
 	  	:host { font-family: var(--font-std); }
-	  	:host .cf {@apply --cf-lite; font-size:1.2rem; }
+	  	:host .cf {@apply --cf-lite; font-size:1.2rem; color:var(--mybg-color);}
 	  	:host .ic1 {height:3rem; width:3rem; color:red; }
   </style>
   	<div class="cf">[[bonjour]] <b>[[owner]] [[build]]</b>'s name-tag element.</div>
@@ -26,9 +26,10 @@
 		<spinner-box id="spin"></spinner-box>
 		<div>
 			<iron-icon icon="mail"></iron-icon>
-		  	<button on-click="ping">Ping</button>&nbsp;
-		  	<button on-click="bover">Bower.json</button><span>[[pingres]]</span>&nbsp;
-		  	<button on-click="checkSrvVersion">Check Version</button>
+		  	<button on-tap="ping">Ping</button>&nbsp;
+		    <button on-tap="changeTheme">Change theme</button>
+		  	<button on-tap="bover">Bower.json</button><span>[[pingres]]</span>&nbsp;
+		  	<button on-tap="checkSrvVersion">Check Version</button>
 		</div>
 	   <a href="bower.json" target="_blank">Lien (relatif) vers bower.json!</a><br>
 	   <a href="[[lkbower]]" target="_blank">Lien (absolu) vers bower.json!</a><br>
@@ -48,6 +49,9 @@
         	lkbower: {type:String, value:App.baseUrl(1) + "bower.json"},
         	lkping: {type:String, value:App.baseUrl() + "ping"}
           };
+      }
+      changeTheme() {
+    	  App.appHomes.changeTheme();
       }
       constructor() {
         super();

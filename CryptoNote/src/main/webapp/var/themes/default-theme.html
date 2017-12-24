@@ -3,7 +3,6 @@
 	/* Define a document-wide default—will not override a :host rule in  */
 	html {
 		font-size: 14px;
-		--mybg-color : lightgrey;
 		--font-mono : 'Roboto Mono';
 		--font-std : 'Roboto';
 		--font-cf : 'Comfortaa';
@@ -12,6 +11,10 @@
 		--cf-bold : { font-family:var(--font-cf); font-weight:700; font-size:1rem;};
 		--std-reg : { font-family:var(--font-std); font-weight:400; font-size:1rem;};
 		--std-bold : { font-family:var(--font-std); font-weight:700; font-size:1rem;};
+		
+		--mybg-color : lightgrey;
+		--c1-gen : { color : var(--mybg-color); font-size: 2rem; }
+		
 	}
 
 	@media (max-width: 900px) {

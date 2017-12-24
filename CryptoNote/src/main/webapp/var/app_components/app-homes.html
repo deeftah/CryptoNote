@@ -20,6 +20,7 @@
 		<iron-pages class="top" attr-for-selected="id" selected="[[home]]">
 			<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
 			<home2-home id="home2" lang="[[lang]]"></home2-home>
+			<div id="blank"></div>
 		</iron-pages>
 	</div>
 </template>
@@ -30,6 +31,7 @@
       	constructor() { 
       		super(); 
       		this.home = App.home;
+      		App.appHomes = this;
       	}
       	setLang(lang) { this.lang = lang; }
       	ready() {
@@ -38,6 +40,14 @@
       		App.globalReqErr = this.$.reqerr;
       		
       	}
+      	setHome(home) {
+      		this.home = home;
+      	}
+      	changeTheme() {
+      	  Polymer.updateStyles({
+     			"--mybg-color" : "green"
+      		});
+       	}
     }
 	customElements.define(AppHomes.is, AppHomes);
 </script>
