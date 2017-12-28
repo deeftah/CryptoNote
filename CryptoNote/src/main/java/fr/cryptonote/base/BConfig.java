@@ -20,12 +20,13 @@ public class BConfig {
 	private static final String BASECONFIG = "/WEB-INF/base-config.json";
 	private static final String APPCONFIG = "/WEB-INF/app-config.json";
 	private static final String PASSWORDS = "/WEB-INF/passwords.json";
-	private static final String APPDICS = "/WEB-INF/app-msg-";
-	private static final String BASEDICS = "/WEB-INF/base-msg-";
+	private static final String GENDICS = "/var/etc/";
+	private static final String APPDICS = "/app-msg.json";
+	private static final String BASEDICS = "/base-msg.json";
 	private static final String BUILDJS = "/var/js/build.js";
 	static final String SWJS = "/var/js/sw.js";
 	static final String INDEX = "/var/index.html";
-	static final String MT = "/var/js/mimetypes.json";
+	static final String MT = "/var/etc/mimetypes.json";
 
 	static class TxtDic extends HashMap<String,String> { 
 		private static final long serialVersionUID = 1L;			
@@ -38,7 +39,6 @@ public class BConfig {
 	private static MFDic mfDic0 = new MFDic();
 	private static MFDic mfDic1 = new MFDic();
 	private static MFDic[] mfDics = {mfDic0, mfDic1};
-	private static HashMap<String,TxtDic> exportDics = new HashMap<String,TxtDic>();
 
 	static {
 		mfDic0.put("XSERVLETCONFIG", new MessageFormat("Classe de configuration d'a n'est pas donnée en paramètre dans web.xml"));
@@ -72,10 +72,10 @@ public class BConfig {
 		mfDic1.put("XDBPROVIDERFACTORY", new MessageFormat("Class [{0}] DBProvider : not found or not having a static getProvider(String) method"));
 	}
 		
-	public static final String format(String code, String... args) { return _format(ExecContext.current().iLang(), code, args); }
-	public static final String formatLang(String lang, String code, String... args) { return _format(lang(lang), code, args); }
-	public static final String label(String code) { return _label(ExecContext.current().iLang(), code); }
-	public static final String label(String lang, String code) { return _label(lang(lang), code); }
+	public static final String format(String code, String... args) { ExecContext ec = ExecContext.current(); return _format(ec.iLang(), ec.nsqm(), code, args); }
+	public static final String formatLang(String lang, String code, String... args) { ExecContext ec = ExecContext.current(); return _format(lang(lang), ec.nsqm(), code, args); }
+	public static final String label(String code) { ExecContext ec = ExecContext.current(); return _label(ec.iLang(), ec.nsqm(), code); }
+	public static final String label(String lang, String code) { ExecContext ec = ExecContext.current(); return _label(lang(lang), ec.nsqm(), code); }
 
 	private static class DefMsg {
 		@SuppressWarnings("unused") public String code;
@@ -83,15 +83,29 @@ public class BConfig {
 		public DefMsg(String code, String[] args) { this.code = code; this.args = args; }
 	}
 
-	static final String _format(int il, String code, String... args) {
-		MessageFormat mf = mfDics[il].get(code);
-		if (mf == null && il != 0) mf = mfDics[0].get(code);
+	private static MessageFormat mf(int il, Nsqm nsqm, String code) {
+		MessageFormat mf = null;
+		if (nsqm != null) {
+			mf = nsqm.mfDics[il].get(code);
+			if (mf != null) return mf;
+			if (il != 0) {
+				mf = nsqm.mfDics[0].get(code);
+				if (mf != null) return mf;
+			}
+		}
+		mf = mfDics[il].get(code);
+		return mf != null ? mf : mfDics[0].get(code);
+	}
+	
+	static final String _format(int il, String code, String... args) { return _format(il, null, code, args);}
+	private static final String _format(int il, Nsqm nsqm, String code, String... args) {
+		MessageFormat mf = mf(il, nsqm, code);
 		return mf == null ? JSON.toJson(new DefMsg(code, args)) : mf.format(args);
 	}
 
-	private static final String _label(int il, String code) {
-		MessageFormat mf = mfDics[il].get(code);
-		if (mf == null && il != 0) mf = mfDics[0].get(code);
+	static final String _label(int il, String code, String... args) { return _label(il, null, code);}
+	private static final String _label(int il, Nsqm nsqm, String code) {
+		MessageFormat mf = mf(il, nsqm, code);
 		return mf == null ? JSON.toJson(new DefMsg(code, null)) : mf.toPattern();
 	}
 
@@ -101,18 +115,13 @@ public class BConfig {
 		if (g.langs.length > 1) mfDics[1] = mfDic1;
 		for (int i = 2; i < g.langs.length; i++) mfDics[i] = new MFDic();
 		for(String lang : g.langs) {
-			setMF(lang, APPDICS + lang + ".json");
-			setMF(lang, BASEDICS + lang + ".json");
+			setMF(mfDics, lang, GENDICS + lang + APPDICS);
+			setMF(mfDics, lang, GENDICS + lang + BASEDICS);
 		}
 	}
 	
-	private static void setMF(String lang, String n) throws ServletException {
+	private static void setMF(MFDic[] mfDics, String lang, String n) throws ServletException {
 		Servlet.Resource r = Servlet.getResource(n);
-		TxtDic dx = exportDics.get(lang);
-		if (dx == null){
-			dx = new TxtDic();
-			exportDics.put(lang,  dx);
-		}
 		if (r != null) {
 			try {
 				TxtDic d = (TxtDic)JSON.fromJson(r.toString(), TxtDic.class);
@@ -121,25 +130,36 @@ public class BConfig {
 					String s = d.get(k);
 					try { if (!dic.containsKey(k)) dic.put(k,  new MessageFormat(s));
 					} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEMSGFMT", n, k)); }
-					if (!dx.containsKey(k)) dx.put(k, s.replaceAll("''", "'"));
 				}
 			} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEJSONPARSE", n, ex.getMessage())); }
 		}
 	}
 	
-	private static String normUrl(String url){
-		String s = url == null || url.length() == 0 ? g.defaultUrl : url;
+	private static String normUrl(String ns){
+		String s = g.url;
 		if (!s.endsWith("/")) s += "/";
 		String cp = Servlet.contextPath();
-		if (cp == null || cp.length() == 0) return s;
-		return cp.endsWith("/") ? s + cp : url + cp + "/";
+		if (cp != null && cp.length() != 0) {
+			s += cp;
+			if (!cp.endsWith("/")) s +=  "/";
+		}
+		return ns == null ? s : s + ns + "/";
 	}
+	
+	public static class HelpPage {
+		String p;		// précédente dans la section (null si première)
+		String t;		// page tête de la section (null pour home)
+		String s;		// page suivante dans la section (null si dernière)
+		String[] refs; 	// pages référencées
+	}
+	
 	
 	/*******************************************************************************/
 	public static class Nsqm {
+		int 	onoff;
+
 		String 	code;
 		boolean isQM;
-		String 	url;
 		String 	base;
 		String 	pwd;
 		
@@ -147,16 +167,17 @@ public class BConfig {
 		String 	theme;
 		String 	lang;
 		HashMap<String,String> options;
-		int 	build;
-		int 	off;
+		HashMap<String,Integer> homes;
+		HashMap<String,HelpPage> help;
+		MFDic[] mfDics;
 		
 		int[] 	threads;
 		int 	scanlapseinseconds;
 		
 		public boolean isQM() { return isQM; }
-		public String url() { return normUrl(url); }
 		public String base() { return base != null && base.length() != 0 ? base : g.defaultBase; }
 		public String lang() { return g.langs[BConfig.lang(lang)]; }
+		public String url() { return normUrl(code); }
 		public String pwd() {
 			if (pwd == null || pwd.length() == 0) return "";
 			String px = p == null ? null : p.get(pwd);
@@ -165,10 +186,22 @@ public class BConfig {
 		
 		public String qm() { return qm; }
 		public String theme() { return theme != null || theme.length() != 0 ? theme : "a"; }
-		public int build() { return build; }
-		public int off() { return off; }
+		public int onoff() { return onoff; }
 		public String[] options() { return options == null || options.size() == 0 ? new String[0] : options.keySet().toArray(new String[options.size()]); }
 		public String option(String opt) { return options == null ? null : options.get(opt); }
+		public ArrayList<String> homes(boolean offline) { 
+			ArrayList<String> res = new ArrayList<String>();
+			for(String h : homes.keySet()) {
+				int l = homes.get(h);
+				if ((offline && l > 0) || (!offline && l == 0)) res.add(h);
+			}
+			return res;
+		}
+		public HashMap<String,Integer> homes() { return homes;}
+		
+		public HashMap<String,HelpPage> help() { 
+			return help == null ? g.help : help; 
+		}
 		
 		public int[] threads() { return threads; }
 		public int scanlapseinseconds() { return scanlapseinseconds; }
@@ -176,6 +209,18 @@ public class BConfig {
 		public boolean isPwd(String key) {
 			String sha = Crypto.SHA256b64(key);
 			return sha != null && !sha.equals(pwd());
+		}
+		
+		private void compile() throws ServletException {
+			if (help != null)
+				for(String p : g.help.keySet())
+					if (help.get(p) == null) help.put(p, g.help.get(p));
+			mfDics = new MFDic[g.langs.length];
+			for(int i = 0; i < g.langs.length; i++) {
+				String lg = g.langs[i];
+				setMF(mfDics, lg, "z/" + code + "/" + lg + "/" + BASEDICS);
+				setMF(mfDics, lg, "z/" + code + "/" + lg + "/" + APPDICS);
+			}
 		}
 	}
 
@@ -208,15 +253,15 @@ public class BConfig {
 	private static class BaseConfig {
 		private int 		build;
 		private String 		QM = null;
+		private String 		dbProviderClass = "fr.cryptonote.provider.ProviderPG";
+		private String 		appConfigClass = "fr.cryptonote.app.config";
 		private String 		zone = "Europe/Paris";
 		private String[] 	langs = defaultLangs;
-		private String 		dbProviderClass = "fr.cryptonote.provider.ProviderPG";
 		private String 		defaultBase = "defaultBase";
-		private String 		appConfigClass = "fr.cryptonote.app.config";
 		private boolean 	isDebug = false;
 		private boolean 	isDistrib = true;
 		private boolean 	isMonoServer = false;
-		private String 		defaultUrl = "http://localhost:8080/";
+		private String 		url = "http://localhost:8080/";
 		
 		private int 		TASKMAXTIMEINSECONDS = 1800;
 		private int 		OPERATIONMAXTIMEINSECONDS = 120;
@@ -231,14 +276,14 @@ public class BConfig {
 		private HashMap<String,Nsqm> 		queueManagers;
 		private HashMap<String,Nsqm> 		namespaces;
 		private HashMap<String,S2Storage> 	s2Storages;
-		private HashMap<String,MailerCfg> 		mailers;
+		private HashMap<String,MailerCfg> 	mailers;
+		private HashMap<String,HelpPage>	help;
+		private String[]					themes;
 		
 		private String 		mailServer = "simu://alterconsos.fr/tech/server2.php";
 		private String 		adminMails = "daniel@sportes.fr,domi.colin@laposte.net";
 		private String[] 	emailFilter = {"sportes.fr"};
 		
-		private ArrayList<String> 		homes;
-		private ArrayList<String> 		offlineHomes;
 		private HashMap<String,String> 		shortcuts;
 	}
 
@@ -253,7 +298,7 @@ public class BConfig {
 	public static boolean 		isDistrib() { return g.isDistrib;}
 	public static boolean 		isDebug() { return g.isDebug;}
 	public static boolean 		isMonoServer() { return g.isMonoServer;}
-	public static String 		defaultUrl() { return normUrl(g.defaultUrl); }
+	public static String 		url() { return normUrl(g.url); }
 	public static String 		defaultBase() { return g.defaultBase; }
 
 	public static int 			TASKMAXTIMEINSECONDS() { return g.TASKMAXTIMEINSECONDS;}
@@ -277,16 +322,17 @@ public class BConfig {
 	public static String		password(String code) { return p == null ? null : p.get(code); }
 	public static int			queueIndexByOp(String op) { return appConfig.queueIndexByOp(op); }
 	
-	public static TxtDic 		exportDic(String lang) { return exportDics.get(lang); }
-	public static ArrayList<String>	homes(boolean offline) { return offline ? g.homes : g.offlineHomes;}
+	public static String[]		themes() { return g.themes; };
 	
 	public static Nsqm namespace(String ns, boolean fresh) { 
 		Nsqm x = g.namespaces.get(ns);
-		return x != null && fresh ? NS.fresh(x) : x;
+		if (fresh) x.onoff = OnOff.status(ns, false);
+		return x;
 	}
 	public static Nsqm queueManager(String ns, boolean fresh) { 
 		Nsqm x = g.queueManagers == null ? null : g.queueManagers.get(ns); 
-		return x != null && fresh ? NS.fresh(x) : x;
+		if (fresh) x.onoff = OnOff.status(ns, false);
+		return x;
 	}
 	public static Nsqm nsqm(String nsqm, boolean fresh) { 
 		Nsqm x = namespace(nsqm, fresh); 
@@ -482,7 +528,9 @@ public class BConfig {
 	/****************************************************/
 
 	private static void compile() throws ServletException {	
-		// TODO : Compiler tout 
+		for(Nsqm nsqm : g.namespaces.values()) nsqm.compile();		
+		for(Nsqm nsqm : g.queueManagers.values()) nsqm.compile();
+		
 		boolean defMailer = false;
 		for(MailerCfg m : g.mailers.values()) {
 			if (m.isDefault) {
@@ -492,22 +540,15 @@ public class BConfig {
 		}
 		if (!defMailer) throw exc(null, _format(0, "XMAILERCFG2"));
 		if (password("mailServer") == null) throw exc(null, _format(0, "XMAILERCFG3"));
-		
-		// déclarer Documents et opérations
-//		DocumentDescr.register(NS.NsDoc.class);
-//		Operation.register(NS.NSCfg.class);
-//		Operation.register(NS.NSRes.class);
-//		Operation.register(NS.NSExport.class);
-//		DocumentDescr.register(S2Cleanup.class);
-//				
-//		Operation.register(Document.ListGroups.class);
-//		// Operation.register(Document.ReschedTask.class);
-//		// Operation.register(Document.DocsInfo.class);
-//		// Operation.register(Document.ExportDoc.class);
-//		// Operation.register(Document.ImportDoc.class);
-//		Operation.register(Document.ImportPart.class);
-//		
-//		Operation.register(Mailer.SendMail.class);
+			
+		try {
+			// déclarer Documents et opérations
+			Operation.register(OnOff.GetOnOff.class);
+			Operation.register(OnOff.SetOnOff.class);
+			Operation.register(Mailer.SendMail.class);
+		} catch (Exception e) {
+			throw exc(e, _format(0, "BCONFIGOP"));
+		}
 		
 
 	}

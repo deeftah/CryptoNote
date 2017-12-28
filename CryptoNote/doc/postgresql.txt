@@ -29,6 +29,15 @@ Dans JETTY_RUN/start.ini
 la ligne --module=ext (qui référence JETTY_HOME/modules/ext.mod) indique comment étendre le classpath
  
 /*********************************************************/
+/* une table unique dans la base de référence */
+DROP TABLE IF EXISTS onoff;
+CREATE TABLE onoff (
+  	ns varchar(16) NOT NULL,
+	onoff int NOT NULL,
+	CONSTRAINT onoff_pk PRIMARY KEY (ns)
+);
+ALTER TABLE onoff OWNER TO "docdb";
+
 /* une table unique par base */
 DROP TABLE IF EXISTS dbinfo;
 CREATE TABLE dbinfo (

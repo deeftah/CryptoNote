@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Set;
 
@@ -24,7 +25,6 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import fr.cryptonote.base.BConfig.Nsqm;
-import fr.cryptonote.base.BConfig.TxtDic;
 import fr.cryptonote.provider.DBProvider;
 
 public class Servlet extends HttpServlet {
@@ -34,15 +34,21 @@ public class Servlet extends HttpServlet {
 	private static String contextPath;
 	private static ServletContext servletContext;
 	private static String[] var;
-	private static String[] zres;
+	private static HashMap<String,HashMap<String,String>> zres = new HashMap<String,HashMap<String,String>>();
 
 	public static String contextPath() { return contextPath; }
 	public static String contextPathSlash() { return (contextPath.length() == 0) ? "/" : "/" + contextPath + "/"; }
 	public static boolean hasCP() { return contextPath.length() != 0; }
 	public static String[] var() { return var; }
-	public static String[] zres() { return zres; }
-	public static boolean isZres(String name) { for (String n : zres) if (n.equals(name)) return true; return false; }
-
+	public static HashMap<String,String> zres(String ns) { 
+		HashMap<String,String> x = zres.get(ns); 
+		if (x == null) {
+			x = new HashMap<String,String>();
+			zres.put(ns, x);
+		}
+		return x;
+	}
+	
 	/********************************************************************************/
 	private void lpath(ArrayList<String> var, String root){
 		Set<String> paths = servletContext.getResourcePaths(root);
@@ -50,8 +56,21 @@ public class Servlet extends HttpServlet {
 			for(String s : paths)
 				if (s.endsWith("/"))
 					lpath(var, s);
-				else if (MimeType.mimeOf(s) != null) 
-					var.add(s);
+				else if (MimeType.mimeOf(s) != null) {
+					if (!s.startsWith("/var/z/"))
+						var.add(s);
+					else {
+						int i = s.indexOf('/', 7);
+						if (i != -1) {
+							String ns = s.substring(7, i);
+							String p1 = "/var/z/z" + s.substring(i);
+							String p2 = "/var/z/" + ns + s.substring(i);
+							HashMap<String,String> vz = zres(ns);
+							vz.put(p1, p2);
+						}
+					}
+				}
+		
 	}
 
 	/********************************************************************************/
@@ -68,10 +87,12 @@ public class Servlet extends HttpServlet {
 			lpath(varx, "/var/");
 			var = varx.toArray(new String[varx.size()]);
 			Arrays.sort(var);
-			ArrayList<String> zresx = new ArrayList<String>();
-			for(String x : var) if (x.startsWith("z/"))	zresx.add(x.substring(2));
-			zres = zresx.toArray(new String[zresx.size()]);
-	
+			HashMap<String,String> rz = zres("z");
+			for(String ns : zres.keySet()) {
+				HashMap<String,String> rns = zres(ns);
+				for(String n : rz.keySet())
+					if (rns.get(n) == null) rns.put(n, rz.get(n));
+			}
 			BConfig.startup();			
 			
 			done = true;
@@ -124,7 +145,7 @@ public class Servlet extends HttpServlet {
 			if (shortcut != null) origUri = shortcut;
 			exec = new ExecContext().setLang(this.lang);
 		}
-		
+				
 		void checkNsqm() throws IOException {
 			// namespace/...
 			int i = origUri.indexOf('/');
@@ -148,13 +169,6 @@ public class Servlet extends HttpServlet {
 					fini = true;
 					return;
 				}	
-			} else {
-				if (nsqm.off != 0) {
-					sendText(500, BConfig.format("500OFF", ""+nsqm.off), resp);	
-					fini = true;
-					return;
-				}
-				build += nsqm.build;
 			}
 			exec.setNsqm(nsqm);
 			
@@ -166,7 +180,7 @@ public class Servlet extends HttpServlet {
 					dbInfo = "?";			
 				}
 				StringBuffer sb = new StringBuffer();
-				sb.append("{\"t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":").append(build).append(", \"off\":").append(nsqm.off)
+				sb.append("{\"t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":").append(build).append(", \"off\":").append(nsqm.onoff)
 				.append(", \"db\":\"").append(dbInfo).append("\"}");
 				sendText(0, sb.toString(), resp, "application/json");
 				fini = true;
@@ -179,8 +193,8 @@ public class Servlet extends HttpServlet {
 			String p2 = p1 + "var" + build + "/";
 			StringBuffer sb = new StringBuffer();
 			sb.append("CACHE MANIFEST\n#").append(build).append("\nCACHE:\n");
-			for(String x : BConfig.homes(false)) sb.append(p1).append(x).append(".a\",\n");	
-			for(String x : BConfig.homes(true)) sb.append(p1).append(x).append("_.a\",\n");	
+			for(String x : nsqm.homes(false)) sb.append(p1).append(x).append(".a\",\n");	
+			for(String x : nsqm.homes(true)) sb.append(p1).append(x).append("_.a\",\n");	
 			for(String s : var()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
 			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), "text/cache-manifest"), req, resp);
 			fini = true;
@@ -201,9 +215,11 @@ public class Servlet extends HttpServlet {
 			sb.append("const CONTEXTPATH = \"").append(contextPath).append("\";\n");
 			sb.append("const BUILD = \"").append(BConfig.build()).append("\";\n");
 			sb.append("const NS = \"").append(nsqm.code).append("\";\n");
-			sb.append("let RESSOURCES = [\n");
-			for(String x : BConfig.homes(false)) sb.append(p1).append(x).append("\",\n");	
+			sb.append("const RESSOURCES = [\n");
+			for(String x : nsqm.homes(true)) sb.append(p1).append(x).append("\",\n");	
 			for(String s : var()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
+			HashMap<String,String> rns = zres(nsqm.code);
+			for(String s : rns.keySet()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
 			sb.setLength(sb.length() - 2);
 			sb.append("];\n").append(c.toString());
 			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), " text/javascript"), req, resp);	
@@ -218,9 +234,12 @@ public class Servlet extends HttpServlet {
 			}
 			uri = uri.substring(i + 1);
 			Resource res = null;
-			if (uri.startsWith("z/"))
-				res = NS.resource(nsqm.code, uri.substring(2));
-			if (res == null)
+			if (uri.startsWith("z/")) {
+				HashMap<String,String> rns = zres(nsqm.code);
+				String subst = rns.get("/var/z/" + uri);
+				if (subst != null)
+					res = getResource(subst);
+			} else
 				res = getResource("/var/" + uri);
 			if (res == null)
 				resp.sendError(404);
@@ -234,7 +253,7 @@ public class Servlet extends HttpServlet {
 				mode = 2;
 				uri = uri.substring(0, uri.length() - 1);
 			}
-			if (!BConfig.homes(true).contains(uri) && !BConfig.homes(false).contains(uri)){
+			if (!nsqm.homes(true).contains(uri) && !nsqm.homes(false).contains(uri)){
 				sendText(404, BConfig.format("404HOME2", uri), resp);
 				fini = true;
 				return;
@@ -298,22 +317,22 @@ public class Servlet extends HttpServlet {
 			sb.append("App.isSW = ").append(isSW).append(";\n");
 			sb.append("App.langs = ").append(JSON.toJson(BConfig.langs())).append(";\n");
 			sb.append("App.lang = \"").append(lang).append("\";\n");
-			
-			for(String lg : BConfig.langs()){
-				TxtDic dic = BConfig.exportDic(lg);
-				for(String k : dic.keySet()){
-					String s = dic.get(k).replace("\"", "\\\"").replace("\n", "\\n");
-					sb.append("App.setMsg(\"").append(lg).append("\", \"").append(k).append("\", \"").append(s).append("\");\n");
-				}
-			}
+			sb.append("App.theme = \"").append(nsqm.theme).append("\";\n");
+			sb.append("App.themes = JSON.parse('").append(JSON.toJson(BConfig.themes())).append("');\n");
+
+			HashMap<String,String> rns = zres(nsqm.code);
+			sb.append("App.zres = {\n");
+			for(String n : rns.keySet())
+				sb.append("\"").append(n).append("\":true,\n");
+			sb.setLength(sb.length() - 2);
+			sb.append("}\n");
 			
 			sb.append("</script>\n");
+			sb.append("<script src='js/util.js' type='module'></script>\n");
 
 			sb.append(head);
-			sb.append("<link rel='import' href='themes/" + nsqm.theme + "-theme.html'>\n");
-			sb.append("<link rel='import' href='z/custom.html'>\n");
-
-			sb.append("<script src='js/final.js' type='module'></script>\n");
+			
+			sb.append("<script src='z/custom.js' type='module'></script>\n");
 
 			sb.append(body);
 			
@@ -344,8 +363,6 @@ public class Servlet extends HttpServlet {
 			return;
 		}
 
-//		if (r.uri.endsWith(".sync") || r.uri.endsWith(".local"))
-//			Util.log.info(r.uri);
 		r.page();
 	}
 
@@ -399,6 +416,8 @@ public class Servlet extends HttpServlet {
 			inp.uri = r.uri.substring(3);
 			String op = inp.args.get("op");
 			inp.operationName = op != null ? op  : "Default";
+			
+			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("off-" + r.nsqm.onoff));	
 
 			String b1 = r.req.getHeader("build");
 			String b2 = "" + BConfig.build();

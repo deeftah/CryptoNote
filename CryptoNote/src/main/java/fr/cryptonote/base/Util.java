@@ -227,7 +227,7 @@ public class Util {
 			if (args != null) 
 				for(String k : args.keySet()) 
 					sb.append("&").append(k).append("=").append(urlEnc(args.get(k)));
-			String u = nsqm.url() + ns + "/" + (endUrl != null ? urlEnc(endUrl) : "");
+			String u = nsqm.url() + (endUrl != null ? urlEnc(endUrl) : "");
 		    URL url = new URL(u);
 		    String query = sb.toString();
 		    HttpURLConnection con = url.getProtocol().equals("https") ?

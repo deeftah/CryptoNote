@@ -251,7 +251,7 @@ class Retry {
 								text = uint8 ? Util.toUtf8(uint8) : "{}";
 								jsonObj = JSON.parse(text);
 							} catch (e) {
-								const er = new ReqErr("BJSONRESP", 6, App.format("BJSONRESPOK", url, e.message), [url, text]); 
+								const er = new ReqErr("BJSONRESP", 6, App.format("BJSONRESP", url, e.message), [url, text]); 
 								reject(er);
 							}
 						}
@@ -348,22 +348,91 @@ export class Util {
 		return s.substring(0,3) + "Mo";
 	}
 	
-	static register() {
-		// Pour Apple et Edge 
-		if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
-		//Pour Safari / IOS !!!
-		if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) window.crypto.subtle = window.crypto.webkitSubtle;
-		// window.Polymer = { dom:'shadow'};
-		if (App.mode){
-			if (App.isSW)
-				this.regSW(); 
-			else 
-				this.updCache();
-		}
-		if (this.mode != 2)
-			this.checkSrvVersion();
-	}
+    static loadMimeTypes() {
+    	const res = "etc/mimetypes.json";
+		new App.Req(true).setUrl(res).go()
+		.then(r  => {
+			App.mimetypes = JSON.parse(r);
+		}).catch(e => {
+			this.erorPage("z/mimetypes.json : " + e.message);
+		});	
+    }
 
+    static loadDic(ns, lang, app) {
+    	return new Promise((resolve, reject) => {
+    		const res = (ns ? "z/" : "etc/") + lang + (app ? "app-msg.json" : "base-msg.json");
+    		new App.Req(true).setUrl(res).go()
+    		.then(r  => {
+    			const dic = JSON.parse(r);
+    			for(let code in dic)
+    				App.setMsg(lang, code, dic[code], false);
+    			resolve();
+    		}).catch(e => {
+    			resolve();
+    		});	
+    	});
+    }
+
+    static loadTheme(ns, theme) {
+    	return new Promise((resolve, reject) => {
+    		const res = (ns ? "z/theme-" : "styles/theme-") + theme + ".json";
+    		new App.Req(true).setUrl(res).go()
+    		.then(r  => {
+    			const dic = JSON.parse(r);
+    			for(let code in dic)
+    				App.customTheme[code] = dic[code];
+    			resolve();
+    		}).catch(e => {
+    			resolve();
+    		});	
+    	});
+    }
+
+    static customTheme() {
+    	return this.loadTheme(true, App.theme)
+    	.then(() => {
+    		this.loadTheme(false, App.theme)
+    	});
+     }
+
+    static customLangTheme() {
+    	return this.loadTheme(true, App.lang)
+    	.then(() => {
+    		this.loadTheme(false, App.lang)
+    	});
+     }
+
+    static loadDics() {
+    	App.resetDics();
+    	if (App.lang != App.langs[0]) {
+	    	return this.loadDic(true, App.lang, true)
+	    	.then(() => {
+	    		this.loadDic(true, App.lang, false)
+	    	}).then(() => {
+	    		this.loadDic(true, App.lang[0], true)
+	    	}).then(() => {
+	    		this.loadDic(true, App.lang[0], false)
+	    	}).then(() => {
+	    		this.loadDic(false, App.lang, true)
+	    	}).then(() => {
+	    		this.loadDic(false, App.lang, false)
+	    	}).then(() => {
+	    		this.loadDic(false, App.lang[0], true)
+	    	}).then(() => {
+	    		this.loadDic(false, App.lang[0], false)
+	    	});
+    	} else {
+	    	return this.loadDic(true, App.lang, true)
+	    	.then(() => {
+	    		this.loadDic(true, App.lang, false)
+	    	}).then(() => {
+	    		this.loadDic(false, App.lang, true)
+	    	}).then(() => {
+	    		this.loadDic(false, App.lang, false)
+	    	});
+    	}
+    }
+    
 	/*
 	 * Réservé aux messages fonctionnels (qui apparaissent à l'écran (sauf si notOnPanel est true)
 	 * Usage : console.log(Util.log("Mon beau message"));
@@ -389,7 +458,15 @@ export class Util {
 			window.location = App.reloadUrl() + "bye.html?" + encodeURI(JSON.stringify(x));
 		}, 3000);		
 	}
-/*
+
+	static errorPage(msg) {
+		setTimeout(function() {
+			const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl(), msg:msg}
+			window.location = App.reloadUrl() + "error.html?" + encodeURI(JSON.stringify(x));
+		}, 3000);		
+	}
+
+	/*
 	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
 	 */
 	static updCache(){
@@ -442,11 +519,11 @@ export class Util {
 	 */
 	static regSW() {
 		const js = App.ctxNsSlash() + "sw.js";
-		navigator.serviceWorker.register(js)
+		return navigator.serviceWorker.register(js)
 		.then(reg => { 
 			console.log(App.format("regok", js, reg.scope));
 		}).catch(e => {
-			console.log(App.format("regko", js, reg.scope));
+			this.errorPage(App.format("regko", js, reg.scope));
 		});
 	}
 
@@ -749,4 +826,42 @@ export class B64 {
 	}
 }
 App.B64 = B64;
+
 /*****************************************************/
+// Pour Apple et Edge 
+if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
+//Pour Safari / IOS !!!
+if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) window.crypto.subtle = window.crypto.webkitSubtle;
+// window.Polymer = { dom:'shadow'};
+
+if (App.mode){
+	if (App.isSW) {
+		Util.regSW()
+		.then(() => {
+			if (App.mode == 1) Util.checkSrvVersion();
+			Util.loadDics()
+		}).then(() => {
+			Util.customTheme();
+		}).then(() => {
+			Util.customLangTheme();
+		});
+	} else { 
+		Util.updCache();
+		if (App.mode == 1) Util.checkSrvVersion();
+		Util.loadDics()
+		.then(() => {
+			Util.customTheme();
+		}).then(() => {
+			Util.customLangTheme();
+		});
+	}
+} else {
+	Util.checkSrvVersion();
+	Util.loadDics()
+	.then(() => {
+		Util.customTheme();
+	}).then(() => {
+		Util.customLangTheme();
+	});
+}
+

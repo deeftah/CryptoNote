@@ -33,21 +33,35 @@
       		this.home = App.home;
       		App.appHomes = this;
       	}
-      	setLang(lang) { this.lang = lang; }
       	ready() {
       		super.ready();
       		App.globalSpinner = this.$.spin;
       		App.globalReqErr = this.$.reqerr;
-      		
+      		if (App.Main && App.Main.ready)
+      			App.Main.ready();		
       	}
       	setHome(home) {
       		this.home = home;
       	}
-      	changeTheme() {
-      	  Polymer.updateStyles({
-     			"--mybg-color" : "green"
+      	setLang(lang) { 
+      		App.lang = lang;
+      		Util.loadDics()
+      		.then(() => {
+      			Util.customTheme();
+      		}).then(() => {
+      			Util.customLangTheme();
+      		}).then(() => {
+      			Polymer.updateStyles(App.customStyle);
+      			this.lang = lang; 
       		});
-       	}
+      	}
+      	changeTheme(theme) {
+      		App.theme = theme;
+   			Util.customTheme()
+      		.then(() => {
+      			Polymer.updateStyles(App.customStyle);
+      		});
+      	}
     }
 	customElements.define(AppHomes.is, AppHomes);
 </script>

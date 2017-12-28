@@ -4,13 +4,11 @@
 		"css":"text/css",
 		"json":"application/json",
 		"js":"text/javascript",
+		"md":"text/markdown",
+		"txt":"text/plain",
 		"xml":"application/xml",
 		"appcache":"text/cache-manifest",
-		"net":"text/html",
-		"sync":"text/html",
-		"local":"text/html",
-		"sync2":"text/html",
-		"local2":"text/html"
+		"a":"text/html"
 	},
 	"bin":{
 		"woff":"application/font-woff",

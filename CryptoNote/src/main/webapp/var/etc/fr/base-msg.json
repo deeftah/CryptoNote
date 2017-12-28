@@ -1,9 +1,23 @@
 {
+
+"off-1":"interruption temporaire pour installation d''une nouvelle version",
+"X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
+"TIMEOUT":"Dépassement du temps maximum d'''attente dans le navigateur {1}ms pour l''URL {0}",
+"INTERRUPTED":"Fin d''attente dans le navigateur par clic au bout de {1}s pour l'URL {0}",
+"BJSONRESP":"Erreur de syntaxe dans la réponse du serveur pour l''URL [{0}] - Cause : [{1}] ",
+"XHTTP":"Réponse d''erreur inattendue du serveur pour l''URL [{0}]. Status-HTTP:{1} Message:{2}",
+"XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
+"DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
+"regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
+"regko":"Echec de l''enregistrement auprès du service worker. Scope:[{0}]",
+"reqStarted":"envoi au serveur",
+"reqRec":"reçus %0 de %1",
+
+
 "500URLMF1":"URL [{0}] mal formée : https://site.com/org/... attendue",
 "500URLMF1cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue",
 "500URLMF2":"URL [{0}] mal formée : https://site.com/org/... attendue. [{1}] n''est ni une organisation ni un queue manager répertorié",
 "500URLMF2cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue [{1}] n''est ni une organisation ni un queue manager répertorié",
-"500OFF":"Application OFF : raison [{0}]",
 "500HQM":"Ce serveur n''héberge pas le Queue Manager [{0}]",
 "404SWJS":"Ressource /var/sw.js non trouvée",
 "404HOME1":"Le nom d''une page d'accueil doit se terminer par .net .sync .local .sync2 .local2 ou ne pas avoir d''extension. [{0}] n''est pas reconnu",
@@ -14,6 +28,7 @@
 "404IDX2":"Ressource index.html mal formée : une ligne commençant par </head> est requise pour isoler la section <head>",
 "404IDX3":"Ressource index.html mal formée : une section <head> non vide est requise",
 "404IDX4":"Ressource index.html mal formée : une section <body> et le tag de fin </html> sont requis",
+
 
 "SADMINOP":"Opération requérant une clé d''administrateur",
 
@@ -33,19 +48,9 @@
 "XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}] sql:[{3}]\nmessage:[{4}]",
 "XSQLDS":"Datasource pour la base [{0}] non initialisable.\nmessage:[{1}]",
 
-"X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
-"TIMEOUT":"Dépassement du temps maximum d'''attente dans le navigateur {1}ms pour l''URL {0}",
-"INTERRUPTED":"Fin d''attente dans le navigateur par clic au bout de {1}s pour l'URL {0}",
-"BJSONRESP":"Erreur de syntaxe dans la réponse du serveur pour l''URL [{0}] - Cause : [{1}] ",
-"XHTTP":"Réponse d''erreur inattendue du serveur pour l''URL [{0}]. Status-HTTP:{1} Message:{2}",
-"XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
-"regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
-"regko":"Echec de l''enregistrement auprès du service worker. Scope:[{0}]",
-
-
 "X0":"Exception inattendue sur le serveur [cause : {0}]",
 "TMAXTIME":"Dépassement du temps maximum d'exécution sur le serveur {1}ms pour l''opération {0}",
-"DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
+"OFF":"Application hors service : {0}",
 "BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
 
 "CONTENTION1":"Opération [{0}] : contention sur la base de données. Validation impossible : locks:[{1}]. Réessayer plus tard",
@@ -96,9 +101,6 @@
 "BEMPTYBLOB":"BlobStore sans blob pour [{0}] [{1}]",
 "BMIMEBLOB":"BlobStore sans mime pour [{0}] [{1}]",
 "BKEYBLOB":"BlobStore sans nom pour [{0}]",
-
-"reqStarted":"envoi au serveur",
-"reqRec":"reçus %0 de %1",
 
 "RIEN":"rien"
 }

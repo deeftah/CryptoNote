@@ -14,22 +14,27 @@ class App {
 		this.langs = ["fr","en"]; 
 		this.lang = "fr"; 
 		this.zone = "Europe/Paris";
+		this.theme = "a";
+		this.themes = ["a"];
+		this.customTheme = {};
+		this.resetDics();
+	}
+	
+	static resetDics() {
 		this.dics = {
 			"fr":{
-				"script":"Erreur d''exécution d''un script dans le navigateur. Code:{0}",
-				"exc":"Code:{0} Message:[{1}]",
-				"jsonparseurl":"Le retour du serveur [{0}] a une erreur de syntxe JSON",
-				"httpget":"Réponse d''erreur du serveur [{0}].",
-				"httpgetto":"Pas de réponse du serveur [{0}] après {1}s d'attente",
-				"httpget2":"Réponse d''erreur du serveur [{0}]. Status-HTTP:{1} Message:{2}",
-				"newbuild":"Une version de L''application ({0}) plus récente que celle qui s'exécute ({1}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
-				"regok":"Succès de l''enregistrement auprès du service worker : [{0}] (scope:[{1}])",
-				"regko":"Echec de l''enregistrement auprès du service worker : [{0}]",
-				"pingko":"Echec de la récupération de la build du serveur",
-				"reload":"Une version de L''application plus récente que celle qui s'exécute ({0}) est disponible.\nL''application doit rédemarrer, automatiquement si possible.\nFermer les autres fenêtres de cetteapplication (s''il y en a)",
-				"cachebuildok":"Build connue du service worker : {1} ({0})",
-				"cachebuildko1":"Echec de récupération de la Build connue du service worker",
-				"cachebuildko2":"Echec de récupération de la Build connue du service worker : PAS de service worker",
+				"X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
+				"TIMEOUT":"Dépassement du temps maximum d'''attente dans le navigateur {1}ms pour l''URL {0}",
+				"INTERRUPTED":"Fin d''attente dans le navigateur par clic au bout de {1}s pour l'URL {0}",
+				"BJSONRESP":"Erreur de syntaxe dans la réponse du serveur pour l''URL [{0}] - Cause : [{1}] ",
+				"XHTTP":"Réponse d''erreur inattendue du serveur pour l''URL [{0}]. Status-HTTP:{1} Message:{2}",
+				"XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
+				"DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
+				"regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
+				"regko":"Echec de l''enregistrement auprès du service worker. Scope:[{0}]",
+				"reqStarted":"envoi au serveur",
+				"reqRec":"reçus %0 de %1",
+				"off-1":"interruption temporaire pour installation d''une nouvelle version",
 				"truc":"truc"
 			}, 
 			"en":{

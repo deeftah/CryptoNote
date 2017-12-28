@@ -144,7 +144,7 @@ public class QueueManager implements Runnable {
 		} else {
 			HashMap<String,String> args = new HashMap<String,String>();
 			args.put("param", JSON.toJson(tm));
-			Util.postSrv(nsqm.code, BConfig.queueManager(nsqm.code, false).url() + "op/", args);
+			Util.postSrv(nsqm.code, "op/", args);
 		}
 	}
 	

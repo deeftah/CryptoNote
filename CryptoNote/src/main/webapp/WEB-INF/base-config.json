@@ -1,12 +1,12 @@
 {
+	"appConfigClass":"fr.cryptonote.test.Config",
+	"dbProviderClass":"fr.cryptonote.provider.ProviderPG",
 	"zone":"Europe/Paris",
 	"langs":["fr", "en"],
-	"dbProviderClass":"fr.cryptonote.provider.ProviderPG",
 	"defaultBase":"cna",
-	"appConfigClass":"fr.cryptonote.test.Config",
 	"isDebug":true,
 	"isDistrib":false,
-	"defaultUrl":"http://192.168.0.10:8090/cn",
+	"url":"http://192.168.0.10:8090/cn",
 
 	"TASKMAXTIMEINSECONDS":1800,
 	"OPERATIONMAXTIMEINSECONDS":1200,
@@ -19,28 +19,31 @@
 	"TASKRETRIESINMIN":[1, 10, 60, 180],
 	
 	"namespaces" : {
-		"namespace":{
-			"url": "http://192.168.0.10:8090/cn", 
+		"ns":{
 			"base":"cna", 
 			"pwd":"ns", 
-			"qm":"qm1",
 			"theme":"z",
+			"homes": {"admin":0},		
 			"lang":"fr"
 			},
 		"test":{
-			"url": "http://192.168.0.10:8090/cn",
 			"base":"cna", 
 			"pwd":"test", 
 			"qm":"qm1",
 			"theme":"a",
+			"homes": {"index":0, "admin":0, "home1":2, "home2":2},
 			"lang":"fr",
+			"help": {
+				"s2":{"p":"s1", "t":"home", "s":null, "refs":["p21", "p23"]},
+				"p21":{"p":null, "t":"s1", "s":"p23", "refs":[]},
+				"p23":{"p":"p21", "t":"s1", "s":null, "refs":["p11", "p12"]}
+			},
 			"options":{}
 			}
 	},
 	
 	"queueManagers":{
 		"qm1":{
-			"label":"QM de test", 
 			"url": "http://192.168.0.10:8090/cn",
 			"base":"cna",
 			"pwd":"qm",
@@ -79,15 +82,24 @@
 	"s2Sstorages":{
 		"nca": {"blobsroot":"/tmp/blobsroot", "bucket":"bk1" }
 	},
-	
-	"homes":["index", "admin"],
-	"offlineHomes":["home1", "home2"],
-	
+		
 	"shortcuts":{
 		"(empty)":"a/index.app",
 		"z":"z/index.app",
 		"a/p":"a/index.app",
 		"a/s":"a/index.ws"
-	}
+	},
+	
+	"help": {
+		"home":{"p":null, "t":null, "s":null, "refs":["s1", "s2"]},
+		"s1":{"p":null, "t":"home", "s":"s2", "refs":["p11", "p12"]},
+		"s2":{"p":"s1", "t":"home", "s":null, "refs":["p21", "p22"]},
+		"p11":{"p":null, "t":"s1", "s":"p12", "refs":["p22"]},
+		"p12":{"p":"p11", "t":"s1", "s":null, "refs":["p22"]},
+		"p21":{"p":null, "t":"s1", "s":"p22", "refs":[]},
+		"p22":{"p":"p21", "t":"s1", "s":null, "refs":["p11", "p12"]}
+	},
+	
+	"themes": ["z", "a", "b", "en", "fr"]
 	
 }

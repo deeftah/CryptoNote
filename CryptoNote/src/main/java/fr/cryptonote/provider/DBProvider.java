@@ -30,7 +30,11 @@ public interface DBProvider {
 	public String dbInfo(String info) throws AppException ;
 	
 	public void recordHourStats(int hour, String ns, String json) throws AppException;
-	
+
+	public void setOnOff(String ns, int onoff) throws AppException;
+
+	public HashMap<String,Integer> getOnOff() throws AppException;
+
 	public BlobProvider blobProvider() throws AppException;
 	
 	public void shutdwon();

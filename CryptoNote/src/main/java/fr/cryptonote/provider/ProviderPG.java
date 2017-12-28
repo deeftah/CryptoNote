@@ -88,20 +88,21 @@ public class ProviderPG implements DBProvider {
 	// "XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}]\nsql:[{3}]\nmessage:[{4}]",
 
 	protected AppException err(PreparedStatement preparedStatement, ResultSet rs, Exception e, String meth) {
+		String sqlx = sql;
 		if (preparedStatement != null)
 			try { preparedStatement.close(); } catch (SQLException e1) {}
 		if (rs != null)
 			try { rs.close(); } catch (SQLException e1) {}
 		closeConnection();
-		return (e instanceof AppException) ? (AppException)e : new AppException("XSQL0", operationName, meth, ns(), sql, e.getMessage());
+		return (e instanceof AppException) ? (AppException)e : new AppException("XSQL0", operationName, meth, ns(), sqlx, e.getMessage());
 	}
 
 	protected Connection conn() throws AppException{ 
 		if (conn == null)
 			try {
-				sql = "";
 				conn = (Connection)dataSource.getConnection();
 			} catch (SQLException e){
+				sql = "";
 				throw err(null, null, e, "conn");
 			}
 		return conn; 
@@ -111,10 +112,10 @@ public class ProviderPG implements DBProvider {
 		if (inTransaction)
 			return;
 		try {
-			sql = "";
 			conn().setAutoCommit(false);
 			inTransaction = true;
 		} catch (SQLException e) {
+			sql = "";
 			throw err(null, null, e, "beginTransaction");
 		}
 	}
@@ -122,9 +123,9 @@ public class ProviderPG implements DBProvider {
 	private void commitTransaction() throws AppException {
 		if (inTransaction && conn != null) {
 			try {
-				sql = "";
 				conn.commit();
 			} catch (SQLException e) {
+				sql = "";
 				throw err(null, null, e, "commitTransaction");
 			}
 			try {
@@ -221,6 +222,46 @@ public class ProviderPG implements DBProvider {
 		} catch(Exception e){
 			throw err(preparedStatement, rs, e, "dbInfo");
 		}
+	}
+
+	/***********************************************************************************************/
+	private static final String SELONOFF = "select ns, onoff from onoff;";
+	
+	private static final String UPSERTONOFF = "insert into onoff (ns, onoff) values (?,?) on conflict (onoff_pk) do update set onoff = ?;";
+	
+	public void setOnOff(String ns, int onoff) throws AppException {
+		PreparedStatement preparedStatement = null;
+		sql = UPSERTONOFF; 
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, ns);
+			preparedStatement.setInt(2, onoff);
+			preparedStatement.setInt(3, onoff);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "setOnOff");
+		}
+
+	};
+
+	public HashMap<String,Integer> getOnOff() throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		HashMap<String,Integer> res = new HashMap<String,Integer>();
+		sql = SELONOFF; 
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			rs = preparedStatement.executeQuery();
+			while (rs.next())
+				res.put(rs.getString("ns"), rs.getInt("onoff"));
+			rs.close();
+			preparedStatement.close();
+			return res;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "getOnOff");
+		}
+		
 	}
 
 	/***********************************************************************************************/

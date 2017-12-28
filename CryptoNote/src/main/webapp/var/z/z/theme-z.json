@@ -1,0 +1,8 @@
+{
+"--font-mono" : "'Roboto Mono'",
+"--font-std" : "'Roboto'",
+"--font-cf" : "'Comfortaa'",
+"--mybg-color" : "lightgrey",
+"--font-large" : "2rem",
+"--bg-imglg" : "url('z/post-it.png')"
+}
