@@ -3,8 +3,9 @@
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
 
-<link rel="import"  href="spinner-box.html">
-<link rel="import"  href="reqerr-panel.html">
+<link rel="import" href="confirm-box.html">
+<link rel="import" href="spinner-box.html">
+<link rel="import" href="reqerr-panel.html">
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 
@@ -15,6 +16,7 @@
 	  	:host .top { margin:0; padding:0; height: 100vh; width: 100vw; position:relative; }
   	</style>
 	<div class="top">
+		<confirm-box id="confirm"></confirm-box>
 		<spinner-box id="spin"></spinner-box>
 		<reqerr-panel id="reqerr" lang="[[lang]]"></reqerr-panel>
 		<iron-pages class="top" attr-for-selected="id" selected="[[home]]">
@@ -35,32 +37,29 @@
       	}
       	ready() {
       		super.ready();
+      		App.confirmBox = this.$.confirm;
       		App.globalSpinner = this.$.spin;
       		App.globalReqErr = this.$.reqerr;
-      		if (App.Main && App.Main.ready)
-      			App.Main.ready();		
+      		this.setTheme(App.theme);
+      		this.setLang(App.lang);
+      		if (App.Custom && App.Custom.ready)
+      			App.Custom.ready();		
       	}
       	setHome(home) {
       		this.home = home;
       	}
       	setLang(lang) { 
       		App.lang = lang;
-      		Util.loadDics()
-      		.then(() => {
-      			Util.customTheme();
-      		}).then(() => {
-      			Util.customLangTheme();
-      		}).then(() => {
-      			Polymer.updateStyles(App.customStyle);
-      			this.lang = lang; 
-      		});
+      		Polymer.updateStyles(App.customThemes[lang]);
+      		this.lang = lang; 
       	}
-      	changeTheme(theme) {
-      		App.theme = theme;
-   			Util.customTheme()
-      		.then(() => {
-      			Polymer.updateStyles(App.customStyle);
-      		});
+      	setTheme(theme) {
+      		const sty = {};
+      		let t = App.customThemes["z"];
+      		for(let k in t) sty[k] = t[k];
+      		t = App.customThemes[theme];
+      		for(let k in t) sty[k] = t[k];
+      		Polymer.updateStyles(sty);
       	}
     }
 	customElements.define(AppHomes.is, AppHomes);

@@ -1,0 +1,15 @@
+{
+"--font-mono" : "'Roboto Mono'",
+"--font-std" : "'Roboto'",
+"--font-cf" : "'Comfortaa'",
+"--mybg-color" : "lightgrey",
+"--font-large" : "2rem",
+"--bg-imglg" : "url('z/z/post-it.png')",
+
+"--btnstd-color": "var(--paper-indigo-900)",
+"--btnstd-colorhover" : "var(--paper-indigo-50)",
+"--btndef-color": "var(--paper-orange-700)",
+"--btndef-colorhover" : "var(--paper-orange-50)",
+
+"truc":"rien"
+}

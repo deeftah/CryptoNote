@@ -278,7 +278,6 @@ class Retry {
 	  ]);
 	}
 }
-App.Req = Req;
 
 /*****************************************************/
 class Tracker {
@@ -289,20 +288,24 @@ class Tracker {
 	
 	onStart(request) {
 		this.request = request;
-		this.spinner.start(this.request, App.lib("reqStarted"));
+		if (this.spinner)
+			this.spinner.start(this.request, App.lib("reqStarted"));
 	}
 	
 	onProgress(loaded, total){
-		this.spinner.progress(App.format("reqRec", Util.editPC(loaded, total), Util.editVol(total)));
+		if (this.spinner)
+			this.spinner.progress(App.format("reqRec", Util.editPC(loaded, total), Util.editVol(total)));
 	}
 	
 	onSuccess(resp) {
-		this.spinner.stop();
+		if (this.spinner)
+			this.spinner.stop();
 		this.request.resolve(resp);
 	}
 	
 	onError(err) {
-		this.spinner.stop();
+		if (this.spinner)
+			this.spinner.stop();
 		if (err.code == "DBUILD") {
 			Util.reload(App.srvbuild);
 			return;
@@ -317,7 +320,8 @@ class Tracker {
 	}
 	
 	onRetry() {
-		this.spinner.start(this.request, App.lib("reqStarted"));
+		if (this.spinner)
+			this.spinner.start(this.request, App.lib("reqStarted"));
 		this.request.go();
 	}
 	
@@ -326,7 +330,6 @@ class Tracker {
 	}
 
 }
-App.Tracker = Tracker;
 
 /*****************************************************/
 export class Util {	
@@ -348,90 +351,154 @@ export class Util {
 		return s.substring(0,3) + "Mo";
 	}
 	
-    static loadMimeTypes() {
-    	const res = "etc/mimetypes.json";
-		new App.Req(true).setUrl(res).go()
+	/*
+	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
+	 */
+	static async updCache(){
+		window.applicationCache.addEventListener('updateready', function(e) {
+		    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+		    	location.reload(true);
+		    }
+		}, false);
+	}
+
+	static async checkSrvVersion(){
+		// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build);
+		if (App.buildAtPageGeneration != App.build)
+			this.reload(App.build);
+		this.ping()
 		.then(r  => {
-			App.mimetypes = JSON.parse(r);
-		}).catch(e => {
-			this.erorPage("z/mimetypes.json : " + e.message);
-		});	
-    }
+			if (r && r.json.b != App.build) {
+				// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build + " ping.b:" + r.json.b);
+				this.reload(r.json.b);
+			}
+		});
+	}
 
-    static loadDic(ns, lang, app) {
-    	return new Promise((resolve, reject) => {
-    		const res = (ns ? "z/" : "etc/") + lang + (app ? "app-msg.json" : "base-msg.json");
-    		new App.Req(true).setUrl(res).go()
-    		.then(r  => {
-    			const dic = JSON.parse(r);
-    			for(let code in dic)
-    				App.setMsg(lang, code, dic[code], false);
-    			resolve();
-    		}).catch(e => {
-    			resolve();
-    		});	
-    	});
-    }
-
-    static loadTheme(ns, theme) {
-    	return new Promise((resolve, reject) => {
-    		const res = (ns ? "z/theme-" : "styles/theme-") + theme + ".json";
-    		new App.Req(true).setUrl(res).go()
-    		.then(r  => {
-    			const dic = JSON.parse(r);
-    			for(let code in dic)
-    				App.customTheme[code] = dic[code];
-    			resolve();
-    		}).catch(e => {
-    			resolve();
-    		});	
-    	});
-    }
-
-    static customTheme() {
-    	return this.loadTheme(true, App.theme)
-    	.then(() => {
-    		this.loadTheme(false, App.theme)
-    	});
-     }
-
-    static customLangTheme() {
-    	return this.loadTheme(true, App.lang)
-    	.then(() => {
-    		this.loadTheme(false, App.lang)
-    	});
-     }
-
-    static loadDics() {
-    	App.resetDics();
-    	if (App.lang != App.langs[0]) {
-	    	return this.loadDic(true, App.lang, true)
-	    	.then(() => {
-	    		this.loadDic(true, App.lang, false)
-	    	}).then(() => {
-	    		this.loadDic(true, App.lang[0], true)
-	    	}).then(() => {
-	    		this.loadDic(true, App.lang[0], false)
-	    	}).then(() => {
-	    		this.loadDic(false, App.lang, true)
-	    	}).then(() => {
-	    		this.loadDic(false, App.lang, false)
-	    	}).then(() => {
-	    		this.loadDic(false, App.lang[0], true)
-	    	}).then(() => {
-	    		this.loadDic(false, App.lang[0], false)
-	    	});
-    	} else {
-	    	return this.loadDic(true, App.lang, true)
-	    	.then(() => {
-	    		this.loadDic(true, App.lang, false)
-	    	}).then(() => {
-	    		this.loadDic(false, App.lang, true)
-	    	}).then(() => {
-	    		this.loadDic(false, App.lang, false)
-	    	});
-    	}
-    }
+	/*
+	 * Le service worker est une application INDEPENDANTE de la page.
+	 * Le script sw.js qui l'anime est déclaré : ça lancera le service worker S'IL N'ETAIT PAS DEJA LANCE.
+	 * S'il était lancé, il continue de vivre avec la version actuelle (donc d'une version potentiellement retardée).
+	 * Si le sw.js a changé par rapport à celui en exécution, un noveau service est préparé et
+	 * RESTE EN ATTENTE jusqu'à la fin de toutes les pages qui ont déclaré ce service.
+	 * IL Y A UN SERVICE WORKER PAR "namespace" : /cp/nsB/sw.js et /cp/nsA/sw.js définissent DEUX services indépendants.
+	 * Le "scope" de /cp/nsA/sw.js n'est PAS réduit : il interceptent TOUTES les URLs /cp/nsA/...
+	 * MAIS en conséquence IGNORE les URLs de la navigation privée /cp/nsA$/...
+	 * Une EXCEPTION "Request failed" signifie qu'une des URLs citée dans addAll() N'EST PAS ACCESSIBLE (404)
+	 * MAIS one sait PAS laquelle (joie !)
+	 */
+	static async register() {
+		try {
+			if (App.mode){
+				if (App.isSW) {
+					const js = App.ctxNsSlash() + "sw.js";
+						const reg = await navigator.serviceWorker.register(js);
+						console.log(App.format("regok", js, reg.scope));
+				} else
+					await this.updCache();
+			}
+			await this.checkSrvVersion();
+			console.log("Après checkSrvVersion()");
+			
+		    let response = await fetch("etc/mimetypes.json");
+		    App.mimetypes = await response.json();
+		    
+		    for(let i = 0, lang = null; lang = App.langs[i]; i++) {
+		    	this.loadDic(lang);
+		    	this.loadTheme(lang);
+		    }
+		    
+		    for(let i = 0, theme = null; theme = App.themes[i]; i++) {
+		    	this.loadTheme(theme);
+		    }
+		    
+		} catch (er) {
+			this.errorPage(er.message);
+		}
+	}
+		
+	static async loadDic(lang) {
+		try {
+			let r;
+			let x;
+			let d = App.zDics[lang];
+			let u;
+			if (!d) {
+				d = {};
+				App.zDics[lang] = d;
+			}
+			u = lang + "base-msg.json";
+			if (App.etcres[u]) {
+			    r = await fetch("etc/" + u);
+			    if (r.ok) {
+			    	x = await r.json();
+			    	for(let k in x)
+			    		d[k] = x[k].replace(/''/g, "'");
+			    }
+			}
+			u = lang + "app-msg.json";
+			if (App.etcres[u]) {
+			    r = await fetch("etc/" + u);
+			    if (r.ok) {
+			    	x = await r.json();
+			    	for(let k in x)
+			    		d[k] = x[k].replace(/''/g, "'");
+			    }
+			}
+			u = lang + "base-msg.json";
+			if (App.zres[u]) {
+			    r = await fetch("z/z/" + u);
+			    if (r.ok) {
+			    	x = await r.json();
+			    	for(let k in x)
+			    		d[k] = x[k].replace(/''/g, "'");
+			    }
+			}
+			u = lang + "app-msg.json";
+			if (App.zres[u]) {
+			    r = await fetch("z/z/" + u);
+			    if (r.ok) {
+			    	x = await r.json();
+			    	for(let k in x)
+			    		d[k] = x[k].replace(/''/g, "'");
+			    }
+			}
+		} catch (er) {
+			this.errorPage(er.message);
+		}
+	}
+	
+	static async loadTheme(theme) {
+		try {
+			let r;
+			let x;
+			let d = App.customThemes[theme];
+			let u;
+			if (!d) {
+				d = {};
+				App.customThemes[theme] = d;
+			}
+			u = "theme-" + theme + ".json";
+			if (App.etcres[u]) {
+			    r = await fetch("etc/" + u);
+			    if (r.ok) {
+			    	x = await r.json();
+			    	for(let k in x)
+			    		d[k] = x[k];
+			    }
+			}
+			if (App.zres[u]) {
+			    r = await fetch("z/z/" + u);
+			    if (r.ok) {
+			    	x = await r.json();
+			    	for(let k in x)
+			    		d[k] = x[k];
+			    }
+			}
+		} catch (er) {
+			this.errorPage(er.message);
+		}
+	}
     
 	/*
 	 * Réservé aux messages fonctionnels (qui apparaissent à l'écran (sauf si notOnPanel est true)
@@ -451,7 +518,6 @@ export class Util {
 		}, 3000);		
 	}
 
-
 	static bye() {
 		setTimeout(function() {
 			const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
@@ -466,24 +532,13 @@ export class Util {
 		}, 3000);		
 	}
 
-	/*
-	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
-	 */
-	static updCache(){
-		window.applicationCache.addEventListener('updateready', function(e) {
-		    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-		    	location.reload(true);
-		    }
-		}, false);
-	}
-
 	// ping du namespace ou du serveur (notns est true)
 	static ping(notns) {
 		return new Promise((resolve, reject) => {
 			new Req(true).setUrl(notns ? "../ping" : "ping").go()
 			.then(r  => {
 				App.offline = false;
-				App.srvbuild = r.b;
+				App.srvbuild = r.json.b;
 				resolve(r);
 			}).catch(e => {
 				App.offline = true;
@@ -491,41 +546,7 @@ export class Util {
 			});	
 		});
 	}
-		
-	static checkSrvVersion(){
-		// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build);
-		if (App.buildAtPageGeneration != App.build)
-			this.reload(App.build);
-		this.ping()
-		.then(r  => {
-			if (r && r.json.b != App.build) {
-				// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build + " ping.b:" + r.json.b);
-				this.reload(r.json.b);
-			}
-		});
-	}
-	
-	/*
-	 * Le service worker est une application INDEPENDANTE de la page.
-	 * Le script sw.js qui l'anime est déclaré : ça lancera le service worker S'IL N'ETAIT PAS DEJA LANCE.
-	 * S'il était lancé, il continue de vivre avec la version actuelle (donc d'une version potentiellement retardée).
-	 * Si le sw.js a changé par rapport à celui en exécution, un noveau service est préparé et
-	 * RESTE EN ATTENTE jusqu'à la fin de toutes les pages qui ont déclaré ce service.
-	 * IL Y A UN SERVICE WORKER PAR "namespace" : /cp/nsB/sw.js et /cp/nsA/sw.js définissent DEUX services indépendants.
-	 * Le "scope" de /cp/nsA/sw.js n'est PAS réduit : il interceptent TOUTES les URLs /cp/nsA/...
-	 * MAIS en conséquence IGNORE les URLs de la navigation privée /cp/nsA$/...
-	 * Une EXCEPTION "Request failed" signifie qu'une des URLs citée dans addAll() N'EST PAS ACCESSIBLE (404)
-	 * MAIS one sait PAS laquelle (joie !)
-	 */
-	static regSW() {
-		const js = App.ctxNsSlash() + "sw.js";
-		return navigator.serviceWorker.register(js)
-		.then(reg => { 
-			console.log(App.format("regok", js, reg.scope));
-		}).catch(e => {
-			this.errorPage(App.format("regko", js, reg.scope));
-		});
-	}
+			
 
 //	// ça eu servi un jour !!!	
 //	static sendMessageToCache(message) {
@@ -667,8 +688,7 @@ export class Util {
 	}
 
 }
-Util.setup();
-App.Util = Util;
+
 /*****************************************************/
 export class B64 {
 	static get chars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; }
@@ -825,43 +845,18 @@ export class B64 {
 		console.log((t2 - t1) + "ms");
 	}
 }
-App.B64 = B64;
 
 /*****************************************************/
+App.Req = Req;
+App.Tracker = Tracker;
+App.Util = Util;
+App.B64 = B64;
+Util.setup();
+
 // Pour Apple et Edge 
 if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
 //Pour Safari / IOS !!!
 if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) window.crypto.subtle = window.crypto.webkitSubtle;
 // window.Polymer = { dom:'shadow'};
 
-if (App.mode){
-	if (App.isSW) {
-		Util.regSW()
-		.then(() => {
-			if (App.mode == 1) Util.checkSrvVersion();
-			Util.loadDics()
-		}).then(() => {
-			Util.customTheme();
-		}).then(() => {
-			Util.customLangTheme();
-		});
-	} else { 
-		Util.updCache();
-		if (App.mode == 1) Util.checkSrvVersion();
-		Util.loadDics()
-		.then(() => {
-			Util.customTheme();
-		}).then(() => {
-			Util.customLangTheme();
-		});
-	}
-} else {
-	Util.checkSrvVersion();
-	Util.loadDics()
-	.then(() => {
-		Util.customTheme();
-	}).then(() => {
-		Util.customLangTheme();
-	});
-}
-
+Util.register();

@@ -36,7 +36,7 @@ this.addEventListener('activate', function(event) {
 	event.waitUntil(
 		caches.keys()
 		.then(cacheNames => {
-				if (TRACEON2) console.log("Activate / cleaning " + CACHENAME);
+				if (TRACEON) console.log("Activate / cleaning " + CACHENAME);
 				return Promise.all(
 					cacheNames.map(cacheName => {
 						if (cacheName.startsWith(PREFIX) && cacheName != CACHENAME) {

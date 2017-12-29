@@ -50,17 +50,17 @@
 		
 		constructor() { 
 			super();
+		}
+
+		lib(code, lang) { return App.lib(code);}
+		
+		ready() {
+			super.ready();
 			App.setMsg("fr", "sb_npa", "Ne plus attendre");
 			App.setMsg("fr", "sb_texte", "Interrompre correspond à renoncer à l'action engagée qui sera traitée comme un échec."
 					+ "L'autre option est d'avoir plus de patience.");
 			App.setMsg("fr", "sb_att", "Attendre encore");
 			App.setMsg("fr", "sb_int", "Interrompre");
-		}
-		
-		lib(code, lang) { return App.lib(code);}
-		
-		ready() {
-			super.ready();
 			this.$.actions.animationConfig =  {
 				'entry': { name: 'fade-in-animation', node: this.$.actions, timing: {duration: 1000} },
 				'exit': { name: 'fade-out-animation', node: this.$.actions, timing: {duration: 1000} }

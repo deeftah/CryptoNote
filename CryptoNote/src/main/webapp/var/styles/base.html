@@ -3,13 +3,20 @@
 	html {
 		font-size: 14px;
 		
-		/* toutes les var surchargeables par themes */
+		/* toutes les var surchargeables par themes A DUPLIQUER DANS etc/theme-z.json*/
 		--font-mono : 'Roboto Mono';
 		--font-std : 'Roboto';
 		--font-cf : 'Comfortaa';
 		--mybg-color : lightgrey;
 		--font-large : 2rem;
-		--bg-imglg : url("z/post-it.png");
+		--bg-imglg : url("z/z/post-it.png");
+		--bonjour-before : 'Bonjour ...';
+		
+		--btnstd-color : var(--paper-indigo-900);
+		--btnstd-colorhover : var(--paper-indigo-50);
+
+		--btndef-color : var(--paper-orange-700);
+		--btndef-colorhover : var(--paper-orange-50);
 		
 		
 		/* les apply : utilisent des var ci-dessus : NON surchargeables par les themes */
@@ -21,6 +28,8 @@
 		--c1-gen : { color : var(--mybg-color); font-size: var(--font-large); }
 		--flag-gen : {background-image:var(--bg-imglg); background-repeat:no-repeat; background-position:center; background-size: 2rem 2rem;}
 		
+		--btnstd-hover : {background-color: var(--btnstd-color); color:var(--btnstd-colorhover);}
+		--btndef-hover : {background-color: var(--btndef-color); color:var(--btndef-colorhover);}
 	}
 
 	@media (max-width: 900px) {

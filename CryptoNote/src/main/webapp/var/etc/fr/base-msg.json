@@ -9,10 +9,12 @@
 "XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
 "DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
 "regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
-"regko":"Echec de l''enregistrement auprès du service worker. Scope:[{0}]",
 "reqStarted":"envoi au serveur",
 "reqRec":"reçus %0 de %1",
-
+"sb_npa": "Ne plus attendre",
+"sb_texte": "Interrompre correspond à renoncer à l'action engagée qui sera traitée comme un échec. L'autre option est d'avoir plus de patience.",
+"sb_att": "Attendre encore",
+"sb_int": "Interrompre",
 
 "500URLMF1":"URL [{0}] mal formée : https://site.com/org/... attendue",
 "500URLMF1cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue",

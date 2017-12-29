@@ -16,12 +16,8 @@ class App {
 		this.zone = "Europe/Paris";
 		this.theme = "a";
 		this.themes = ["a"];
-		this.customTheme = {};
-		this.resetDics();
-	}
-	
-	static resetDics() {
-		this.dics = {
+		this.customThemes = {};
+		this.baseDics = {
 			"fr":{
 				"X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
 				"TIMEOUT":"Dépassement du temps maximum d'''attente dans le navigateur {1}ms pour l''URL {0}",
@@ -31,7 +27,6 @@ class App {
 				"XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
 				"DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
 				"regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
-				"regko":"Echec de l''enregistrement auprès du service worker. Scope:[{0}]",
 				"reqStarted":"envoi au serveur",
 				"reqRec":"reçus %0 de %1",
 				"off-1":"interruption temporaire pour installation d''une nouvelle version",
@@ -41,25 +36,28 @@ class App {
 				
 			},
 		};
+		this.zDics = {};
 	}
 	
-	static setMsg(lang, code, msg, force){
-		const d = this.dics[lang];
-		if (d && code && msg && (force || !d[code])) d[code] = msg;
+	static setMsg(lang, code, msg) {
+		let d = this.zDics[lang];
+		if (d && !d[code])
+			d[code] = msg;
 	}
-
-	static setDic(lang, texts, force){
-		const d = this.dics[lang];
-		if (!d || !texts) return;
-		for(code in texts)
-			if (force || !d[code]) d[code] = texts[code];
-	}
-
+	
 	static lib(code) {
 		if (!code) return "?";
-		let x = this.dics[this.lang][code];
-		if (!x && this.lang != this.langs[0])
-			x = this.dics[this.lang[0]][code];
+		let d = this.zDics[this.lang];
+		let x = !d ? null : d[code];
+		const l = this.langs[0];
+		if (!x && this.lang != l) {
+			d = this.zDics[l];
+			x = !d ? null : d[code];
+			if (!x) {
+				d = this.baseDics[l];
+				x = !d ? null : d[code];
+			}
+		}
 		return x ? x : code;
 	}
 	

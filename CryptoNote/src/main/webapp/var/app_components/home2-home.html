@@ -12,6 +12,7 @@
     <style>
 	  	:host { font-family: var(--font-std); }
 	  	:host .cf {@apply --cf-lite; font-size:1.2rem; color:var(--mybg-color);}
+	  	:host .cf::before { content: var(--bonjour-before);}
 	  	:host .ic1 {height:3rem; width:3rem; color:red; }
 	  	:host .logolang { @apply --flag-gen; width:3rem; height: 3rem; display:inline-block;}
   </style>
@@ -29,13 +30,17 @@
 			<div class="logolang"></div>
 			<iron-icon icon="mail"></iron-icon>
 		  	<button on-tap="ping">Ping</button>&nbsp;
-		    <button on-tap="changeTheme">Change theme</button>
-		  	<button on-tap="bover">Bower.json</button><span>[[pingres]]</span>&nbsp;
+		  	<button on-tap="confirm1">confirm 1</button>&nbsp;
+		  	<button on-tap="confirm2">confirm 2</button>&nbsp;
+		    <button on-tap="changeThemeA">Theme A</button>
+		    <button on-tap="changeThemeB">Theme B</button>
+		    <button on-tap="changeLangFR">Lang FR</button>
+		    <button on-tap="changeLangEN">Lang EN</button>
+		  	<button on-tap="bower">bower.json (fetch)</button><span>[[pingres]]</span>&nbsp;
 		  	<button on-tap="checkSrvVersion">Check Version</button>
 		</div>
-	   <a href="bower.json" target="_blank">Lien (relatif) vers bower.json!</a><br>
-	   <a href="[[lkbower]]" target="_blank">Lien (absolu) vers bower.json!</a><br>
-	   <a href="[[lkping]]" target="_blank">Lien (absolu) vers ping!</a> 
+	   <a href="bower.json" target="_blank">Lien _blank (relatif) vers bower.json!</a><br>
+	   <a href="[[lkbower]]" target="_blank">Lien _blank (absolu) vers bower.json!</a><br>
    </div>
     
   </template>
@@ -45,28 +50,56 @@
       
       static get properties() {
           return {
-        	  lang:{type:String, value:App.lang},
+        	lang:{type:String, value:App.lang},
             owner: {type:String, value:'Daniel' },
         	build: {type:Number, value:App.build},
         	lkbower: {type:String, value:App.baseUrl(1) + "bower.json"},
         	lkping: {type:String, value:App.baseUrl() + "ping"}
           };
       }
-      changeTheme() {
-    	  App.appHomes.changeTheme();
+      confirm2() {
+    	  App.confirmBox.show("Ceci est un beau message.", "OK", "Bullshit")
+    	  .then(() => {
+    		  console.log("Confirm OK");
+    	  }).catch(() => {
+    		  console.log("Confirm KO");    		  
+    	  })
+      }
+      confirm1() {
+    	  App.confirmBox.show("Ceci est un TRES beau message.", "Lu")
+    	  .then(() => {
+    		  console.log("Confirm Lu");
+    	  }).catch(() => {
+    		  console.log("Confirm KO2");    		  
+    	  })
+      }
+      changeThemeA() {
+    	  App.appHomes.setTheme("a");
+      }
+      changeThemeB() {
+    	  App.appHomes.setTheme("b");
+      }
+      changeLangFR() {
+    	  App.appHomes.setLang("fr");
+      }
+      changeLangEN() {
+    	  App.appHomes.setLang("en");
       }
       constructor() {
         super();
         this.bonjour = App.bonjour ? App.bonjour : "Salut" ;
       }
-      bower() {
-			new App.Req(true).setUrl("bower.json").go()
-			.then(r  => {
-				this.pingres = JSON.stringify(r);
-			}).catch(e => {
-				console.log(e.message);
-			});	
-      }
+	async bower() {
+		try {
+			let r = await fetch("bower.json");
+			if (r.ok) {
+				let t = await r.text();
+				this.pingres = t.substring(0, 30);
+			}
+		} catch(e) {
+			console.log(e.message);
+		}
+	}
       ping() {
     	  const spin = this.$.spin;
 //    	  const spin = App.globalSpinner;

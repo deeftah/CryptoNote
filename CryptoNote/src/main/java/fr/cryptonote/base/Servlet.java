@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
@@ -35,6 +36,7 @@ public class Servlet extends HttpServlet {
 	private static ServletContext servletContext;
 	private static String[] var;
 	private static HashMap<String,HashMap<String,String>> zres = new HashMap<String,HashMap<String,String>>();
+	private static HashSet<String> etcRes = new HashSet<String>();
 
 	public static String contextPath() { return contextPath; }
 	public static String contextPathSlash() { return (contextPath.length() == 0) ? "/" : "/" + contextPath + "/"; }
@@ -57,9 +59,11 @@ public class Servlet extends HttpServlet {
 				if (s.endsWith("/"))
 					lpath(var, s);
 				else if (MimeType.mimeOf(s) != null) {
-					if (!s.startsWith("/var/z/"))
+					if (!s.startsWith("/var/z/")) {
 						var.add(s);
-					else {
+						if (s.startsWith("/var/etc/"))
+							etcRes.add(s);
+					} else {
 						int i = s.indexOf('/', 7);
 						if (i != -1) {
 							String ns = s.substring(7, i);
@@ -227,22 +231,31 @@ public class Servlet extends HttpServlet {
 		}
 	
 		void resource() throws IOException {
+			String urix = uri;
+//			int ii = 0;
 			int i = uri.indexOf("/");
 			if (i == -1 || i >= uri.length() -1) {
 				resp.sendError(404);
+				Util.log.severe("404 - " + urix);
 				return;
 			}
 			uri = uri.substring(i + 1);
 			Resource res = null;
+			HashMap<String,String> rns;
 			if (uri.startsWith("z/")) {
-				HashMap<String,String> rns = zres(nsqm.code);
-				String subst = rns.get("/var/z/" + uri);
+//				if (uri.startsWith("z/z/"))
+//					ii++;
+				rns = zres(nsqm.code);
+				String subst = rns.get("/var/" + uri);
 				if (subst != null)
 					res = getResource(subst);
 			} else
 				res = getResource("/var/" + uri);
-			if (res == null)
+			if (res == null) {
 				resp.sendError(404);
+				Util.log.severe("404 - " + urix);
+				return;
+			}
 			sendRes(res, req, resp);
 		}
 
@@ -302,7 +315,6 @@ public class Servlet extends HttpServlet {
 			
 			sb.append("<head><base href=\"").append(contextPathSlash()).append(nsqm.code).append("/var").append(build).append("/\">\n");
 			sb.append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n");
-			sb.append("<link rel='icon' type='image/png' href='z/icon.png'>\n");
 
 			sb.append("<script src='js/root.js'></script>\n");
 			sb.append("<script src='js/build.js'></script>\n");
@@ -320,10 +332,19 @@ public class Servlet extends HttpServlet {
 			sb.append("App.theme = \"").append(nsqm.theme).append("\";\n");
 			sb.append("App.themes = JSON.parse('").append(JSON.toJson(BConfig.themes())).append("');\n");
 
+			sb.append("App.etcres = {\n");
+			int l = "/var/etc/".length();
+			for(String n : etcRes)
+				sb.append("\"").append(n.substring(l)).append("\":true,\n");
+			sb.setLength(sb.length() - 2);
+			sb.append("}\n");
+			
+
 			HashMap<String,String> rns = zres(nsqm.code);
 			sb.append("App.zres = {\n");
+			l = "/var/z/z/".length();
 			for(String n : rns.keySet())
-				sb.append("\"").append(n).append("\":true,\n");
+				sb.append("\"").append(n.substring(l)).append("\":true,\n");
 			sb.setLength(sb.length() - 2);
 			sb.append("}\n");
 			
@@ -331,11 +352,7 @@ public class Servlet extends HttpServlet {
 			sb.append("<script src='js/util.js' type='module'></script>\n");
 
 			sb.append(head);
-			
-			sb.append("<script src='z/custom.js' type='module'></script>\n");
-
 			sb.append(body);
-			
 			sendRes(new Resource(sb.toString(), "text/html"), req, resp);
 			fini = true;
 		}
