@@ -4,6 +4,7 @@
 <link rel="import" href="../bower_components/paper-styles/color.html">
 
 <link rel="import" href="confirm-box.html">
+<link rel="import" href="message-box.html">
 <link rel="import" href="spinner-box.html">
 <link rel="import" href="reqerr-panel.html">
 <link rel="import" href="home1-home.html">
@@ -17,6 +18,7 @@
   	</style>
 	<div class="top">
 		<confirm-box id="confirm"></confirm-box>
+		<message-box id="message"></message-box>
 		<spinner-box id="spin"></spinner-box>
 		<reqerr-panel id="reqerr" lang="[[lang]]"></reqerr-panel>
 		<iron-pages class="top" attr-for-selected="id" selected="[[home]]">
@@ -38,6 +40,7 @@
       	ready() {
       		super.ready();
       		App.confirmBox = this.$.confirm;
+      		App.messageBox = this.$.message;
       		App.globalSpinner = this.$.spin;
       		App.globalReqErr = this.$.reqerr;
       		this.setTheme(App.theme);

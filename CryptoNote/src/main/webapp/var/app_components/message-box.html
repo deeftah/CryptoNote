@@ -1,0 +1,41 @@
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="message-box">
+<template>
+	<style is="custom-style">
+	</style>
+	<style>
+		:host { font-family: var(--font-std); font-size:1rem;}
+		:host #message {max-height:500px !important; }
+	</style>
+	<paper-toast id="message" text="[[text]]" duration="[[duration]]"></paper-toast>
+</div>
+</template>
+<script>
+    class MessageBox extends Polymer.Element {
+		static get is() { return "message-box"; }
+		static get properties() { return { 
+			text : {type:String, value:"?"},
+			duration : {type:Number, value:0}
+			}
+		}
+
+      	constructor() { super(); }
+      	
+      	ready() {
+      		super.ready();
+		}
+      	
+    	show(msg, duration){
+    		if (!msg) return;
+    		console.log(msg);
+    		this.text = msg;
+    		this.duration = duration ? duration : 5000;
+    		this.$.message.show();
+    	}
+
+	}
+customElements.define(MessageBox.is, MessageBox);
+</script>
+</dom-module>
+	

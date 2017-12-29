@@ -1,0 +1,34 @@
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="foo-bar">
+<template>
+	<style is="custom-style">
+	</style>
+	<style>
+		:host { font-family: var(--font-std); font-size:1rem;}
+	</style>
+<div id="top">
+</div>
+</template>
+<script>
+    class FooBar extends Polymer.Element {
+		static get is() { return "foo-bar"; }
+		static get properties() { return { 
+			lang : {type:String, value:"xx"},
+			}
+		}
+
+		lib(code, lang) { return App.lib(code);}
+
+      	constructor() { super(); }
+      	
+      	ready() {
+      		super.ready();
+			App.setMsg("fr", "sb_npa", "Ne plus attendre");
+		}
+      	
+	}
+customElements.define(FooBar.is, FooBar);
+</script>
+</dom-module>
+	
