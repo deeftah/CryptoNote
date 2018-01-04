@@ -86,10 +86,12 @@ public class BConfig {
 	private static MessageFormat mf(int il, Nsqm nsqm, String code) {
 		MessageFormat mf = null;
 		if (nsqm != null) {
-			mf = nsqm.mfDics[il].get(code);
+			MFDic d = nsqm.mfDics[il];
+			mf = d == null ? null : d.get(code);
 			if (mf != null) return mf;
 			if (il != 0) {
-				mf = nsqm.mfDics[0].get(code);
+				d = nsqm.mfDics[0];
+				mf = d == null ? null : d.get(code);
 				if (mf != null) return mf;
 			}
 		}

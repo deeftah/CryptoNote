@@ -62,6 +62,8 @@
       		for(let k in t) sty[k] = t[k];
       		t = App.customThemes[theme];
       		for(let k in t) sty[k] = t[k];
+      		t = App.customThemes[App.lang];
+      		for(let k in t) sty[k] = t[k];
       		Polymer.updateStyles(sty);
       	}
     }

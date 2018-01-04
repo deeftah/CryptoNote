@@ -9,7 +9,7 @@
 		--font-cf : 'Comfortaa';
 		--mybg-color : lightgrey;
 		--font-large : 2rem;
-		--bg-imglg : url("z/z/post-it.png");
+		--bg-imglg : url("../z/z/post-it.png");
 		--bonjour-before : 'Bonjour ...';
 		
 		--btnstd-color : var(--paper-indigo-900);
@@ -26,14 +26,17 @@
 		--btnhlp-size : 1.8rem;
 	
 		
-		/* les apply : utilisent des var ci-dessus : NON surchargeables par les themes */
+		/* les apply : utilisent des var ci-dessus : NON surchargeables par les themes 
+		   les var reprises ci-dessous ne sont pas toujours réappliquées en cas de changement dynamique de thème !!!
+		   Exemple : background-image:var(--bg-imglg); dans --flag-gen pas modifié sue Chrome
+		*/
 		--cf-lite : { font-family:var(--font-cf); font-weight:300; font-size:1rem; };
 		--cf-reg : { font-family:var(--font-cf); font-weight:400; font-size:1rem;};
 		--cf-bold : { font-family:var(--font-cf); font-weight:700; font-size:1rem;};
 		--std-reg : { font-family:var(--font-std); font-weight:400; font-size:1rem;};
 		--std-bold : { font-family:var(--font-std); font-weight:700; font-size:1rem;};
 		--c1-gen : { color : var(--mybg-color); font-size: var(--font-large); }
-		--flag-gen : {background-image:var(--bg-imglg); background-repeat:no-repeat; background-position:center; background-size: 2rem 2rem;}
+		--flag-gen : { background-repeat:no-repeat; background-position:center; background-size: 2rem 2rem;}
 		
 		--btnstd-hover : {background-color: var(--btnstd-color); color:var(--btnstd-colorhover);}
 		--btndef-hover : {background-color: var(--btndef-color); color:var(--btndef-colorhover);}

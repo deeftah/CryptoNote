@@ -337,19 +337,17 @@ public class Servlet extends HttpServlet {
 			for(String n : etcRes)
 				sb.append("\"").append(n.substring(l)).append("\":true,\n");
 			sb.setLength(sb.length() - 2);
-			sb.append("}\n");
+			sb.append("};\n");
 			
-
 			HashMap<String,String> rns = zres(nsqm.code);
 			sb.append("App.zres = {\n");
 			l = "/var/z/z/".length();
 			for(String n : rns.keySet())
 				sb.append("\"").append(n.substring(l)).append("\":true,\n");
 			sb.setLength(sb.length() - 2);
-			sb.append("}\n");
-			
+			sb.append("};\n");
 			sb.append("</script>\n");
-			sb.append("<script src='js/util.js' type='module'></script>\n");
+			sb.append("<script src='js/util.js'></script>\n");
 
 			sb.append(head);
 			sb.append(body);

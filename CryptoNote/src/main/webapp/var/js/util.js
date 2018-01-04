@@ -52,7 +52,7 @@ class ReqErr {
  * Methodes d'un Tracker : onStart(req) onProgress(req) onSuccess(req, resp) onError(req, err)
  * Méthodes de Req qu'un Tracker peut appeler: kill() (ce qui en génral lui provoquera un appel onError)
  */
-export class Req {
+class Req {
 	constructor(isGet) {
 		this.isGet = isGet ? true : false;
 		this.TIME_OUT_MS = 300000;
@@ -248,7 +248,7 @@ class Retry {
 						let text;
 						if (isJson) {
 							try {
-								text = uint8 ? Util.toUtf8(uint8) : "{}";
+								text = uint8 ? Util.bytes2string(uint8) : "{}";
 								jsonObj = JSON.parse(text);
 							} catch (e) {
 								const er = new ReqErr("BJSONRESP", 6, App.format("BJSONRESP", url, e.message), [url, text]); 
@@ -332,7 +332,7 @@ class Tracker {
 }
 
 /*****************************************************/
-export class Util {	
+class Util {	
 	static editPC(n1, n2){
 		if (n2 <= 0 || n1 >= n2) return "100%";
 		if (!n1 || n1 < 0) return "0%";
@@ -398,7 +398,6 @@ export class Util {
 					await this.updCache();
 			}
 			await this.checkSrvVersion();
-			console.log("Après checkSrvVersion()");
 			
 		    let response = await fetch("etc/mimetypes.json");
 		    App.mimetypes = await response.json();
@@ -427,7 +426,7 @@ export class Util {
 				d = {};
 				App.zDics[lang] = d;
 			}
-			u = lang + "base-msg.json";
+			u = lang + "/base-msg.json";
 			if (App.etcres[u]) {
 			    r = await fetch("etc/" + u);
 			    if (r.ok) {
@@ -436,7 +435,7 @@ export class Util {
 			    		d[k] = x[k].replace(/''/g, "'");
 			    }
 			}
-			u = lang + "app-msg.json";
+			u = lang + "/app-msg.json";
 			if (App.etcres[u]) {
 			    r = await fetch("etc/" + u);
 			    if (r.ok) {
@@ -445,7 +444,7 @@ export class Util {
 			    		d[k] = x[k].replace(/''/g, "'");
 			    }
 			}
-			u = lang + "base-msg.json";
+			u = lang + "/base-msg.json";
 			if (App.zres[u]) {
 			    r = await fetch("z/z/" + u);
 			    if (r.ok) {
@@ -454,7 +453,7 @@ export class Util {
 			    		d[k] = x[k].replace(/''/g, "'");
 			    }
 			}
-			u = lang + "app-msg.json";
+			u = lang + "/app-msg.json";
 			if (App.zres[u]) {
 			    r = await fetch("z/z/" + u);
 			    if (r.ok) {
@@ -462,6 +461,7 @@ export class Util {
 			    	for(let k in x)
 			    		d[k] = x[k].replace(/''/g, "'");
 			    }
+			    else alert("KO : " + u);
 			}
 		} catch (er) {
 			this.errorPage(er.message);
@@ -509,8 +509,16 @@ export class Util {
 		return new Date().format("Y-m-d H:i:s.S") + " - " + message;
 	}
 
-	static toUtf8(bytes) { return bytes ? this.decoder.decode(bytes) : ""; }
+	static bytes2string(bytes) { 
+		if (!this.decoder) this.decoder = new TextDecoder("utf-8");
+		return bytes ? this.decoder.decode(bytes) : ""; 
+	}
 
+	static string2bytes(string) { 
+		if (!this.encoder) this.encoder = new TextEncoder("utf-8");
+		return string ? this.encoder.encode(string) : new Uint8Array(0); 
+	}
+	
 	static reload(b) {
 		setTimeout(function() {
 			const x = {lang:App.lang, build:b, nslabel:App.nslabel(), applabel:App.applabel(), b:App.buildAtPageGeneration, home:App.homeUrl()}
@@ -588,11 +596,8 @@ export class Util {
 //			};
 //		});
 //	}
-
-	static setup() {
-		this.decoder = new TextDecoder("utf-8");
-
-		this.defaultDRM = [
+	
+	static get defaultDRM() { return [
 	    {'base':'A', 'letters':/[\u0041\u24B6\uFF21\u00C0\u00C1\u00C2\u1EA6\u1EA4\u1EAA\u1EA8\u00C3\u0100\u0102\u1EB0\u1EAE\u1EB4\u1EB2\u0226\u01E0\u00C4\u01DE\u1EA2\u00C5\u01FA\u01CD\u0200\u0202\u1EA0\u1EAC\u1EB6\u1E00\u0104\u023A\u2C6F]/g},
 	    {'base':'AA','letters':/[\uA732]/g},
 	    {'base':'AE','letters':/[\u00C6\u01FC\u01E2]/g},
@@ -681,16 +686,63 @@ export class Util {
 	}
 	
 	static removeDiacritics(str) {
-		if (!this.defaultDRM) this.init();
-		for(var i=0; i<this.defaultDRM.length; i++)
-			str = str.replace(this.defaultDRM[i].letters, this.defaultDRM[i].base);
+		const drm = this.defaultDRM();
+		for(var i=0; i<drm.length; i++)
+			str = str.replace(drm[i].letters, drm[i].base);
 		return str;
+	}
+
+	static bytesEqual(a, b){
+		if (!a && !b) return true;
+		if ((a && !b) || (!a && b) || (a.length != b.length)) return false;
+		for(let i = 0; i< a.length; i++)
+			if (a[i] != b[i]) return false;
+		return true;
+	}
+
+	/** BCrypt ***************************************************/
+	static get salt() { return "$2a$10$kBdas.cIGiNW/ziEj/pZD."; }
+
+	static bcrypt(data) {
+		return dcodeIO.bcrypt.hashSync(data, this.salt).substring(29).replace(/\./g, '-').replace(/\//g, '_');
+	}
+
+	static bcryptCompare(data, hash) {
+		let h = hash.replace(/-/g, '.').replace(/_/g, '/');
+		return dcodeIO.bcrypt.compareSync(data, this.salt + h);
+	}
+	
+	/** SHA-256 ***************************************************/
+//	static sha256(data) {
+//		const sha = sha256.create();
+//		return new Uint8Array(sha.update(data).array());
+//	}
+//
+	static async sha256(data) {
+		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
+		let result = await crypto.subtle.digest({name: "SHA-256"}, uint8);
+		return new Uint8Array(result);
+	}
+
+	/** Hash of String ***************************************************/
+	static hashOf(s) { return B64.intToBase64(this.checksum(s))};
+	
+	static checksum(s) { // hash de Java String
+		let hash = 0;
+		let strlen = s ? s.length : 0;
+		if (strlen === 0) return 0;
+		for (let i = 0; i < strlen; i++) {
+			let c = s.charCodeAt(i);
+			hash = ((hash << 5) - hash) + c;
+			hash = hash & hash; // Convert to 32bit integer
+		}
+		return hash;
 	}
 
 }
 
 /*****************************************************/
-export class B64 {
+class B64 {
 	static get chars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; }
 	static get chars2() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"; }
 	static get egal() { return "=".charCodeAt(0); }
@@ -784,7 +836,7 @@ export class B64 {
 			}
 		}
 
-		return Util.toUtf8(u8);
+		return Util.bytes2string(u8);
 	}
 	
 	static decode(strBase64) {
@@ -847,16 +899,184 @@ export class B64 {
 }
 
 /*****************************************************/
+class AES {
+	constructor(key, uint8){
+		this.key = key;
+		this.uint8 = uint8;
+		if (!AES.defaultVector)
+			AES.defaultVector = new Uint8Array([101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116]); 
+	}
+	
+	static async newAES(passphraseKey) {
+		return new Promise((resolve, reject) => {
+			try {
+				const uint8 = typeof passphraseKey === "string" ? Util.string2bytes(passphraseKey) : passphraseKey;
+				const b = uint8.length == 32 ? uint8 : Util.sha256(uint8);
+				crypto.subtle.importKey('raw', b, {name: "AES-CBC"}, false, ["encrypt", "decrypt"])
+				.then(webKey => {
+					resolve(new AES(webKey, uint8));
+				});
+			} catch (err) {
+				reject(err);
+			}
+		});
+	}
+
+	async encode(data, gzip){
+		if (data == null) return null;
+		let uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
+		if (!uint8) uint8 = new Uint8Array(0);
+		const deflated = gzip ? pako.deflate(uint8) : uint8;
+		let result = await crypto.subtle.encrypt({name: "AES-CBC", iv:AES.defaultVector}, this.key, deflated);
+		return new Uint8Array(result);
+	}
+
+	async decode(encoded, gzip){
+		if (encoded == null) return null;
+	    let result = await crypto.subtle.decrypt({name: "AES-CBC", iv:AES.defaultVector}, this.key, encoded);
+    	const bin = new Uint8Array(result);
+        return gzip ? pako.inflate(bin) : bin;
+	}
+
+	/*
+	 * photo est un base64 du cryptage d'une URL d'image par une clé AES
+	 */
+	async decodeImage(photoB64) {
+		let photob = await this.decode(B64.decode(photoB64));
+		const ph = Util.bytes2string(photob);
+		if (!ph || !ph.startsWith("data:image/")) return null;
+		const i = ph.indexOf(";");
+		if (i == -1) return null;
+		const j = ph.indexOf(",");
+		if (j != i + 7 || ph.substring(i + 1, j) != "base64" || !B64.isBase64NN(ph.substring(j + 1))) return null;
+		return ph;
+	}
+
+}
+
+/*****************************************************/
+class RSA {
+	constructor() {	
+	}
+
+	static get rsaObj() {
+		// le hash DOIT être SHA-1 pour interaction avec java (le seul qu'il accepte d'échanger)
+		return {name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: {name: "SHA-1"}};
+	}
+
+	//	rsassaObj : {name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: {name: "SHA-256"}},
+	// http://stackoverflow.com/questions/33043091/public-key-encryption-in-microsoft-edge
+	// hash: { name: "SHA-1" } inutile mais fait marcher edge !!!
+	
+	async encode(data) {
+		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
+		let result = await crypto.subtle.encrypt({name: "RSA-OAEP", hash: { name: "SHA-1" }}, this.pub, uint8);
+		return new Uint8Array(result);
+	}
+	
+	async decode(data) {
+		const uint8 = typeof data === "string" ? B64.decode(data) : data;
+		let result = await crypto.subtle.decrypt({name: "RSA-OAEP", hash: { name: "SHA-1" }}, this.priv, uint8);
+	    return new Uint8Array(result);
+	}
+	
+	static async newRSAGen() {
+		const rsa = new GEN.RSA();
+		let key = await crypto.subtle.generateKey(this.rsaObj, true, ["encrypt", "decrypt"]);
+		rsa.priv = key.privateKey;
+		rsa.pub = key.publicKey;
+		let jpriv = await crypto.subtle.exportKey("jwk", rsa.priv);
+		rsa.jwkpriv = JSON.stringify(jpriv);
+		let jpub = await crypto.subtle.exportKey("jwk", rsa.pub);
+		rsa.jwkpub = JSON.stringify(jpub);
+		return rsa;
+	}
+	
+	static async compareRSAPub(p1, p2, ch){ 
+		if ((p1 && !p2) || (p2 && !p1) || !ch) return null;
+		try {
+			let x = await p1.encode(ch);
+			let chec64 = B64.encode(x, true);
+			let y = await p2.encode(ch);
+			let y64 = B64.encode(y, true);
+			return y64 == chec64 ? chec64 : null;
+		} catch(err) {
+			return null;
+		}
+	}
+
+	static async compareRSAPriv(p1, p2, chec64, ch64){ 
+		if ((p1 && !p2) || (p2 && !p1) || !chec64 || !ch64) return false;
+		try {
+			const chec = B64.decode(chec64);
+			let x = await p1.decode(chec);
+			let chdc64 = B64.encode(x, true);
+			if (chdc64 != ch64) return false;
+			let y = await p2.decode(chec);
+			const y64 = B64.encode(y, true);
+			return y64 == chdc64;
+		} catch (err) {
+			return false;
+		}
+	}
+
+	static async compareRSA(pub1, pub2, priv1, priv2, ch) {
+		let chec64 = await this.compareRSAPub(pub1, pub2, ch);
+		if (!chec64) return false;
+		const ch64 = B64.encode(ch, true);
+		return await this.compareRSAPriv(priv1, priv2, chec64, ch64);
+	}
+		
+	static async ios() {
+		if (RSA.IOS == null) {
+			try {
+				let key = await crypto.subtle.generateKey(RSA.rsaObj, true, ["encrypt", "decrypt"]);
+				let jwk = await crypto.subtle.exportKey("jwk", key.privateKey);
+				const x = JSON.stringify(jwk);
+				const y = JSON.parse(x);
+				let result2 = await crypto.subtle.importKey("jwk", y, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
+				RSA.IOS = false;
+			} catch (err) {
+				RSA.IOS = true;
+			}
+		}
+		return RSA.IOS;
+	}
+	
+	static async newRSAPriv(jwkJson) {
+		const key = RSA.ios() ? Util.string2bytes(jwkJson) : JSON.parse(jwkJson);
+		let result2 = await crypto.subtle.importKey("jwk", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
+		const rsa = new RSA();
+		rsa.priv = result2;
+		rsa.jwkpriv = jwkJson;
+		return rsa;
+	}
+
+	static async newRSAPub(jwkJson) {
+		const key = RSA.ios() ? Util.string2bytes(jwkJson) : JSON.parse(jwkJson);
+		let result2 = await crypto.subtle.importKey("jwk", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["encrypt"])
+		const rsa = new RSA();
+		rsa.pub = result2;
+		rsa.jwkpub = jwkJson;
+		return rsa;
+	}
+
+}
+
+/*****************************************************/
 App.Req = Req;
 App.Tracker = Tracker;
 App.Util = Util;
 App.B64 = B64;
-Util.setup();
+App.AES = AES;
+App.RSA = RSA;
 
 // Pour Apple et Edge 
-if (!navigator.serviceWorker && APP.isSW) window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
+if (!navigator.serviceWorker && App.isSW) 
+	window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
 //Pour Safari / IOS !!!
-if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) window.crypto.subtle = window.crypto.webkitSubtle;
+if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) 
+	window.crypto.subtle = window.crypto.webkitSubtle;
 // window.Polymer = { dom:'shadow'};
 
 Util.register();
