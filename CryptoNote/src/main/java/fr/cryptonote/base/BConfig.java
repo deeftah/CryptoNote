@@ -191,12 +191,10 @@ public class BConfig {
 		public int onoff() { return onoff; }
 		public String[] options() { return options == null || options.size() == 0 ? new String[0] : options.keySet().toArray(new String[options.size()]); }
 		public String option(String opt) { return options == null ? null : options.get(opt); }
-		public ArrayList<String> homes(boolean offline) { 
+		public ArrayList<String> homes(int min) { 
 			ArrayList<String> res = new ArrayList<String>();
-			for(String h : homes.keySet()) {
-				int l = homes.get(h);
-				if ((offline && l > 0) || (!offline && l == 0)) res.add(h);
-			}
+			for(String h : homes.keySet()) 
+				if (homes.get(h) >= min) res.add(h);
 			return res;
 		}
 		public HashMap<String,Integer> homes() { return homes;}

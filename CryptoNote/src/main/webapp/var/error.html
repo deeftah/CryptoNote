@@ -33,9 +33,9 @@ function format(lang, args) { // 0 à N arguments après le code
 	}
 	return x;
 }
-
-var s = window.location.search.substring(1);
-x = JSON.parse(decodeURI(s));
+var sx = window.location.search;
+var s = sx ? sx.substring(1) : "";
+x = s ? JSON.parse(decodeURI(s)) : {};
 var p = document.getElementById("p");
 // 	const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
 var m = format(x.lang, x.applabel, x.nslabel, x.home, window.location.origin + "/" + x.home);

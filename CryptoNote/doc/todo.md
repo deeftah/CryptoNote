@@ -6,7 +6,7 @@
 [Distributions](https://github.com/dcodeIO/bcrypt.js/tree/master/dist)  
 [ZIP-Archive](https://github.com/dcodeIO/bcrypt.js/archive/master.zip)
 
-### text-encoding 
+### text-encoding (pour Edge)
 https://github.com/inexorabletash/text-encoding  
 
 ### showdown.js

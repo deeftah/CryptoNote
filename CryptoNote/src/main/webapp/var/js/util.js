@@ -1,7 +1,7 @@
 /*****************************************************/
 class ReqErr {
 	constructor(code, phase, message, detail) {
-		this.code = code ? "LX" : name;
+		this.code = code ? code : "LX";
 		this.phase = phase < -1 || phase > 6 ? 9 : phase;
 		this.message = message ? message : this.code;
 		this.detail = detail ? detail : [];
@@ -136,7 +136,7 @@ class Req {
 	
 	setNoCatch(noCatch) { this.noCatch = noCatch; return this; }
 	
-	go(){
+	async go(){
 		return new Promise((resolve, reject) => {
 			if (this.cred) {
 				for(let a in cred) {
@@ -148,8 +148,10 @@ class Req {
 					this.hasArgs = true;
 				}
 			}
-			this.resolve = resolve;
-			this.reject = reject;
+			if (!this.resolve)
+				this.resolve = resolve;
+			if (!this.reject)
+				this.reject = reject;
 			this.currentRetry = new Retry();
 			this.currentRetry.req = this;
 			if (this.tracker) 
@@ -188,7 +190,7 @@ class Retry {
 		}
 	}
 	
-	send() {
+	async send() {
 		const tracker = this.req.tracker;
 		const url = this.req.url.toString();
 		const t0 = new Date().getTime();
@@ -310,13 +312,16 @@ class Tracker {
 			Util.reload(App.srvbuild);
 			return;
 		}
-		if (request && request.noCatch) {
-			if (request.noCatch.indexOf(err.code + "") != -1) {
+		if (this.request && this.request.noCatch) {
+			if (this.request.noCatch.indexOf(err.code + "") != -1) {
 				this.request.reject(err);
 				return;
 			}
 		}
-		this.reqErr.open(this, err);
+		if (this.reqErr)
+			this.reqErr.open(this, err);
+		else
+			this.request.reject(err);
 	}
 	
 	onRetry() {
@@ -354,9 +359,11 @@ class Util {
 	/*
 	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
 	 */
-	static async updCache(){
-		window.applicationCache.addEventListener('updateready', function(e) {
+	static updCache(){
+		window.applicationCache.addEventListener('updateready', e => {
+			console.log("Evt. updateready reçu " + window.applicationCache.status);
 		    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+		    	window.applicationCache.swapCache();
 		    	location.reload(true);
 		    }
 		}, false);
@@ -366,13 +373,11 @@ class Util {
 		// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build);
 		if (App.buildAtPageGeneration != App.build)
 			this.reload(App.build);
-		this.ping()
-		.then(r  => {
-			if (r && r.json.b != App.build) {
-				// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build + " ping.b:" + r.json.b);
-				this.reload(r.json.b);
-			}
-		});
+		let r = await this.ping();
+		if (r && r.json.b != App.build) {
+			// alert("App.buildAtPageGeneration:" + App.buildAtPageGeneration + " App.build:" + App.build + " ping.b:" + r.json.b);
+			this.reload(r.json.b);
+		}
 	}
 
 	/*
@@ -395,10 +400,17 @@ class Util {
 						const reg = await navigator.serviceWorker.register(js);
 						console.log(App.format("regok", js, reg.scope));
 				} else
-					await this.updCache();
+					this.updCache();
 			}
+			await this.loadResources();
 			await this.checkSrvVersion();
-			
+		} catch (er) {
+			this.errorPage(er.message);
+		}
+	}
+
+	static async loadResources() {
+		try {
 		    let response = await fetch("etc/mimetypes.json");
 		    App.mimetypes = await response.json();
 		    
@@ -415,7 +427,7 @@ class Util {
 			this.errorPage(er.message);
 		}
 	}
-		
+
 	static async loadDic(lang) {
 		try {
 			let r;
@@ -501,11 +513,20 @@ class Util {
 	}
     
 	/*
-	 * Réservé aux messages fonctionnels (qui apparaissent à l'écran (sauf si notOnPanel est true)
-	 * Usage : console.log(Util.log("Mon beau message"));
+	 * Réservé aux messages fonctionnels (qui apparaissent à l'écran (sauf si duration est 0)
+	 * Usage : console.log(App.Util.log("Mon beau message", 5000)); (ou console.error(...))
 	 */
-	static log(message, notOnPanel) { 
-		if (!notOnPanel && message && App.TracePanel) App.TracePanel.trace(message); 
+	static log(message, duration) { 
+		if (duration && message && App.messageBox) App.messageBox.show(message, duration);
+		return new Date().format("Y-m-d H:i:s.S") + " - " + message;
+	}
+
+	/*
+	 * Réservé aux messages fonctionnels (qui apparaissent à l'écran (sauf si duration est 0)
+	 * Usage : console.error(App.Util.log("Mon beau message", 5000));
+	 */
+	static error(message, duration) { 
+		if (duration && message && App.messageBox) App.messageBox.show(message, duration, true);
 		return new Date().format("Y-m-d H:i:s.S") + " - " + message;
 	}
 
@@ -541,18 +562,19 @@ class Util {
 	}
 
 	// ping du namespace ou du serveur (notns est true)
-	static ping(notns) {
-		return new Promise((resolve, reject) => {
-			new Req(true).setUrl(notns ? "../ping" : "ping").go()
-			.then(r  => {
-				App.offline = false;
-				App.srvbuild = r.json.b;
-				resolve(r);
-			}).catch(e => {
-				App.offline = true;
-				resolve(null);
-			});	
-		});
+	static async ping(exc, notns) {
+		try {
+			let r = await new Req().setUrl(notns ? "../ping" : "ping").go();
+			App.offline = false;
+			App.srvbuild = r.json.b;
+			console.log("PING OK : " + JSON.stringify(r.json));
+			return r;
+		} catch(e) {
+			App.offline = true;
+			if (exc) throw e;
+			console.error("ping KO : " + e.message);
+			return null;
+		}	
 	}
 			
 
@@ -712,12 +734,13 @@ class Util {
 		return dcodeIO.bcrypt.compareSync(data, this.salt + h);
 	}
 	
+	static bcrypt2u32(data) {
+		const r = new Uint8Array(32).fill(0);
+		r.set(B64.decode(data));
+		return r;
+	}
+	
 	/** SHA-256 ***************************************************/
-//	static sha256(data) {
-//		const sha = sha256.create();
-//		return new Uint8Array(sha.update(data).array());
-//	}
-//
 	static async sha256(data) {
 		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
 		let result = await crypto.subtle.digest({name: "SHA-256"}, uint8);
@@ -881,21 +904,6 @@ class B64 {
 		return "data:" + image.contentType + ";base64," + this.encode(image.uint8);
 	}
 	
-	static test(special) {
-		const t1 = new Date().getTime();
-		for(let len = 1; len < 1024; len++){
-			for(let j = 0; j < 10; j++){
-				const a = GEN.Crypt.randomNUint8(len);
-				const b64 = this.encode(a, special);
-				const b = this.decode(b64);
-				if (!GEN.Crypt.uint8Equal(a, b)){
-					console.error("Base64 - " + len + " / " + b64.length + "[" + a + "] " + b64);
-				}
-			}
-		}
-		const t2 = new Date().getTime();
-		console.log((t2 - t1) + "ms");
-	}
 }
 
 /*****************************************************/
@@ -908,18 +916,10 @@ class AES {
 	}
 	
 	static async newAES(passphraseKey) {
-		return new Promise((resolve, reject) => {
-			try {
-				const uint8 = typeof passphraseKey === "string" ? Util.string2bytes(passphraseKey) : passphraseKey;
-				const b = uint8.length == 32 ? uint8 : Util.sha256(uint8);
-				crypto.subtle.importKey('raw', b, {name: "AES-CBC"}, false, ["encrypt", "decrypt"])
-				.then(webKey => {
-					resolve(new AES(webKey, uint8));
-				});
-			} catch (err) {
-				reject(err);
-			}
-		});
+		const uint8 = typeof passphraseKey === "string" ? Util.string2bytes(passphraseKey) : passphraseKey;
+		const b = uint8.length == 32 ? uint8 : Util.sha256(uint8);
+		let webkey = await crypto.subtle.importKey('raw', b, {name: "AES-CBC"}, false, ["encrypt", "decrypt"]);
+		return new AES(webkey, uint8);
 	}
 
 	async encode(data, gzip){
@@ -981,14 +981,15 @@ class RSA {
 	}
 	
 	static async newRSAGen() {
-		const rsa = new GEN.RSA();
-		let key = await crypto.subtle.generateKey(this.rsaObj, true, ["encrypt", "decrypt"]);
+		const rsa = new RSA();
+		const obj = this.rsaObj;
+		let key = await crypto.subtle.generateKey(obj, true, ["encrypt", "decrypt"]);
 		rsa.priv = key.privateKey;
 		rsa.pub = key.publicKey;
 		let jpriv = await crypto.subtle.exportKey("jwk", rsa.priv);
-		rsa.jwkpriv = JSON.stringify(jpriv);
+		rsa.jwkpriv = RSA.ios() ? Util.bytes2string(jpriv) : JSON.stringify(jpriv);
 		let jpub = await crypto.subtle.exportKey("jwk", rsa.pub);
-		rsa.jwkpub = JSON.stringify(jpub);
+		rsa.jwkpub = RSA.ios() ? Util.bytes2string(jpub) : JSON.stringify(jpub);
 		return rsa;
 	}
 	
@@ -1027,21 +1028,23 @@ class RSA {
 		return await this.compareRSAPriv(priv1, priv2, chec64, ch64);
 	}
 		
-	static async ios() {
-		if (RSA.IOS == null) {
-			try {
-				let key = await crypto.subtle.generateKey(RSA.rsaObj, true, ["encrypt", "decrypt"]);
-				let jwk = await crypto.subtle.exportKey("jwk", key.privateKey);
-				const x = JSON.stringify(jwk);
-				const y = JSON.parse(x);
-				let result2 = await crypto.subtle.importKey("jwk", y, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
-				RSA.IOS = false;
-			} catch (err) {
-				RSA.IOS = true;
-			}
-		}
-		return RSA.IOS;
-	}
+//	static async ios() {
+//		if (RSA.IOS == null) {
+//			try {
+//				let key = await crypto.subtle.generateKey(RSA.rsaObj, true, ["encrypt", "decrypt"]);
+//				let jwk = await crypto.subtle.exportKey("jwk", key.privateKey);
+//				const x = JSON.stringify(jwk);
+//				const y = JSON.parse(x);
+//				let result2 = await crypto.subtle.importKey("jwk", y, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
+//				RSA.IOS = false;
+//			} catch (err) {
+//				RSA.IOS = true;
+//			}
+//		}
+//		return RSA.IOS;
+//	}
+	
+	static ios() { return RSA.IOS; }
 	
 	static async newRSAPriv(jwkJson) {
 		const key = RSA.ios() ? Util.string2bytes(jwkJson) : JSON.parse(jwkJson);
@@ -1074,9 +1077,12 @@ App.RSA = RSA;
 // Pour Apple et Edge 
 if (!navigator.serviceWorker && App.isSW) 
 	window.location = window.location.pathname + ".a" + window.location.search + window.location.hash;
+
 //Pour Safari / IOS !!!
-if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) 
+if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) {
 	window.crypto.subtle = window.crypto.webkitSubtle;
+	RSA.IOS = true;
+}
 // window.Polymer = { dom:'shadow'};
 
 Util.register();

@@ -87,12 +87,13 @@ this.addEventListener('fetch', event => {
 	
 	if (op) {
 		event.respondWith(
-			fetchWithTimeout(url)
-			.then(response => {
-				return response;
-			}).catch(e => {
-				return null;
-			})
+			fetch(event.request)
+//			fetchWithTimeout(url)
+//			.then(response => {
+//				return response;
+//			}).catch(e => {
+//				return null;
+//			})
 		);
 	} else {
 		event.respondWith(

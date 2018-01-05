@@ -20,10 +20,20 @@
 	</style>
 	<paper-dialog id="panel" class="size-position-right-panel" modal entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
 	<div class="top layout vertical flex-start">
-		<div class="bar">[[topInfo]]</div>
-		<div class="body layout vertical flex flex-start">
-		(panel à écrire)
+		<div class="bar">
+			<button on-tap="onRetry">[[lib('er_retry',lang)]]</button>
+			<button on-tap="onReturnToApp">[[lib('er_resume',lang)]]</button>
+			<button on-tap="onReload">[[lib('er_reload',lang)]]</button>
+			<button on-tap="onBye">[[lib('er_quit',lang)]]</button>
 		</div>
+		<div class="body layout vertical flex flex-start">
+			<div>Code : [[err.code]]</div>
+			<div>Phase : [[err.phase]]</div>
+			<div>Message : [[err.message]]</div>
+			<template is="dom-repeat" items="[[err.detail]]">
+		        <div><i>[[item]]</i></div>
+	     	</template>
+     	</div>
 	</div>
 	</paper-dialog>
 </template>
@@ -33,27 +43,35 @@
       
 		static get properties() { return {
         	  lang:{type:String, value:App.lang},
+        	  err:{type:Object, value:{code:"LX"}},
         	  topInfo:{type:String, value:"?"},
           };
 		}
 		
 		constructor() {
 			super();
+			App.setMsg("fr", "er_retry", "Ré-essayer");
+			App.setMsg("fr", "er_resume", "Renoncer à l'opération");
+			App.setMsg("fr", "er_reload", "Recharger l'application");
+			App.setMsg("fr", "er_quit", "Quitter l'application");
 		}
-		
+
+		lib(code, lang) { 
+			return App.lib(code);
+		}
+
 		open(tracker, err) {
 			this.tracker = tracker;
 			this.err = err;
 			this.$.panel.open();
-			// TODO - préparer le panel
 		}
 		
 		onRetry() {
 			this.close();
-			this.tracker.retry();
+			this.tracker.onRetry();
 		}
 		
-		onReturnToApp(err) {
+		onReturnToApp() {
 			this.close();
 			this.tracker.onReturnToApp(this.err);		
 		}
@@ -61,6 +79,11 @@
 		onBye() {
 			this.close();
 			App.Util.bye();
+		}
+
+		onReload() {
+			this.close();
+			App.Util.reload();
 		}
 
 		close() { this.$.panel.close(); }

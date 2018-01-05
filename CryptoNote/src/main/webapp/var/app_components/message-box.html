@@ -2,13 +2,13 @@
 
 <dom-module id="message-box">
 <template>
-	<style is="custom-style">
-	</style>
 	<style>
 		:host { font-family: var(--font-std); font-size:1rem;}
 		:host #message {max-height:500px !important; }
+		:host .err { background-color: var(--msg-errbg) !important; color: var(--msg-errcolor) !important;}
+		:host .std { background-color: var(--msg-stdbg) !important; color: var(--msg-stdcolor) !important;}
 	</style>
-	<paper-toast id="message" text="[[text]]" duration="[[duration]]"></paper-toast>
+	<paper-toast id="message" class$="[[cl]]" text="[[text]]" duration="[[duration]]"></paper-toast>
 </div>
 </template>
 <script>
@@ -16,21 +16,18 @@
 		static get is() { return "message-box"; }
 		static get properties() { return { 
 			text : {type:String, value:"?"},
-			duration : {type:Number, value:0}
+			duration : {type:Number, value:0},
+			cl : {type:String, value:"std"}
 			}
 		}
 
       	constructor() { super(); }
-      	
-      	ready() {
-      		super.ready();
-		}
-      	
-    	show(msg, duration){
+      	      	
+    	show(msg, duration, err){
     		if (!msg) return;
-    		console.log(msg);
+   			this.cl = err ? "err" : "std";
     		this.text = msg;
-    		this.duration = duration ? duration : 5000;
+    		this.duration = duration ? duration : 3000;
     		this.$.message.show();
     	}
 

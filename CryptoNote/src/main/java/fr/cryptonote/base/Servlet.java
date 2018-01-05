@@ -193,14 +193,16 @@ public class Servlet extends HttpServlet {
 		}
 		
 		private void appcache() throws IOException {
-			String p1 = "\"/" + contextPath + "/" + nsqm.code + "/";
+			String p1 = "/" + contextPath + "/" + nsqm.code + "/";
 			String p2 = p1 + "var" + build + "/";
 			StringBuffer sb = new StringBuffer();
 			sb.append("CACHE MANIFEST\n#").append(build).append("\nCACHE:\n");
-			for(String x : nsqm.homes(false)) sb.append(p1).append(x).append(".a\",\n");	
-			for(String x : nsqm.homes(true)) sb.append(p1).append(x).append("_.a\",\n");	
+			for(String x : nsqm.homes(1)) sb.append(p1).append(x).append(".a\n");	
+			for(String x : nsqm.homes(2)) sb.append(p1).append(x).append("_.a\n");	
 			for(String s : var()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
-			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), "text/cache-manifest"), req, resp);
+			HashMap<String,String> rns = zres(nsqm.code);
+			for(String s : rns.keySet()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
+			sendRes2(sb.toString().getBytes("UTF-8"), resp);
 			fini = true;
 		}
 
@@ -220,7 +222,7 @@ public class Servlet extends HttpServlet {
 			sb.append("const BUILD = \"").append(BConfig.build()).append("\";\n");
 			sb.append("const NS = \"").append(nsqm.code).append("\";\n");
 			sb.append("const RESSOURCES = [\n");
-			for(String x : nsqm.homes(true)) sb.append(p1).append(x).append("\",\n");	
+			for(String x : nsqm.homes(1)) sb.append(p1).append(x).append("\",\n");	
 			for(String s : var()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
 			HashMap<String,String> rns = zres(nsqm.code);
 			for(String s : rns.keySet()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
@@ -266,7 +268,7 @@ public class Servlet extends HttpServlet {
 				mode = 2;
 				uri = uri.substring(0, uri.length() - 1);
 			}
-			if (!nsqm.homes(true).contains(uri) && !nsqm.homes(false).contains(uri)){
+			if (!nsqm.homes(0).contains(uri)){
 				sendText(404, BConfig.format("404HOME2", uri), resp);
 				fini = true;
 				return;
@@ -308,7 +310,7 @@ public class Servlet extends HttpServlet {
 			StringBuffer sb = new StringBuffer();
 			sb.append("<!DOCTYPE html>");
 			
-			if (isSW)
+			if (isSW || mode == 0)
 				sb.append("<html>");
 			else
 				sb.append("<html manifest=\"").append(contextPathSlash()).append(nsqm.code).append("/x.appcache\">");
@@ -611,6 +613,19 @@ public class Servlet extends HttpServlet {
 			}
 		} else {
 			resp.sendError(404);
+		}	
+	}
+
+	static void sendRes2(byte[] bytes, HttpServletResponse resp) throws IOException {
+		if (bytes != null) {
+			resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+			resp.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+			resp.setHeader("Expires", "0"); // Proxies.
+			resp.setStatus(200);
+			resp.setContentType("text/cache-manifest");
+			resp.setContentLength(bytes.length);
+			resp.setHeader("build", "" + BConfig.build());
+			resp.getOutputStream().write(bytes);
 		}	
 	}
 
