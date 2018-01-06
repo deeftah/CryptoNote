@@ -60,20 +60,21 @@
 			return App.lib(code);
 		}
 
-		open(tracker, err) {
-			this.tracker = tracker;
+		open(request, err) {
+			this.request = request;
 			this.err = err;
 			this.$.panel.open();
+			// TODO pretty display de err
 		}
 		
 		onRetry() {
 			this.close();
-			this.tracker.onRetry();
+			if (this.request && this.request.onRetry) this.request.onRetry();
 		}
 		
 		onReturnToApp() {
 			this.close();
-			this.tracker.onReturnToApp(this.err);		
+			if (this.request && this.request.onReturnToApp) this.request.onReturnToApp(this.err);		
 		}
 		
 		onBye() {

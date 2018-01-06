@@ -8,7 +8,9 @@ class App {
 		this.contextpath = ""; 
 		this.namespace = ""; 
 		this.mode = 0; 
-		this.offline = false;
+		this.modeMax = 0; 
+		this.ready1 = false;
+		this.ready2 = false;
 		this.debug = false;
 		this.isSW = true;
 		this.langs = ["fr","en"]; 
@@ -17,26 +19,17 @@ class App {
 		this.theme = "a";
 		this.themes = ["a"];
 		this.customThemes = {};
-		this.baseDics = {
-			"fr":{
-				"X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
-				"TIMEOUT":"Dépassement du temps maximum d'''attente dans le navigateur {1}ms pour l''URL {0}",
-				"INTERRUPTED":"Fin d''attente dans le navigateur par clic au bout de {1}s pour l'URL {0}",
-				"BJSONRESP":"Erreur de syntaxe dans la réponse du serveur pour l''URL [{0}] - Cause : [{1}] ",
-				"XHTTP":"Réponse d''erreur inattendue du serveur pour l''URL [{0}]. Status-HTTP:{1} Message:{2}",
-				"XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
-				"DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
-				"regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
-				"reqStarted":"envoi au serveur",
-				"reqRec":"reçus %0 de %1",
-				"off-1":"interruption temporaire pour installation d''une nouvelle version",
-				"truc":"truc"
-			}, 
-			"en":{
-				
-			},
-		};
 		this.zDics = {};
+	}
+	
+	static setAll(lang, arg) {
+		if (this.langs.indexOf(lang) == -1 || !arg) return;
+		let d = this.zDics[lang];
+		if (!d) {
+			d = {}
+			this.zDics[lang] = d;
+		}
+		for(let code in arg) d[code] = arg[code].replace(/''/g, "'");
 	}
 	
 	static setMsg(lang, code, msg) {
@@ -53,12 +46,18 @@ class App {
 		if (!x && this.lang != l) {
 			d = this.zDics[l];
 			x = !d ? null : d[code];
-			if (!x) {
-				d = this.baseDics[l];
-				x = !d ? null : d[code];
-			}
 		}
 		return x ? x : code;
+	}
+	
+	static setTheme(code, arg){
+		if (!code || !arg || this.themes.indexOf(code) == -1) return;
+		let t = this.customThemes[code];
+		if (!t) {
+			t = {};
+			this.customThemes[code] = t;
+		}
+		for(let code in arg) t[code] = arg[code];
 	}
 	
 	static format(code, args) { // 0 à N arguments après le code
@@ -102,11 +101,11 @@ class App {
 		+ this.home;
 	}
 	
-	static reloadUrl() { 
+	static reloadUrl(reload) { 
 		return window.location.origin 
 		+ (window.location.origin.endsWith("/") ? "" : "/")
 		+ (!this.contextpath ? "" : this.contextpath + "/")
-		+ this.namespace + "$/var" + this.build + "/";
+		+ this.namespace + (reload ? "$/var" : "/var") + this.build + "/";
 	}
 
 };

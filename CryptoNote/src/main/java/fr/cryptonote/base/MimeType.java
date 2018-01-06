@@ -6,7 +6,8 @@ import javax.servlet.ServletException;
 
 public class MimeType {
 	public static final String defaultMime = "application/octet-stream";
-	
+	private static final String MT = "/var/js/mimetypes.js";
+
 	@SuppressWarnings("serial")
 	private static class Extensions extends HashMap<String,HashMap<String,String>>{};
 	
@@ -23,35 +24,27 @@ public class MimeType {
 	private static HashMap<String,Ext> byMime = new HashMap<String,Ext>();
 		
 	static void init() throws ServletException {
-		byte[] r = Servlet.getRawResource(BConfig.MT);
-		if (r != null)
-			try {
-				Extensions extensions = JSON.fromJson(Util.fromUTF8(r), Extensions.class);
-				HashMap<String,String> t = extensions.get("text");
-				if (t != null){
-					for(String ext : t.keySet()){
-						String m = t.get(ext);
-						Ext e = new Ext(ext, m, true);
-						byExt.put(ext, e);
-						Ext e2 = byMime.get(m);
-						if (e2 == null) byMime.put(m, e);
-					}
-				}
-				t = extensions.get("bin");
-				if (t != null){
-					for(String ext : t.keySet()){
-						String m = t.get(ext);
-						Ext e = new Ext(ext, m, false);
-						byExt.put(ext, e);
-						Ext e2 = byMime.get(m);
-						if (e2 == null) byMime.put(m, e);
-					}
-				}
-			} catch (Exception ex){
-				throw BConfig.exc(ex, BConfig._format(0, "XRESSOURCEJSON", BConfig.MT, ex.getMessage()));
+		Extensions extensions = (Extensions)Servlet.script2json(MT, Extensions.class);
+		HashMap<String,String> t = extensions.get("text");
+		if (t != null){
+			for(String ext : t.keySet()){
+				String m = t.get(ext);
+				Ext e = new Ext(ext, m, true);
+				byExt.put(ext, e);
+				Ext e2 = byMime.get(m);
+				if (e2 == null) byMime.put(m, e);
 			}
-		else
-			throw BConfig.exc(null, BConfig._format(0, "XRESSOURCEABSENTE", BConfig.MT));
+		}
+		t = extensions.get("bin");
+		if (t != null){
+			for(String ext : t.keySet()){
+				String m = t.get(ext);
+				Ext e = new Ext(ext, m, false);
+				byExt.put(ext, e);
+				Ext e2 = byMime.get(m);
+				if (e2 == null) byMime.put(m, e);
+			}
+		}
 	}
 	
 	public static String extOf(String mime) {

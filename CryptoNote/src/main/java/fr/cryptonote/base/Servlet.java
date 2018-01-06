@@ -4,13 +4,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -35,8 +39,10 @@ public class Servlet extends HttpServlet {
 	private static String contextPath;
 	private static ServletContext servletContext;
 	private static String[] var;
+	private static HashSet<String> varx = new HashSet<String>();
 	private static HashMap<String,HashMap<String,String>> zres = new HashMap<String,HashMap<String,String>>();
-	private static HashSet<String> etcRes = new HashSet<String>();
+	
+	public static boolean hasVar(String name) { return varx.contains(name); }
 
 	public static String contextPath() { return contextPath; }
 	public static String contextPathSlash() { return (contextPath.length() == 0) ? "/" : "/" + contextPath + "/"; }
@@ -52,17 +58,40 @@ public class Servlet extends HttpServlet {
 	}
 	
 	/********************************************************************************/
-	private void lpath(ArrayList<String> var, String root){
+	private static MessageDigest digestSha256;
+	/**
+	 * Digest SHA-256 d'un byte[] retourné en byte[]
+	 * @param x
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] SHA256(byte[] x) {
+		if (x == null) return null;
+		synchronized (digestSha256) {
+		    digestSha256.reset();
+		    digestSha256.update(x);
+		    return digestSha256.digest();
+		}
+	}
+	
+	public static String SHA256b64(String s) {
+		return Base64.getUrlEncoder().encodeToString(SHA256(Base64.getUrlDecoder().decode(s == null ? "" : s)));
+	}
+
+	public static String SHA256b64(byte[] bytes) {
+		return Base64.getUrlEncoder().encodeToString(SHA256(bytes == null ? new byte[0] : bytes));
+	}
+
+	/********************************************************************************/
+	private void lpath(String root){
 		Set<String> paths = servletContext.getResourcePaths(root);
 		if (paths != null)
 			for(String s : paths)
 				if (s.endsWith("/"))
-					lpath(var, s);
+					lpath(s);
 				else if (MimeType.mimeOf(s) != null) {
 					if (!s.startsWith("/var/z/")) {
-						var.add(s);
-						if (s.startsWith("/var/etc/"))
-							etcRes.add(s);
+						varx.add(s);
 					} else {
 						int i = s.indexOf('/', 7);
 						if (i != -1) {
@@ -78,17 +107,41 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
+	static ServletException exc(Exception e, String msg) {
+		if (e != null) msg += "\n" + e.getMessage() + "\n" + Util.stack(e);
+		Util.log.log(Level.SEVERE, msg);
+		return new ServletException(msg);
+	}
+
+	public static Object script2json(String resName, Class<?> cl) throws ServletException{
+		Servlet.Resource r = Servlet.getResource(resName, resName.endsWith(".js") ? "text/javascript" : null);
+		if (r != null) {
+			try {
+				String s = Util.fromUTF8(r.bytes);
+				int i = s.indexOf("{");
+				int j = s.lastIndexOf("}");
+				String x = i != -1 && j != -1 && i < j ? s.substring(i, j+1) : "{}";
+				return JSON.fromJson(x, cl);
+			} catch (Exception ex) {
+				throw exc(ex, "Ressource : " + resName + " - JSON mal formé");
+			}
+		} else 
+			throw exc(null, "Ressource : " + resName + " - Absente");
+	}
+
+	/********************************************************************************/
 	@Override public void init(ServletConfig servletConfig) throws ServletException {
 		synchronized (done) {
 			if (done) return;
+			try { digestSha256 = MessageDigest.getInstance("SHA-256"); } catch (NoSuchAlgorithmException e) { throw new ServletException(e); }
+			emptyResource = new Resource((byte[])null, null);
 			servletContext = servletConfig.getServletContext();
 			String s  = servletContext.getContextPath();
 			contextPath = s == null ? "" : s.startsWith("/") ? s.substring(1) : s;
 			
 			MimeType.init();
 
-			ArrayList<String> varx = new ArrayList<String>();
-			lpath(varx, "/var/");
+			lpath("/var/");
 			var = varx.toArray(new String[varx.size()]);
 			Arrays.sort(var);
 			HashMap<String,String> rz = zres("z");
@@ -124,6 +177,7 @@ public class Servlet extends HttpServlet {
 		boolean isTask;
 		boolean isSW;
 		int mode; // navigation ... // 0:privée(incognito) 1:normale(cache+net) 2:locale(cache seulement)
+		int modeMax;
 		String lang;
 		
 		ReqCtx(HttpServletRequest req, HttpServletResponse resp, boolean isGet) throws IOException { 
@@ -179,6 +233,7 @@ public class Servlet extends HttpServlet {
 			if ("ping".equals(uri)) {
 				String dbInfo;
 				try {
+					try { TimeUnit.SECONDS.sleep(2); } catch (InterruptedException e) {}
 					dbInfo = exec.dbProvider().dbInfo(null);
 				} catch (AppException e) {
 					dbInfo = "?";			
@@ -202,7 +257,7 @@ public class Servlet extends HttpServlet {
 			for(String s : var()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
 			HashMap<String,String> rns = zres(nsqm.code);
 			for(String s : rns.keySet()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
-			sendRes2(sb.toString().getBytes("UTF-8"), resp);
+			sendRes2(sb.toString().getBytes("UTF-8"), resp, "text/cache-manifest");
 			fini = true;
 		}
 
@@ -228,13 +283,12 @@ public class Servlet extends HttpServlet {
 			for(String s : rns.keySet()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
 			sb.setLength(sb.length() - 2);
 			sb.append("];\n").append(c.toString());
-			sendRes(new Servlet.Resource(sb.toString().getBytes("UTF-8"), " text/javascript"), req, resp);	
+			sendRes2(sb.toString().getBytes("UTF-8"), resp, "text/javascript");	
 			fini = true;
 		}
 	
 		void resource() throws IOException {
 			String urix = uri;
-//			int ii = 0;
 			int i = uri.indexOf("/");
 			if (i == -1 || i >= uri.length() -1) {
 				resp.sendError(404);
@@ -245,8 +299,6 @@ public class Servlet extends HttpServlet {
 			Resource res = null;
 			HashMap<String,String> rns;
 			if (uri.startsWith("z/")) {
-//				if (uri.startsWith("z/z/"))
-//					ii++;
 				rns = zres(nsqm.code);
 				String subst = rns.get("/var/" + uri);
 				if (subst != null)
@@ -262,13 +314,26 @@ public class Servlet extends HttpServlet {
 		}
 
 		void page() throws IOException{
+			int bmode = mode;
 			isSW = !uri.endsWith(".a");
 			if (!isSW) uri = uri.substring(0, uri.length() - 2);
 			if (uri.endsWith("_")){
-				mode = 2;
 				uri = uri.substring(0, uri.length() - 1);
+				bmode = 2;
+			} 
+			modeMax = nsqm.modeMax(uri);
+			if (modeMax == -1){
+				sendText(404, BConfig.format("404HOME1", uri), resp);
+				fini = true;
+				return;
 			}
-			if (!nsqm.homes(0).contains(uri)){
+			if (bmode == 2 && modeMax < 2){
+				sendText(404, BConfig.format("404HOME3", uri), resp);
+				fini = true;
+				return;
+			}
+			mode = bmode;
+			if (mode > 0 && modeMax == 0){
 				sendText(404, BConfig.format("404HOME2", uri), resp);
 				fini = true;
 				return;
@@ -328,27 +393,42 @@ public class Servlet extends HttpServlet {
 			sb.append("App.zone = \"").append(BConfig.zone()).append("\";\n");
 			sb.append("App.home = \"").append(uri).append("\";\n");
 			sb.append("App.mode = ").append(mode).append(";\n");
+			sb.append("App.modeMax = ").append(modeMax).append(";\n");
 			sb.append("App.isSW = ").append(isSW).append(";\n");
 			sb.append("App.langs = ").append(JSON.toJson(BConfig.langs())).append(";\n");
 			sb.append("App.lang = \"").append(lang).append("\";\n");
 			sb.append("App.theme = \"").append(nsqm.theme).append("\";\n");
 			sb.append("App.themes = JSON.parse('").append(JSON.toJson(BConfig.themes())).append("');\n");
-
-			sb.append("App.etcres = {\n");
-			int l = "/var/etc/".length();
-			for(String n : etcRes)
-				sb.append("\"").append(n.substring(l)).append("\":true,\n");
-			sb.setLength(sb.length() - 2);
-			sb.append("};\n");
 			
 			HashMap<String,String> rns = zres(nsqm.code);
 			sb.append("App.zres = {\n");
-			l = "/var/z/z/".length();
+			int l = "/var/z/z/".length();
 			for(String n : rns.keySet())
 				sb.append("\"").append(n.substring(l)).append("\":true,\n");
 			sb.setLength(sb.length() - 2);
 			sb.append("};\n");
 			sb.append("</script>\n");
+			
+			// dics et thèmes dépendant de lang
+			for(String lang : BConfig.langs()){
+				String p = "/var/js/" + lang + "/";
+				if (varx.contains(p + "base-msg.js"))
+					sb.append("<script src='js/" + lang + "/base-msg.js'></script>\n");
+				if (varx.contains(p + "app-msg.js"))
+					sb.append("<script src='js/" + lang + "/app-msg.js'></script>\n");
+				p = "/var/z/" + nsqm.code + "/" + lang + "/";
+				if (varx.contains(p + "app-msg.js"))
+					sb.append("<script src='z/z/" + lang + "/app-msg.js'></script>\n");
+				if (varx.contains(p + "base-msg.js"))
+					sb.append("<script src='z/z/" + lang + "/base-msg.js'></script>\n");
+				if (varx.contains("/var/js/" + lang + "/theme.js"));
+					sb.append("<script src='js/" + lang + "/theme.js'></script>\n");				
+			}
+			
+			for(String t : BConfig.themes())
+				if (varx.contains("/var/js/theme-" + t + ".js"))
+					sb.append("<script src='js/theme-" + t + ".js'></script>\n");
+
 			sb.append("<script src='js/util.js'></script>\n");
 
 			sb.append(head);
@@ -616,13 +696,13 @@ public class Servlet extends HttpServlet {
 		}	
 	}
 
-	static void sendRes2(byte[] bytes, HttpServletResponse resp) throws IOException {
+	static void sendRes2(byte[] bytes, HttpServletResponse resp, String ct) throws IOException {
 		if (bytes != null) {
 			resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
 			resp.setHeader("Pragma", "no-cache"); // HTTP 1.0.
 			resp.setHeader("Expires", "0"); // Proxies.
 			resp.setStatus(200);
-			resp.setContentType("text/cache-manifest");
+			resp.setContentType(ct);
 			resp.setContentLength(bytes.length);
 			resp.setHeader("build", "" + BConfig.build());
 			resp.getOutputStream().write(bytes);
@@ -665,7 +745,7 @@ public class Servlet extends HttpServlet {
 					contentType = b64.substring(i+1, j);
 					String prefix = "data:" + contentType + ";base64,";
 					if (b64.startsWith(prefix))
-						try { bytes = Crypto.base64ToBytes(b64.substring(prefix.length(), b64.length())); } catch (Exception e) {	bytes = null; }
+						try { bytes = Base64.getDecoder().decode(b64.substring(prefix.length(), b64.length())); } catch (Exception e) {	bytes = null; }
 				}
 				if (bytes == null) contentType = "text/plain";
 			}
@@ -673,15 +753,19 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	private static Resource emptyResource = new Resource((byte[])null, null);
-	private static Hashtable<String, Resource> resources = new Hashtable<String, Resource>();
+	private static Resource emptyResource;
+	private static Hashtable<String, Resource> resources;
 
 	public static class Resource {
 		public byte[] bytes;
 		public String mime;
 		public String sha;
 		
-		public Resource(byte[] bytes, String mime) { this.bytes = bytes; this.mime = mime;  sha = Crypto.bytesToBase64(Crypto.SHA256(bytes)); }
+		public Resource(byte[] bytes, String mime) { 
+			this.bytes = bytes; 
+			this.mime = mime;  
+			sha = SHA256b64(bytes); 
+		}
 		public Resource(String text, String mime){ this(Util.toUTF8(text), mime); }
 		public String toString(){ String s = Util.fromUTF8(bytes); return s == null ? "" : s; }
 	}
@@ -689,19 +773,25 @@ public class Servlet extends HttpServlet {
 	static byte[] getRawResource(String name) {
 		return Util.bytesFromStream(servletContext.getResourceAsStream(name));
 	}
-	
+
 	public static Resource getResource(String name){
+		return getResource(name, null);
+	}
+	public static Resource getResource(String name, String mt){
 		if (name == null || name.length() == 0) return null;
+		if (resources == null)
+			resources = new Hashtable<String, Resource>();
 		Resource r = resources.get(name);
 		if (r != null)
 			return r == emptyResource ? null : r;
-		String mime = MimeType.mimeOf(name);
+		String mime = mt != null ? mt : MimeType.mimeOf(name);
 		if (mime == null) mime = MimeType.defaultMime;
 		byte[] b = Util.bytesFromStream(servletContext.getResourceAsStream(name));
 		if (b == null){
 			resources.put(name, emptyResource);
 			return null;
 		}
+		
 		r = new Resource(b, mime);
 		resources.put(name, r);
 		return r;

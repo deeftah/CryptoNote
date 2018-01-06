@@ -28,13 +28,13 @@
 		<paper-icon-button slot="suffix" onclick="clearInput()" icon="clear" alt="clear" title="clear"></paper-icon-button>
 	</paper-input>
 </div>
-<div style="display:inline-block;">
+<div style="display:inline-block;position:relative;">
 	<spinner-box id="spin"></spinner-box>
 	<div>
 		<div class="logolang"></div>
 		<iron-icon icon="mail"></iron-icon>
-	  	<button on-tap="ping1">Ping 1</button>&nbsp;
-	  	<button on-tap="ping2">Ping 2</button>&nbsp;
+	  	<button on-tap="ping1">Ping (spin local)</button>&nbsp;
+	  	<button on-tap="ping2">Ping (spin global)</button>&nbsp;
 	  	<button on-tap="confirm1">confirm 1</button>&nbsp;
 	  	<button on-tap="confirm2">confirm 2</button>&nbsp;<br>
 	    <button on-tap="changeThemeA">Theme A</button>
@@ -122,23 +122,17 @@ class Home2Home extends Polymer.Element {
     	console.error(App.Util.error("Kill bower.json", 3000));
     }
     
-	async ping1() {
+	async ping(glob) {
 		try {
-			const r = await new Req().setUrl("ping").setTracker(new App.Tracker(null, this.$.spin)).go();
+			const r = await new Req().setOp("ping").setSpinner(glob ? App.globalSpinner : this.$.spin).go();
 			this.pingres = !r ? "json mal formé ?" : JSON.stringify(r);					
 		} catch(err) {
 			console.error(App.Util.error("PING KO - " + err.message, 3000));
 		}
 	}
 
-	async ping2() {
-		try {
-			const r = await App.Util.ping(true);
-			this.pingres = !r ? "json mal formé ?" : JSON.stringify(r);					
-		} catch(err) {
-			console.error(App.Util.error("PING KO - " + err.message, 3000));
-		}
-	}
+	ping1() { this.ping(false); }
+	ping2() { this.ping(true); }
 
 	checkSrvVersion() {
 		App.Util.checkSrvVersion();

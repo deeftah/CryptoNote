@@ -37,8 +37,8 @@ var sx = window.location.search;
 var s = sx ? sx.substring(1) : "";
 x = s ? JSON.parse(decodeURI(s)) : {};
 var p = document.getElementById("p");
-// 	const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
-var m = format(x.lang, x.applabel, x.nslabel, x.home, window.location.origin + "/" + x.home);
+// 	const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl(), msg:msg}
+var m = format(x.lang, x.applabel, x.nslabel, x.home, x.msg, window.location.origin + "/" + x.home);
 p.innerHTML = m;
 </script>
 </body>

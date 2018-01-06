@@ -1,4 +1,4 @@
-{
+App.setAll("fr", {
 
 "off-1":"interruption temporaire pour installation d''une nouvelle version",
 "X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
@@ -8,13 +8,29 @@
 "XHTTP":"Réponse d''erreur inattendue du serveur pour l''URL [{0}]. Status-HTTP:{1} Message:{2}",
 "XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
 "DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
-"regok":"Succès de l''enregistrement auprès du service worker. Scope:[{0}]",
-"reqStarted":"envoi au serveur",
-"reqRec":"reçus %0 de %1",
+
+"testsrv":"Test d''accès au serveur",
+"srvko":"Serveur non joignable : possibilités d''actions limitées",
+"srvok":"Serveur joignable",
+"reqStarted":"Envoi au serveur",
+"reqRec":"%0 reçus de %1",
 "sb_npa": "Ne plus attendre",
 "sb_texte": "Interrompre correspond à renoncer à l'action engagée qui sera traitée comme un échec. L'autre option est d'avoir plus de patience.",
 "sb_att": "Attendre encore",
 "sb_int": "Interrompre",
+"er_retry": "Ré-essayer",
+"er_resume": "Renoncer à l'opération",
+"er_reload": "Recharger l'application",
+"er_quit": "Quitter l'application",
+"start_mode0": "Mode incognito (rien en local, tout cloud)",
+"start_mode1": "Mode synchronisé (local / cloud)",
+"start_mode2": "Mode avion (tout local / aucun accès réseau)",
+"start_mode0off": "Mode incognito (rien en local, tout cloud). Serveur NON joignable, actions très limitées",
+"start_mode1off": "Mode synchronisé (local / cloud). Serveur NON joignable, actions très limitées",
+"wait_home": "Chargement en cours ...",
+"xping_1": "Le serveur n''est pas joignable (vérifier la connexion Internet).\nAprès appui sur OK un rechargement sera tenté.",
+"xping_2": "Le serveur n''est pas joignable (vérifier la connexion Internet).\nOK : pour tenter un rechargement.\nAnnuler : pour passer en mode avion.",
+
 
 "500URLMF1":"URL [{0}] mal formée : https://site.com/org/... attendue",
 "500URLMF1cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue",
@@ -22,9 +38,9 @@
 "500URLMF2cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue [{1}] n''est ni une organisation ni un queue manager répertorié",
 "500HQM":"Ce serveur n''héberge pas le Queue Manager [{0}]",
 "404SWJS":"Ressource /var/sw.js non trouvée",
-"404HOME1":"Le nom d''une page d'accueil doit se terminer par .net .sync .local .sync2 .local2 ou ne pas avoir d''extension. [{0}] n''est pas reconnu",
-"404HOME2":"L''application n''a pas de page d''accueil [{0}]",
-"404HOME3":"La page d'accueil [{0}] n''est pas accessible en mode ''.sync'' ou ''.local''",
+"404HOME3":"Cette page d''accueil [{0}] n''est pas utilisable offline (mode avion)",
+"404HOME2":"Cette page d''accueil [{0}] n''est utilisable qu''en mode incognito (cloud seulement)",
+"404HOME1":"L''application n''a pas de page d''accueil [{0}]",
 "404IDX0":"Ressource index.html non trouvée",
 "404IDX1":"Ressource index.html mal formée : ligne 1 du type <!DOCTYPE html><html><head><base href=''...'' /> requise",
 "404IDX2":"Ressource index.html mal formée : une ligne commençant par </head> est requise pour isoler la section <head>",
@@ -105,4 +121,4 @@
 "BKEYBLOB":"BlobStore sans nom pour [{0}]",
 
 "RIEN":"rien"
-}
+});

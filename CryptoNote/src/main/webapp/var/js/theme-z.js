@@ -1,4 +1,4 @@
-{
+App.setTheme("z", {
 "--font-mono" : "'Roboto Mono'",
 "--font-std" : "'Roboto'",
 "--font-cf" : "'Comfortaa'",
@@ -19,4 +19,4 @@
 "--paper-toast-color" : "var(--paper-grey-50)",
 
 "truc":"rien"
-}
+});

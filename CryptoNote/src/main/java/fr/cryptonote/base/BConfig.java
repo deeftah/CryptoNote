@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TimeZone;
-import java.util.logging.Level;
 
 import javax.servlet.ServletException;
 
@@ -20,13 +19,12 @@ public class BConfig {
 	private static final String BASECONFIG = "/WEB-INF/base-config.json";
 	private static final String APPCONFIG = "/WEB-INF/app-config.json";
 	private static final String PASSWORDS = "/WEB-INF/passwords.json";
-	private static final String GENDICS = "/var/etc/";
-	private static final String APPDICS = "/app-msg.json";
-	private static final String BASEDICS = "/base-msg.json";
+	private static final String GENDICS = "/var/js/";
+	private static final String APPDICS = "/app-msg.js";
+	private static final String BASEDICS = "/base-msg.js";
 	private static final String BUILDJS = "/var/js/build.js";
 	static final String SWJS = "/var/js/sw.js";
 	static final String INDEX = "/var/index.html";
-	static final String MT = "/var/etc/mimetypes.json";
 
 	static class TxtDic extends HashMap<String,String> { 
 		private static final long serialVersionUID = 1L;			
@@ -106,7 +104,7 @@ public class BConfig {
 	}
 
 	static final String _label(int il, String code, String... args) { return _label(il, null, code);}
-	private static final String _label(int il, Nsqm nsqm, String code) {
+	static final String _label(int il, Nsqm nsqm, String code) {
 		MessageFormat mf = mf(il, nsqm, code);
 		return mf == null ? JSON.toJson(new DefMsg(code, null)) : mf.toPattern();
 	}
@@ -123,17 +121,14 @@ public class BConfig {
 	}
 	
 	private static void setMF(MFDic[] mfDics, String lang, String n) throws ServletException {
-		Servlet.Resource r = Servlet.getResource(n);
-		if (r != null) {
-			try {
-				TxtDic d = (TxtDic)JSON.fromJson(r.toString(), TxtDic.class);
-				MFDic dic = mfDics[lang(lang)];
-				for(String k : d.keySet()) {
-					String s = d.get(k);
-					try { if (!dic.containsKey(k)) dic.put(k,  new MessageFormat(s));
-					} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEMSGFMT", n, k)); }
-				}
-			} catch (Exception ex) { throw exc(ex, _format(0, "XRESSOURCEJSONPARSE", n, ex.getMessage())); }
+		if (Servlet.hasVar(n)) {
+			TxtDic d = (TxtDic)Servlet.script2json(n, TxtDic.class);
+			MFDic dic = mfDics[lang(lang)];
+			for(String k : d.keySet()) {
+				String s = d.get(k);
+				try { if (!dic.containsKey(k)) dic.put(k,  new MessageFormat(s));
+				} catch (Exception ex) { throw Servlet.exc(ex, _format(0, "XRESSOURCEMSGFMT", n, k)); }
+			}
 		}
 	}
 	
@@ -191,6 +186,7 @@ public class BConfig {
 		public int onoff() { return onoff; }
 		public String[] options() { return options == null || options.size() == 0 ? new String[0] : options.keySet().toArray(new String[options.size()]); }
 		public String option(String opt) { return options == null ? null : options.get(opt); }
+		public int modeMax(String home) { Integer m = homes.get(home); return m == null ? -1 : m; }
 		public ArrayList<String> homes(int min) { 
 			ArrayList<String> res = new ArrayList<String>();
 			for(String h : homes.keySet()) 
@@ -207,7 +203,7 @@ public class BConfig {
 		public int scanlapseinseconds() { return scanlapseinseconds; }
 		
 		public boolean isPwd(String key) {
-			String sha = Crypto.SHA256b64(key);
+			String sha = Servlet.SHA256b64(key);
 			return sha != null && !sha.equals(pwd());
 		}
 		
@@ -348,59 +344,35 @@ public class BConfig {
 	private static String dbProviderName;
 	private static Method dbProviderFactory;
 	private static IConfig appConfig;
-	
-	static ServletException exc(Exception e, String msg) {
-		if (e != null) msg += "\n" + e.getMessage() + "\n" + Util.stack(e);
-		Util.log.log(Level.SEVERE, msg);
-		return new ServletException(msg);
-	}
-	
+			
 	@SuppressWarnings("unchecked")
-	static void startup() throws ServletException {	
-		try { Crypto.startup(); } catch (Exception e) { throw exc(null, _format(0, "BCRYPTOSTARTUP")); }
+	static void startup() throws ServletException {			
+		g = (BaseConfig)Servlet.script2json(BASECONFIG, BaseConfig.class);
+		if (g.langs == null || g.langs.length == 0) g.langs = defaultLangs;
+		setMF();
 		
-		Servlet.Resource r = Servlet.getResource(BASECONFIG);
-		if (r != null) {
-			try {
-				g = (BaseConfig)JSON.fromJson(r.toString(), BaseConfig.class);
-			} catch (Exception ex) {
-				throw exc(ex, _format(0, "XRESSOURCEJSON", BASECONFIG));
-			}
-			if (g.langs == null || g.langs.length == 0) g.langs = defaultLangs;
-			setMF();
-		} else
-			throw exc(null, _format(0, "XRESSOURCEABSENTE", BASECONFIG));
-
 		try {
 			Servlet.Resource rb = Servlet.getResource(BUILDJS);
 				if (rb != null) {
 				String s = rb.toString();
 				int i = s.indexOf("=");
-				if (i == -1 || i == s.length() - 1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "1"));
+				if (i == -1 || i == s.length() - 1) throw Servlet.exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "1"));
 				int j = s.indexOf(";", i + 2);
-				if (j == -1) throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));
+				if (j == -1) throw Servlet.exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));
 				String x = s.substring(i+ 1, j).trim();
-				try { g.build = Integer.parseInt(x); } catch (Exception e) { throw exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "3"));}
+				try { g.build = Integer.parseInt(x); } catch (Exception e) { throw Servlet.exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "3"));}
 			}
 			else 
-				throw exc(null, _format(0, "XRESSOURCEABSENTE", BUILDJS));
+				throw Servlet.exc(null, _format(0, "XRESSOURCEABSENTE", BUILDJS));
 		} catch (Exception e) {
-			throw exc(e, _format(0, "XRESSOURCEABSENTE", BUILDJS));
+			throw Servlet.exc(e, _format(0, "XRESSOURCEABSENTE", BUILDJS));
 		}
 
 		checkNsqm();
 		
 		g.QM = System.getProperty(DVARQM);
 		
-		r = Servlet.getResource(PASSWORDS);
-		if (r != null) {
-			try {
-				p = (HashMap<String,String>)JSON.fromJson(Util.fromUTF8(r.bytes), HashMap.class);
-			} catch (Exception ex) {
-				throw exc(ex, _format(0, "XRESSOURCEJSON", PASSWORDS));
-			}
-		} else 
-			throw exc(null, _format(0, "XRESSOURCEABSENTE", PASSWORDS));
+		p = (HashMap<String,String>)Servlet.script2json(PASSWORDS, HashMap.class);
 		
 		try {
 			int i = g.dbProviderClass.lastIndexOf(".");
@@ -409,35 +381,27 @@ public class BConfig {
 			try {
 				dbProviderFactory = c.getMethod("getProvider", String.class, String.class);
 				if (!Modifier.isStatic(dbProviderFactory.getModifiers())) 
-					throw exc(null, _format(0, "XDBPROVIDERFACTORY", g.dbProviderClass));
+					throw Servlet.exc(null, _format(0, "XDBPROVIDERFACTORY", g.dbProviderClass));
 			} catch (Exception e) {
-				throw exc(e, _format(0, "XDBPROVIDERFACTORY", g.dbProviderClass));				
+				throw Servlet.exc(e, _format(0, "XDBPROVIDERFACTORY", g.dbProviderClass));				
 			}
 		} catch (Exception e) {
-			throw exc(e, _format(0, "XRESSOURCECLASS", g.dbProviderClass));
+			throw Servlet.exc(e, _format(0, "XRESSOURCECLASS", g.dbProviderClass));
 		}
 		
 		compile();
 
 		Class<?> appCfg = Util.hasClass(g.appConfigClass, IConfig.class);
-		if (appCfg == null) throw exc(null, _format(0, "XRESSOURCECLASS", g.appConfigClass));
-		r = Servlet.getResource(APPCONFIG);
-		if (r != null) {
-			try {
-				appConfig = (IConfig)JSON.fromJson(r.toString(), appCfg);
-			} catch (Exception ex) {
-				throw exc(ex, _format(0, "XRESSOURCEJSON", APPCONFIG));
-			}
-			try {
-				Method startup = appCfg.getMethod("startup", IConfig.class);
-				if (!Modifier.isStatic(startup.getModifiers())) 
-					throw exc(null, _format(0, "XAPPCONFIG", g.appConfigClass));
-				startup.invoke(null, appConfig); 
-			} catch (Exception e) {
-				throw exc(e, _format(0, "XAPPCONFIG", g.appConfigClass));				
-			}
-		} else
-			throw exc(null, _format(0, "XRESSOURCEABSENTE", APPCONFIG));
+		if (appCfg == null) throw Servlet.exc(null, _format(0, "XRESSOURCECLASS", g.appConfigClass));
+		appConfig = (IConfig)Servlet.script2json(APPCONFIG, appCfg);
+		try {
+			Method startup = appCfg.getMethod("startup", IConfig.class);
+			if (!Modifier.isStatic(startup.getModifiers())) 
+				throw Servlet.exc(null, _format(0, "XAPPCONFIG", g.appConfigClass));
+			startup.invoke(null, appConfig); 
+		} catch (Exception e) {
+			throw Servlet.exc(e, _format(0, "XAPPCONFIG", g.appConfigClass));				
+		}
 
 		QueueManager.startQM();
 	}
@@ -445,12 +409,12 @@ public class BConfig {
 	/****************************************************/
 	private static void checkNsqm() throws ServletException {
 		if (g.namespaces == null || g.namespaces.size() == 0)
-			throw exc(null, _format(0, "XNAMESPACENO"));
+			throw Servlet.exc(null, _format(0, "XNAMESPACENO"));
 		for(String ns : g.namespaces.keySet()) {
 			Nsqm x = g.namespaces.get(ns);
 			x.isQM = false;
 			x.code = ns;
-			if (x.pwd == null || x.pwd.length() == 0) throw exc(null, _format(0, "XNAMESPACEPWD", ns));
+			if (x.pwd == null || x.pwd.length() == 0) throw Servlet.exc(null, _format(0, "XNAMESPACEPWD", ns));
 			if (x.base != null && x.base.length() != 0) {
 				databases.add(x.base);
 				ArrayList<Nsqm> al = namespacesByDB.get(x.base);
@@ -471,7 +435,7 @@ public class BConfig {
 			Nsqm x = g.queueManagers.get(qm);
 			x.isQM = true;
 			x.code = qm;
-			if (x.pwd == null || x.pwd.length() == 0) throw exc(null, _format(0, "XQMPWD", qm));			
+			if (x.pwd == null || x.pwd.length() == 0) throw Servlet.exc(null, _format(0, "XQMPWD", qm));			
 			if (x.base != null && x.base.length() != 0) databases.add(x.base);
 		}
 	}
@@ -534,12 +498,12 @@ public class BConfig {
 		boolean defMailer = false;
 		for(MailerCfg m : g.mailers.values()) {
 			if (m.isDefault) {
-				if (defMailer) throw exc(null, _format(0, "XMAILERCFG1"));
+				if (defMailer) throw Servlet.exc(null, _format(0, "XMAILERCFG1"));
 				defMailer = true;
 			}		
 		}
-		if (!defMailer) throw exc(null, _format(0, "XMAILERCFG2"));
-		if (password("mailServer") == null) throw exc(null, _format(0, "XMAILERCFG3"));
+		if (!defMailer) throw Servlet.exc(null, _format(0, "XMAILERCFG2"));
+		if (password("mailServer") == null) throw Servlet.exc(null, _format(0, "XMAILERCFG3"));
 			
 		try {
 			// déclarer Documents et opérations
@@ -547,7 +511,7 @@ public class BConfig {
 			Operation.register(OnOff.SetOnOff.class);
 			Operation.register(Mailer.SendMail.class);
 		} catch (Exception e) {
-			throw exc(e, _format(0, "BCONFIGOP"));
+			throw Servlet.exc(e, _format(0, "BCONFIGOP"));
 		}
 		
 

@@ -1,4 +1,4 @@
-{
+App.mimetypes = {
 	"text":{
 		"html":"text/html",
 		"css":"text/css",
@@ -16,4 +16,4 @@
 		"png":"image/png",
 		"jpg":"image/jpeg"
 	}
-}
+};
