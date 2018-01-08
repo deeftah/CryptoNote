@@ -1,95 +1,71 @@
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/neon-animation/web-animations.html">
-<link rel="import" href="../bower_components/neon-animation/animations/slide-from-right-animation.html">
-<link rel="import" href="../bower_components/neon-animation/animations/slide-right-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-from-left-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-left-animation.html">
 
 
 <dom-module id="reqerr-panel">
 <template>
 	<style is="custom-style" include="iron-flex iron-flex-alignment">
-		paper-dialog.size-position-right-panel { margin:0 !important;
-			position:fixed; top:0; right:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
+		paper-dialog.size-position-left-panel { margin:0 !important;
+			position:fixed; top:0; left:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
+		paper-button.custom { }
+		paper-button.custom:hover { background-color: var(--pb-hover); }
+		paper-button.pbok { @apply --std-bold; font-size:var(--font-medium); margin-bottom:0.5rem;
+	 		background-color: var(--pbok-bg); 
+	 		color: var(--pbok-color);
+		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: white !important; };
+		}
+		paper-button.pbok:hover {color:var(--pbok-bg); }
+	 	paper-button.pbko { @apply --std-bold; font-size:var(--font-medium) !important;  margin-bottom:0.5rem;
+	 		background-color: var(--pbko-bg); 
+	 		color: var(--pbko-color);
+		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: white !important; };
+		}
+		paper-button.pbko:hover {color:var(--pbko-bg); }
+	 	paper-button.lite { @apply --std-reg; font-size:var(--font-small) !important;
+	 		background-color: var(--pblite-bg); 
+	 		color: var(--pblite-color);
+		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: white !important; };
+		 }
 	</style>
     <style>
 	  	:host { margin:0; padding:0; }
-	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; }
-	  	:host .bar { padding:0.5rem 1rem; margin:0; background-color:white; @apply --cf-bold; font-size:1.2rem;
-			color:var(--paper-orange-900); border-bottom: 2px solid var(--paper-orange-900);
-		}	
-	  	:host .body { overflow-y:auto; @apply --std-reg;}
+	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; background-color:white;}
+	  	:host .bar { padding:0.5rem; margin:0; background-color:white; border-bottom: 2px solid var(--paper-grey-100); }
+		:host .bar1 { }	
+		:host .bar2 { }	
+	  	:host .body { overflow-y:auto; @apply --std-reg; padding:0.5rem; margin:0; background-color:white; font-size:var(--font-reg);}
+	  	:host .info { margin-bottom:1rem; @apply --cf-reg; font-size:var(--font-medium);}
+	  	:host .more { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-reg);}
+	  	:host .code { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-small);}
+	  	:host .detail { @apply --mono-reg; font-size:var(--font-small);}
 	</style>
-	<paper-dialog id="panel" class="size-position-right-panel" modal entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
+	<paper-dialog id="panel" class="size-position-left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
 	<div class="top layout vertical flex-start">
-		<div class="bar">
-			<button on-tap="onRetry">[[lib('er_retry',lang)]]</button>
-			<button on-tap="onReturnToApp">[[lib('er_resume',lang)]]</button>
-			<button on-tap="onReload">[[lib('er_reload',lang)]]</button>
-			<button on-tap="onBye">[[lib('er_quit',lang)]]</button>
+		<div class="bar layout horizontal center-center">
+		<div class="bar1 layout vertical">
+			<paper-button class="custom pbok" raised on-tap="onRetry"><iron-icon icon="icons:refresh"></iron-icon>[[lib('er_retry',lang)]]</paper-button>
+			<paper-button class="custom lite" on-tap="onBye"><iron-icon icon="icons:close"></iron-icon>[[lib('er_quit',lang)]]</paper-button>
+		</div>
+		<div class="bar2 layout vertical">
+			<paper-button class="custom pbko" raised on-tap="onReturnToApp"><iron-icon icon="icons:reply"></iron-icon>[[lib('er_resume',lang)]]</paper-button>
+			<paper-button class="custom lite" on-tap="onReload"><iron-icon icon="icons:file-download"></iron-icon>[[lib('er_reload',lang)]]</paper-button>
+		</div>
 		</div>
 		<div class="body layout vertical flex flex-start">
-			<div>Code : [[err.code]]</div>
+			<div class="info">[[info]]</div>
+			<div class="more" hidden$="[[!more]]">[[info]]</div>
+			<div class="code" hidden$="[[!topdet]]">[[err.code]] - [[topdet]]</div>
 			<div>Phase : [[err.phase]]</div>
-			<div>Message : [[err.message]]</div>
-			<template is="dom-repeat" items="[[err.detail]]">
-		        <div><i>[[item]]</i></div>
-	     	</template>
+			<div class="detail">
+				<template is="dom-repeat" items="[[err.detail]]">
+			        <div>[[item]]</div>
+		     	</template>
+	     	</div>
      	</div>
 	</div>
 	</paper-dialog>
 </template>
-<script>
-	class ReqerrPanel extends Polymer.Element {
-		static get is() { return "reqerr-panel"; }
-      
-		static get properties() { return {
-        	  lang:{type:String, value:App.lang},
-        	  err:{type:Object, value:{code:"LX"}},
-        	  topInfo:{type:String, value:"?"},
-          };
-		}
-		
-		constructor() {
-			super();
-			App.setMsg("fr", "er_retry", "Ré-essayer");
-			App.setMsg("fr", "er_resume", "Renoncer à l'opération");
-			App.setMsg("fr", "er_reload", "Recharger l'application");
-			App.setMsg("fr", "er_quit", "Quitter l'application");
-		}
-
-		lib(code, lang) { 
-			return App.lib(code);
-		}
-
-		open(request, err) {
-			this.request = request;
-			this.err = err;
-			this.$.panel.open();
-			// TODO pretty display de err
-		}
-		
-		onRetry() {
-			this.close();
-			if (this.request && this.request.onRetry) this.request.onRetry();
-		}
-		
-		onReturnToApp() {
-			this.close();
-			if (this.request && this.request.onReturnToApp) this.request.onReturnToApp(this.err);		
-		}
-		
-		onBye() {
-			this.close();
-			App.bye();
-		}
-
-		onReload() {
-			this.close();
-			App.reload();
-		}
-
-		close() { this.$.panel.close(); }
-		
-	}
-	customElements.define(ReqerrPanel.is, ReqerrPanel);
-</script>
+<script src="../js/reqerr-panel.js"></script>
 </dom-module>

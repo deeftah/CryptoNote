@@ -19,7 +19,7 @@ App.setAll("fr", {
 "sb_att": "Attendre encore",
 "sb_int": "Interrompre",
 "er_retry": "Ré-essayer",
-"er_resume": "Renoncer à l'opération",
+"er_resume": "Renoncer",
 "er_reload": "Recharger l'application",
 "er_quit": "Quitter l'application",
 "start_mode0": "Mode incognito (rien en local, tout cloud)",

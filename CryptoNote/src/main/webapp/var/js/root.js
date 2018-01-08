@@ -172,7 +172,7 @@ class App {
 	static setMsg(lang, code, msg) {
 		let d = this.zDics[lang];
 		if (d && !d[code])
-			d[code] = msg;
+			d[code] = msg.replace(/''/g, "'");
 	}
 	
 	static lib(code) {

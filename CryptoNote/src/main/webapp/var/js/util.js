@@ -1,109 +1,4 @@
 class Util {			
-//	static async register() {
-//		if (App.mode == 2) return this.ifready();
-//
-//		let b = 0 // copie de App.srvbuild
-//		b = await this.ping();
-//
-//		if (App.mode == 0) 
-//			return !b || b != App.build ? this.reload2(b) : this.ifready();
-//		
-//		// mode 1
-//		if (!b) {
-//			if (App.modeMax < 2) 
-//				return this.reload2()
-//			if (confirm(App.lib("xping_2")))
-//				return this.reload2();					
-//			return App.reloadAvion();	
-//		}
-//		if (b != App.build)
-//			this.reload2();
-//		else
-//			this.ifready();	
-//		
-//	}
-//    	
-//	static ifready() {
-//		App.ready1 = true;
-//  		if (App.ready2) {
-//  			App.appHomes.setHome(App.home);
-//  			if (App.Custom && App.Custom.ready)
-//  				App.Custom.ready();
-//  		}
-//	}
-//	
-//	static reload2() {
-//		App.reloadWB();
-//	}
-//
-//	static reload2b() {
-//		App.ready1 = true;
-//  		if (App.ready2) {
-//  			App.appHomes.setHome("reload");
-//  		}
-//	}
-//	
-//	static async ping() {
-//		try {
-//			const r = await new Req().setOp("ping").setSpinner(App.defaultSpinner).setTimeOut(10000).go();
-//			console.log(App.format("srvok", JSON.stringify(r.json ? r.json : {})));
-//			App.srvbuild = r.json && r.json.b ? r.json.b : 0;
-//			return App.srvbuild;
-//		} catch(err) {
-//			console.error(App.format("srvko", err.message));
-//			return 0;
-//		}
-//	}
-//	
-//	static async reping(b) {
-//	console.log("1 - b=" + b + "  build=" + App.build);
-//	if (b != App.build) {
-//		await this.wait(4000);
-//		b = await this.ping();
-//		console.log("2 - b=" + b + "  build=" + App.build);
-//		return b != App.build ? this.reload2(b) : this.ifready();
-//	} else
-//		this.ifready()	
-//}
-//	static async pingFetch() {
-//		try {
-//			const resp = await this.fetchWithTimeout(App.baseUrl(0) + "ping", 3000);
-//			if (resp.ok) {
-//				const r = await resp.json();
-//				console.log(App.format("srvok", JSON.stringify(r ? r : {})));
-//				App.srvbuild =  r && r.b ? r.b : 0;
-//				return App.srvbuild;
-//			} else {
-//				console.error(App.format("srvko", "? (fetch)"));
-//				return 0;
-//			}
-//		} catch(err) {
-//			console.error(App.format("srvko", err.message));
-//			return 0;
-//		}
-//	}
-//	
-//	static async fetchWithTimeout(url, TIME_OUT_MS) {
-//		let tim;
-//		return Promise.race([
-//			new Promise((resolve, reject) => {
-//				fetch(url)
-//				.then(response => {
-//					if (tim) clearTimeout(tim);
-//					resolve(response);
-//				}).catch(e => {
-//					if (tim) clearTimeout(tim);
-//					reject(e);
-//				})
-//			}),
-//			new Promise((resolve, reject) => {
-//				tim = setTimeout(() => reject({message:'timeout'}), TIME_OUT_MS ? TIME_OUT_MS : 20000);
-//			})
-//		]);
-//	}
-//	static async wait(ms) {
-//		return new Promise(resolve => setTimeout(resolve, ms));
-//	}
 
 	static editPC(n1, n2){
 		if (n2 <= 0 || n1 >= n2) return "100%";
@@ -658,7 +553,6 @@ class RSA {
 }
 
 /*****************************************************/
-/*****************************************************/
 class ReqErr {
 	constructor(code, phase, message, detail) {
 		this.code = code ? code : "LX";
@@ -680,7 +574,7 @@ class ReqErr {
 	 * 9 : inconnu entre 0 et 5
 	 */
 	
-	/*
+	/* m : major
 	 * N : notfound -> 1 : 404 : not found. Document ou attachment non trouvé
 	 * A : app -> 1 : 400 : erreur applicative autre que N. Données incorrectes
 	 * B : bug -> 2 : 400 : bug, situation des données illogique
@@ -694,7 +588,7 @@ class ReqErr {
 	 * L : erreur d'exécution d'un script local (avant ou après) -> 0
 	 */
 	major() {
-		const i = "NABXDCOSTI".indexOf(this.code.charAt(0));
+		const m = "NABXDCOSTI".indexOf(this.code.charAt(0));
 		return m == -1 ? 0 : m;
 	}
 	

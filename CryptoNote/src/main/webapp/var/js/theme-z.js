@@ -4,6 +4,9 @@ App.setTheme("z", {
 "--font-cf" : "'Comfortaa'",
 "--mybg-color" : "lightgrey",
 "--font-large" : "2rem",
+"--font-medium" : "1.4rem",
+"--font-reg" : "1.1rem",
+"--font-small" : "0.9rem",
 "--bg-imglg" : "url('../z/z/post-it.png')",
 
 "--btnstd-color": "var(--paper-indigo-900)",
@@ -14,6 +17,14 @@ App.setTheme("z", {
 "--btnhlp-color" : "var(--paper-indigo-900)",
 "--btnhlp-colorhover" : "var(--paper-indigo-50)",
 "--btnhlp-size" : "1.8rem",
+
+"--pb-hover": "var(--paper-grey-300)",
+"--pbok-bg": "var(--paper-indigo-600)",
+"--pbok-color": "var(--paper-indigo-50)",
+"--pbko-bg": "var(--paper-orange-700)",
+"--pbko-color": "var(--paper-orange-50)",
+"--pblite-bg": "var(--paper-grey-50)",
+"--pblite-color": "var(--paper-grey-700)",
 
 "--paper-toast-background-color" : "var(--paper-grey-700)",
 "--paper-toast-color" : "var(--paper-grey-50)",
