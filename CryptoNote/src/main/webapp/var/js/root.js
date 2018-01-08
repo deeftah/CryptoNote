@@ -1,18 +1,64 @@
 class App {
+	static get HPC() { return "htm"}
+	static get AVION() { return "a"}
+	static get INCOGNITO() { return "$"}
+
 	static setup() {
-		this.build = 1000;
-		this.home = "index";
-		this.mode = 1;
+		this.isSW = navigator.serviceWorker ? true : false;
+		
+		this.origin = window.location.origin; 						// https://... :8443
+		this.path = window.location.pathname; 						// /cn/test/home2.ahtm?...
+		this.hash = window.location.hash;							// ?...
+		this.page = this.path.substring(0, this.path.length - this.hash.length); // /cn/test/home2.ahtm
+		
+		let i = this.page.lastIndexOf("/");
+		let x = this.page.substring(i + 1); 						// home2.ahtm
+		let j = x.lastIndexOf(".");
+		this.ext = j == -1 ? "" : x.substring(j + 1); 				// ahtm
+		this.home = j == -1 ? x : x.substring(0, j);				// home2 OU home2_202_
+		let wb = false;
+		if (this.home.endsWith("_")){
+			j = this.home.lastIndexOf("_", this.home.length - 2);
+			this.home = this.home.substring(0, j);
+			wb = true;
+		}
+		this.base = this.page.substring(0, i);						// /cn/test OU /test OU /cn/test$ OU /test$
+		this.mode = this.base.endsWith(this.INCOGNITO) ? 0 : (this.ext.startsWith(this.AVION) ? 2 : 1);
+		
+		x = this.mode ?	this.base : this.base.substring(0, this.base.length - 1);
+		i = x.lastIndexOf("/");
+		if (i == 0) {
+			// PAS de contextpath
+			this.contextpath = "";
+			this.namespace = x.substring(1);
+		} else {
+			this.contextpath = x.substring(1, i);
+			this.namespace = x.substring(i + 1);
+		}
+		
+		if (wb) {
+			let nu = this.base + "/" + this.home + (this.ext ? "." + this.ext : "") + this.hash;
+			history.replaceState({}, "", nu);
+		}
+		
+		// Pour Apple et Edge (appcache)
+		if (this.mode > 0 && !this.isSW && !this.ext.endsWith(this.HPC)) 
+			window.location = this.origin + this.page + this.HPC + this.hash; // rechargement avec htm dans l'extension
+		
+		//Pour Safari / IOS !!!
+		if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) {
+			window.crypto.subtle = window.crypto.webkitSubtle;
+			this.IOS = true;
+		}
+		
+		// sera rempli par le script de la page
+		this.build = 0;
 		this.buildAtPageGeneration = 0;
 		this.srvbuild = 0;
-		this.contextpath = ""; 
-		this.namespace = ""; 
-		this.mode = 0; 
 		this.modeMax = 0; 
 		this.ready1 = false;
 		this.ready2 = false;
 		this.debug = false;
-		this.isSW = true;
 		this.langs = ["fr","en"]; 
 		this.lang = "fr"; 
 		this.zone = "Europe/Paris";
@@ -20,8 +66,69 @@ class App {
 		this.themes = ["a"];
 		this.customThemes = {};
 		this.zDics = {};
+		
+		/*
+		 * Le service worker est une application INDEPENDANTE de la page.
+		 * Le script sw.js qui l'anime est déclaré : ça lancera le service worker S'IL N'ETAIT PAS DEJA LANCE.
+		 * S'il était lancé, il continue de vivre avec la version actuelle (donc d'une version potentiellement retardée).
+		 * Si le sw.js a changé par rapport à celui en exécution, un noveau service est préparé et
+		 * RESTE EN ATTENTE jusqu'à la fin de toutes les pages qui ont déclaré ce service.
+		 * IL Y A UN SERVICE WORKER PAR "namespace" : /cp/nsB/sw.js et /cp/nsA/sw.js définissent DEUX services indépendants.
+		 * Le "scope" de /cp/nsA/sw.js n'est PAS réduit : il interceptent TOUTES les URLs /cp/nsA/...
+		 * MAIS en conséquence IGNORE les URLs de la navigation privée /cp/nsA$/...
+		 * Une EXCEPTION "Request failed" signifie qu'une des URLs citée dans addAll() N'EST PAS ACCESSIBLE (404)
+		 * MAIS one sait PAS laquelle (joie !)
+		 */
+		if (this.isSW) {
+			if (this.mode) {
+				const swscope = (!this.contextpath ? "/" : "/" + this.contextpath + "/") + this.namespace + "/sw.js";
+				navigator.serviceWorker.register(swscope)
+				.then(reg => {
+					console.log("Succès de l'enregistrement auprès du service worker. Scope:" + reg.scope);
+				}).catch(err => {
+					console.log("Echec de l'enregistrement auprès du service worker. Scope:" + swscope);					
+				})
+			}
+		} else {
+			console.log("Ecoute updateready ... ");
+			window.applicationCache.addEventListener('updateready', e => {
+				console.log("Evt. updateready reçu " + window.applicationCache.status);
+			    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) 
+			    	this.reload();
+			}, false);
+		}
+
 	}
 	
+	static reload() {
+		window.location.reload(true);
+	}
+
+	static reloadWB2() { 
+		window.location = this.origin + this.base + "/" + this.home + "_" + this.srvbuild + "_" + (this.isSW ? "" : "." + this.HPC) + this.hash;
+	}
+
+	static reloadWB() {
+		const url = this.origin + this.base + "/" + this.home + "_" + this.srvbuild + "_" + (this.isSW ? "" : "." + this.HPC) + this.hash;
+	 	const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), build:App.srvbuild, b:App.build, reload:url}
+	 	const b = this.base.endsWith(this.INCOGNITO) ? this.base : this.base + this.INCOGNITO;
+		window.location = this.origin + b + "/var/reload.html?" + encodeURI(JSON.stringify(x));
+	}
+
+	static reloadAvion() { 
+		window.location = this.mode == 2 ? (this.origin + this.path) : (this.origin + this.page + this.AVION + (this.isSW ? "" : this.HPC) + this.hash);
+	}
+
+	static bye() {
+		const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
+		window.location = this.origin + this.page + "/bye.html?" + encodeURI(JSON.stringify(x));
+	}
+
+//	static errorPage(msg) { // inutilisé
+//		const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl(), msg:msg}
+//		window.location = this.origin + this.page + "/error.html?" + encodeURI(JSON.stringify(x));
+//	}
+
 	static setAll(lang, arg) {
 		if (this.langs.indexOf(lang) == -1 || !arg) return;
 		let d = this.zDics[lang];
@@ -57,7 +164,7 @@ class App {
 			t = {};
 			this.customThemes[code] = t;
 		}
-		for(let code in arg) t[code] = arg[code];
+		for(let x in arg) t[x] = arg[x];
 	}
 	
 	static format(code, args) { // 0 à N arguments après le code
@@ -85,33 +192,9 @@ class App {
 
 	static applabel() { return App.lib("application");}
 
-	static ctxNsSlash() { return (!this.contextpath ? "/" : "/" + this.contextpath + "/") + (this.namespace ? this.namespace + "/" : "");}
-		
-	static baseUrl(lvl) { // 0:/cp/ns/ 1:/cp/ns/var9999/
-		return window.location.origin 
-		+ (window.location.origin.endsWith("/") ? "" : "/") 
-		+ (!this.contextpath ? "" : this.contextpath + "/")
-		+ (!this.namespace ? "" : this.namespace + "/") 
-		+ (!lvl ? "" : "var" + this.build + "/");
-	}
+}
 
-	static homeUrl() { 
-		return (!this.contextpath ? "" : this.contextpath + "/")
-		+ (!this.namespace ? "" : this.namespace + (this.mode ? "/" : "$/")) 
-		+ this.home;
-	}
-	
-	static reloadUrl(reload) { 
-		return window.location.origin 
-		+ (window.location.origin.endsWith("/") ? "" : "/")
-		+ (!this.contextpath ? "" : this.contextpath + "/")
-		+ this.namespace + (reload ? "$/var" : "/var") + this.build + "/";
-	}
-
-};
 /*****************************************************/
-App.setup();
-
 Date.prototype.format = function(format) {
 	let fullYear = this.getYear();
 	if (fullYear < 1000)
@@ -170,3 +253,4 @@ class StringBuffer {
 }
 
 /*****************************************************/
+App.setup();

@@ -54,11 +54,11 @@ this.addEventListener('activate', function(event) {
 	);
 });
 
-const fetchWithTimeout = function(url, options, TIME_OUT_MS) {
+const fetchWithTimeout = function(req, options, TIME_OUT_MS) {
 	let tim;
 	return Promise.race([
 		new Promise((resolve, reject) => {
-			fetch(url, options)
+			fetch(req, options)
 			.then(response => {
 				if (tim) clearTimeout(tim);
 				resolve(response);
@@ -68,32 +68,45 @@ const fetchWithTimeout = function(url, options, TIME_OUT_MS) {
 			})
 		}),
 		new Promise((resolve, reject) => {
-			tim = setTimeout(() => reject('timeout'), TIME_OUT_MS ? TIME_OUT_MS : 7000);
-		})
+			const to = TIME_OUT_MS ? TIME_OUT_MS: 7000;
+			tim = setTimeout(() => {
+				if (TRACEON) console.log("FETCH TIMEOUT - " + req.url);
+				let myBlob = new Blob();
+				let init = { "status" : 500 , "statusText" : "TIMEOUT " + to + "ms" };
+				let myResponse = new Response(myBlob,init);
+				reject(myResponse);
+			}, to);
+		})	
 	]);
 }
 
 /*
- * Une home page .../home1_ (locale) a le même texte que son homologue normale .../home.
+ * Une home page .../home1.a (locale) a le même texte que son homologue normale .../home
  * DOIT laisser passer les opérations passées par GET : cp/ns/od/... cp/ns/op/... cp/ping cp/ns/ping    ns/od/.. ns/op/..  ping  ns/ping
  */
 this.addEventListener('fetch', event => {
 	let url = event.request.url;
-	if (url.endsWith("_")) url = url.substring(0, url.length - 1); // page "locale" (même texte que "normale")
+	let j = url.lastIndexOf("?");
+	if (j != -1) url = url.substring(0, j);
+	if (url.endsWith(".a")) url = url.substring(0, url.length - 2); // page "locale" (même texte que "normale")
 	
 	const i = url.indexOf("/", 10); // laisse passer https://...
 	const x = !CONTEXTPATH ? url.substring(i + 1) : url.substring(i + 2 + CONTEXTPATH.length);
-	const op =  x == "ping" || x ==  NS + "/ping" || x.startsWith(NS + "/od/") || x.startsWith(NS + "/op/");
+	const ping = x == "ping" || x ==  NS + "/ping";
+	const op =  ping || x.startsWith(NS + "/od/") || x.startsWith(NS + "/op/");
 	
-	if (op) {
+	if (ping) {
+		event.respondWith(
+			fetchWithTimeout(event.request)
+			.then(response => {
+				return response;
+			}).catch(e => {
+				return null;
+			})
+		);
+	} else if (op) {
 		event.respondWith(
 			fetch(event.request)
-//			fetchWithTimeout(url)
-//			.then(response => {
-//				return response;
-//			}).catch(e => {
-//				return null;
-//			})
 		);
 	} else {
 		event.respondWith(

@@ -14,11 +14,11 @@
 <script>
 var lib = {
 	fr:"La page de l'application <span class='app'>{0}</span> pour l'organisation <span class='app'>{1}</span> correspond "
-	+ "à la version <span class='red'>{4}</span> "
-	+ "alors que celle actuellement en ligne est la <span class='red'>{3}</span>.<br>" 
+	+ "à la version <span class='red'>{3}</span> "
+	+ "alors que celle actuellement en ligne est la <span class='red'>{2}</span>.<br>" 
 	+ "Pour éviter des problèmes d'incompatibilité, elle doit être rechargée avec la nouvelle version.<br>"
 	+ "Fermer, s'il y en a, les onglets ou pages ouvertes sur cette application dans ce navigateur (ceci ne peut pas être fait automatiquement) "
-	+ "puis cliquer <a class='ici' href='{5}'>ici</a> ({2}).",
+	+ "puis cliquer <a class='ici' href='{4}'>ici</a>.",
 	en:""
 }
 
@@ -38,8 +38,8 @@ function format(lang, args) { // 0 à N arguments après le code
 var s = window.location.search.substring(1);
 x = JSON.parse(decodeURI(s));
 var p = document.getElementById("p");
-// 	const x = {lang:App.lang, build:b, applabel:application, nslabel:App.nslabel, b:build dans la page actuelle, home:App.homeUrl()}
-var m = format(x.lang, x.applabel, x.nslabel, x.home, x.build, x.b, window.location.origin + "/" + x.home);
+// 	const x = {lang:App.lang, build:b, applabel:application, nslabel:App.nslabel, b:build dans la page actuelle, reload:url}
+var m = format(x.lang, x.applabel, x.nslabel, x.build, x.b, x.reload);
 p.innerHTML = m;
 </script>
 </body>

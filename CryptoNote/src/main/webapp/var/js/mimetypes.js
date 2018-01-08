@@ -1,19 +1,25 @@
 App.mimetypes = {
 	"text":{
 		"html":"text/html",
+		"htm":"text/html",
+		"ahtm":"text/html",
+		"a":"text/html",
 		"css":"text/css",
 		"json":"application/json",
 		"js":"text/javascript",
 		"md":"text/markdown",
 		"txt":"text/plain",
 		"xml":"application/xml",
-		"appcache":"text/cache-manifest",
-		"a":"text/html"
+		"appcache":"text/cache-manifest"
 	},
 	"bin":{
 		"woff":"application/font-woff",
 		"woff2":"application/font-woff2",
+		"svg":"image/svg+xml",
+		"gif":"image/gif",
+		"ico":"image/x-icon",
 		"png":"image/png",
-		"jpg":"image/jpeg"
+		"jpg":"image/jpeg",
+		"jpeg":"image/jpeg"
 	}
-};
+}; 

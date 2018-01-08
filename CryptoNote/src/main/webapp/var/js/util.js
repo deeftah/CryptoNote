@@ -1,293 +1,111 @@
-/*****************************************************/
-class ReqErr {
-	constructor(code, phase, message, detail) {
-		this.code = code ? code : "LX";
-		this.phase = phase < -1 || phase > 6 ? 9 : phase;
-		this.message = message ? message : this.code;
-		this.detail = detail ? detail : [];
-	}
-	
-	/*
-	 * Phase 
-	 * -1 : connexion au serveur
-	 * 0 : avant opération dans le serveur
-	 * 1 : dans l'opération (work)
-	 * 2 : au cours de la validation
-	 * 3 : après validation (afterwork)
-	 * 4 : au cours de la synchronisation
-	 * 5 : lors de l'envoi de la réponse
-	 * 6 : dans le script d'interprétation de la réponse
-	 * 9 : inconnu entre 0 et 5
-	 */
-	
-	/*
-	 * N : notfound -> 1 : 404 : not found. Document ou attachment non trouvé
-	 * A : app -> 1 : 400 : erreur applicative autre que N. Données incorrectes
-	 * B : bug -> 2 : 400 : bug, situation des données illogique
-	 * X : unexpected -> 3 : 400 : incident inattendu, matériel ou logiciel
-	 * D : delayed build -> 4 : 400 : recharger l'application cliente
-	 * C : contention -> 5 : 400 : trop de contention sur la base de données
-	 * O : espace off -> 6 : 400 : espace en maintenance
-	 * S : session non autorisée -> 7 : 400 : ou résiliée ou trop longue ...
-	 * T : timeout -> 8
-	 * I : interrupted -> 9
-	 * L : erreur d'exécution d'un script local (avant ou après) -> 0
-	 */
-	major() {
-		const i = "NABXDCOSTI".indexOf(this.code.charAt(0));
-		return m == -1 ? 0 : m;
-	}
-	
-}
+class Util {			
+	static async register() {
+		if (App.mode == 2) return this.ifready();
 
-/*****************************************************/
-class Req {
-	constructor() {
-		this.TIME_OUT_MS = 300000;
-		this.url = new StringBuffer().append(App.baseUrl(0));
-		this.currentRetry = null;
-		this.hasArgs = false;
-		this.formData = new FormData();
-		this.cred = 0;
-		this.reqErr = App.globalReqErr;
-		this.spinner = App.globalSpinner;
-	}
-	
-	setReqErr(reqErr) {
-		if (reqErr)
-			this.reqErr = reqErr; 
-		return this; 
-	}
+		let b = 0 // copie de App.srvbuild
+		b = await this.ping();
 
-	setSpinner(spinner) {
-		if (spinner)
-			this.spinner = spinner; 
-		return this; 
-	}
-
-	setTimeOut(timeOut) { this.TIME_OUT_MS = timeOut; return this; }
-
-	setFormData() { this.formData = formData; return this; } // à citer AVANT ceux qui suivent
-
-	setSyncs(syncs) { if (syncs) this.formData.append("syncs", JSON.stringify(syncs)); return this;}
-	
-	setOp(op, param, url) { 
-		this.op = op; 
-		if (op.endsWith("ping")) { // "ping" ou "../ping"
-			this.url.append(op);
-		} else {
-			this.param = JSON.stringify(param); 
-			this.url.append("op/").append(url ? url : "");
-			this.formData.append("op", this.op);
-			this.hasArgs = true;
+		if (App.mode == 0) 
+			return !b || b != App.build ? this.reload2(b) : this.ifready();
+		
+		// mode 1
+		if (!b) {
+			if (App.modeMax < 2) 
+				return this.reload2()
+			if (confirm(App.lib("xping_2")))
+				return this.reload2();					
+			return App.reloadAvion();	
 		}
-		return this;
-	}
-	
-	setArgs(args) {
-		if (!args) return;
-		for(let a in args) {
-			let v = args[a];
-			if (this.isGet)
-				this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
-			else
-				this.formData.append(a,v);
-			this.hasArgs = true;
-		}
-		return this;
-	}
-	
-	/*
-	 * !cred : pas de crédential
-	 * cred = 1 crédential standard simple (propriétés account / key de App)
-	 * cred = 2 crédential privilégié (account / key / sudo de App)
-	 * cred = {c1:... c2:... } crédential spécifique
-	 */
-	setCred(cred) { 
-		if (cred) {
-			if (cred == 1)
-				this.cred = {account:App.account, key:App.key}
-			else if (cred == 2)
-				this.cred = {account:App.account, key:App.key, sudo:App.sudo}
-			else
-				this.cred = cred;
-		}
-		return this;
-	}
-	
-	setNoCatch(noCatch) { this.noCatch = noCatch; return this; }
-	
-	setStartMsg(startMsg) {
-		if (startMsg)
-			this.startMsg = startMsg;
-		return this;
-	}
-	
-	async go(){
-		return new Promise((resolve, reject) => {
-			if (this.cred) {
-				for(let a in cred) {
-					let v = cred[a];
-					if (this.isGet)
-						this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
-					else
-						this.formData.append(a,v);
-					this.hasArgs = true;
-				}
-			}
-			this.url = this.url.toString();
-			this.resolve = resolve;
-			this.reject = reject;
-			new Retry(this).send();
-		});
-	}
-	
-	kill() {
-		if (this.currentRetry)
-			this.currentRetry.kill();
-	}
-	
-	onProgress(loaded, total){
-		if (this.spinner.progress)
-			this.spinner.progress(App.format("reqRec", Util.editPC(loaded, total), Util.editVol(total)));
-	}
-	
-	onSuccess(resp) {
-		this.currentRetry = null;
-		if (this.spinner.stop)
-			this.spinner.stop();
-		this.resolve(resp);
-	}
-	
-	onError(err) {
-		this.currentRetry = null;
-		if (this.spinner.stop)
-			this.spinner.stop();
-		if (err.code == "DBUILD") {
-			Util.reload(App.srvbuild);
-			return;
-		}
-		if (this.noCatch && this.noCatch.indexOf(err.code + " ") != -1) {
-			this.reject(err);
-			return;
-		}
-		if (this.reqErr.open)
-			this.reqErr.open(this, err);
+		if (b != App.build)
+			this.reload2();
 		else
-			this.reject(err);
+			this.ifready();	
+		
+	}
+    	
+	static ifready() {
+		App.ready1 = true;
+  		if (App.ready2) {
+  			App.appHomes.setHome(App.home);
+  			if (App.Custom && App.Custom.ready)
+  				App.Custom.ready();
+  		}
 	}
 	
-	onRetry() {
-		new Retry(this).send();
-	}
-	
-	onReturnToApp(err) {
-		this.reject(err);		
+	static reload2() {
+		App.reloadWB();
 	}
 
-}
-
-class Retry { // un objet par retry pour éviter les collisions sur le XHR
-	constructor(req) {
-		this.req = req;
-		req.currentRetry = this;
+	static reload2b() {
+		App.ready1 = true;
+  		if (App.ready2) {
+  			App.appHomes.setHome("reload");
+  		}
 	}
 	
-	kill() {
-		if (this.done) return;
-		this.done = true;
-		if (this.tim) clearTimeout(this.tim);
-		if (this.xhr) this.xhr.abort();
-		const d = new Date().getTime() - this.t0;
-		this.req.onError(new ReqErr("INTERRUPTED", 9, App.format("INTERRUPTED", this.req.url, d), [this.req.url, d]));
-	}
-	
-	send() {
-		if (this.req.spinner.start)
-			this.req.spinner.start(this.req, this.req.startMsg ? this.req.startMsg : App.lib("reqStarted"));
-		this.t0 = new Date().getTime();
-		this.tim = setTimeout(() => {
-			if (!this.done) {
-				this.done = true;
-				if (this.xhr) this.xhr.abort();
-				this.req.onError(new ReqErr("TIMEOUT", 9, App.format("TIMEOUT", this.req.url, Math.round(this.req.TIME_OUT_MS / 1000)))); 
-			}
-		}, this.req.TIME_OUT_MS); 
-
+	// App.baseUrl
+	static async ping() {
 		try {
-			this.xhr = new XMLHttpRequest();
-			this.xhr.open("POST", this.req.url, true);
-			this.xhr.responseType = "arraybuffer";
-			
-			this.xhr.onerror = (e) => {	
-				if (this.done) return;
-				if (this.tim) clearTimeout(this.tim);
-				this.done = true;
-				this.req.onError(new ReqErr("X1", 9, App.format("X1", this.req.url, e.message), [this.req.url, e])); 
-			}
-			
-			this.xhr.onprogress = (e) => {	
-				if (this.done) return;
-				this.req.onProgress(e.loaded, e.total);
-			}
-			
-			this.xhr.onreadystatechange = () => {
-				if (this.done || this.xhr.readyState != 4) return;
-				this.done = true;
-				if (this.tim) clearTimeout(this.tim);
-				
-				const b = this.xhr.getResponseHeader("build");
-				if (b) App.srvbuild = parseInt(b);
-				const ct = this.xhr.getResponseHeader("Content-Type");
-				let contentType = ct;
-				let charset = null;
-				let i = ct ? ct.indexOf(";") : -1;
-				if (i != -1) {
-					contentType = ct.substring(0, i);
-					i = ct.indexOf("charset=", i);
-					if (i != -1)
-						charset = ct.substring(i + 8);
-				}
-				const isJson = contentType && contentType == "application/json" ;
-				const uint8 = this.xhr.response ? new Uint8Array(this.xhr.response) : null;
-				let jsonObj = null;
-				let text;
-				if (isJson) {
-					try {
-						text = uint8 ? Util.bytes2string(uint8) : "{}";
-						jsonObj = JSON.parse(text);
-					} catch (e) {
-						this.req.onError(new ReqErr("BJSONRESP", 6, App.format("BJSONRESP", this.req.url, e.message), [this.req.url, text])); 
-						return;
-					}
-				}
-
-				if (this.xhr.status == 200) {					    
-					const resp = isJson ? {json:jsonObj} : {uint8:uint8, charset:charset, contentType:contentType};
-					this.req.onSuccess(resp);
-				} else {
-					const err = jsonObj ? new ReqErr(jsonObj.code, jsonObj.phase, jsonObj.message, jsonObj.detail)
-					: new ReqErr("XHTTP", 9, App.format("XHTTP", this.req.url, this.xhr.status, this.xhr.statusText), [this.req.url, this.xhr.status, this.xhr.statusText]);
-					this.req.onError(err);
-				}
-			}
-			
-			this.xhr.send(this.req.formData);
-			
-		} catch(e) {
-			this.done = true;
-			if (this.tim) clearTimeout(this.tim);
-			this.req.onError(new ReqErr("XSEND", -1, App.format("XSEND", this.req.url, e.message), [this.req.url, e])); 
+			const r = await new Req().setOp("ping").setSpinner(App.defaultSpinner).setTimeOut(10000).go();
+			console.log(App.format("srvok", JSON.stringify(r.json ? r.json : {})));
+			App.srvbuild = r.json && r.json.b ? r.json.b : 0;
+			return App.srvbuild;
+		} catch(err) {
+			console.error(App.format("srvko", err.message));
+			return 0;
 		}
 	}
-}
-
-/*****************************************************/
-class Util {	
-	static async wait(ms) {
-		return new Promise(resolve => setTimeout(resolve, ms));
-	}
 	
+//	static async reping(b) {
+//	console.log("1 - b=" + b + "  build=" + App.build);
+//	if (b != App.build) {
+//		await this.wait(4000);
+//		b = await this.ping();
+//		console.log("2 - b=" + b + "  build=" + App.build);
+//		return b != App.build ? this.reload2(b) : this.ifready();
+//	} else
+//		this.ifready()	
+//}
+//	static async pingFetch() {
+//		try {
+//			const resp = await this.fetchWithTimeout(App.baseUrl(0) + "ping", 3000);
+//			if (resp.ok) {
+//				const r = await resp.json();
+//				console.log(App.format("srvok", JSON.stringify(r ? r : {})));
+//				App.srvbuild =  r && r.b ? r.b : 0;
+//				return App.srvbuild;
+//			} else {
+//				console.error(App.format("srvko", "? (fetch)"));
+//				return 0;
+//			}
+//		} catch(err) {
+//			console.error(App.format("srvko", err.message));
+//			return 0;
+//		}
+//	}
+//	
+//	static async fetchWithTimeout(url, TIME_OUT_MS) {
+//		let tim;
+//		return Promise.race([
+//			new Promise((resolve, reject) => {
+//				fetch(url)
+//				.then(response => {
+//					if (tim) clearTimeout(tim);
+//					resolve(response);
+//				}).catch(e => {
+//					if (tim) clearTimeout(tim);
+//					reject(e);
+//				})
+//			}),
+//			new Promise((resolve, reject) => {
+//				tim = setTimeout(() => reject({message:'timeout'}), TIME_OUT_MS ? TIME_OUT_MS : 20000);
+//			})
+//		]);
+//	}
+//	static async wait(ms) {
+//		return new Promise(resolve => setTimeout(resolve, ms));
+//	}
+
 	static editPC(n1, n2){
 		if (n2 <= 0 || n1 >= n2) return "100%";
 		if (!n1 || n1 < 0) return "0%";
@@ -304,142 +122,6 @@ class Util {
 		if (v < 1100000) return s.substring(0,1) + "," + s.substring(1,3) + "Mo";
 		if (v < 10000000) return s.substring(0,2) + "," + s.substring(2,3) + "Mo";
 		return s.substring(0,3) + "Mo";
-	}
-	
-	/*
-	 * Avis de fin de rechargement de l'application cache : impose le rechargement de l'application
-	 */
-	static updCache(){
-		window.applicationCache.addEventListener('updateready', e => {
-			console.log("Evt. updateready reçu " + window.applicationCache.status);
-		    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-		    	window.applicationCache.swapCache();
-		    	location.reload(true);
-		    }
-		}, false);
-	}
-
-	/*
-	 * Le service worker est une application INDEPENDANTE de la page.
-	 * Le script sw.js qui l'anime est déclaré : ça lancera le service worker S'IL N'ETAIT PAS DEJA LANCE.
-	 * S'il était lancé, il continue de vivre avec la version actuelle (donc d'une version potentiellement retardée).
-	 * Si le sw.js a changé par rapport à celui en exécution, un noveau service est préparé et
-	 * RESTE EN ATTENTE jusqu'à la fin de toutes les pages qui ont déclaré ce service.
-	 * IL Y A UN SERVICE WORKER PAR "namespace" : /cp/nsB/sw.js et /cp/nsA/sw.js définissent DEUX services indépendants.
-	 * Le "scope" de /cp/nsA/sw.js n'est PAS réduit : il interceptent TOUTES les URLs /cp/nsA/...
-	 * MAIS en conséquence IGNORE les URLs de la navigation privée /cp/nsA$/...
-	 * Une EXCEPTION "Request failed" signifie qu'une des URLs citée dans addAll() N'EST PAS ACCESSIBLE (404)
-	 * MAIS one sait PAS laquelle (joie !)
-	 */
-	static async register() {
-		const pn = window.location.pathname;
-		// Pour Apple et Edge 
-		if (!navigator.serviceWorker && App.isSW) 
-			window.location = pn + ".a" + window.location.search + window.location.hash;
-
-		//Pour Safari / IOS !!!
-		if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) {
-			window.crypto.subtle = window.crypto.webkitSubtle;
-			RSA.IOS = true;
-		}
-		
-		if ((pn.endsWith("_") || pn.endsWith("_.a")) && App.modeMax == 2)
-			App.mode = 2;
-		
-		let b = 0;
-		if (App.mode != 2)
-			b = await this.ping();
-
-		if (App.mode == 2) return this.ifready();
-		
-		if (App.mode == 0) {
-			if (!b) {
-				alert(App.lib("xping_1"));
-				window.location.reload(true);
-			} else if (b != App.build) 
-				this.reload(b);
-			return;
-		}
-		
-		// mode 1
-		if (!b) {
-			if (App.modeMax < 2) {
-				alert(App.lib("xping_1"));
-				window.location.reload(true);
-				return;
-			}
-			if (confirm(App.lib("xping_2"))){
-				window.location.reload(true);
-				return;					
-			}
-			App.mode = 2;
-			return this.ifready();
-		} 
-		
-		try {
-			if (App.isSW) {
-				const js = App.ctxNsSlash() + "sw.js";
-				const reg = await navigator.serviceWorker.register(js);
-				console.log("Succès de l'enregistrement auprès du service worker. Scope:" + reg.scope);
-			} else {
-				this.updCache();
-				await this.wait(4000);
-			}
-		} catch (er) {
-			this.errorPage(er.message);
-		}
-
-		if (b != App.build) {
-			b = await this.ping();
-			if (b != App.build) this.reload(b);
-		}
-		
-		this.ifready()	
-	}
-    
-	static ifready() {
-		App.ready1 = true;
-  		if (App.ready2) {
-  			App.appHomes.setHome(App.home);
-  			if (App.Custom && App.Custom.ready)
-  				App.Custom.ready();
-  		}
-	}
-	
-	static async ping() {
-		try {
-			const resp = await this.fetchWithTimeout(App.baseUrl(0) + "ping", 3000);
-			if (resp.ok) {
-				const r = await resp.json();
-				console.log(App.lib("srvok"));
-				return r && r.b ? r.b : 0;
-			} else {
-				console.error(App.lib("srvko"));
-				return 0;
-			}
-		} catch(err) {
-			console.error(App.lib("srvko"));
-			return 0;
-		}
-	}
-	
-	static async fetchWithTimeout(url, TIME_OUT_MS) {
-		let tim;
-		return Promise.race([
-			new Promise((resolve, reject) => {
-				fetch(url)
-				.then(response => {
-					if (tim) clearTimeout(tim);
-					resolve(response);
-				}).catch(e => {
-					if (tim) clearTimeout(tim);
-					reject(e);
-				})
-			}),
-			new Promise((resolve, reject) => {
-				tim = setTimeout(() => reject('timeout'), TIME_OUT_MS ? TIME_OUT_MS : 20000);
-			})
-		]);
 	}
 
 	/*
@@ -469,28 +151,7 @@ class Util {
 		if (!this.encoder) this.encoder = new TextEncoder("utf-8");
 		return string ? this.encoder.encode(string) : new Uint8Array(0); 
 	}
-	
-	static reload(b) {
-		setTimeout(function() {
-			const x = {lang:App.lang, build:b, nslabel:App.nslabel(), applabel:App.applabel(), b:App.buildAtPageGeneration, home:App.homeUrl()}
-			window.location = App.reloadUrl(true) + "reload.html?" + encodeURI(JSON.stringify(x));
-		}, 100);		
-	}
-
-	static bye() {
-		setTimeout(function() {
-			const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
-			window.location = App.reloadUrl() + "bye.html?" + encodeURI(JSON.stringify(x));
-		}, 100);		
-	}
-
-	static errorPage(msg) {
-		setTimeout(function() {
-			const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl(), msg:msg}
-			window.location = App.reloadUrl() + "error.html?" + encodeURI(JSON.stringify(x));
-		}, 100);		
-	}
-	
+		
 	static get defaultDRM() { return [
 	    {'base':'A', 'letters':/[\u0041\u24B6\uFF21\u00C0\u00C1\u00C2\u1EA6\u1EA4\u1EAA\u1EA8\u00C3\u0100\u0102\u1EB0\u1EAE\u1EB4\u1EB2\u0226\u01E0\u00C4\u01DE\u1EA2\u00C5\u01FA\u01CD\u0200\u0202\u1EA0\u1EAC\u1EB6\u1E00\u0104\u023A\u2C6F]/g},
 	    {'base':'AA','letters':/[\uA732]/g},
@@ -901,22 +562,22 @@ class RSA {
 	}
 		
 //	static async ios() {
-//		if (RSA.IOS == null) {
+//		if (App.IOS == null) {
 //			try {
 //				let key = await crypto.subtle.generateKey(RSA.rsaObj, true, ["encrypt", "decrypt"]);
 //				let jwk = await crypto.subtle.exportKey("jwk", key.privateKey);
 //				const x = JSON.stringify(jwk);
 //				const y = JSON.parse(x);
 //				let result2 = await crypto.subtle.importKey("jwk", y, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
-//				RSA.IOS = false;
+//				App.IOS = false;
 //			} catch (err) {
-//				RSA.IOS = true;
+//				App.IOS = true;
 //			}
 //		}
-//		return RSA.IOS;
+//		return App.IOS;
 //	}
 	
-	static ios() { return RSA.IOS; }
+	static ios() { return App.IOS; }
 	
 	static async newRSAPriv(jwkJson) {
 		const key = RSA.ios() ? Util.string2bytes(jwkJson) : JSON.parse(jwkJson);
@@ -939,10 +600,310 @@ class RSA {
 }
 
 /*****************************************************/
+/*****************************************************/
+class ReqErr {
+	constructor(code, phase, message, detail) {
+		this.code = code ? code : "LX";
+		this.phase = phase < -1 || phase > 6 ? 9 : phase;
+		this.message = message ? message : this.code;
+		this.detail = detail ? detail : [];
+	}
+	
+	/*
+	 * Phase 
+	 * -1 : connexion au serveur
+	 * 0 : avant opération dans le serveur
+	 * 1 : dans l'opération (work)
+	 * 2 : au cours de la validation
+	 * 3 : après validation (afterwork)
+	 * 4 : au cours de la synchronisation
+	 * 5 : lors de l'envoi de la réponse
+	 * 6 : dans le script d'interprétation de la réponse
+	 * 9 : inconnu entre 0 et 5
+	 */
+	
+	/*
+	 * N : notfound -> 1 : 404 : not found. Document ou attachment non trouvé
+	 * A : app -> 1 : 400 : erreur applicative autre que N. Données incorrectes
+	 * B : bug -> 2 : 400 : bug, situation des données illogique
+	 * X : unexpected -> 3 : 400 : incident inattendu, matériel ou logiciel
+	 * D : delayed build -> 4 : 400 : recharger l'application cliente
+	 * C : contention -> 5 : 400 : trop de contention sur la base de données
+	 * O : espace off -> 6 : 400 : espace en maintenance
+	 * S : session non autorisée -> 7 : 400 : ou résiliée ou trop longue ...
+	 * T : timeout -> 8
+	 * I : interrupted -> 9
+	 * L : erreur d'exécution d'un script local (avant ou après) -> 0
+	 */
+	major() {
+		const i = "NABXDCOSTI".indexOf(this.code.charAt(0));
+		return m == -1 ? 0 : m;
+	}
+	
+}
+
+/*****************************************************/
+class Req {
+	constructor() {
+		this.TIME_OUT_MS = 300000;
+		this.url = new StringBuffer().append(App.base + "/");
+		this.currentRetry = null;
+		this.hasArgs = false;
+		this.formData = new FormData();
+		this.cred = 0;
+		this.reqErr = App.globalReqErr;
+		this.spinner = App.globalSpinner;
+	}
+	
+	setReqErr(reqErr) {
+		if (reqErr)
+			this.reqErr = reqErr; 
+		return this; 
+	}
+
+	setSpinner(spinner) {
+		if (spinner)
+			this.spinner = spinner; 
+		return this; 
+	}
+
+	setTimeOut(timeOut) { this.TIME_OUT_MS = timeOut; return this; }
+
+	setFormData() { this.formData = formData; return this; } // à citer AVANT ceux qui suivent
+
+	setSyncs(syncs) { if (syncs) this.formData.append("syncs", JSON.stringify(syncs)); return this;}
+	
+	setOp(op, param, url) { 
+		this.op = op; 
+		if (op.endsWith("ping")) { // "ping" ou "../ping"
+			this.url.append(op);
+		} else {
+			this.param = JSON.stringify(param); 
+			this.url.append("op/").append(url ? url : "");
+			this.formData.append("op", this.op);
+			this.hasArgs = true;
+		}
+		return this;
+	}
+	
+	setArgs(args) {
+		if (!args) return;
+		for(let a in args) {
+			let v = args[a];
+			if (this.isGet)
+				this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
+			else
+				this.formData.append(a,v);
+			this.hasArgs = true;
+		}
+		return this;
+	}
+	
+	/*
+	 * !cred : pas de crédential
+	 * cred = 1 crédential standard simple (propriétés account / key de App)
+	 * cred = 2 crédential privilégié (account / key / sudo de App)
+	 * cred = {c1:... c2:... } crédential spécifique
+	 */
+	setCred(cred) { 
+		if (cred) {
+			if (cred == 1)
+				this.cred = {account:App.account, key:App.key}
+			else if (cred == 2)
+				this.cred = {account:App.account, key:App.key, sudo:App.sudo}
+			else
+				this.cred = cred;
+		}
+		return this;
+	}
+	
+	setNoCatch(noCatch) { this.noCatch = noCatch; return this; }
+	
+	setStartMsg(startMsg) {
+		if (startMsg)
+			this.startMsg = startMsg;
+		return this;
+	}
+	
+	async go(){
+		return new Promise((resolve, reject) => {
+			if (this.cred) {
+				for(let a in cred) {
+					let v = cred[a];
+					if (this.isGet)
+						this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
+					else
+						this.formData.append(a,v);
+					this.hasArgs = true;
+				}
+			}
+			this.url = this.url.toString();
+			this.resolve = resolve;
+			this.reject = reject;
+			new Retry(this).send();
+		});
+	}
+	
+	kill() {
+		if (this.currentRetry)
+			this.currentRetry.kill();
+	}
+	
+	onProgress(loaded, total){
+		if (this.spinner.progress)
+			this.spinner.progress(App.format("reqRec", Util.editPC(loaded, total), Util.editVol(total)));
+	}
+	
+	onSuccess(resp) {
+		this.currentRetry = null;
+		if (this.spinner.stop)
+			this.spinner.stop();
+		this.resolve(resp);
+	}
+	
+	onError(err) {
+		this.currentRetry = null;
+		if (this.spinner.stop)
+			this.spinner.stop();
+		if (err.code == "DBUILD") {
+			Util.reload2(App.srvbuild);
+			return;
+		}
+		if (this.noCatch && this.noCatch.indexOf(err.code + " ") != -1) {
+			this.reject(err);
+			return;
+		}
+		if (this.reqErr && this.reqErr.open)
+			this.reqErr.open(this, err);
+		else
+			this.reject(err);
+	}
+	
+	onRetry() {
+		new Retry(this).send();
+	}
+	
+	onReturnToApp(err) {
+		this.reject(err);		
+	}
+
+}
+
+class Retry { // un objet par retry pour éviter les collisions sur le XHR
+	constructor(req) {
+		this.req = req;
+		req.currentRetry = this;
+	}
+	
+	kill() {
+		if (this.done) return;
+		this.done = true;
+		if (this.tim) clearTimeout(this.tim);
+		if (this.xhr) this.xhr.abort();
+		const d = new Date().getTime() - this.t0;
+		this.req.onError(new ReqErr("INTERRUPTED", 9, App.format("INTERRUPTED", this.req.url, d), [this.req.url, d]));
+	}
+	
+	send() {
+		if (this.req.spinner.start)
+			this.req.spinner.start(this.req, this.req.startMsg ? this.req.startMsg : App.lib("reqStarted"));
+		this.t0 = new Date().getTime();
+		this.tim = setTimeout(() => {
+			if (!this.done) {
+				this.done = true;
+				if (this.xhr) this.xhr.abort();
+				console.error("TIMEOUT " + this.req.op);
+				this.req.onError(new ReqErr("TIMEOUT", 9, App.format("TIMEOUT", this.req.url, Math.round(this.req.TIME_OUT_MS)))); 
+			}
+		}, this.req.TIME_OUT_MS); 
+
+		try {
+			this.xhr = new XMLHttpRequest();
+			this.xhr.open("POST", this.req.url, true);
+			this.xhr.responseType = "arraybuffer";
+			
+			this.xhr.onerror = (e) => {	
+				if (this.done) return;
+				if (this.tim) clearTimeout(this.tim);
+				this.done = true;
+				this.req.onError(new ReqErr("X1", 9, App.format("X1", this.req.url, e.message), [this.req.url, e])); 
+			}
+			
+			this.xhr.onprogress = (e) => {	
+				if (this.done) return;
+				this.req.onProgress(e.loaded, e.total);
+			}
+			
+			this.xhr.onreadystatechange = () => {
+				if (this.done || this.xhr.readyState != 4) return;
+				this.done = true;
+				if (this.tim) clearTimeout(this.tim);
+				
+				const b = this.xhr.getResponseHeader("build");
+				if (b) App.srvbuild = parseInt(b);
+				const ct = this.xhr.getResponseHeader("Content-Type");
+				let contentType = ct;
+				let charset = null;
+				let i = ct ? ct.indexOf(";") : -1;
+				if (i != -1) {
+					contentType = ct.substring(0, i);
+					i = ct.indexOf("charset=", i);
+					if (i != -1)
+						charset = ct.substring(i + 8);
+				}
+				const isJson = contentType && contentType == "application/json" ;
+				const uint8 = this.xhr.response ? new Uint8Array(this.xhr.response) : null;
+				let jsonObj = null;
+				let text;
+				if (isJson) {
+					try {
+						text = uint8 ? Util.bytes2string(uint8) : "{}";
+						jsonObj = JSON.parse(text);
+					} catch (e) {
+						this.req.onError(new ReqErr("BJSONRESP", 6, App.format("BJSONRESP", this.req.url, e.message), [this.req.url, text])); 
+						return;
+					}
+				}
+
+				if (this.xhr.status == 200) {					    
+					const resp = isJson ? {json:jsonObj} : {uint8:uint8, charset:charset, contentType:contentType};
+					this.req.onSuccess(resp);
+				} else {
+					const err = jsonObj ? new ReqErr(jsonObj.code, jsonObj.phase, jsonObj.message, jsonObj.detail)
+					: new ReqErr("XHTTP", 9, App.format("XHTTP", this.req.url, this.xhr.status, this.xhr.statusText), [this.req.url, this.xhr.status, this.xhr.statusText]);
+					this.req.onError(err);
+				}
+			}
+			
+			this.xhr.send(this.req.formData);
+			
+		} catch(e) {
+			this.done = true;
+			if (this.tim) clearTimeout(this.tim);
+			this.req.onError(new ReqErr("XSEND", -1, App.format("XSEND", this.req.url, e.message), [this.req.url, e])); 
+		}
+	}
+}
+
+/*****************************************************/
+
+class DefaultSpinner {
+	start(request, info) {
+		console.log("Spinner start : " + info);
+	}
+	progress(info) { 
+		console.log("Spinner progress : " + info);
+	}
+	stop() {
+		console.log("Spinner stop");
+	}
+}
+/*****************************************************/
 App.Req = Req;
 App.Util = Util;
 App.B64 = B64;
 App.AES = AES;
 App.RSA = RSA;
+App.defaultSpinner = new DefaultSpinner();
 
 Util.register();

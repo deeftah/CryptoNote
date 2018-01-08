@@ -34,6 +34,9 @@ import fr.cryptonote.provider.DBProvider;
 
 public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
+	public static final String HPC = "htm";
+	public static final String AVION = "a";
+	public static final String INCOGNITO = "$";
 		
 	private static Boolean done = false;
 	private static String contextPath;
@@ -102,7 +105,8 @@ public class Servlet extends HttpServlet {
 							vz.put(p1, p2);
 						}
 					}
-				}
+				} else
+					Util.log.info("Ressource ignorée : " + s);
 		
 	}
 
@@ -196,7 +200,7 @@ public class Servlet extends HttpServlet {
 			build = BConfig.build();
 			if ("ping".equals(origUri)) {
 				String x = "{\"t\":" + Stamp.fromNow(0).stamp() + ", \"b\":" + build + "}";
-				sendText(0, x, resp, "application/json");
+				sendText(200, x, resp, "application/json");
 				fini = true;
 			}
 			String shortcut = BConfig.shortcut(origUri);
@@ -213,9 +217,10 @@ public class Servlet extends HttpServlet {
 				return;
 			}
 			uri = origUri.substring(i + 1);
+			String s = origUri.substring(0, i);
 			// si namespace est suivi de $ : navigation privée/incognito
-			mode = origUri.charAt(i - 1) == '$' ? 0 : 1;
-			String ns = origUri.substring(0, mode == 1 ? i : i -1);
+			mode = s.endsWith(INCOGNITO) ? 0 : 1;
+			String ns = mode == 1 ? s : s.substring(0, s.length() - INCOGNITO.length());
 			nsqm = BConfig.nsqm(ns, true);
 			if (nsqm == null) {
 				sendText(500, BConfig.format("500URLMF2" + (hasCP() ? "cp" : ""), origUri, ns), resp);
@@ -233,7 +238,7 @@ public class Servlet extends HttpServlet {
 			if ("ping".equals(uri)) {
 				String dbInfo;
 				try {
-					try { TimeUnit.SECONDS.sleep(2); } catch (InterruptedException e) {}
+//					try { TimeUnit.SECONDS.sleep(2); } catch (InterruptedException e) {}
 					dbInfo = exec.dbProvider().dbInfo(null);
 				} catch (AppException e) {
 					dbInfo = "?";			
@@ -241,8 +246,9 @@ public class Servlet extends HttpServlet {
 				StringBuffer sb = new StringBuffer();
 				sb.append("{\"t\":").append("" + Stamp.fromNow(0).stamp()).append(", \"b\":").append(build).append(", \"off\":").append(nsqm.onoff)
 				.append(", \"db\":\"").append(dbInfo).append("\"}");
-				sendText(0, sb.toString(), resp, "application/json");
+				sendText(200, sb.toString(), resp, "application/json");
 				fini = true;
+				Util.log.info("Ping");
 				return;
 			}
 		}
@@ -251,10 +257,12 @@ public class Servlet extends HttpServlet {
 			String p1 = "/" + contextPath + "/" + nsqm.code + "/";
 			String p2 = p1 + "var" + build + "/";
 			StringBuffer sb = new StringBuffer();
-			sb.append("CACHE MANIFEST\n#").append(build).append("\nCACHE:\n");
-			for(String x : nsqm.homes(1)) sb.append(p1).append(x).append(".a\n");	
-			for(String x : nsqm.homes(2)) sb.append(p1).append(x).append("_.a\n");	
-			for(String s : var()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
+			sb.append("CACHE MANIFEST\n#").append(build).append("\n\nCACHE:\n\n");
+			for(String x : nsqm.homes(1)) sb.append(p1).append(x).append("." + HPC + "\n");	
+			for(String x : nsqm.homes(2)) sb.append(p1).append(x).append("." + AVION + HPC + "\n");	
+			for(String s : var()) 
+				if (!s.endsWith("/sw.js"))
+					sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
 			HashMap<String,String> rns = zres(nsqm.code);
 			for(String s : rns.keySet()) sb.append(p2 + s.substring(5) + "\n"); // 5 "/var/".length()
 			sendRes2(sb.toString().getBytes("UTF-8"), resp, "text/cache-manifest");
@@ -278,7 +286,10 @@ public class Servlet extends HttpServlet {
 			sb.append("const NS = \"").append(nsqm.code).append("\";\n");
 			sb.append("const RESSOURCES = [\n");
 			for(String x : nsqm.homes(1)) sb.append(p1).append(x).append("\",\n");	
-			for(String s : var()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
+			for(String x : nsqm.homes(1)) sb.append(p1).append(x).append('_').append(BConfig.build()).append("_\",\n");	
+			for(String s : var()) 
+				if (!s.endsWith("/sw.js"))
+					sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
 			HashMap<String,String> rns = zres(nsqm.code);
 			for(String s : rns.keySet()) sb.append(p2 + s.substring(5) + "\",\n"); // 5 "/var/".length()
 			sb.setLength(sb.length() - 2);
@@ -290,9 +301,13 @@ public class Servlet extends HttpServlet {
 		void resource() throws IOException {
 			String urix = uri;
 			int i = uri.indexOf("/");
-			if (i == -1 || i >= uri.length() -1) {
+			if (i == -1) {
 				resp.sendError(404);
 				Util.log.severe("404 - " + urix);
+				return;
+			}
+			if (i == uri.length() -1) {
+				sendText(200, "", resp);
 				return;
 			}
 			uri = uri.substring(i + 1);
@@ -306,8 +321,9 @@ public class Servlet extends HttpServlet {
 			} else
 				res = getResource("/var/" + uri);
 			if (res == null) {
+//				sendText(200, "", resp);
 				resp.sendError(404);
-				Util.log.severe("404 - " + urix);
+				Util.log.info("404 - " + urix);
 				return;
 			}
 			sendRes(res, req, resp);
@@ -315,12 +331,22 @@ public class Servlet extends HttpServlet {
 
 		void page() throws IOException{
 			int bmode = mode;
-			isSW = !uri.endsWith(".a");
-			if (!isSW) uri = uri.substring(0, uri.length() - 2);
-			if (uri.endsWith("_")){
-				uri = uri.substring(0, uri.length() - 1);
+			isSW = true;
+			if (uri.endsWith(HPC)) {
+				isSW = false;
+				Util.log.info("Demande de : " + origUri);
+			}
+			if (!isSW) uri = uri.substring(0, uri.length() - HPC.length());
+			if (uri.endsWith("." + AVION)){
+				uri = uri.substring(0, uri.length() - AVION.length() - 1);
 				bmode = 2;
-			} 
+			}
+			
+			if (uri.endsWith("_")) {
+				int j = uri.lastIndexOf('_', uri.length() - 2);
+				if (j != -1) uri = uri.substring(0, j);
+			}
+			
 			modeMax = nsqm.modeMax(uri);
 			if (modeMax == -1){
 				sendText(404, BConfig.format("404HOME1", uri), resp);
@@ -387,14 +413,14 @@ public class Servlet extends HttpServlet {
 			sb.append("<script src='js/build.js'></script>\n");
 
 			sb.append("\n<script type='text/javascript'>\n");
-			sb.append("App.contextpath = \"").append(contextPath).append("\";\n");
-			sb.append("App.namespace = \"").append(nsqm.code).append("\";\n");
+//			sb.append("App.contextpath = \"").append(contextPath).append("\";\n");
+//			sb.append("App.namespace = \"").append(nsqm.code).append("\";\n");
+//			sb.append("App.home = \"").append(uri).append("\";\n");
+//			sb.append("App.mode = ").append(mode).append(";\n");
+//			sb.append("App.isSW = ").append(isSW).append(";\n");
+			sb.append("App.modeMax = ").append(modeMax).append(";\n");
 			sb.append("App.buildAtPageGeneration = ").append(BConfig.build()).append(";\n");
 			sb.append("App.zone = \"").append(BConfig.zone()).append("\";\n");
-			sb.append("App.home = \"").append(uri).append("\";\n");
-			sb.append("App.mode = ").append(mode).append(";\n");
-			sb.append("App.modeMax = ").append(modeMax).append(";\n");
-			sb.append("App.isSW = ").append(isSW).append(";\n");
 			sb.append("App.langs = ").append(JSON.toJson(BConfig.langs())).append(";\n");
 			sb.append("App.lang = \"").append(lang).append("\";\n");
 			sb.append("App.theme = \"").append(nsqm.theme).append("\";\n");
@@ -429,11 +455,15 @@ public class Servlet extends HttpServlet {
 				if (varx.contains("/var/js/theme-" + t + ".js"))
 					sb.append("<script src='js/theme-" + t + ".js'></script>\n");
 
+			sb.append("<script src='js/encoding.js'></script>\n");
+			sb.append("<script src='js/pako.js'></script>\n");
+			sb.append("<script src='js/bcrypt.js'></script>\n");
+			sb.append("<script src='js/showdown.min.js'></script>\n");
 			sb.append("<script src='js/util.js'></script>\n");
 
 			sb.append(head);
 			sb.append(body);
-			sendRes(new Resource(sb.toString(), "text/html"), req, resp);
+			sendRes2(sb.toString().getBytes("UTF-8"), resp, "text/html");
 			fini = true;
 		}
 
@@ -484,11 +514,11 @@ public class Servlet extends HttpServlet {
 	private void sendText(int code, String text, HttpServletResponse resp, String contentType) throws IOException {
 		if (text == null) text = "";
 		resp.setContentType(contentType == null ? "text/plain" : contentType);
-		resp.setStatus(200);
 		resp.setCharacterEncoding("UTF-8");
 		resp.addHeader("build", "" + BConfig.build());
 		if (code == 0 || code == 200) {
 			try {
+				resp.setStatus(200);
 				byte[] bytes = text.getBytes("UTF-8");
 				resp.setContentLength(bytes.length);
 				resp.getOutputStream().write(bytes);		

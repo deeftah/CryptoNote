@@ -10,6 +10,7 @@
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 <link rel="import" href="wait-home.html">
+<link rel="import" href="reload-home.html">
 
 <dom-module id="app-homes">
 <template>
@@ -26,6 +27,7 @@
 			<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
 			<home2-home id="home2" lang="[[lang]]"></home2-home>
 			<wait-home id="wait" lang="[[lang]]"></wait-home>
+			<reload-home id="reload" lang="[[lang]]"></reload-home>
 		</iron-pages>
 	</div>
 </template>
@@ -47,13 +49,18 @@
       		this.setLang(App.lang);
       		App.ready2 = true;
       		if (App.ready1) {
-      			this.setHome(App.home);
-      			if (App.Custom && App.Custom.ready)
-      				App.Custom.ready();
+      			if (App.mode == 2 || App.srvbuild == App.build) {
+	      			this.setHome(App.home);
+	      			if (App.Custom && App.Custom.ready)
+	      				App.Custom.ready();
+      			} else
+      				this.setHome("reload");
       		}
       	}
       	setHome(home) {
       		this.home = home;
+      		if (this.$[home].init)
+      			this.$[home].init();
       	}
       	setLang(lang) { 
       		App.lang = lang;

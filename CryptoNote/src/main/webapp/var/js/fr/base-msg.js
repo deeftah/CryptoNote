@@ -10,10 +10,10 @@ App.setAll("fr", {
 "DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
 
 "testsrv":"Test d''accès au serveur",
-"srvko":"Serveur non joignable : possibilités d''actions limitées",
-"srvok":"Serveur joignable",
+"srvko":"Serveur non joignable : {0}",
+"srvok":"Serveur joignable : {0}",
 "reqStarted":"Envoi au serveur",
-"reqRec":"%0 reçus de %1",
+"reqRec":"{0} reçus de {1}",
 "sb_npa": "Ne plus attendre",
 "sb_texte": "Interrompre correspond à renoncer à l'action engagée qui sera traitée comme un échec. L'autre option est d'avoir plus de patience.",
 "sb_att": "Attendre encore",
