@@ -10,7 +10,6 @@
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 <link rel="import" href="wait-home.html">
-<link rel="import" href="reload-home.html">
 
 <dom-module id="app-homes">
 <template>
@@ -27,7 +26,6 @@
 			<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
 			<home2-home id="home2" lang="[[lang]]"></home2-home>
 			<wait-home id="wait" lang="[[lang]]"></wait-home>
-			<reload-home id="reload" lang="[[lang]]"></reload-home>
 		</iron-pages>
 	</div>
 </template>
@@ -37,7 +35,6 @@
 		static get properties() { return { home: {String, value:"wait"}, lang:{type:String, value:App.lang} } ; }
       	constructor() { 
       		super(); 
-      		App.appHomes = this;
       	}
       	ready() {
       		super.ready();
@@ -45,17 +42,15 @@
       		App.messageBox = this.$.message;
       		App.globalSpinner = this.$.spin;
       		App.globalReqErr = this.$.reqerr;
+      		App.appHomes = this;
+      		if (App.rootcomplete)
+      			this.starting();
+      	}
+      	async starting() {
       		this.setTheme(App.theme);
-      		this.setLang(App.lang);
-      		App.ready2 = true;
-      		if (App.ready1) {
-      			if (App.mode == 2 || App.srvbuild == App.build) {
-	      			this.setHome(App.home);
-	      			if (App.Custom && App.Custom.ready)
-	      				App.Custom.ready();
-      			} else
-      				this.setHome("reload");
-      		}
+  			if (App.Custom && App.Custom.ready)
+  				await App.Custom.ready();
+  			this.setHome(App.home);
       	}
       	setHome(home) {
       		this.home = home;
@@ -64,10 +59,10 @@
       	}
       	setLang(lang) { 
       		App.lang = lang;
-      		Polymer.updateStyles(App.customThemes[lang]);
-      		this.lang = lang; 
+      		this.setTheme(App.theme);
       	}
       	setTheme(theme) {
+      		App.theme = theme;
       		const sty = {};
       		let t = App.customThemes["z"];
       		if (t) for(let k in t) sty[k] = t[k];
@@ -76,6 +71,7 @@
       		t = App.customThemes[App.lang];
       		if (t) for(let k in t) sty[k] = t[k];
       		Polymer.updateStyles(sty);
+      		this.lang = App.lang;
       	}
     }
 	customElements.define(AppHomes.is, AppHomes);

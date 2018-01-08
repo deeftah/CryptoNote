@@ -32,9 +32,6 @@ reqerr-panel à compléter / tester
 Doc serveur à ajuster
 Test / exemple
 
-
-styles/z/z/post-it.png
-
 Une tâche a un résultat : c'est un petit objet *report* qui synthétise le niveau d'avancement de la tâche, soit à son dernier point de reprise, soit à sa fin.
 
 La phase work() d'une tâche se finit sous deux options :

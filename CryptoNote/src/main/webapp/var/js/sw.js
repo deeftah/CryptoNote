@@ -54,11 +54,11 @@ this.addEventListener('activate', function(event) {
 	);
 });
 
-const fetchWithTimeout = function(req, options, TIME_OUT_MS) {
+const fetchWithTimeout = function(req, TIME_OUT_MS) {
 	let tim;
 	return Promise.race([
 		new Promise((resolve, reject) => {
-			fetch(req, options)
+			fetch(req)
 			.then(response => {
 				if (tim) clearTimeout(tim);
 				resolve(response);
@@ -68,14 +68,13 @@ const fetchWithTimeout = function(req, options, TIME_OUT_MS) {
 			})
 		}),
 		new Promise((resolve, reject) => {
-			const to = TIME_OUT_MS ? TIME_OUT_MS: 7000;
 			tim = setTimeout(() => {
 				if (TRACEON) console.log("FETCH TIMEOUT - " + req.url);
 				let myBlob = new Blob();
-				let init = { "status" : 500 , "statusText" : "TIMEOUT " + to + "ms" };
+				let init = { "status" : 500 , "statusText" : "TIMEOUT " + TIME_OUT_MS + "ms" };
 				let myResponse = new Response(myBlob,init);
 				reject(myResponse);
-			}, to);
+			}, TIME_OUT_MS);
 		})	
 	]);
 }
@@ -87,17 +86,27 @@ const fetchWithTimeout = function(req, options, TIME_OUT_MS) {
 this.addEventListener('fetch', event => {
 	let url = event.request.url;
 	let j = url.lastIndexOf("?");
-	if (j != -1) url = url.substring(0, j);
+	let hasHash = false;
+	if (j != -1) {
+		url = url.substring(0, j);
+		hasHash = true;
+	}
 	if (url.endsWith(".a")) url = url.substring(0, url.length - 2); // page "locale" (même texte que "normale")
 	
 	const i = url.indexOf("/", 10); // laisse passer https://...
 	const x = !CONTEXTPATH ? url.substring(i + 1) : url.substring(i + 2 + CONTEXTPATH.length);
 	const ping = x == "ping" || x ==  NS + "/ping";
-	const op =  ping || x.startsWith(NS + "/od/") || x.startsWith(NS + "/op/");
+	const op =  hasHash || ping || x.startsWith(NS + "/od/") || x.startsWith(NS + "/op/");
 	
-	if (ping) {
+	const ch = event.request.headers.get("X-Custom-Header");
+	let myOptions = {};
+	if (ch)
+		try { myOptions = JSON.parse(ch); } catch(err) { }
+	const timeout = myOptions.timeout ? myOptions.timeout : 0;
+		
+	if (op && timeout) {
 		event.respondWith(
-			fetchWithTimeout(event.request)
+			fetchWithTimeout(event.request, timeout)
 			.then(response => {
 				return response;
 			}).catch(e => {

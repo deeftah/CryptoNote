@@ -1,0 +1,22 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+#p { font-size:32px; color:orange; }
+</style>
+</head>
+<body>
+<div id="p"></div>
+<script>
+let h = window.location.search.substring(1);
+let json = JSON.parse(decodeURI(h));
+let x = "";
+let c = String.fromCharCode(9203);
+for(let i = 0; i < json.n; i++) x += c;
+document.getElementById("p").innerHTML = x;
+setTimeout(() => {
+	window.location = json.reload2 + h;
+}, 3000);
+</script>
+</body>
+</html>

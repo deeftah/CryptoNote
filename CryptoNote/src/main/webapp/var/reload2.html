@@ -1,0 +1,69 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+#p { font-size:32px; color:orange; }
+</style>
+</head>
+<body>
+<div id="p"></div>
+<script>
+class MyReloader {
+	static async sendMessageToCache(message) {
+		return new Promise((resolve, reject) => {
+			const messageChannel = new MessageChannel();
+			messageChannel.port1.onmessage = (event) => {
+				if (event.data.error) {
+					reject(event.data.error);
+				} else {
+					resolve(event.data);
+				}
+			};
+			const swc = navigator.serviceWorker.controller;
+			if (swc)
+				swc.postMessage(message, [messageChannel.port2]);
+		});
+	}
+
+	static async getCacheVersion(){
+		return new Promise((resolve, reject) => {
+			if (navigator.serviceWorker && navigator.serviceWorker.controller) { // activated : répond aux messages
+				this.sendMessageToCache({command:"getBuild"})
+				.then(resp => { // Build: resp.build
+					console.log("Cache build: " + resp.build);
+					resolve(resp.build);
+				}).catch(error => { 
+					console.log("Cache error: " + error.message);
+					resolve(0);
+				});
+			} else {
+				resolve(0);
+			};
+		});
+	}
+
+	static async init() {
+		this.json = JSON.parse(decodeURI(window.location.search.substring(1)));
+		this.json.n++;
+		let x = "";
+		let c = String.fromCharCode(9203);
+		for(let i = 0; i < this.json.n; i++) x += c;
+		document.getElementById("p").innerHTML = x;
+		
+		let b = await this.getCacheVersion();
+		let bb = parseInt(b, 10);
+		if (bb == this.json.build) 
+			window.location = this.json.reload;
+		else {
+			// alert("" + bb + " - " + this.json.build);
+			const param = {lang:this.json.lang, build:this.json.build, reload:this.json.reload, reload2:this.json.reload2,  n:this.json.n};
+			let r3 = this.json.reload2.replace("/var/reload2", "$/var/reload3");
+			window.location = r3 + encodeURI(JSON.stringify(param));
+		}
+	}
+}
+
+MyReloader.init();
+</script>
+</body>
+</html>

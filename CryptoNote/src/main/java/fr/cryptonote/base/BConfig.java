@@ -359,7 +359,7 @@ public class BConfig {
 				if (i == -1 || i == s.length() - 1) throw Servlet.exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "1"));
 				int j = s.indexOf(";", i + 2);
 				if (j == -1) throw Servlet.exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "2"));
-				String x = s.substring(i+ 1, j).trim();
+				String x = s.substring(i + 1, j).trim();
 				try { g.build = Integer.parseInt(x); } catch (Exception e) { throw Servlet.exc(null, _format(0, "XRESSOURCEPARSE", BUILDJS, "3"));}
 			}
 			else 

@@ -4,7 +4,7 @@
 <link rel="stylesheet" type="text/css" href="fonts/comfortaa.css">
 <style>
 #p { font-family:'Comfortaa'; font-size:14px; margin:10px;}
-.ici {font-size:18px; text-decoration: underline; font-weight:bold; color:blue; cursor:pointer; }
+.ici {font-size:20px; text-decoration: underline; font-weight:bold; color:blue; cursor:pointer; }
 .app {font-size:18px; font-weight:bold; }
 .red {font-size:16px; font-weight:bold; color:red;}
 </style>
@@ -12,35 +12,53 @@
 <body>
 <div id="p"></div>
 <script>
-var lib = {
-	fr:"La page de l'application <span class='app'>{0}</span> pour l'organisation <span class='app'>{1}</span> correspond "
-	+ "à la version <span class='red'>{3}</span> "
-	+ "alors que celle actuellement en ligne est la <span class='red'>{2}</span>.<br>" 
-	+ "Pour éviter des problèmes d'incompatibilité, elle doit être rechargée avec la nouvelle version.<br>"
-	+ "Fermer, s'il y en a, les onglets ou pages ouvertes sur cette application dans ce navigateur (ceci ne peut pas être fait automatiquement) "
-	+ "puis cliquer <a class='ici' href='{4}'>ici</a>.",
-	en:""
-}
-
-function format(lang, args) { // 0 à N arguments après le code
-	let x = lib[lang];
-	if (!x) x = lib.fr;
-	for(let i = 1; i < arguments.length; i++) {
-		let t = typeof arguments[i] != 'undefined' ? arguments[i] : "";
-		let y = "{" + (i - 1) + "}";
-		let j = x.indexOf(y);
-		if (j != -1)
-			x = x.substring(0, j) + t + x.substring(j + y.length);
+class MyReloader {
+	static get lib() { return {
+			fr:"La page de l'application <span class='app'>{0}</span> pour l'organisation <span class='app'>{1}</span> correspond "
+			+ "à la version <span class='red'>{3}</span> "
+			+ "alors que celle actuellement en ligne est la <span class='red'>{2}</span>.<br>" 
+			+ "Pour éviter des problèmes d'incompatibilité, elle doit être rechargée avec la nouvelle version.<br>"
+			+ "Fermer, s'il y en a, les autres onglets ou fenêtres ouvertes sur cette application dans ce navigateur (ceci ne peut pas être fait automatiquement) "
+			+ "puis <span class='ici' onclick='MyReloader.clic()'>cliquer ici</span>.",
+			en:""
+		}
 	}
-	return x;
+
+	static async clic() {
+		if (!navigator.serviceWorker)
+			window.location = this.json.reload;
+		else {	
+			const param = {lang:this.json.lang, build:this.json.build, reload:this.json.reload, reload2:this.json.reload2,  n:0};
+			// await this.wait(3000);
+			window.location = this.json.reload2 + encodeURI(JSON.stringify(param));
+		}
+	}
+
+	static async wait(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	static format(lang, args) { // 0 à N arguments après le code
+		let x = this.lib[lang];
+		if (!x) x = this.lib.fr;
+		for(let i = 1; i < arguments.length; i++) {
+			let t = typeof arguments[i] != 'undefined' ? arguments[i] : "";
+			let y = "{" + (i - 1) + "}";
+			let j = x.indexOf(y);
+			if (j != -1)
+				x = x.substring(0, j) + t + x.substring(j + y.length);
+		}
+		return x;
+	}
+
+	static init() {
+		this.json = JSON.parse(decodeURI(window.location.search.substring(1)));
+//		const x = {lang:App.lang, build:b, applabel:application, nslabel:App.nslabel, b:build dans la page actuelle, reload:url}
+		document.getElementById("p").innerHTML = this.format(this.json.lang, this.json.applabel, this.json.nslabel, this.json.build, this.json.b, this.json.reload);
+	}
 }
 
-var s = window.location.search.substring(1);
-x = JSON.parse(decodeURI(s));
-var p = document.getElementById("p");
-// 	const x = {lang:App.lang, build:b, applabel:application, nslabel:App.nslabel, b:build dans la page actuelle, reload:url}
-var m = format(x.lang, x.applabel, x.nslabel, x.build, x.b, x.reload);
-p.innerHTML = m;
+MyReloader.init();
 </script>
 </body>
 </html>

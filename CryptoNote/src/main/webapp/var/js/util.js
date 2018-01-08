@@ -1,61 +1,60 @@
 class Util {			
-	static async register() {
-		if (App.mode == 2) return this.ifready();
-
-		let b = 0 // copie de App.srvbuild
-		b = await this.ping();
-
-		if (App.mode == 0) 
-			return !b || b != App.build ? this.reload2(b) : this.ifready();
-		
-		// mode 1
-		if (!b) {
-			if (App.modeMax < 2) 
-				return this.reload2()
-			if (confirm(App.lib("xping_2")))
-				return this.reload2();					
-			return App.reloadAvion();	
-		}
-		if (b != App.build)
-			this.reload2();
-		else
-			this.ifready();	
-		
-	}
-    	
-	static ifready() {
-		App.ready1 = true;
-  		if (App.ready2) {
-  			App.appHomes.setHome(App.home);
-  			if (App.Custom && App.Custom.ready)
-  				App.Custom.ready();
-  		}
-	}
-	
-	static reload2() {
-		App.reloadWB();
-	}
-
-	static reload2b() {
-		App.ready1 = true;
-  		if (App.ready2) {
-  			App.appHomes.setHome("reload");
-  		}
-	}
-	
-	// App.baseUrl
-	static async ping() {
-		try {
-			const r = await new Req().setOp("ping").setSpinner(App.defaultSpinner).setTimeOut(10000).go();
-			console.log(App.format("srvok", JSON.stringify(r.json ? r.json : {})));
-			App.srvbuild = r.json && r.json.b ? r.json.b : 0;
-			return App.srvbuild;
-		} catch(err) {
-			console.error(App.format("srvko", err.message));
-			return 0;
-		}
-	}
-	
+//	static async register() {
+//		if (App.mode == 2) return this.ifready();
+//
+//		let b = 0 // copie de App.srvbuild
+//		b = await this.ping();
+//
+//		if (App.mode == 0) 
+//			return !b || b != App.build ? this.reload2(b) : this.ifready();
+//		
+//		// mode 1
+//		if (!b) {
+//			if (App.modeMax < 2) 
+//				return this.reload2()
+//			if (confirm(App.lib("xping_2")))
+//				return this.reload2();					
+//			return App.reloadAvion();	
+//		}
+//		if (b != App.build)
+//			this.reload2();
+//		else
+//			this.ifready();	
+//		
+//	}
+//    	
+//	static ifready() {
+//		App.ready1 = true;
+//  		if (App.ready2) {
+//  			App.appHomes.setHome(App.home);
+//  			if (App.Custom && App.Custom.ready)
+//  				App.Custom.ready();
+//  		}
+//	}
+//	
+//	static reload2() {
+//		App.reloadWB();
+//	}
+//
+//	static reload2b() {
+//		App.ready1 = true;
+//  		if (App.ready2) {
+//  			App.appHomes.setHome("reload");
+//  		}
+//	}
+//	
+//	static async ping() {
+//		try {
+//			const r = await new Req().setOp("ping").setSpinner(App.defaultSpinner).setTimeOut(10000).go();
+//			console.log(App.format("srvok", JSON.stringify(r.json ? r.json : {})));
+//			App.srvbuild = r.json && r.json.b ? r.json.b : 0;
+//			return App.srvbuild;
+//		} catch(err) {
+//			console.error(App.format("srvko", err.message));
+//			return 0;
+//		}
+//	}
+//	
 //	static async reping(b) {
 //	console.log("1 - b=" + b + "  build=" + App.build);
 //	if (b != App.build) {
@@ -298,6 +297,65 @@ class Util {
 }
 
 /*****************************************************/
+Date.prototype.format = function(format) {
+	let fullYear = this.getYear();
+	if (fullYear < 1000)
+		fullYear = fullYear + 1900;
+	const hour =this.getHours(); 
+	const day = this.getDate();
+	const month = this.getMonth() + 1;
+	const minute = this.getMinutes();
+	const seconde = this.getSeconds();
+	const ms = this.getMilliseconds();
+	const reg = new RegExp('(d|m|Y|H|i|s|S)', 'g');
+	const replacement = new Array();
+	replacement['d'] = day < 10 ? '0' + day : day;
+	replacement['m'] = month < 10 ? '0' + month : month;
+	replacement['S'] = ms < 10 ? '00' + ms : (ms < 100 ? '0' + ms : ms);
+	replacement['Y'] = fullYear;
+	replacement['H'] = hour < 10 ? '0' + hour : hour;
+	replacement['i'] = minute < 10 ? '0' + minute : minute;
+	replacement['s'] = seconde < 10 ? '0' + seconde : seconde;
+	return format.replace(reg, function($0) {
+		return ($0 in replacement) ? replacement[$0] : $0.slice(1, $0.length - 1);
+	});
+};
+
+Date.prototype.compact = function(now) {
+	if (!now) now = new Date();
+	let a1 = now.getYear();
+	if (a1 < 1000) a1 += 1900;
+	const m1 = now.getMonth() + 1;
+	const j1 = now.getDate();
+	let a2 = this.getYear();
+	if (a2 < 1000) a2 += 1900;
+	const m2 = this.getMonth() + 1;
+	const j2 = this.getDate();
+	const h = this.getHours();
+	const m = this.getMinutes();
+	let res = "";
+	if (a1 != a2) {
+		res = "" + a2 + "-" + (m2 < 10 ? '0' + m2 : m2) + "-" + (j2 < 10 ? '0' + j2 : j2) + " ";
+	} else if (m1 != m2) {
+		res = "" + (m2 < 10 ? '0' + m2 : m2) + "-" + (j2 < 10 ? '0' + j2 : j2) + " ";
+	} else if (j1 != j2) {
+		res = "" + (j2 < 10 ? '0' + j2 : j2) + " ";
+	}
+	res += "" + (h < 10 ? '0' + h : h) + ":" + (m < 10 ? '0' + m : m);
+	return res;
+}
+
+/*****************************************************/
+class StringBuffer {
+	constructor() { this.buffer = []; }
+	append(string) { this.buffer.push(string); return this; }
+	toString() { return this.buffer.join(""); }
+	join(arg) { return this.buffer.join(arg); }
+	isEmpty() { return this.buffer.length != 0; }
+	clear() { this.buffer = []; }
+}
+
+/*****************************************************/
 class B64 {
 	static get chars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; }
 	static get chars2() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"; }
@@ -360,12 +418,12 @@ class B64 {
 		return out;
 	}
 
-	static encode(bytes, special) {
+	static encode(bytes, file) {
 		if (bytes == null) return null;
 		this.init();
 		const len = bytes.length;
 		let len2 = Math.ceil(len / 3) * 4;
-		if (special){
+		if (!file){
 			if ((len % 3) === 2) {
 				len2--;
 			} else if (len % 3 === 1) {
@@ -373,7 +431,7 @@ class B64 {
 			}
 		}
 		
-		const cx = special ? this.lk2 : this.lk;
+		const cx = file ? this.lk : this.lk2;
 		const u8 = new Uint8Array(len2);
 
 		for (let i = 0, j = 0; i < len; i+=3) {
@@ -383,7 +441,7 @@ class B64 {
 			u8[j++] = cx[bytes[i + 2] & 63];
 		}
 
-		if (!special) {
+		if (file) {
 			if ((len % 3) === 2) {
 				u8[len2 - 1] = this.egal;
 			} else if (len % 3 === 1) {
@@ -886,7 +944,6 @@ class Retry { // un objet par retry pour éviter les collisions sur le XHR
 }
 
 /*****************************************************/
-
 class DefaultSpinner {
 	start(request, info) {
 		console.log("Spinner start : " + info);
@@ -898,6 +955,7 @@ class DefaultSpinner {
 		console.log("Spinner stop");
 	}
 }
+
 /*****************************************************/
 App.Req = Req;
 App.Util = Util;
@@ -905,5 +963,3 @@ App.B64 = B64;
 App.AES = AES;
 App.RSA = RSA;
 App.defaultSpinner = new DefaultSpinner();
-
-Util.register();

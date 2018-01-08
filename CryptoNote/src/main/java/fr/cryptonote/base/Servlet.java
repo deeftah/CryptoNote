@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import javax.servlet.ServletConfig;
@@ -330,19 +329,23 @@ public class Servlet extends HttpServlet {
 		}
 
 		void page() throws IOException{
+			// Util.log.info("Demande de : " + origUri);
 			int bmode = mode;
 			isSW = true;
+			
 			if (uri.endsWith(HPC)) {
 				isSW = false;
-				Util.log.info("Demande de : " + origUri);
+				uri = uri.substring(0, uri.length() - HPC.length());
+				if (uri.endsWith("."))
+					uri = uri.substring(0, uri.length() - 1);
 			}
-			if (!isSW) uri = uri.substring(0, uri.length() - HPC.length());
+			
 			if (uri.endsWith("." + AVION)){
 				uri = uri.substring(0, uri.length() - AVION.length() - 1);
 				bmode = 2;
 			}
 			
-			if (uri.endsWith("_")) {
+			if (uri.endsWith("_")) { // élimine la version home2_203_
 				int j = uri.lastIndexOf('_', uri.length() - 2);
 				if (j != -1) uri = uri.substring(0, j);
 			}
@@ -409,8 +412,8 @@ public class Servlet extends HttpServlet {
 			sb.append("<head><base href=\"").append(contextPathSlash()).append(nsqm.code).append("/var").append(build).append("/\">\n");
 			sb.append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n");
 
-			sb.append("<script src='js/root.js'></script>\n");
 			sb.append("<script src='js/build.js'></script>\n");
+			sb.append("<script src='js/root.js'></script>\n");
 
 			sb.append("\n<script type='text/javascript'>\n");
 //			sb.append("App.contextpath = \"").append(contextPath).append("\";\n");
@@ -425,6 +428,8 @@ public class Servlet extends HttpServlet {
 			sb.append("App.lang = \"").append(lang).append("\";\n");
 			sb.append("App.theme = \"").append(nsqm.theme).append("\";\n");
 			sb.append("App.themes = JSON.parse('").append(JSON.toJson(BConfig.themes())).append("');\n");
+			sb.append("App.zDics = {};\n");
+			sb.append("App.customThemes = {};\n");
 			
 			HashMap<String,String> rns = zres(nsqm.code);
 			sb.append("App.zres = {\n");
@@ -454,12 +459,14 @@ public class Servlet extends HttpServlet {
 			for(String t : BConfig.themes())
 				if (varx.contains("/var/js/theme-" + t + ".js"))
 					sb.append("<script src='js/theme-" + t + ".js'></script>\n");
-
-			sb.append("<script src='js/encoding.js'></script>\n");
-			sb.append("<script src='js/pako.js'></script>\n");
-			sb.append("<script src='js/bcrypt.js'></script>\n");
-			sb.append("<script src='js/showdown.min.js'></script>\n");
-			sb.append("<script src='js/util.js'></script>\n");
+			
+//			sb.append("<script>App.setup();</script>\n");
+//
+//			sb.append("<script src='js/encoding.js'></script>\n");
+//			sb.append("<script src='js/pako.js'></script>\n");
+//			sb.append("<script src='js/bcrypt.js'></script>\n");
+//			sb.append("<script src='js/showdown.min.js'></script>\n");
+//			sb.append("<script src='js/util.js'></script>\n");
 
 			sb.append(head);
 			sb.append(body);
@@ -515,7 +522,7 @@ public class Servlet extends HttpServlet {
 		if (text == null) text = "";
 		resp.setContentType(contentType == null ? "text/plain" : contentType);
 		resp.setCharacterEncoding("UTF-8");
-		resp.addHeader("build", "" + BConfig.build());
+		setBuild(resp);
 		if (code == 0 || code == 200) {
 			try {
 				resp.setStatus(200);
@@ -530,6 +537,17 @@ public class Servlet extends HttpServlet {
 		}
 	}
 
+	/********************************************************************************/
+	private static class CustomHeader {
+		int build;
+		CustomHeader(int build) { this.build = build; }
+		public String toString() { return JSON.toJson(this); }
+	}
+	
+	static void setBuild(HttpServletResponse resp) {
+		resp.addHeader("X-Custom-Header", new CustomHeader(BConfig.build()).toString());
+	}
+	
 	/********************************************************************************/
 	private void doGetPost(ReqCtx r) throws IOException, ServletException {
 		// op/ od/
@@ -546,10 +564,14 @@ public class Servlet extends HttpServlet {
 			
 			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("off-" + r.nsqm.onoff));	
 
-			String b1 = r.req.getHeader("build");
-			String b2 = "" + BConfig.build();
-			if (b1 != null && !b2.equals(b1))
-				throw new AppException("DBUILD", b1, b2);
+			String b1 = r.req.getHeader("X-Custom-Header");
+			if (b1 != null) {
+				try {
+					CustomHeader ch = JSON.fromJson(b1, CustomHeader.class);
+					if (ch.build != BConfig.build())
+						throw new AppException("DBUILD", "" + ch.build, "" + BConfig.build());
+				} catch (Exception e) {}
+			}
 			
 			result = r.nsqm.isQM ? QueueManager.doTmRequest(r.exec, inp) :  r.exec.go(inp);
 			r.exec.closeAll();
@@ -615,7 +637,7 @@ public class Servlet extends HttpServlet {
 		if (r.mime == null)
 			r.mime = "application/octet-stream";
 		if (r.bytes != null){
-			resp.addHeader("build", "" + build);
+			setBuild(resp);
 			resp.setContentType(r.mime);
 			resp.setContentLength(r.bytes.length);
 			if (r.encoding != null)
@@ -716,7 +738,7 @@ public class Servlet extends HttpServlet {
 				resp.setContentType(r.mime);
 				resp.setContentLength(r.bytes.length);
 				resp.setHeader("ETag", r.sha);
-				resp.setHeader("build", "" + BConfig.build());
+				setBuild(resp);
 				resp.getOutputStream().write(r.bytes);
 			} else {
 				resp.setStatus(304);
@@ -734,7 +756,7 @@ public class Servlet extends HttpServlet {
 			resp.setStatus(200);
 			resp.setContentType(ct);
 			resp.setContentLength(bytes.length);
-			resp.setHeader("build", "" + BConfig.build());
+			setBuild(resp);
 			resp.getOutputStream().write(bytes);
 		}	
 	}

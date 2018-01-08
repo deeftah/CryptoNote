@@ -6,7 +6,7 @@ class Home2Home extends Polymer.Element {
 			lang:{type:String, value:App.lang},
             owner: {type:String, value:'Daniel' },
         	build: {type:Number, value:App.build},
-        	lkbower: {type:String, value:App.base + "/bower.json"}
+        	lkbower: {type:String, value:App.basevar + "bower.json"}
 		};
 	}
 	
@@ -53,7 +53,7 @@ class Home2Home extends Polymer.Element {
     
     async loadBower() {
 		try {
-			let r = await fetch("bower.json");
+			let r = await fetch(App.basevar + "bower.json");
 			if (r.ok) {
 				let t = await r.text();
 				this.pingres = t.substring(0, 30);
