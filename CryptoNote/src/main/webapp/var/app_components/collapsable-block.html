@@ -5,32 +5,41 @@
 <style is="custom-style">
 </style>
 <style>
-	:host .title { @apply --cf-bold; font-size: var(--font-reg); color:var(--pbok-bg); background-color:var(--pbok-color); padding:0.2rem; cursor:pointer;}
+	:host .title { @apply --cf-bold; font-size: var(--font-reg); color:var(--pbok-bg); background-color:var(--pbok-color); padding:0.2rem; cursor:pointer; }
 	:host .title:hover { background-color:var(--pb-hover);}
 	:host .ic1 { height: var(--font-medium); width: var(--font-medium); color:var(--pbok-bg);}
-	:host .body {border:2px solid var(--pbok-color); padding:0.2rem;}
+	:host #body {border:2px solid var(--pbok-color); padding:0.2rem; overflow:hidden; height:auto;
+		transition-duration: 0.6s; -webkit-transition-duration: 0.6s; transition-property:max-height;}
 </style>
 <div class="title" on-tap="toggle">
-	<iron-icon class="ic1" hidden=[[!opened]] icon="icons:expand-less"></iron-icon>
-	<iron-icon class="ic1" hidden=[[opened]] icon="icons:expand-more"></iron-icon>
+	<iron-icon class="ic1" hidden=[[!isOpen(ref,openref)]] icon="icons:expand-less"></iron-icon>
+	<iron-icon class="ic1" hidden=[[isOpen(ref,openref)]] icon="icons:expand-more"></iron-icon>
 	[[title]]
 </div>
-<div hidden=[[!opened]] class="body">
+<div id="body">
 	<slot></slot>
 </div>
 </template>
 <script>
     class CollapsableBlock extends Polymer.Element {
-		static get is() { return "collapsable-block"; }
+		static get is() { return "collapsable-block"; } /* hidden=[[!isOpen(ref,openref)]] */
 		static get properties() { return { 
 			lang : {type:String, value:"xx"},
-			opened : {type:Boolean, value:false},
+			maxheight : {type:String, value:"200px"}
+			ref : {type:String},
+			openref : {type:String, notify:true, observer:"openrefchange"},
 			title : {type:String, value:"Title"}
 			}
 		}
+		
+		openrefchange() {
+			this.$.body.style.maxHeight = this.openref == this.ref ? this.maxheight : "0";
+		}
+		
+		isOpen(ref, openref) { return ref == openref; }
 
 		toggle() {
-			this.opened = !this.opened;
+			this.openref = this.openref == this.ref ? "0" : this.ref;
 		}
 
       	constructor() { super(); }

@@ -55,7 +55,7 @@
 	  	:host .more { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-reg);}
 	  	:host .code { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-small);}
 	  	:host .detail { @apply --mono-bold; font-size:var(--font-reg); }
-	  	:host .pci { margin-bottom:0.5rem; }
+	  	:host .pci { margin:0; padding:0 0.2rem; }
 	</style>
 	<paper-dialog id="panel" class="size-position-left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
 	
@@ -74,28 +74,29 @@
 			<div class="info">[[info]]</div>
 			<div class="more" hidden$="[[!more]]">[[more]]</div>
 			<div class="more"><b>[[optype]] : [[err.op]]</b><br>[[oplib]]</div>
-				<collapsable-block class="pci" icon="icons:info" title="[[lib('er_whereq',lang)]]" opened>
-					<div class="pci2">[[where]]</div>
-				</collapsable-block>
-				<collapsable-block class="pci" icon="icons:info"  hidden="[[!isUpdate]]" title="[[lib('er_upddoneq',lang)]]">
-					<div class="pci2">[[where]]</div>
-				</collapsable-block>
-				<collapsable-block class="pci" icon="icons:info"  hidden="[[hiddenbtns]]" title="[[lib('er_retryq',lang)]]">
-					<div class="pci2">[[where]]</div>
-				</collapsable-block>
-				<collapsable-block class="pci" icon="icons:info"  hidden="[[hiddenbtns]]" title="[[lib('er_resumeq',lang)]]">
-					<div class="pci2">[[where]]</div>
-				</collapsable-block>
-				<collapsable-block class="pci" icon="icons:info"  title="[[lib('er_reloadq',lang)]]">
-					<div class="pci2">[[where]]</div>
-				</collapsable-block>
-				<collapsable-block class="pci" hidden="[[hiddenbtns]]" title="[[lib('er_detailq',lang)]]">
-					<div class="detail">
-						<div class="code" hidden="[[!topdet]]">[[topdet]]</span></div>
-						<label slot="label">[[detaillabel]]</label>
-						<paper-textarea id="ta" no-label-float value="[[lines]]"></paper-textarea>
-			     	</div>
-				</collapsable-block>
+			
+			<collapsable-block class="pci" icon="icons:info" title="[[lib('er_whereq',lang)]]" ref="1" openref="{{cref}}" maxheight="200px">
+				<div class="pci2">[[where]]</div>
+			</collapsable-block>
+			<collapsable-block class="pci" icon="icons:info"  hidden="[[!isUpdate]]" title="[[lib('er_upddoneq',lang)]]" ref="2" openref="{{cref}}" maxheight="200px">
+				<div class="pci2">[[where]]</div>
+			</collapsable-block>
+			<collapsable-block class="pci" icon="icons:info"  hidden="[[hiddenbtns]]" title="[[lib('er_retryq',lang)]]" ref="3" openref="{{cref}}" maxheight="200px">
+				<div class="pci2">[[where]]</div>
+			</collapsable-block>
+			<collapsable-block class="pci" icon="icons:info"  hidden="[[hiddenbtns]]" title="[[lib('er_resumeq',lang)]]" ref="4" openref="{{cref}}" maxheight="200px">
+				<div class="pci2">[[where]]</div>
+			</collapsable-block>
+			<collapsable-block class="pci" icon="icons:info"  title="[[lib('er_reloadq',lang)]]" ref="5" openref="{{cref}}" maxheight="200px">
+				<div class="pci2">[[where]]</div>
+			</collapsable-block>
+			<collapsable-block class="pci" hidden="[[hiddenbtns]]" title="[[lib('er_detailq',lang)]]" ref="6" openref="{{cref}}" maxheight="500px">
+				<div class="detail">
+					<div class="code" hidden="[[!topdet]]">[[topdet]]</span></div>
+					<label slot="label">[[detaillabel]]</label>
+					<paper-textarea id="ta" no-label-float value="[[lines]]"></paper-textarea>
+		     	</div>
+			</collapsable-block>
      	</div>
 	</div>
 	</paper-dialog>

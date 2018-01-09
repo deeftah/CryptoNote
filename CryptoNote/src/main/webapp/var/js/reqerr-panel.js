@@ -4,6 +4,7 @@ class ReqerrPanel extends Polymer.Element {
 	static get properties() { return {
     	  lang:{type:String, value:App.lang},
     	  err:{type:Object, value:{code:"LX"}},
+    	  cref : {type:String, value:"0"},
     	  topInfo:{type:String, value:"?"},
       };
 	}
@@ -110,7 +111,7 @@ class ReqerrPanel extends Polymer.Element {
 		case 3 : { this.info = this.lib("er_tech"); this.more = ""; this.topdet = err.message;
 			break;
 		}
-		case 4 : { this.info = this.lib("er_build"); this.more = err.message; this.topdet = ""; this.hiddenbtns = false;
+		case 4 : { this.info = this.lib("er_build"); this.more = err.message; this.topdet = ""; this.hiddenbtns = true;
 			break;
 		}
 		case 5 : { this.info = this.lib("er_cont"); this.more = err.message; this.topdet = "";

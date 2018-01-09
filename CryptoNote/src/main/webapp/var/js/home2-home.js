@@ -130,5 +130,32 @@ class Home2Home extends Polymer.Element {
 	erA() {
 		App.globalReqErr.open(this, new App.ReqErr("opr", "A_T", 0, "message de A", [this.errTest.message, this.errTest.stack]));
 	}
+	erB() {
+		App.globalReqErr.open(this, new App.ReqErr("opw", "B_T", 1, "message de B", [this.errTest.message, this.errTest.stack]));
+	}
+	erX() {
+		App.globalReqErr.open(this, new App.ReqErr("opw", "X_T", 2, "message de X", [this.errTest.message, this.errTest.stack]));
+	}
+	erD() {
+		App.globalReqErr.open(this, new App.ReqErr("opw", "DBUILD", 0, "message de D", [this.errTest.message, this.errTest.stack]));
+	}
+	erC() {
+		App.globalReqErr.open(this, new App.ReqErr("opw", "CONT", 3, "message de C", [this.errTest.message, this.errTest.stack]));
+	}
+	erO() {
+		App.globalReqErr.open(this, new App.ReqErr("opr", "OFF", 0, "message de off", [this.errTest.message, this.errTest.stack]));
+	}
+	erS() {
+		App.globalReqErr.open(this, new App.ReqErr("opr", "SAUTH", 1, "pas autorisé", [this.errTest.message, this.errTest.stack]));
+	}
+	erT() {
+		App.globalReqErr.open(this, new App.ReqErr("opw", "TIMEOUT", 3, "timeout 32s", [this.errTest.message, this.errTest.stack]));
+	}
+	erI() {
+		App.globalReqErr.open(this, new App.ReqErr("opw", "INTERRUPT", 9, "interruption par clic", [this.errTest.message, this.errTest.stack]));
+	}
+	erL() {
+		App.globalReqErr.open(this, new App.ReqErr("opw", "LREC", 6, "parse json", [this.errTest.message, this.errTest.stack]));
+	}
 }
 customElements.define(Home2Home.is, Home2Home);
