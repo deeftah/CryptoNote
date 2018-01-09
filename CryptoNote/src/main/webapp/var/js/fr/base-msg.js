@@ -1,12 +1,14 @@
 App.setAll("fr", {
 
-"off-1":"interruption temporaire pour installation d''une nouvelle version",
-"X1":"Exception inattendue dans le navigateur pour l''URL [{0}] - Cause : [{1}]",
+"OFF":"Interruption temporaire du serveur pour installation d''une nouvelle version",
+
 "TIMEOUT":"Dépassement du temps maximum d'''attente dans le navigateur {1}ms pour l''URL {0}",
 "INTERRUPTED":"Fin d''attente dans le navigateur par clic au bout de {1}s pour l'URL {0}",
 "BJSONRESP":"Erreur de syntaxe dans la réponse du serveur pour l''URL [{0}] - Cause : [{1}] ",
 "XHTTP":"Réponse d''erreur inattendue du serveur pour l''URL [{0}]. Status-HTTP:{1} Message:{2}",
-"XSEND":"Exception inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
+"LSEND":"Exception de script inattendue lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
+"XCONN":"Problème de connexion rencontré par le script lors de l''envoi de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
+"LREC":"Exception de script inattendue lors de la réception de la requête au serveur pour l''URL [{0}] - Cause : [{1}]",
 "DBUILD":"Version d''application {0} incompatible avec celle du serveur {1}",
 
 "testsrv":"Test d''accès au serveur",
@@ -68,7 +70,6 @@ App.setAll("fr", {
 
 "X0":"Exception inattendue sur le serveur [cause : {0}]",
 "TMAXTIME":"Dépassement du temps maximum d'exécution sur le serveur {1}ms pour l''opération {0}",
-"OFF":"Application hors service : {0}",
 "BJSONFILTER":"Erreur de syntaxe sur le filtre json [{0}] du document [{1}]",
 
 "CONTENTION1":"Opération [{0}] : contention sur la base de données. Validation impossible : locks:[{1}]. Réessayer plus tard",

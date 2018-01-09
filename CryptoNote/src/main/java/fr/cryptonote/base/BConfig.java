@@ -336,7 +336,7 @@ public class BConfig {
 	}
 	
 	/***************************************************************************************/
-	private static BaseConfig g;
+	private static BaseConfig g = new BaseConfig();
 	private static HashMap<String,String> p;
 	private static HashMap<String,ArrayList<Nsqm>> namespacesByDB = new HashMap<String,ArrayList<Nsqm>>();
 	private static HashMap<String,ArrayList<Nsqm>> namespacesByQM = new HashMap<String,ArrayList<Nsqm>>();

@@ -554,8 +554,9 @@ class RSA {
 
 /*****************************************************/
 class ReqErr {
-	constructor(code, phase, message, detail) {
-		this.code = code ? code : "LX";
+	constructor(op, code, phase, message, detail) {
+		this.op = op;
+		this.code = code ? code : "BX";
 		this.phase = phase < -1 || phase > 6 ? 9 : phase;
 		this.message = message ? message : this.code;
 		this.detail = detail ? detail : [];
@@ -563,15 +564,15 @@ class ReqErr {
 	
 	/*
 	 * Phase 
-	 * -1 : connexion au serveur
 	 * 0 : avant opération dans le serveur
 	 * 1 : dans l'opération (work)
 	 * 2 : au cours de la validation
 	 * 3 : après validation (afterwork)
 	 * 4 : au cours de la synchronisation
 	 * 5 : lors de l'envoi de la réponse
-	 * 6 : dans le script d'interprétation de la réponse
-	 * 9 : inconnu entre 0 et 5
+	 * 6 : inconnu entre 0 et 5, et / ou réseau
+	 * 8 : dans le script d'envoi au serveur
+	 * 9 : dans le script d'interprétation de la réponse
 	 */
 	
 	/* m : major
@@ -592,6 +593,7 @@ class ReqErr {
 		return m == -1 ? 0 : m;
 	}
 	
+	isSrv() { return this.phase < 6; }
 }
 
 /*****************************************************/
@@ -679,6 +681,7 @@ class Req {
 	
 	async go(){
 		return new Promise((resolve, reject) => {
+			try{
 			if (this.cred) {
 				for(let a in cred) {
 					let v = cred[a];
@@ -692,7 +695,10 @@ class Req {
 			this.url = this.url.toString();
 			this.resolve = resolve;
 			this.reject = reject;
-			new Retry(this).send();
+			this.currentRetry = new Retry();
+			this.currentRetry.req = this;
+			} catch(err) { App.errscript(err);}
+			this.currentRetry.send();
 		});
 	}
 	
@@ -702,25 +708,21 @@ class Req {
 	}
 	
 	onProgress(loaded, total){
-		if (this.spinner.progress)
-			this.spinner.progress(App.format("reqRec", Util.editPC(loaded, total), Util.editVol(total)));
+		try {
+			if (this.spinner.progress)
+				this.spinner.progress(App.format("reqRec", Util.editPC(loaded, total), Util.editVol(total)));
+		} catch(e) {}
 	}
 	
 	onSuccess(resp) {
 		this.currentRetry = null;
-		if (this.spinner.stop)
-			this.spinner.stop();
+		try { if (this.spinner.stop) this.spinner.stop(); } catch(e) {}
 		this.resolve(resp);
 	}
 	
 	onError(err) {
 		this.currentRetry = null;
-		if (this.spinner.stop)
-			this.spinner.stop();
-		if (err.code == "DBUILD") {
-			Util.reload2(App.srvbuild);
-			return;
-		}
+		try { if (this.spinner.stop) this.spinner.stop(); } catch(e) {}
 		if (this.noCatch && this.noCatch.indexOf(err.code + " ") != -1) {
 			this.reject(err);
 			return;
@@ -732,7 +734,9 @@ class Req {
 	}
 	
 	onRetry() {
-		new Retry(this).send();
+		this.currentRetry = new Retry();
+		this.currentRetry.req = this;
+		this.currentRetry.send();
 	}
 	
 	onReturnToApp(err) {
@@ -742,34 +746,29 @@ class Req {
 }
 
 class Retry { // un objet par retry pour éviter les collisions sur le XHR
-	constructor(req) {
-		this.req = req;
-		req.currentRetry = this;
-	}
-	
 	kill() {
 		if (this.done) return;
 		this.done = true;
 		if (this.tim) clearTimeout(this.tim);
-		if (this.xhr) this.xhr.abort();
+		try {if (this.xhr) this.xhr.abort(); } catch(e) {}
 		const d = new Date().getTime() - this.t0;
-		this.req.onError(new ReqErr("INTERRUPTED", 9, App.format("INTERRUPTED", this.req.url, d), [this.req.url, d]));
+		this.req.onError(new ReqErr(this.req.op, "INTERRUPTED", 9, App.format("INTERRUPTED", this.req.url, d), [this.req.url, d]));
 	}
 	
 	send() {
-		if (this.req.spinner.start)
-			this.req.spinner.start(this.req, this.req.startMsg ? this.req.startMsg : App.lib("reqStarted"));
-		this.t0 = new Date().getTime();
-		this.tim = setTimeout(() => {
-			if (!this.done) {
-				this.done = true;
-				if (this.xhr) this.xhr.abort();
-				console.error("TIMEOUT " + this.req.op);
-				this.req.onError(new ReqErr("TIMEOUT", 9, App.format("TIMEOUT", this.req.url, Math.round(this.req.TIME_OUT_MS)))); 
-			}
-		}, this.req.TIME_OUT_MS); 
-
+		let errSend;
 		try {
+			try { if (this.req.spinner.start)	this.req.spinner.start(this.req, this.req.startMsg ? this.req.startMsg : App.lib("reqStarted")); } catch(e) {}
+			this.t0 = new Date().getTime();
+			
+			this.tim = setTimeout(() => {
+				if (!this.done) {
+					this.done = true;
+					try { if (this.xhr) this.xhr.abort(); } catch(e) {}
+					this.req.onError(new ReqErr(this.req.op, "TIMEOUT", 9, App.format("TIMEOUT", this.req.url, Math.round(this.req.TIME_OUT_MS)))); 
+				}
+			}, this.req.TIME_OUT_MS); 
+
 			this.xhr = new XMLHttpRequest();
 			this.xhr.open("POST", this.req.url, true);
 			this.xhr.responseType = "arraybuffer";
@@ -778,62 +777,85 @@ class Retry { // un objet par retry pour éviter les collisions sur le XHR
 				if (this.done) return;
 				if (this.tim) clearTimeout(this.tim);
 				this.done = true;
-				this.req.onError(new ReqErr("X1", 9, App.format("X1", this.req.url, e.message), [this.req.url, e])); 
+				this.req.onError(this.req.op, new ReqErr("X1", 9, App.format("X1", this.req.url, e.message), [this.req.url, e])); 
 			}
 			
 			this.xhr.onprogress = (e) => {	
 				if (this.done) return;
-				this.req.onProgress(e.loaded, e.total);
+				try { this.req.onProgress(e.loaded, e.total); } catch(e) {}
 			}
 			
 			this.xhr.onreadystatechange = () => {
 				if (this.done || this.xhr.readyState != 4) return;
-				this.done = true;
-				if (this.tim) clearTimeout(this.tim);
-				
-				const b = this.xhr.getResponseHeader("build");
-				if (b) App.srvbuild = parseInt(b);
-				const ct = this.xhr.getResponseHeader("Content-Type");
-				let contentType = ct;
-				let charset = null;
-				let i = ct ? ct.indexOf(";") : -1;
-				if (i != -1) {
-					contentType = ct.substring(0, i);
-					i = ct.indexOf("charset=", i);
-					if (i != -1)
-						charset = ct.substring(i + 8);
-				}
-				const isJson = contentType && contentType == "application/json" ;
-				const uint8 = this.xhr.response ? new Uint8Array(this.xhr.response) : null;
-				let jsonObj = null;
-				let text;
-				if (isJson) {
-					try {
-						text = uint8 ? Util.bytes2string(uint8) : "{}";
-						jsonObj = JSON.parse(text);
-					} catch (e) {
-						this.req.onError(new ReqErr("BJSONRESP", 6, App.format("BJSONRESP", this.req.url, e.message), [this.req.url, text])); 
-						return;
+				let resp;
+				let err;
+				try {
+					this.done = true;
+					if (this.tim) clearTimeout(this.tim);
+					
+					const b = this.xhr.getResponseHeader("X-Custom-Header");
+					if (b) {
+						try {
+							let j = JSON.parse(b);
+							if (j.build) App.srvbuild = parseInt(j.build);
+						} catch (e) {}
 					}
-				}
-
-				if (this.xhr.status == 200) {					    
-					const resp = isJson ? {json:jsonObj} : {uint8:uint8, charset:charset, contentType:contentType};
+					const ct = this.xhr.getResponseHeader("Content-Type");
+					let contentType = ct;
+					let charset = null;
+					let i = ct ? ct.indexOf(";") : -1;
+					if (i != -1) {
+						contentType = ct.substring(0, i);
+						i = ct.indexOf("charset=", i);
+						if (i != -1)
+							charset = ct.substring(i + 8);
+					}
+					const isJson = contentType && contentType == "application/json" ;
+					const uint8 = this.xhr.response ? new Uint8Array(this.xhr.response) : null;
+					let jsonObj = null;
+					let text;
+					if (isJson) {
+						try {
+							text = uint8 ? Util.bytes2string(uint8) : "{}";
+							jsonObj = JSON.parse(text);
+						} catch (e) {
+							err = this.req.op, new ReqErr("BJSONRESP", 9, App.format("BJSONRESP", this.req.url, e.message), [this.req.url, text]); 
+						}
+					}
+					if (!err) {
+						if (this.xhr.status == 200) {					    
+							resp = isJson ? {json:jsonObj} : {uint8:uint8, charset:charset, contentType:contentType};
+						} else {
+							err = jsonObj ? new ReqErr(this.req.op, jsonObj.code, jsonObj.phase, jsonObj.message, jsonObj.detail)
+							: new ReqErr(this.req.op, "XHTTP", 6, App.format("XHTTP", this.req.url, this.xhr.status, this.xhr.statusText), [this.req.url, this.xhr.status, this.xhr.statusText]);
+						}
+					}
+				} catch(e) { this.req.onError(new ReqErr(this.req.op, "LREC", 9, App.format("LREC", this.req.url, e.message), [this.req.url, e.stack])); }
+				// Hors du catch de réception
+				if (resp) 
 					this.req.onSuccess(resp);
-				} else {
-					const err = jsonObj ? new ReqErr(jsonObj.code, jsonObj.phase, jsonObj.message, jsonObj.detail)
-					: new ReqErr("XHTTP", 9, App.format("XHTTP", this.req.url, this.xhr.status, this.xhr.statusText), [this.req.url, this.xhr.status, this.xhr.statusText]);
+				else
 					this.req.onError(err);
-				}
 			}
-			
-			this.xhr.send(this.req.formData);
 			
 		} catch(e) {
 			this.done = true;
 			if (this.tim) clearTimeout(this.tim);
-			this.req.onError(new ReqErr("XSEND", -1, App.format("XSEND", this.req.url, e.message), [this.req.url, e])); 
+			errSend = new ReqErr(this.req.op, "LSEND", 8, App.format("XSEND", this.req.url, e.message), [this.req.url, e.stack]); 
 		}
+		
+		// Hors du catch d'émission
+		if (!errSend) {
+			try {
+				this.xhr.send(this.req.formData);
+			} catch(e) {
+				this.done = true;
+				if (this.tim) clearTimeout(this.tim);
+				errSend = new ReqErr(this.req.op, "XCONN", 8, App.format("XCONN", this.req.url, e.message), [this.req.url, e.stack]); 
+			}
+		}
+		if (errSend)
+			this.req.onError(errSend);
 	}
 }
 
@@ -852,6 +874,7 @@ class DefaultSpinner {
 
 /*****************************************************/
 App.Req = Req;
+App.ReqErr = ReqErr;
 App.Util = Util;
 App.B64 = B64;
 App.AES = AES;

@@ -44,7 +44,7 @@ public class AppException extends Exception {
 			
 	public AppException(String code, String... args){ this(null, code, args); }
 
-	public String toString() { return message; }
+	public String toString() { return message + (cause != null ? "\n" + cause.getMessage() : ""); }
 	
 	public String toJson() { return new Error(this).toString(); }
 	
@@ -52,13 +52,23 @@ public class AppException extends Exception {
 	
 	public AppException(Throwable t, String code, String... args){
 		super();
+		cause = t;
 		ExecContext ec = ExecContext.current();
 		phase = ec == null ? 0 : ec.phase();
 		this.code = code == null || code.length() == 0 ? "X0" : code;
 		char c = this.code.charAt(0);
 		if ("NABXDCOTS".indexOf(c) == -1) this.code = "X0";
 		message = BConfig.format(code,  args);
-		detail = args;
+		if (t == null)
+			detail = args;
+		else {
+			detail = new String[args == null ? 3 : args.length + 3];
+			int i = 0;
+			for (String x : args) detail[i++] = x;
+			detail[i++] = "Cause : ";
+			detail[i++] = t.getMessage();
+			detail[i++] = Util.stack(t);
+		}
 		Util.log.log("BXCT".indexOf(c) != -1 ? Level.SEVERE : Level.FINE, toString());
 	}
 	

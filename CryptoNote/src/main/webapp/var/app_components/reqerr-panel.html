@@ -2,7 +2,8 @@
 <link rel="import" href="../bower_components/neon-animation/web-animations.html">
 <link rel="import" href="../bower_components/neon-animation/animations/slide-from-left-animation.html">
 <link rel="import" href="../bower_components/neon-animation/animations/slide-left-animation.html">
-
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../app_components/collapsable-block.html">
 
 <dom-module id="reqerr-panel">
 <template>
@@ -27,42 +28,74 @@
 	 		background-color: var(--pblite-bg); 
 	 		color: var(--pblite-color);
 		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: white !important; };
-		 }
+		}
+		
+		#ta {
+			--iron-autogrow-textarea: {
+				padding:0;
+				color: black;
+				@apply --mono-reg;
+				font-size:var(--font-small);
+			}
+			--paper-input-container: {
+				padding:0; 
+				margin:0;
+				/* border:2px solid var(--paper-grey-100); */
+			}
+			--paper-input-container-color : white !important; 
+			--paper-input-container-focus-color : white;
+        }
+				
 	</style>
     <style>
-	  	:host { margin:0; padding:0; }
 	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; background-color:white;}
 	  	:host .bar { padding:0.5rem; margin:0; background-color:white; border-bottom: 2px solid var(--paper-grey-100); }
-		:host .bar1 { }	
-		:host .bar2 { }	
 	  	:host .body { overflow-y:auto; @apply --std-reg; padding:0.5rem; margin:0; background-color:white; font-size:var(--font-reg);}
-	  	:host .info { margin-bottom:1rem; @apply --cf-reg; font-size:var(--font-medium);}
+	  	:host .info { margin-bottom:1rem; @apply --cf-reg; font-size:var(--font-medium); color:var(--pbok-bg);}
 	  	:host .more { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-reg);}
 	  	:host .code { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-small);}
-	  	:host .detail { @apply --mono-reg; font-size:var(--font-small);}
+	  	:host .detail { @apply --mono-bold; font-size:var(--font-reg); }
+	  	:host .pci { margin-bottom:0.5rem; }
 	</style>
 	<paper-dialog id="panel" class="size-position-left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
+	
 	<div class="top layout vertical flex-start">
 		<div class="bar layout horizontal center-center">
 		<div class="bar1 layout vertical">
-			<paper-button class="custom pbok" raised on-tap="onRetry"><iron-icon icon="icons:refresh"></iron-icon>[[lib('er_retry',lang)]]</paper-button>
+			<paper-button hidden$="[[hiddenbtns]]" class="custom pbok" raised on-tap="onRetry"><iron-icon icon="icons:refresh"></iron-icon>[[lib('er_retry',lang)]]</paper-button>
 			<paper-button class="custom lite" on-tap="onBye"><iron-icon icon="icons:close"></iron-icon>[[lib('er_quit',lang)]]</paper-button>
 		</div>
 		<div class="bar2 layout vertical">
-			<paper-button class="custom pbko" raised on-tap="onReturnToApp"><iron-icon icon="icons:reply"></iron-icon>[[lib('er_resume',lang)]]</paper-button>
+			<paper-button hidden$="[[hiddenbtns]]" class="custom pbko" raised on-tap="onReturnToApp"><iron-icon icon="icons:reply"></iron-icon>[[lib('er_resume',lang)]]</paper-button>
 			<paper-button class="custom lite" on-tap="onReload"><iron-icon icon="icons:file-download"></iron-icon>[[lib('er_reload',lang)]]</paper-button>
 		</div>
 		</div>
-		<div class="body layout vertical flex flex-start">
+		<div class="body flex layout vertical">
 			<div class="info">[[info]]</div>
-			<div class="more" hidden$="[[!more]]">[[info]]</div>
-			<div class="code" hidden$="[[!topdet]]">[[err.code]] - [[topdet]]</div>
-			<div>Phase : [[err.phase]]</div>
-			<div class="detail">
-				<template is="dom-repeat" items="[[err.detail]]">
-			        <div>[[item]]</div>
-		     	</template>
-	     	</div>
+			<div class="more" hidden$="[[!more]]">[[more]]</div>
+			<div class="more"><b>[[optype]] : [[err.op]]</b><br>[[oplib]]</div>
+				<collapsable-block class="pci" icon="icons:info" title="[[lib('er_whereq',lang)]]" opened>
+					<div class="pci2">[[where]]</div>
+				</collapsable-block>
+				<collapsable-block class="pci" icon="icons:info"  hidden="[[!isUpdate]]" title="[[lib('er_upddoneq',lang)]]">
+					<div class="pci2">[[where]]</div>
+				</collapsable-block>
+				<collapsable-block class="pci" icon="icons:info"  hidden="[[hiddenbtns]]" title="[[lib('er_retryq',lang)]]">
+					<div class="pci2">[[where]]</div>
+				</collapsable-block>
+				<collapsable-block class="pci" icon="icons:info"  hidden="[[hiddenbtns]]" title="[[lib('er_resumeq',lang)]]">
+					<div class="pci2">[[where]]</div>
+				</collapsable-block>
+				<collapsable-block class="pci" icon="icons:info"  title="[[lib('er_reloadq',lang)]]">
+					<div class="pci2">[[where]]</div>
+				</collapsable-block>
+				<collapsable-block class="pci" hidden="[[hiddenbtns]]" title="[[lib('er_detailq',lang)]]">
+					<div class="detail">
+						<div class="code" hidden="[[!topdet]]">[[topdet]]</span></div>
+						<label slot="label">[[detaillabel]]</label>
+						<paper-textarea id="ta" no-label-float value="[[lines]]"></paper-textarea>
+			     	</div>
+				</collapsable-block>
      	</div>
 	</div>
 	</paper-dialog>

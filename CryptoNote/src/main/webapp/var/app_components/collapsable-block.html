@@ -1,0 +1,42 @@
+<link rel="import" 	href="../bower_components/iron-icons/iron-icons.html">
+
+<dom-module id="collapsable-block">
+<template>
+<style is="custom-style">
+</style>
+<style>
+	:host .title { @apply --cf-bold; font-size: var(--font-reg); color:var(--pbok-bg); background-color:var(--pbok-color); padding:0.2rem; cursor:pointer;}
+	:host .title:hover { background-color:var(--pb-hover);}
+	:host .ic1 { height: var(--font-medium); width: var(--font-medium); color:var(--pbok-bg);}
+	:host .body {border:2px solid var(--pbok-color); padding:0.2rem;}
+</style>
+<div class="title" on-tap="toggle">
+	<iron-icon class="ic1" hidden=[[!opened]] icon="icons:expand-less"></iron-icon>
+	<iron-icon class="ic1" hidden=[[opened]] icon="icons:expand-more"></iron-icon>
+	[[title]]
+</div>
+<div hidden=[[!opened]] class="body">
+	<slot></slot>
+</div>
+</template>
+<script>
+    class CollapsableBlock extends Polymer.Element {
+		static get is() { return "collapsable-block"; }
+		static get properties() { return { 
+			lang : {type:String, value:"xx"},
+			opened : {type:Boolean, value:false},
+			title : {type:String, value:"Title"}
+			}
+		}
+
+		toggle() {
+			this.opened = !this.opened;
+		}
+
+      	constructor() { super(); }
+      	      	
+	}
+customElements.define(CollapsableBlock.is, CollapsableBlock);
+</script>
+</dom-module>
+	

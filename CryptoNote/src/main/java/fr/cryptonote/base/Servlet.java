@@ -112,7 +112,6 @@ public class Servlet extends HttpServlet {
 	/********************************************************************************/
 	static ServletException exc(Exception e, String msg) {
 		if (e != null) msg += "\n" + e.getMessage() + "\n" + Util.stack(e);
-		Util.log.log(Level.SEVERE, msg);
 		return new ServletException(msg);
 	}
 
@@ -136,6 +135,7 @@ public class Servlet extends HttpServlet {
 	@Override public void init(ServletConfig servletConfig) throws ServletException {
 		synchronized (done) {
 			if (done) return;
+			new ExecContext();
 			try { digestSha256 = MessageDigest.getInstance("SHA-256"); } catch (NoSuchAlgorithmException e) { throw new ServletException(e); }
 			emptyResource = new Resource((byte[])null, null);
 			servletContext = servletConfig.getServletContext();
@@ -182,14 +182,21 @@ public class Servlet extends HttpServlet {
 		int mode; // navigation ... // 0:privée(incognito) 1:normale(cache+net) 2:locale(cache seulement)
 		int modeMax;
 		String lang;
+		CustomHeader customHeader;
 		
 		ReqCtx(HttpServletRequest req, HttpServletResponse resp, boolean isGet) throws IOException { 
+			exec = new ExecContext();
 			String lg = req.getHeader("Accept-Language");
 			if (lg != null && lg.length() != 0) {
 				int i = lg.indexOf(',');
 				if (i != -1) lg = lg.substring(0,i);
 			}
-			this.lang = BConfig.lang(BConfig.lang(lg));
+			String b1 = req.getHeader("X-Custom-Header");
+			if (b1 != null)
+				try { customHeader = JSON.fromJson(b1, CustomHeader.class); } catch (Exception e) {}
+
+			this.lang = BConfig.lang(BConfig.lang(customHeader != null && customHeader.lang != null ? customHeader.lang : lg));
+			exec.setLang(this.lang);
 			this.req = req; 
 			this.resp = resp; 
 			this.isGet = isGet;
@@ -204,7 +211,6 @@ public class Servlet extends HttpServlet {
 			}
 			String shortcut = BConfig.shortcut(origUri);
 			if (shortcut != null) origUri = shortcut;
-			exec = new ExecContext().setLang(this.lang);
 		}
 				
 		void checkNsqm() throws IOException {
@@ -416,11 +422,6 @@ public class Servlet extends HttpServlet {
 			sb.append("<script src='js/root.js'></script>\n");
 
 			sb.append("\n<script type='text/javascript'>\n");
-//			sb.append("App.contextpath = \"").append(contextPath).append("\";\n");
-//			sb.append("App.namespace = \"").append(nsqm.code).append("\";\n");
-//			sb.append("App.home = \"").append(uri).append("\";\n");
-//			sb.append("App.mode = ").append(mode).append(";\n");
-//			sb.append("App.isSW = ").append(isSW).append(";\n");
 			sb.append("App.modeMax = ").append(modeMax).append(";\n");
 			sb.append("App.buildAtPageGeneration = ").append(BConfig.build()).append(";\n");
 			sb.append("App.zone = \"").append(BConfig.zone()).append("\";\n");
@@ -460,14 +461,6 @@ public class Servlet extends HttpServlet {
 				if (varx.contains("/var/js/theme-" + t + ".js"))
 					sb.append("<script src='js/theme-" + t + ".js'></script>\n");
 			
-//			sb.append("<script>App.setup();</script>\n");
-//
-//			sb.append("<script src='js/encoding.js'></script>\n");
-//			sb.append("<script src='js/pako.js'></script>\n");
-//			sb.append("<script src='js/bcrypt.js'></script>\n");
-//			sb.append("<script src='js/showdown.min.js'></script>\n");
-//			sb.append("<script src='js/util.js'></script>\n");
-
 			sb.append(head);
 			sb.append(body);
 			sendRes2(sb.toString().getBytes("UTF-8"), resp, "text/html");
@@ -540,6 +533,7 @@ public class Servlet extends HttpServlet {
 	/********************************************************************************/
 	private static class CustomHeader {
 		int build;
+		String lang;
 		CustomHeader(int build) { this.build = build; }
 		public String toString() { return JSON.toJson(this); }
 	}
@@ -562,16 +556,10 @@ public class Servlet extends HttpServlet {
 			String op = inp.args.get("op");
 			inp.operationName = op != null ? op  : "Default";
 			
-			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("off-" + r.nsqm.onoff));	
+			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("OFF"));	
 
-			String b1 = r.req.getHeader("X-Custom-Header");
-			if (b1 != null) {
-				try {
-					CustomHeader ch = JSON.fromJson(b1, CustomHeader.class);
-					if (ch.build != BConfig.build())
-						throw new AppException("DBUILD", "" + ch.build, "" + BConfig.build());
-				} catch (Exception e) {}
-			}
+			if (r.customHeader != null && r.customHeader.build != 0 && r.customHeader.build != BConfig.build())
+				throw new AppException("DBUILD", "" + r.customHeader.build, "" + BConfig.build());
 			
 			result = r.nsqm.isQM ? QueueManager.doTmRequest(r.exec, inp) :  r.exec.go(inp);
 			r.exec.closeAll();

@@ -13,6 +13,7 @@ class Home2Home extends Polymer.Element {
     constructor() {
         super();
         this.bonjour = App.bonjour ? App.bonjour : "Salut" ;
+        this.errTest = new TypeError("(script) erreur de test");
 	}
 
 	lib(code, lang) { return App.lib(code);}
@@ -125,5 +126,9 @@ class Home2Home extends Polymer.Element {
 		}
 	}
 	
+	// 	constructor(op, code, phase, message, detail) {
+	erA() {
+		App.globalReqErr.open(this, new App.ReqErr("opr", "A_T", 0, "message de A", [this.errTest.message, this.errTest.stack]));
+	}
 }
 customElements.define(Home2Home.is, Home2Home);
