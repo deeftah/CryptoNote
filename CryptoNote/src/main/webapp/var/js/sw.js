@@ -95,8 +95,8 @@ this.addEventListener('fetch', event => {
 	
 	const i = url.indexOf("/", 10); // laisse passer https://...
 	const x = !CONTEXTPATH ? url.substring(i + 1) : url.substring(i + 2 + CONTEXTPATH.length);
-	const ping = x == "ping" || x ==  NS + "/ping";
-	const op =  hasHash || ping || x.startsWith(NS + "/od/") || x.startsWith(NS + "/op/");
+	const ping = x == "ping" || x ==  NS + "/ping" || x ==  NS + "/s/ping";
+	const op =  hasHash || ping || x.startsWith(NS + "/od/") || x.startsWith(NS + "/op/") || x.startsWith(NS + "/s/od/") || x.startsWith(NS + "/s/op/");
 	
 	const ch = event.request.headers.get("X-Custom-Header");
 	let myOptions = {};

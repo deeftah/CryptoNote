@@ -57,7 +57,7 @@ class MyReloader {
 		else {
 			// alert("" + bb + " - " + this.json.build);
 			const param = {lang:this.json.lang, build:this.json.build, reload:this.json.reload, reload2:this.json.reload2,  n:this.json.n};
-			let r3 = this.json.reload2.replace("/var/reload2", "$/var/reload3");
+			let r3 = this.json.reload2.replace("/s/var/reload2", "/var/reload3");
 			window.location = r3 + encodeURI(JSON.stringify(param));
 		}
 	}

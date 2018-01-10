@@ -25,7 +25,7 @@
 		static get is() { return "collapsable-block"; } /* hidden=[[!isOpen(ref,openref)]] */
 		static get properties() { return { 
 			lang : {type:String, value:"xx"},
-			maxheight : {type:String, value:"200px"}
+			maxheight : {type:String, value:"200px"},
 			ref : {type:String},
 			openref : {type:String, notify:true, observer:"openrefchange"},
 			title : {type:String, value:"Title"}

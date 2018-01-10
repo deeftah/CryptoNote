@@ -35,7 +35,8 @@ public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	public static final String HPC = "htm";
 	public static final String AVION = "a";
-	public static final String INCOGNITO = "$";
+	public static final String SYNC = "s";
+	public static final String SYNC2 = SYNC + "/";
 		
 	private static Boolean done = false;
 	private static String contextPath;
@@ -179,6 +180,7 @@ public class Servlet extends HttpServlet {
 		boolean isGet;
 		boolean isTask;
 		boolean isSW;
+		boolean isIncognito;
 		int mode; // navigation ... // 0:privée(incognito) 1:normale(cache+net) 2:locale(cache seulement)
 		int modeMax;
 		String lang;
@@ -197,11 +199,12 @@ public class Servlet extends HttpServlet {
 
 			this.lang = BConfig.lang(BConfig.lang(customHeader != null && customHeader.lang != null ? customHeader.lang : lg));
 			exec.setLang(this.lang);
+			
 			this.req = req; 
 			this.resp = resp; 
 			this.isGet = isGet;
 			String s =  req.getRequestURI();
-			// /contextPath/namespace/...
+			// /contextPath/namespace/... /contextPath/namespace/s/...
 			origUri = s.substring(contextPath.length() + 2);
 			build = BConfig.build();
 			if ("ping".equals(origUri)) {
@@ -214,7 +217,7 @@ public class Servlet extends HttpServlet {
 		}
 				
 		void checkNsqm() throws IOException {
-			// namespace/...
+			// namespace/... pu namespace/s/...
 			int i = origUri.indexOf('/');
 			if (i == -1 || i == origUri.length() - 1) {
 				sendText(500, BConfig.format("500URLMF1" + (hasCP() ? "cp" : ""), origUri), resp);
@@ -222,14 +225,18 @@ public class Servlet extends HttpServlet {
 				return;
 			}
 			uri = origUri.substring(i + 1);
-			String s = origUri.substring(0, i);
-			// si namespace est suivi de $ : navigation privée/incognito
-			mode = s.endsWith(INCOGNITO) ? 0 : 1;
-			String ns = mode == 1 ? s : s.substring(0, s.length() - INCOGNITO.length());
+			String ns = origUri.substring(0, i);
 			nsqm = BConfig.nsqm(ns, true);
 			if (nsqm == null) {
 				sendText(500, BConfig.format("500URLMF2" + (hasCP() ? "cp" : ""), origUri, ns), resp);
 				return;			
+			}
+
+			// si namespace est suivi de $ : navigation privée/incognito
+			isIncognito = !uri.startsWith(SYNC2);
+			if (!isIncognito) {
+				mode = 1;
+				uri = uri.substring(SYNC2.length());
 			}
 			if (nsqm.isQM) {
 				if (nsqm.code.equals(BConfig.QM())) {
@@ -281,7 +288,7 @@ public class Servlet extends HttpServlet {
 				fini = true;
 				return;
 			}
-			String p1 = "\"/" + contextPath + "/" + nsqm.code + "/";
+			String p1 = "\"/" + contextPath + "/" + nsqm.code + "/" + SYNC2;
 			String p2 = p1 + "var" + build + "/";
 
 			StringBuffer sb = new StringBuffer();
@@ -336,7 +343,7 @@ public class Servlet extends HttpServlet {
 
 		void page() throws IOException{
 			// Util.log.info("Demande de : " + origUri);
-			int bmode = mode;
+			boolean avion = false;
 			isSW = true;
 			
 			if (uri.endsWith(HPC)) {
@@ -348,7 +355,7 @@ public class Servlet extends HttpServlet {
 			
 			if (uri.endsWith("." + AVION)){
 				uri = uri.substring(0, uri.length() - AVION.length() - 1);
-				bmode = 2;
+				avion = true;
 			}
 			
 			if (uri.endsWith("_")) { // élimine la version home2_203_
@@ -362,12 +369,13 @@ public class Servlet extends HttpServlet {
 				fini = true;
 				return;
 			}
-			if (bmode == 2 && modeMax < 2){
+			if (avion && modeMax < 2){
 				sendText(404, BConfig.format("404HOME3", uri), resp);
 				fini = true;
 				return;
 			}
-			mode = bmode;
+			if (avion)
+				mode = 2;
 			if (mode > 0 && modeMax == 0){
 				sendText(404, BConfig.format("404HOME2", uri), resp);
 				fini = true;
@@ -415,7 +423,8 @@ public class Servlet extends HttpServlet {
 			else
 				sb.append("<html manifest=\"").append(contextPathSlash()).append(nsqm.code).append("/x.appcache\">");
 			
-			sb.append("<head><base href=\"").append(contextPathSlash()).append(nsqm.code).append("/var").append(build).append("/\">\n");
+			sb.append("<head><base href=\"").append(contextPathSlash()).append(nsqm.code)
+				.append(mode > 0 ? "/" + SYNC2 : "/").append("var").append(build).append("/\">\n");
 			sb.append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n");
 
 			sb.append("<script src='js/build.js'></script>\n");

@@ -557,7 +557,7 @@ class ReqErr {
 	constructor(op, code, phase, message, detail) {
 		this.op = op;
 		this.code = code ? code : "BX";
-		this.phase = phase < -1 || phase > 6 ? 9 : phase;
+		this.phase = phase && phase > 0 && phase < 10 ? phase : 0;
 		this.message = message ? message : this.code;
 		this.detail = detail ? detail : [];
 	}
@@ -594,6 +594,7 @@ class ReqErr {
 	}
 	
 	isSrv() { return this.phase < 6; }
+	
 }
 
 /*****************************************************/
@@ -765,7 +766,7 @@ class Retry { // un objet par retry pour éviter les collisions sur le XHR
 				if (!this.done) {
 					this.done = true;
 					try { if (this.xhr) this.xhr.abort(); } catch(e) {}
-					this.req.onError(new ReqErr(this.req.op, "TIMEOUT", 9, App.format("TIMEOUT", this.req.url, Math.round(this.req.TIME_OUT_MS)))); 
+					this.req.onError(new ReqErr(this.req.op, "TIMEOUT", 8, App.format("TIMEOUT", this.req.url, Math.round(this.req.TIME_OUT_MS)))); 
 				}
 			}, this.req.TIME_OUT_MS); 
 

@@ -1,7 +1,7 @@
 class App {
-	static get HPC() { return "htm"}
-	static get AVION() { return "a"}
-	static get INCOGNITO() { return "$"}
+	static get HPC() { return "htm";}
+	static get AVION() { return "a";}
+	static get SYNC() { return "s";}
 
 	static async setup() {
 		this.build = appbuild;
@@ -23,11 +23,11 @@ class App {
 			this.home = this.home.substring(0, j);
 			wb = true;
 		}
-		this.base = this.page.substring(0, i);						// /cn/test OU /test OU /cn/test$ OU /test$
+		this.base = this.page.substring(0, i);						// /cn/test OU /test OU /cn/test/s OU /test/s
 		this.basevar = this.base + "/var" + App.build + "/";
-		this.mode = this.base.endsWith(this.INCOGNITO) ? 0 : (this.ext.startsWith(this.AVION) ? 2 : 1);
+		this.mode = !this.base.endsWith("/" + this.SYNC) ? 0 : (this.ext.startsWith(this.AVION) ? 2 : 1);
 		
-		x = this.mode ?	this.base : this.base.substring(0, this.base.length - 1);
+		x = !this.mode ? this.base : this.base.substring(0, this.base.length - this.SYNC.length - 1);
 		i = x.lastIndexOf("/");
 		if (i == 0) {
 			// PAS de contextpath
@@ -67,7 +67,7 @@ class App {
 		 */
 		if (this.isSW) {
 			if (this.mode) {
-				const swscope = (!this.contextpath ? "/" : "/" + this.contextpath + "/") + this.namespace + "/sw.js";
+				const swscope = (!this.contextpath ? "/" : "/" + this.contextpath + "/") + this.namespace + "/" + this.SYNC + "/sw.js";
 				navigator.serviceWorker.register(swscope)
 				.then(reg => {
 					console.log("Succès de l'enregistrement auprès du service worker. Scope:" + reg.scope);
@@ -135,23 +135,32 @@ class App {
 	}
 
 	static reloadWB() { // With Build
-		// window.location = this.origin + this.base + "/" + this.home + "_" + this.srvbuild + "_" + (this.isSW ? "" : "." + this.HPC) + this.hash;
-		const url = this.origin + this.base + "/" + this.home + "_" + this.srvbuild + "_" + (this.isSW ? "" : "." + this.HPC) + this.hash;
-	 	const b2 = this.base.endsWith(this.INCOGNITO) ? this.base.substring(0, this.base.length - this.INCOGNITO.length) : this.base;
+		// à recharger avec _build_
+		const url = this.origin + this.base + "/" + this.home + "_" + this.srvbuild + "_" + (this.ext ? "." + this.ext : "") + this.hash;
+		
+		// reload2.html : avec .../s
+	 	let b2 = this.base;
+	 	if (!b2.endsWith("/" + this.SYNC)) b2 += "/" + this.SYNC;
 		const url2 = this.origin + b2 + "/var/reload2.html?";
+
 	 	const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), build:App.srvbuild, b:App.build, reload:url, reload2:url2}
-	 	const b = this.base.endsWith(this.INCOGNITO) ? this.base : this.base + this.INCOGNITO;
-//	 	const b = this.base;
+
+		// reload.html SANS .../s
+	 	let b = this.base;
+	 	if (b.endsWith("/" + this.SYNC)) b = b.substring(0, b.length - ("/" + this.SYNC).length);
 		window.location = this.origin + b + "/var/reload.html?" + encodeURI(JSON.stringify(x));
 	}
 
 	static reloadAvion() { 
-		window.location = this.mode == 2 ? (this.origin + this.path) : (this.origin + this.page + "." + this.AVION + (this.isSW ? "" : this.HPC) + this.hash);
+	 	let b2 = this.base;
+	 	if (!b2.endsWith("/" + this.SYNC)) b2 += "/" + this.SYNC;
+		let p2 = "/" + this.home + "." + this.AVION + (!this.isSW ? this.HPC : "");
+		window.location = this.origin + b2 + p2 + this.hash;
 	}
 
 	static bye() {
 		const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
-		window.location = this.origin + this.page + "/bye.html?" + encodeURI(JSON.stringify(x));
+		window.location = this.origin + this.base + "/bye.html?" + encodeURI(JSON.stringify(x));
 	}
 
 //	static errorPage(msg) {

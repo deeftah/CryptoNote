@@ -140,7 +140,7 @@ class Home2Home extends Polymer.Element {
 		App.globalReqErr.open(this, new App.ReqErr("opw", "DBUILD", 0, "message de D", [this.errTest.message, this.errTest.stack]));
 	}
 	erC() {
-		App.globalReqErr.open(this, new App.ReqErr("opw", "CONT", 3, "message de C", [this.errTest.message, this.errTest.stack]));
+		App.globalReqErr.open(this, new App.ReqErr("opw", "CONT", 2, "message de C", [this.errTest.message, this.errTest.stack]));
 	}
 	erO() {
 		App.globalReqErr.open(this, new App.ReqErr("opr", "OFF", 0, "message de off", [this.errTest.message, this.errTest.stack]));
