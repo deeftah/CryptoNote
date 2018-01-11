@@ -231,4 +231,14 @@ class App {
 
 	static applabel() { return App.lib("application");}
 
+	static scriptErr(err, severe) { 
+		if (!err || !(err instanceof Error)) return;
+		if (App.scriptErrPanel)
+			App.scriptErrPanel.open(err, severe); 
+		else {
+			let s = err.name + " - " + err.message + "\n" + err.stack;
+			console.error(s);
+		}
+	}
+
 }

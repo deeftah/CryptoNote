@@ -157,5 +157,11 @@ class Home2Home extends Polymer.Element {
 	erL() {
 		App.globalReqErr.open(this, new App.ReqErr("opw", "LREC", 6, "parse json", [this.errTest.message, this.errTest.stack]));
 	}
+	erS0() {
+		App.scriptErr(this.errTest);
+	}
+	erS1() {
+		App.scriptErr(this.errTest, true);
+	}
 }
 customElements.define(Home2Home.is, Home2Home);

@@ -4,8 +4,7 @@ class ReqerrPanel extends Polymer.Element {
 	static get properties() { return {
     	  lang:{type:String, value:App.lang},
     	  err:{type:Object, value:{code:"LX"}},
-    	  cref : {type:String, value:"0"},
-    	  topInfo:{type:String, value:"?"},
+    	  cref : {type:String, value:"0"}
       };
 	}
 	
@@ -46,7 +45,7 @@ class ReqerrPanel extends Polymer.Element {
 		App.setMsg("fr", "er_detailq", "Informations plus détaillées à propos de l''erreur");
 		App.setMsg("fr", "er_retryq", "Faut-il ré-essayer ?");
 		App.setMsg("fr", "er_resumeq", "Faut-il renoncer ?");
-		App.setMsg("fr", "er_reloadq", "Faut-il recharger l'application ?");
+		App.setMsg("fr", "er_reloadq", "Faut-il recharger l''application ?");
 
 		App.setMsg("fr", "er_retryr1", "Le problème est que les données envoyées ne sont pas acceptables au vu de celles enregistrées. Ré-essayer produira a priori les mêmes effets, la cause étant inchangée. Toutefois si une autre session est intervenue depuis et a modifié les données enregistrées, il est posible que désormais les données envoyées soient jugées acceptables.");
 		App.setMsg("fr", "er_retryr2", "Le bug provient d'une situation des données que le développeur n''avait pas imaginé qu'elle pouvait se produire. Si le bug était fugitif, résultait d''une situation temporelle rare, ré-essayer permet parfois de ne pas rencontrer la même situation. Si la séquence boguée retrouve la même situation, elle retombera dans le même bug. Toutefois depuis les données enregistrées pouvant avoir changé, peut-être que la situation imprévue ne se produira pas.");

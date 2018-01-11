@@ -7,6 +7,7 @@
 <link rel="import" href="message-box.html">
 <link rel="import" href="spinner-box.html">
 <link rel="import" href="reqerr-panel.html">
+<link rel="import" href="scripterr-panel.html">
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 <link rel="import" href="wait-home.html">
@@ -22,6 +23,7 @@
 		<message-box id="message"></message-box>
 		<spinner-box id="spin"></spinner-box>
 		<reqerr-panel id="reqerr" lang="[[lang]]"></reqerr-panel>
+		<scripterr-panel id="scripterr" lang="[[lang]]"></scripterr-panel>
 		<iron-pages class="top" attr-for-selected="id" selected="[[home]]">
 			<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
 			<home2-home id="home2" lang="[[lang]]"></home2-home>
@@ -42,6 +44,7 @@
       		App.messageBox = this.$.message;
       		App.globalSpinner = this.$.spin;
       		App.globalReqErr = this.$.reqerr;
+      		App.scriptErrPanel = this.$.scripterr;
       		App.appHomes = this;
       		if (App.rootcomplete)
       			this.starting();

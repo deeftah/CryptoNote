@@ -5,7 +5,7 @@
 <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../app_components/collapsable-block.html">
 
-<dom-module id="reqerr-panel">
+<dom-module id="scripterr-panel">
 <template>
 	<style is="custom-style" include="iron-flex iron-flex-alignment">
 		paper-dialog.size-position-left-panel { margin:0 !important;
@@ -60,46 +60,36 @@
 	<paper-dialog id="panel" class="size-position-left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
 	
 	<div class="top layout vertical flex-start">
-		<div class="bar layout horizontal center-center">
-		<div class="bar1 layout vertical">
-			<paper-button hidden$="[[hiddenbtns]]" class="custom pbok" raised on-tap="onRetry"><iron-icon icon="icons:refresh"></iron-icon>[[lib('er_retry',lang)]]</paper-button>
-			<paper-button class="custom lite" on-tap="onBye"><iron-icon icon="icons:close"></iron-icon>[[lib('er_quit',lang)]]</paper-button>
+		<div class="bar layout vertical">
+		<div class="bar1 layout horizontal center-center">
+			<paper-button class="custom pbok" raised on-tap="onReturnToApp"><iron-icon icon="icons:reply"></iron-icon>[[lib('er_return',lang)]]</paper-button>
 		</div>
-		<div class="bar2 layout vertical">
-			<paper-button hidden$="[[hiddenbtns]]" class="custom pbko" raised on-tap="onReturnToApp"><iron-icon icon="icons:reply"></iron-icon>[[lib('er_resume',lang)]]</paper-button>
+		<div class="bar2 layout horizontal center-center">
+			<paper-button class="custom lite" on-tap="onBye"><iron-icon icon="icons:close"></iron-icon>[[lib('er_quit',lang)]]</paper-button>
 			<paper-button class="custom lite" on-tap="onReload"><iron-icon icon="icons:file-download"></iron-icon>[[lib('er_reload',lang)]]</paper-button>
 		</div>
 		</div>
 		<div class="body flex layout vertical">
 			<div class="info">[[info]]</div>
-			<div class="more" hidden$="[[!more]]">[[more]]</div>
-			<div class="more"><b>[[optype]] : [[err.op]]</b><br>[[oplib]]</div>
+			<div class="more" hidden$="[[!message]]">[[message]]</div>
 			
-			<collapsable-block class="pci" title="[[lib('er_whereq',lang)]]" ref="1" openref="{{cref}}" maxheight="200px">
-				<div class="pci2">[[where]]</div>
-			</collapsable-block>
-			<collapsable-block class="pci" hidden="[[!isUpdate]]" title="[[lib('er_upddoneq',lang)]]" ref="2" openref="{{cref}}" maxheight="200px">
-				<div class="pci2">[[upddoner]]</div>
-			</collapsable-block>
-			<collapsable-block class="pci" hidden="[[hiddenbtns]]" title="[[lib('er_retryq',lang)]]" ref="3" openref="{{cref}}" maxheight="200px">
-				<div class="pci2">[[retryr]]</div>
-			</collapsable-block>
-			<collapsable-block class="pci" hidden="[[hiddenbtns]]" title="[[lib('er_resumeq',lang)]]" ref="4" openref="{{cref}}" maxheight="200px">
+			<collapsable-block class="pci" title="[[lib('er_resumeq',lang)]]" ref="4" openref="{{cref}}" maxheight="200px">
 				<div class="pci2">[[resumer]]</div>
 			</collapsable-block>
-			<collapsable-block class="pci" title="[[lib('er_reloadq',lang)]]" ref="5" openref="{{cref}}" maxheight="200px">
+			<collapsable-block class="pci"  title="[[lib('er_reloadq',lang)]]" ref="5" openref="{{cref}}" maxheight="200px">
 				<div class="pci2">[[reloadr]]</div>
 			</collapsable-block>
-			<collapsable-block class="pci" hidden="[[hiddenbtns]]" title="[[lib('er_detailq',lang)]]" ref="6" openref="{{cref}}" maxheight="500px">
+			<collapsable-block class="pci" title="[[lib('er_detailq',lang)]]" ref="6" openref="{{cref}}" maxheight="500px">
 				<div class="detail">
-					<div class="code" hidden="[[!topdet]]">[[topdet]]</span></div>
-					<label slot="label">[[detaillabel]]</label>
+					<div class="code" hidden="[[!message]]">[[message]]</span></div>
+					<label slot="label">[[name]]</label>
 					<paper-textarea id="ta" no-label-float value="[[lines]]"></paper-textarea>
 		     	</div>
 			</collapsable-block>
+			
      	</div>
 	</div>
 	</paper-dialog>
 </template>
-<script src="../js/reqerr-panel.js"></script>
+<script src="../js/scripterr-panel.js"></script>
 </dom-module>
