@@ -1,4 +1,3 @@
 App.setTheme("a", {
-"--mybg-color" : "green", 
-"--font-large":"3rem"
+"--mybg-color" : "green",
 });

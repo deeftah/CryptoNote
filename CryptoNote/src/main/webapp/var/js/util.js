@@ -149,6 +149,17 @@ class Util {
 		return true;
 	}
 
+	static md2html(text) {
+		if (!this.converter) {
+			this.converter = new showdown.Converter();
+			this.converter.setOption('strikethrough', true);
+			this.converter.setOption('tables', true);
+			this.converter.setOption('disableForced4SpacesIndentedSublists', true);
+			// this.converter.setOption('simpleLineBreaks', true);
+		}
+		return this.converter.makeHtml(text);
+	}
+	
 	/** BCrypt ***************************************************/
 	static get salt() { return "$2a$10$kBdas.cIGiNW/ziEj/pZD."; }
 

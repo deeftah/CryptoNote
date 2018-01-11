@@ -3,6 +3,7 @@ App.setTheme("z", {
 "--font-std" : "'Roboto'",
 "--font-cf" : "'Comfortaa'",
 "--mybg-color" : "lightgrey",
+"--font-xlarge" : "2.2rem",
 "--font-large" : "1.7rem",
 "--font-medium" : "1.3rem",
 "--font-reg" : "1rem",

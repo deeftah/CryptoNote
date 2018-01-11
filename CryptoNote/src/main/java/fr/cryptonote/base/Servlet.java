@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
-import java.util.logging.Level;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -438,6 +437,7 @@ public class Servlet extends HttpServlet {
 			sb.append("App.lang = \"").append(lang).append("\";\n");
 			sb.append("App.theme = \"").append(nsqm.theme).append("\";\n");
 			sb.append("App.themes = JSON.parse('").append(JSON.toJson(BConfig.themes())).append("');\n");
+			sb.append("App.helpDic = JSON.parse('").append(JSON.toJson(nsqm.help())).append("');\n");
 			sb.append("App.zDics = {};\n");
 			sb.append("App.customThemes = {};\n");
 			

@@ -1,0 +1,67 @@
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-from-left-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-left-animation.html">
+<link rel="import" 	href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../app_components/collapsable-block.html">
+
+<dom-module id="help-panel">
+<template>
+	<style is="custom-style" include="iron-flex iron-flex-alignment">
+		paper-dialog.size-position-left-panel { margin:0 !important;
+			position:fixed; top:0; left:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
+		paper-icon-button.ic1 {
+			color: var(--paper-grey-700);
+			width: var(--font-xlarge);
+			height: var(--font-xlarge);
+			padding: 0;
+		}
+	    paper-icon-button.ic1:hover {
+			background-color: var(--paper-grey-700);
+			color: white;
+	    }
+	    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */
+    		color: var(--paper-grey-300);
+    	}
+	    
+	</style>
+    <style>
+	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; background-color:white;}
+	  	:host .bar { padding:0; margin:0; background-color:white; border-bottom: 2px solid var(--paper-grey-100); } 
+	  	:host .btnm {padding:0; margin:0;}
+	  	:host .body { overflow-y:auto; @apply --std-reg; padding:0; margin:0; background-color:white; font-size:var(--font-reg);}
+	  	:host .ref { padding: 0 0.5rem; cursor:pointer; color:var(--paper-indigo-700); text-decoration: underline;}
+	  	:host .ref:hover { color:white; background-color:var(--paper-grey-700);}
+	  	:host #content { border-top: 2px solid var(--paper-grey-100); padding: 0.5rem;}
+	</style>
+	<paper-dialog id="panel" class="size-position-left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
+	
+	<div class="top layout vertical flex-start">
+		<div class="bar layout horizontal justified">
+			<paper-icon-button class="ic1" disabled="[[db(hist.length)]]" on-tap="back" title="[[lib('help__back',lang)]]" icon="icons:arrow-back"></paper-icon-button>
+			<div class="btnm">
+				<paper-icon-button class="ic1" disabled="[[isHome(page)]]" on-tap="home" title="[[lib('help__home',lang)]]" icon="icons:home"></paper-icon-button>
+				<paper-icon-button class="ic1" disabled="[[dp(page)]]" on-tap="previous" title="[[lib('help__previous',lang)]]" icon="icons:chevron-left"></paper-icon-button>
+				<paper-icon-button class="ic1" disabled="[[dt(page)]]" on-tap="top" title="[[lib('help__top',lang)]]" icon="icons:expand-less"></paper-icon-button>
+				<paper-icon-button class="ic1" disabled="[[dn(page)]]" on-tap="next" title="[[lib('help__next',lang)]]" icon="icons:chevron-right"></paper-icon-button>
+			</div>
+			<paper-icon-button class="ic1" title="[[lib('help__close',lang)]]" on-tap="close" icon="icons:close"></paper-icon-button>
+		</div>
+		<div class="body flex layout vertical">
+			<div class="ref" on-tap="home" hidden="[[isHome(page)]]"><i>[[lib('help__home',lang)]]</i> : [[lib('help_home',lang)]]</div>
+			<div class="ref" on-tap="previous" hidden="[[!page.p]]"><i>[[lib('help__previous',lang)]]</i> : [[page.pl]]</div>
+			<div class="ref" on-tap="top" hidden="[[!page.t]]"><i>[[lib('help__top',lang)]]</i> : [[page.tl]]</div>
+			<div class="ref" on-tap="next" hidden="[[!page.n]]"><i>[[lib('help__next',lang)]]</i> : [[page.nl]]</div>
+		    <template is="dom-repeat" items="[[page.refsl]]">
+				<div class="ref" on-tap="showref">[[item.lib]]</div>
+			</template>
+			
+			<div id="content"></div>	
+     	</div>
+	</div>
+	</paper-dialog>
+</template>
+<script src="../js/help-panel.js"></script>
+</dom-module>

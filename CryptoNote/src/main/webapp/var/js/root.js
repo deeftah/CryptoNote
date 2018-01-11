@@ -125,7 +125,7 @@ class App {
 				return 0;
 			}
 		} catch(err) {
-			console.error("srvko: " + err.message);
+			this.scriptErr(err)
 			return 0;
 		}
 	}
@@ -238,6 +238,38 @@ class App {
 		else {
 			let s = err.name + " - " + err.message + "\n" + err.stack;
 			console.error(s);
+		}
+	}
+	
+	static help(page) {
+		if (App.helpPanel)
+			App.helpPanel.open(page); 		
+	}
+
+	static async getZRes(name, json) {
+		let rn = this.lang + "/" + name;
+		if (!this.zres[rn] && this.lang != this.langs[0]) 
+			rn = this.langs[0] + "/" + name;
+			return this.zres[rn] ? await this.getRes("z/z/" + rn, json) : null;	
+	}
+	
+	static async getRes(name, json) {
+		try {
+			const myOptions = {timeout:6000}
+			const myHeaders = new Headers();
+			myHeaders.append("X-Custom-Header", JSON.stringify(myOptions));
+			const resp = await fetch(this.base + "/var/" + name, {headers: myHeaders});
+			let text;
+			if (resp.ok) {
+				if (json)
+					return await resp.json();
+				else
+					return await resp.text();
+			} else 
+				return json ? {} : "";
+		} catch(err) {
+			this.scriptErr(err)
+			return 0;
 		}
 	}
 
