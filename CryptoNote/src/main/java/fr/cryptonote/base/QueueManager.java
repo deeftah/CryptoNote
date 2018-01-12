@@ -171,14 +171,21 @@ public class QueueManager implements Runnable {
 		}
 
 		private synchronized void put(TaskMin tm){
-			if (tm == null || tm.startAt > qm.nextFullScan.stamp()) return;
-			TaskMin tx = byPK.get(tm.pk());
-			if (tx != null && tx.workerIndex != 0) return; // déjà en cours d'exécution par un worker
+			if (tm == null || tm.toStartAt > qm.nextFullScan.stamp()) return;
 			tm.qn = QueueManager.normalizeQueueNumber(tm.qn);
 			tm.workerIndex = 0;
-			if (tx != null)
-				byStamp.remove(tx.stampKey());
-			rawinsert(tm);
+			TaskMin tx = byPK.get(tm.pk());
+			if (tx != null) {
+				if (tx.step != tm.step) {
+					if (tx.workerIndex != 0)
+						tx.workerIndex.toIgnore(); 	// pour que le worker ne tente plus de retry éventuel de l'ancienne, voire ne la lance pas
+				} else {							// cette step est déjà connue ici
+					if (tx.workerIndex != 0) 
+						return;						// déjà en cours d'exécution par un worker (rien de nouveau, il faut le laisser finir)	
+				}
+				byStamp.remove(tx.stampKey()); 		// on enlève l'ancienne de la queue (si elle l'y était)
+			}
+			rawinsert(tm);							// on insère la nouvelle étape (ce qui peut cacher l'ancienne)	
 		}
 
 		private synchronized void remove(Worker w){

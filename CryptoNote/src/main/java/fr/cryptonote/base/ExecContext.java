@@ -263,8 +263,7 @@ public class ExecContext {
 		 */
 
 		if (!"sync".equalsIgnoreCase(operationName())) {
-			Object taskCheckpoint = null;
-			
+			boolean done = false;
 			do {
 				
 				for(int retry = 0;;retry++) {
@@ -274,15 +273,14 @@ public class ExecContext {
 					try {
 						long t0 = System.currentTimeMillis();
 						clearCaches();
-						operation = Operation.CreateOperation(operationName(), taskCheckpoint);
+						operation = Operation.newOperation(operationName());
 						phase = 1;
-						operation.work();
+						result = operation.work();
 						long t1 = System.currentTimeMillis();
 						cs[5] += (int)(t1 - t0);
-						taskCheckpoint = operation.taskCheckpoint();
 						ExecCollect collect = new ExecCollect();
 						
-						if (!collect.nothingToCommit()) {
+						if (!collect.nothingToCommit(isTask() ? operation.getParam() : null, result)) {
 							phase = 2;
 							HashMap<String,Long> badDocs = dbProvider().validateDocument(collect);
 							cs[6] += (int)(System.currentTimeMillis() - t1);
@@ -294,8 +292,13 @@ public class ExecContext {
 						}
 						
 						phase = 3;	
-						operation.afterWork();
-						break; // OK : break retry, vers next step
+						if (isTask())
+							done = result == null || result.completed || result.t != null;
+						else {
+							operation.afterWork();
+							done = true;
+						}
+						break; // OK : break retry
 					} catch (Throwable t){
 						AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
 						if (dbProvider != null)	dbProvider.rollbackTransaction();
@@ -312,7 +315,7 @@ public class ExecContext {
 					}
 				}
 				
-			} while(taskCheckpoint != null);
+			} while(!done);
 			cs[0] = 1;
 		}
 
@@ -411,7 +414,7 @@ public class ExecContext {
 //		HashMap<String,Document> deletedDocuments = new HashMap<String,Document>();
 //		HashSet<String> forcedDeletedDocuments = new HashSet<String>();
 		
-		public boolean nothingToCommit() {
+		public boolean nothingToCommit(Object param, Result result) {
 			return versionsToCheckAndLock.size() == 0 && docsToDelForced.size() == 0 && (tq == null || tq.size() == 0); 
 		}
 						

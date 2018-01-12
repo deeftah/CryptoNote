@@ -906,13 +906,14 @@ public class ProviderPG implements DBProvider {
 	CREATE TABLE taskqueue (
 	  	ns varchar(16) NOT NULL,
 	  	taskid varchar(255) NOT NULL,
-		startat bigint, 
+		tostartat bigint,
+		topurgeat bigint, 
 	  	opname varchar(16) NOT NULL,
 	  	param text,
 	  	info varchar(255),
 		qn int NOT NULL,
 		retry int NOT NULL,
-	  	exc varchar(255),
+	  	exc text,
 		report text,
 		starttime bigint, 
 		CONSTRAINT taskqueue_pk PRIMARY KEY (ns, taskid)
@@ -925,7 +926,7 @@ public class ProviderPG implements DBProvider {
 	*/
 	
 	private static final String INSERTTASK = 
-		"insert into taskqueue (ns, taskid, startat, opname, info, qn, retry, exc, report, starttime, param) values (?,?,?,?,?,?,?,?,?,?,?);";
+		"insert into taskqueue (ns, taskid, step, tostartat, opname, info, qn, retry, param) values (?,?,?,?,?,?,?,?,?);";
 		
 	@Override 
 	public void insertTask(TaskInfo ti) throws AppException{
@@ -936,14 +937,12 @@ public class ProviderPG implements DBProvider {
 			int j = 1;
 			preparedStatement.setString(j++, ti.ns);
 			preparedStatement.setString(j++, ti.taskid);
-			preparedStatement.setLong(j++, ti.startAt);
+			preparedStatement.setInt(j++, 1);
+			preparedStatement.setLong(j++, ti.toStartAt);
 			preparedStatement.setString(j++, ti.opName);
 			preparedStatement.setString(j++, ti.info == null ? "" : ti.info);
 			preparedStatement.setInt(j++, ti.qn);
 			preparedStatement.setInt(j++, 0);
-			preparedStatement.setString(j++, null);
-			preparedStatement.setString(j++, null);
-			preparedStatement.setLong(j++, 0);
 			preparedStatement.setString(j++, ti.param);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
@@ -952,9 +951,8 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-	private static final String UPDTASK1 = "update taskqueue set exc = ?, report = ?, startat = ?, starttime = ?, retry = retry + 1 where ns = ? and taskid = ?;";
+	private static final String UPDTASK1 = "update taskqueue set exc = null, tostartat = null, starttime = ?, retry = retry + 1 where ns = ? and taskid = ?;";
 
-	@SuppressWarnings("null")
 	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException {
 		TaskInfo ti = taskInfo(ns, taskid);
 		PreparedStatement preparedStatement = null;
@@ -962,9 +960,6 @@ public class ProviderPG implements DBProvider {
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
-			preparedStatement.setString(j++, null);
-			preparedStatement.setString(j++, null);
-			preparedStatement.setLong(j++, (Long)null);
 			preparedStatement.setLong(j++, startTime);
 			preparedStatement.setString(j++, ns);
 			preparedStatement.setString(j++, taskid);
@@ -975,39 +970,77 @@ public class ProviderPG implements DBProvider {
 			throw err(preparedStatement, null, e, "startTask");
 		}
 	}
-
-	private static final String UPDTASK3 = "update taskqueue set exc = 'LOST', startat = ?, starttime = null where starttime is not null and starttime < ?;";
-
-	@Override
-	public void lostTask(long minStartTime, long startAt) throws AppException {
-		PreparedStatement preparedStatement = null;
-		sql = UPDTASK3;
-		try {
-			preparedStatement = conn().prepareStatement(sql);
-			int j = 1;
-			preparedStatement.setLong(j++, startAt);
-			preparedStatement.setLong(j++, minStartTime);
-			preparedStatement.executeUpdate();
-			preparedStatement.close();
-		} catch(Exception e){
-			throw err(preparedStatement, null, e, "excTask");
-		}
-	}
 	
-	private static final String UPDTASK2 = "update taskqueue set exc = ?, report = ?, startat = ?, starttime = ? where ns = ? and taskid = ?;";
+	private static final String UPDTASK2 = "update taskqueue set exc = ?, tostartat = ?, starttime = null where ns = ? and taskid = ?;";
 
-	@SuppressWarnings("null")
 	@Override
-	public void excTask(String ns, String taskid, String exc, String report, long startAt) throws AppException {
+	public void excTask(String ns, String taskid, String exc, long toStartAt) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK2;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setString(j++, exc);
-			preparedStatement.setString(j++, report);
-			preparedStatement.setLong(j++, startAt);
-			preparedStatement.setLong(j++, (Long)null);
+			preparedStatement.setLong(j++, toStartAt);
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "excTask");
+		}
+	}
+
+	private static final String UPDTASK3 = "update taskqueue set tostartat = ?, param = ?, exc = null, starttime = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
+
+	@Override
+	public void stepTask(String ns, String taskid, String param, long toStartAt) throws AppException {
+		PreparedStatement preparedStatement = null;
+		sql = UPDTASK3;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setLong(j++, toStartAt);
+			preparedStatement.setString(j++, param);
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "excTask");
+		}
+	}
+
+	private static final String UPDTASK4 = "update taskqueue set param = ?, tostartat = null, exc = null, starttime = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
+
+	@Override
+	public void stepTask(String ns, String taskid, String param) throws AppException {
+		PreparedStatement preparedStatement = null;
+		sql = UPDTASK4;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, param);
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "excTask");
+		}
+	}
+
+	private static final String UPDTASK5 = "update taskqueue set topurgeat = ?, param = ?, tostartat = null, exc = null, starttime = null, retry = 0, step = null where ns = ? and taskid = ?;";
+
+	@Override
+	public void finalTask(String ns, String taskid, long toPurgeAt, String param) throws AppException {
+		PreparedStatement preparedStatement = null;
+		sql = UPDTASK5;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setLong(j++, toPurgeAt);
+			preparedStatement.setString(j++, param);
 			preparedStatement.setString(j++, ns);
 			preparedStatement.setString(j++, taskid);
 			preparedStatement.executeUpdate();
@@ -1064,7 +1097,7 @@ public class ProviderPG implements DBProvider {
 	}
 
 	private static final String SELTI3 = 
-		"select startat, opname, param, info, qn, retry, exc, report, startTime from taskqueue where ns = ? and taskid = ?;";
+		"select step, startat, opname, param, info, qn, retry, exc, startTime from taskqueue where ns = ? and taskid = ?;";
 	
 	@Override
 	public TaskInfo taskInfo(String ns, String taskid) throws AppException {
@@ -1082,15 +1115,18 @@ public class ProviderPG implements DBProvider {
 				ti = new TaskInfo();
 				ti.ns = ns;
 				ti.taskid = taskid;;
-				ti.startAt = rs.getLong("startAt");
+				Integer x = rs.getInt("step");
+				ti.step = x == null ? 0 : x;
+				Long l = rs.getLong("startAt");
+				ti.toStartAt = l == null ? 0 : l;
 				ti.opName = rs.getString("opname");
 				ti.param = rs.getString("param");
 				ti.info = rs.getString("info");
 				ti.qn = rs.getInt("qn");
 				ti.retry = rs.getInt("retry");
 				ti.exc = rs.getString("exc");
-				ti.report = rs.getString("report");
-				ti.startTime = rs.getLong("startTime");
+				l = rs.getLong("startTime");
+				ti.startTime = l == null ? 0 : l;
 			}
 			rs.close();
 			preparedStatement.close();
@@ -1141,14 +1177,14 @@ public class ProviderPG implements DBProvider {
 //		}
 //	}
 
-	private static String SELTIREP = "select report from task where ns = ? and taskid = ? ;";
+	private static String SELTIPARAM = "select param from task where ns = ? and taskid = ? ;";
 
 	@Override
 	public String taskReport(String ns, String taskid) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String report = "";
-		sql = SELTIREP;
+		sql = SELTIPARAM;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
@@ -1156,7 +1192,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setString(j++, taskid);
 			rs = preparedStatement.executeQuery();
 			if (rs.next())
-				report = rs.getNString("report");
+				report = rs.getNString("param");
 			rs.close();
 			preparedStatement.close();
 			return report;
@@ -1219,7 +1255,7 @@ public class ProviderPG implements DBProvider {
 	@Override
 	public void setS2Cleanup(TaskInfo ti, String clid) throws AppException {
 		PreparedStatement preparedStatement = null;
-		int hour = (int)(ti.startAt / 10000000L);
+		int hour = (int)(ti.toStartAt / 10000000L);
 		sql = "update s2cleanup_" + ns + UPDS2;
 		boolean transaction = inTransaction;
 		try {

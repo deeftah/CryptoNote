@@ -61,7 +61,7 @@ public abstract class Operation {
 	}
 
 	/**********************************************************************************/
-	static Operation CreateOperation(String operationName, Object taskCheckpoint) throws AppException {
+	static Operation newOperation(String operationName) throws AppException {
 		if (operationName != null) operationName = operationName.toLowerCase();
 		Object param = null;
 		Operation op = null;
@@ -88,14 +88,12 @@ public abstract class Operation {
 	/**********************************************************************************/
 	private ExecContext execContext;
 	private InputData inputData;
-	private Object taskCheckpoint = null;
 	private Result result = new Result();
 	private OperationDescriptor opd;
 	
 	public ExecContext execContext() { return execContext;}
 	public InputData inputData() { return inputData;}
-	public Object taskCheckpoint() { return taskCheckpoint;}
-	public void taskCheckpoint(Object obj) {taskCheckpoint = obj;}
+	public Object getParam() { try { return opd.paramField.get(this);} catch (Exception e) { return null; } }
 	public Result result() { return result;}
 	public TaskInfo taskInfo() { return inputData.taskInfo();}
 	public boolean isTask() { return inputData.isTask(); }
@@ -143,7 +141,7 @@ public abstract class Operation {
 
 	/**********************************************************************************/
 	// A surcharger
-	public void work() throws AppException { }
+	public Result work() throws AppException { return null; }
 	public void afterWork() throws AppException { }
 
 }

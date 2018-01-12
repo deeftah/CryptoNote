@@ -147,28 +147,47 @@ public interface DBProvider {
 	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException ;
 
 	/**
-	 * Met exc à LOST, startTime à null startAt à la valeur indiquée pour toutes les tâches
-	 * supposées perdues, ayant un startTime abcien et qui auraient dû se terminer (bien ou mal).
-	 * Elles sont relancées.
-	 * @param minStartTime
-	 * @param startAt
-	 * @throws AppException
-	 */
-	public void lostTask(long minStartTime, long startAt) throws AppException;
-	
-	/**
 	 * Sortie d'une task en exception
 	 * @param ns
 	 * @param taskid
-	 * @param exc code de l'exception
-	 * @param report
+	 * @param exc code de l'exception. "LOST" pour une tâche perdue.
 	 * @param startAt date-heure de relance
 	 * @throws AppException
 	 */
-	public void excTask(String ns, String taskid, String exc, String report, long startAt) throws AppException ;
+	public void excTask(String ns, String taskid, String exc, long toStartAt) throws AppException ;
+
+	
+	/**
+	 * Fin d'une étape d'une tâche avec relance d'une nouvelle requête pour continuation.
+	 * @param ns
+	 * @param taskid
+	 * @param param paramètre de la prochaine étape
+	 * @param toStartAt date-heure de lancement de la prochaine étape
+	 * @throws AppException
+	 */
+	public void stepTask(String ns, String taskid, String param, long toStartAt) throws AppException ;
+	
+	/**
+	 * Fin d'une étape d'une tâche et son étape suivante se poursuit dans la même requête.
+	 * @param ns
+	 * @param taskid
+	 * @param param paramètre de la prochaine étape
+	 * @throws AppException
+	 */
+	public void stepTask(String ns, String taskid, String param) throws AppException ;
 
 	/**
-	 * Suppression d'une task, soit sur fin normale, soit sur demande de l'administeur
+	 * Fin de la dernière étape avec conservation du résultat pendant un certain temps
+	 * @param ns
+	 * @param taskid
+	 * @param toPurgeAt
+	 * @param param
+	 * @throws AppException
+	 */
+	public void finalTask(String ns, String taskid, long toPurgeAt, String param) throws AppException;
+	
+	/**
+	 * Suppression d'une task, soit sur fin normale de la dernière étape sans conservation du résult, soit sur demande de l'administeur
 	 * @param ns
 	 * @param taskid
 	 * @throws AppException

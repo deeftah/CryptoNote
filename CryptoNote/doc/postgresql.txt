@@ -59,14 +59,15 @@ DROP TABLE IF EXISTS taskqueue;
 CREATE TABLE taskqueue (
   	ns varchar(16) NOT NULL,
   	taskid varchar(255) NOT NULL,
-	startat bigint, 
+  	step int,
+	tostartat bigint, 
+	topurgeat bigint, 
   	opname varchar(16) NOT NULL,
-  	param text,
   	info varchar(255),
+  	param text,
 	qn int NOT NULL,
 	retry int NOT NULL,
-  	exc varchar(255),
-	report text,
+  	exc text,
 	starttime bigint, 
 	CONSTRAINT taskqueue_pk PRIMARY KEY (ns, taskid)
 );

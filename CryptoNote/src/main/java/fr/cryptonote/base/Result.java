@@ -7,6 +7,8 @@ public final class Result {
 	public transient String encoding;
 	public transient byte[] bytes;
 	public transient String mime;
+	public transient Stamp t;
+	public transient boolean completed;
 	
 	public boolean isEmpty() {
 		return out == null && syncs == null && text == null && bytes == null;

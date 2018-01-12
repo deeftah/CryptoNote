@@ -28,7 +28,7 @@ public class Stamp implements Comparable<Stamp> {
 		return jj > x ? x : jj;
 	}
 
-	// période de 4 ans commençant par une bissectile
+	// période de 4 ans commençant par une bissextile
 	private static final int qa = (365 * 4) + 1;
 	private static final int[] nbjq = {0, 366, 366 + 365, 366 + 365 + 365, 366 + 365 + 365 + 365};
 
