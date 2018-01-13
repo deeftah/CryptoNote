@@ -67,7 +67,8 @@ CREATE TABLE taskqueue (
   	param text,
 	qn int NOT NULL,
 	retry int NOT NULL,
-  	exc text,
+  	exc varchar(255),
+  	detail text,
 	starttime bigint, 
 	CONSTRAINT taskqueue_pk PRIMARY KEY (ns, taskid)
 );

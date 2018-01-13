@@ -32,12 +32,14 @@ public class AppException extends Exception {
 		public String toString() { return JSON.toJson(this); }
 	}
 		
-	public int phase; // 0:initiale 1:operation 2:validation 3:afterwork 4:sync 5:finale
-	public String code; // code symbolique principal
-	public String[] detail; // arguments détaillés de l'erreur
-	public String message; // message en clair
+	private int phase; // 0:initiale 1:operation 2:validation 3:afterwork 4:sync 5:finale
+	private String code; // code symbolique principal
+	private String[] detail; // arguments détaillés de l'erreur
+	private String message; // message en clair
 
 	public int httpStatus() { return code.charAt(0) == 'N' ? 404 : 400; }
+	
+	public String code() { return code; }
 	
 	private Throwable cause;
 	public Throwable cause() { return cause; }

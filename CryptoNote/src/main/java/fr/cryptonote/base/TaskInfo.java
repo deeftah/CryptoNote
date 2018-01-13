@@ -17,6 +17,8 @@ public class TaskInfo {
 	
 	public TaskInfo() { }
 	
+	public long retryAt() { return BConfig.RETRYSTARTAT(retry); }
+	
 	/*
 	 * Si toStartAt est "petit" (nombre de secondes en un an) c'est un nombre de secondes par rapport à la date-heure actuelle.
 	 */

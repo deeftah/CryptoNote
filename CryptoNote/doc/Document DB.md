@@ -233,15 +233,15 @@ Une requête HTTP peut également retourner des codes d'incident autres :
 # Tâches : opérations différées
 Certains traitements peuvent être constitués d'une séquence, possiblement longue, d'opérations. D'autres sont à lancer périodiquement.  
 Comme une opération doit avoir un temps d'exécution réduit et surtout ne pas accéder à trop de documents en tolérance 0, ces traitements s'exécutent sous la forme d'une suite d'opérations distinctes et différées.  
-Par ailleurs une opération *principale* peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations `secondaires` différées par rapport à l'opération principale.
+Par ailleurs une opération *principale* peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations *secondaires* différées par rapport à l'opération principale.
 
-Le **Queue Manager** est un ensemble de threads chargés d'envoyer des requêtes HTTP correspondant aux opérations différées inscrites et d'en récupérer le status d'exécution. Le Queue Manager joue un rôle de session externe mais non humaine :
-- elle n'interprète pas son résultat qui peut toutefois être consultable un certain temps après la fin de la tâche par un administrateur.
-- elle doit gérer les erreurs d'exécution des opérations,
-    - en relançant les traitements tombés en exception : si la cause était fugitive, ça s'arrange tout seul. Typiquement un lapse de temps croissant est laissé entre les relances afin de contourner un éventuel problème de contention sur les données ou une indisponibilité technique un peu longue ;
-    - en alertant un administrateur technique par e-mail si un traitement échoue à sa n-ième relance. Ce dernier peut,
-        - soit remédier à la cause fonctionnelle du souci si possible, puis remettre la tâche en exécution.
-        - soit renoncer définitivement à celle-ci en ayant apprécié les conséquences fonctionnelles de cet abandon.
+Le **Queue Manager** est un ensemble de threads chargés d'envoyer des requêtes HTTP demandant l'exécution des opérations différées inscrites et de réguler le flux des demandes afin de ne pas saturer les serveurs. Le Queue Manager joue un rôle de session externe mais non humaine :
+- il n'interprète pas le résultat qui peut être stocké afin d'être consultable un certain temps après la fin de la tâche par un administrateur.
+- il ne gère pas les exceptions des opérations mais récupère périodiquement les tâches *perdues* dont la fin normale ou exception n'a pas pu être enregistrée.
+
+Une tâche est constituée d'une succession d'étapes de 1 à N, chacune marquant un point de reprise persistant :
+- chaque fin d'étape spécifie s'il y a ou non une étape ultérieure et quels sont son objet paramètre d'exécution. Cet objet porte également, si souhaité, des informations de reporting sur le travail déjà exécuté.
+- la fin de la dernière étape spécifie si son résultat doit être conservé, et si oui combien de temps, ou si la trace de la tâche est à détruire immédiatement.
 
 ### Création d'une tâche et de sa première étape
 Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au commit de l'opération qui l'a créé avec les données suivantes :
@@ -251,19 +251,19 @@ Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au co
 - `param` : un JSON contenant les paramètres requis. Si ceux-ci sont très volumineux, on créé un document et `param` en contient juste l'identification.
 - `info` : texte d'information indexé permettant des filtrages pour l'administrateur.
 - `step` : le numéro d'étape est 1, c'est celui de la **prochaine** étape à exécuter.
-- `retry` : son numéro d'ordre d'exécution dans l'étape `step`. 0 à la création il est incrémenté à chaque relance par le Queue Manager.
+- `retry` : son numéro d'ordre d'exécution dans l'étape `step`. Il est incrémenté à chaque relance après exception.
 - `toStartAt` : la date-heure de son lancement / relance au plus tôt.
-- `startTime` : la date-heure de sa demande d'exécution par le Queue Manager. `null` quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.
+- `startTime` : la date-heure du début d'exécution de l'étape courante. `null` quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.
 - `qn` : numéro de queue : le Queue Manager a plusieurs queues numérotées de 0 à N pour des usages différents, par exemple : 
     - 0:*rapide*, plusieurs threads pour des tâches courtes,
     - 1:*standard*, 2 threads pour des tâches plus longues,
     - 3:*background*, un seul thread pour des tâches peu fréquentes et peu prioritaires.
     - pour chaque code d'opération la configuration d'application définit le numéro de queue (quand il n'est pas 0).
 - `exc` : code d'exception du dernier traitement en erreur. `null` au lancement / relance.
-- `report` : texte d'information sur la dernière exception.
+
 
 ### Fin d'étape d'une tâche
-Une tâche peut avoir de 1 à N étapes successives, chacune marque un point de reprise explicite.  La fin d'une étape *intermédiaire* donne lieu :
+La fin d'une étape *intermédiaire* donne lieu :
 - à l'enregistrement du `param` de l'étape suivante, objet pouvant comporter facultativement des données de compte rendu synthétique d'exécution des étapes précédentes;
 - à l'incrémentation du compteur d'étapes `step`;
 - à l'enregistrement d'une nouvelle date-heure de lancement pour l'étape suivante.
@@ -277,7 +277,7 @@ A noter que si la dernière étape ne veut pas conserver de trace de traitement,
 
 ### Opération associée à une tâche
 C'est une opération normale. L'objet `param` et le nom de l'opération `opName` ont été récupérés de `TaskQueue` avec les informations `startTime` `step` et `retry` rendues disponibles dans `InputData.args`.
-- elle ne retourne aucun résultat mais son objet param peut être mis à jour pour refléter à la fois le compte rendu d'exécution et les paramètres de l'étape suivante. L'opération n'effectue pas de calcul de synchronisation et n'a pas de phase `afterwork()` : elle ne fait *que* des mises à jour de documents et de son `param` dans sa phase `work()`.
+- elle ne retourne aucun résultat mais son objet `param` peut être mis à jour pour refléter à la fois le compte rendu d'exécution et les paramètres de l'étape suivante. L'opération n'effectue pas de calcul de synchronisation et n'a pas de phase `afterwork()` : elle ne fait *que* des mises à jour de documents et de son `param` dans sa phase `work()`.
 - elle peut inscrire des opérations différées.
 - elle bénéficie d'un quota de temps plus long pour son exécution.
 
@@ -297,14 +297,14 @@ Au commit :
 Quand le Datastore lance la tâche il émet une requête HTTP sur l'URL `/ns/od/taskid?key=...`.
 
 La requête HTTP arrive dans le serveur et recherche dans `TaskQueue` le descriptif de la tâche :
-- si il n'y est pas la requête se termine en 200. La tâche s'était bien terminée :
+- si il n'y est pas la requête se termine en 200. La tâche était terminée :
     - soit c'était une relance intempestive,
     - soit l'administrateur l'a supprimée. Dans le cas du Datastore c'est un moyen donné à l'administrateur de supprimer une tâche.
 - si elle y est avec une `toStartAt` pas encore atteinte (avec un minimum de tolérance) c'est que l'administrateur l'a reculée :
     - en Datastore il a fait ré-inscrire la tâche avec une nouvelle valeur de `toStartAt`.
     - la requête se termine en 200.
     - en base de données, si la `nextStart` est proche le Queue Manager reçoit une notification.
-- si elle y est avec une `toStartTime` (ça ne devrait pas arriver en Datastore) la requête se termine en 200 : la tâche est déjà en exécution ailleurs.
+- si elle y est avec une `startTime` la requête se termine en 200 : la tâche est, a priori, en exécution ailleurs.
 - sinon la tâche est à exécuter :
     - la requête récupère `param` `step` et `retry`.
     - la requête inscrit dans `TaskQueue` une `startTime` qui marque le fait que la tâche est en exécution. 
@@ -329,7 +329,7 @@ Un Queue Manager gère un ou plusieurs namespaces et fait donc face à une ou pl
 Seule les étapes des tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :
 - une `startAt` antérieure à la date-heure du scan suivant,
 - ayant l'un des namespaces dont il est en charge,
-- un numéro d'étape positif (si 0 la tâche est terminée et l'enregistrement n'est qu'une trace),
+- un numéro d'étape : si `null` la tâche est terminée et l'enregistrement n'est qu'une trace,
 - ayant une `startTime` `null` (tâche pas en cours).
 
 Ce scan permet au Queue Manager de récupérer les tâches à relancer autant que celle à lancer une première fois.
@@ -344,33 +344,16 @@ Si l'étape de la tâche se termine bien, elle disparaîtra de `TaskQueue` ou au
 Si la tâche sort en exception elle sera modifiée en `TaskQueue` pour une future relance de son étape et si cette relance est proche le Queue Manager sera notifié par HTTP pour accélérer la relance.
 
 ##### Tâches perdues
-Il s'agit de tâches qui ont été lancées (ou relancées), 
+Il s'agit de tâches qui ont été lancées (ou relancées),
 - ayant une `startTime` ancienne,
 - dont le Queue Manager n'a pas de trace en exécution dans un worker.
 
-La tâche est supposée s'être mal terminée sans que son exception n'ait pu être enregistrée dans `TaskQueue`.
+On va considérer que l'étape de la tâche s'est mal terminée sans que son exception n'ait pu être enregistrée dans `TaskQueue` : elle est enregistrée avec comme exception `LOST` et marquée avec une `toStartAt` pour une relance ultérieure (comme une exception normale). 
 
-Le Queue Manager au cours d'un scan va récupérer ces tâches supposée encore en exécution depuis longtemps et pour chacune :
-- si un worker indique être encore à l'écoute, elle est ignorée : elle n'était pas perdue bien qu'elle aurait dû sortir en timeout.
-- sinon la tâche est marquée en exception `LOST` et dans `TaskQueue` :
-    - `startTime` est mis à `null`, `retry` est incrémenté, `nextStart` est calculée.
-    - le cas échéant elle est réinscrite pour relance proche.
-
-##### Tâche perdue retrouvée
-Une tâche a été perdue, son worker a perdu le contact et le Queue Manager a inscrit un `retry`.  
-Mais l'étape de la tâche finalement se termine :
-- bien : elle est supprimée de `TaskQueue` ou mise à jour avec un numéro d'étape incrémenté (ou 0).
-- mal : `TaskQueue` n'est pas mis à jour, elle y reste marquée `LOST`.
-
-Le Queue Manager,
-- soit a déjà relancé cette tâche après l'avoir détectée perdue : elle est à nouveau en cours d'exécution.
-- soit ne l'a pas encore fait :
-    - si elle était OK, elle a disparu de `TaskQueue`, le Queue Manager n'arrivera pas à la relancer : elle est effacée des tâches candidates.
-    - si elle était KO, elle est déjà planifié en relance.
-
-Une étape d'une tâche courre le risque (rare) d'être lancée une seconde fois après une première exécution en succès, tout comme n'importe quelle opération peut être relancée par une session : la logique applicative doit s'en prémunir :
-- pour une opération classique une date-heure d'opération donnée par la session cliente permet de détecter cette situation quand elle est stockée dans les documents.
-- pour une opération différée la `startTime` peut être employée.
+Une tâche perdue est *supposée* être perdue mais en fait elle peut être cachée en exécution et dans ce cas il peut exister à un moment donné plus d'une exécution en cours, voire dans le pire des cas avec des numéros d'étapes différents. Les règles suivantes permettent de contrôler ces exécutions multiples et surtout de n'en valider qu'une :
+- au lancement la tâche doit avoir une `startTime` `null` sinon le début de l'étape est refusé et sort sans exception et sans validation.
+- à la validation d'une étape, si le numéro de l'étape n'est pas égal à celui enregistré dans en `TaskQueue` et que la `startTime` n'est pas celle du début de l'étape c'est une collision avec une autre exécution et la validation n'est pas enregistrée.
+- en cas d'exception, elle n'est enregistrée que si le numéro de l'étape et la `starTime` permettent de savoir qu'il s'agit bien de la bonne exécution.
 
 ### Exécution de plusieurs étapes successives dans la même requête
 La phase `work()` se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat comportant :

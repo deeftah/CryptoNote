@@ -519,6 +519,62 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
+	private static class CustomHeader {
+		int build;
+		String lang;
+		CustomHeader(int build) { this.build = build; }
+		public String toString() { return JSON.toJson(this); }
+	}
+	
+	static void setBuild(HttpServletResponse resp) {
+		resp.addHeader("X-Custom-Header", new CustomHeader(BConfig.build()).toString());
+	}
+	
+	/********************************************************************************/
+	private void doGetPost(ReqCtx r) throws IOException, ServletException {
+		// op/ od/
+		InputData inp = null;
+		Result result = null;
+		
+		try {
+			if (r.isTask) {
+				inp = taskInputData(r);
+				if (inp == null) {
+					sendText(200, null, r.resp);
+					return;
+				}
+				if (r.nsqm.onoff != 0) 
+					throw new AppException("OFF", BConfig.label("OFF"));
+			} else {
+				if (r.customHeader != null && r.customHeader.build != 0 && r.customHeader.build != BConfig.build())
+					throw new AppException("DBUILD", "" + r.customHeader.build, "" + BConfig.build());
+				String ct = r.req.getContentType();
+				boolean mpfd = !r.isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
+				inp = !mpfd ? getInputData(r.req) : postInputData(r.req);
+			}
+			
+			inp.uri = r.uri.substring(3);
+			String op = inp.args.get("op");
+			inp.operationName = op != null ? op  : "Default";			
+			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("OFF"));	
+			
+			result = r.nsqm.isQM ? QueueManager.doTmRequest(r.exec, inp) : r.exec.go(inp);
+			r.exec.closeAll();
+			writeResp(r.resp, 200, result, r.build);
+		} catch (Throwable t){
+			AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
+			r.exec.closeAll();
+			if (r.isTask) {
+				try {
+					r.exec.dbProvider().excTask(inp.taskInfo(), ex);
+				} catch (Exception e) {}
+				sendText(200, null, r.resp);
+			} else
+				writeResp(r.resp, ex.httpStatus(), Result.text(ex.toJson(), null, "application/json"), r.build);
+		}
+	}
+
+	/********************************************************************************/
 	private void sendText(int code, String text, HttpServletResponse resp) throws IOException {sendText(code, text, resp, null);}
 	private void sendText(int code, String text, HttpServletResponse resp, String contentType) throws IOException {
 		if (text == null) text = "";
@@ -540,107 +596,15 @@ public class Servlet extends HttpServlet {
 	}
 
 	/********************************************************************************/
-	private static class CustomHeader {
-		int build;
-		String lang;
-		CustomHeader(int build) { this.build = build; }
-		public String toString() { return JSON.toJson(this); }
-	}
-	
-	static void setBuild(HttpServletResponse resp) {
-		resp.addHeader("X-Custom-Header", new CustomHeader(BConfig.build()).toString());
-	}
-	
-	/********************************************************************************/
-	private void doGetPost(ReqCtx r) throws IOException, ServletException {
-		// op/ od/
-		InputData inp = null;
-		Result result = null;
-		
-		try {
-			String ct = r.req.getContentType();
-			boolean mpfd = !r.isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
-			inp = r.isTask ? taskInputData(r) : (!mpfd ? getInputData(r.req) : postInputData(r.req));
-			inp.uri = r.uri.substring(3);
-			String op = inp.args.get("op");
-			inp.operationName = op != null ? op  : "Default";
-			
-			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("OFF"));	
-
-			if (r.customHeader != null && r.customHeader.build != 0 && r.customHeader.build != BConfig.build())
-				throw new AppException("DBUILD", "" + r.customHeader.build, "" + BConfig.build());
-			
-			result = r.nsqm.isQM ? QueueManager.doTmRequest(r.exec, inp) :  r.exec.go(inp);
-			r.exec.closeAll();
-			if (r.isTask)
-				respTask(r, inp.taskInfo, null);
-			else 
-				writeResp(r.resp, 200, result, r.build);
-		} catch (Throwable t){
-			AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
-			r.exec.closeAll();
-			result = new Result();
-			if (r.isTask)
-				respTask(r, inp.taskInfo, ex);
-			else {
-				result.text = ex.toJson();
-				result.mime = "application/json";
-				writeResp(r.resp, ex.httpStatus(), result, r.build);
-			}
-		}
-	}
-
-	/********************************************************************************/
-	private void respTask(ReqCtx r, TaskInfo ti, AppException err) {
-		r.resp.setStatus(err == null ? 200 : err.httpStatus());
-		try {
-			DBProvider provider = BConfig.getDBProvider(r.nsqm.base).ns(r.nsqm.code);
-			if (err == null)
-				provider.removeTask(ti.ns, ti.taskid);
-			else
-				provider.excTask(ti.ns, ti.taskid, err.code, err.toJson(), Stamp.fromNow(BConfig.TASKRETRIESINMIN(ti.retry - 1) * 60000).stamp());
-		} catch (Exception e) { }
-	}
-
-	/********************************************************************************/
 	private void writeResp(HttpServletResponse resp, int status, Result r, int build){
 		resp.setStatus(status);
-		if (r == null || r.isEmpty())
-			r.out = new Object();
-		if (r.out != null || r.syncs != null) {
-			StringBuffer sb = new StringBuffer();
-			sb.append("{");
-			if (r.out != null) {
-				sb.append("\"out\":").append(JSON.toJson(r.out));
-				if (r.syncs != null) sb.append(", ");
-			}
-			if (r.syncs != null) sb.append("\"syncs\":").append(r.syncs);
-			sb.append("}");
-			r.bytes = Util.toUTF8(sb.toString());
-			r.encoding = "UTF-8";
-			r.mime = "application/json";
-		} else if (r.text != null)
-			try {
-				if (r.mime == null)
-					r.mime = "text/plain";
-				if (r.encoding == null)
-					r.encoding = "UTF-8";
-				if (!"UTF-8".equals(r.encoding))
-					try { "a".getBytes(r.encoding);	} catch (Exception x) {	r.encoding = "UTF-8"; }
-				r.bytes = r.text.getBytes(r.encoding); 				
-			} catch (Exception e1) { 
-				r.bytes = null; 
-			}
-		if (r.mime == null)
-			r.mime = "application/octet-stream";
-		if (r.bytes != null){
-			setBuild(resp);
-			resp.setContentType(r.mime);
-			resp.setContentLength(r.bytes.length);
-			if (r.encoding != null)
-				resp.setCharacterEncoding(r.encoding);
-			try { Util.streamBytes(resp.getOutputStream(), r.bytes); } catch (IOException e) {	}
-		}
+		setBuild(resp);
+		if (r == null) r = Result.empty();
+		byte[] bytes = r.bytes();
+		resp.setContentLength(bytes.length);
+		resp.setContentType(r.mime);
+		resp.setCharacterEncoding(r.encoding);
+		try { Util.streamBytes(resp.getOutputStream(), bytes); } catch (IOException e) {	}
 	}
 
 	/*********************************************************************************/

@@ -138,23 +138,23 @@ public interface DBProvider {
 	public TaskInfo taskInfo(String ns, String taskid) throws AppException;
 
 	/**
-	 * Lancement d'une task, fixe startTime et incrémente retry. startAt, exc et report sont mis à null.
+	 * Lancement d'une task, fixe startTime et incrémente retry. startAt et exc sont mis à null.<br>
 	 * @param ns
 	 * @param taskid
 	 * @param startTime
+	 * @return TaskInfo mis à jour. null si la tâche n'existe plus.
 	 * @throws AppException
 	 */
 	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException ;
 
 	/**
-	 * Sortie d'une task en exception
-	 * @param ns
-	 * @param taskid
-	 * @param exc code de l'exception. "LOST" pour une tâche perdue.
-	 * @param startAt date-heure de relance
+	 * Sortie d'une task en exception. Il faut que que startTime et step soient égaux en ti et dans TaskQueue
+	 * sinon c'esst une exception portant sur une exécution parasite à ignorer.
+	 * @param ti
+	 * @param exc AppException
 	 * @throws AppException
 	 */
-	public void excTask(String ns, String taskid, String exc, long toStartAt) throws AppException ;
+	public void excTask(TaskInfo ti, AppException exc) throws AppException ;
 
 	
 	/**
@@ -163,33 +163,34 @@ public interface DBProvider {
 	 * @param taskid
 	 * @param param paramètre de la prochaine étape
 	 * @param toStartAt date-heure de lancement de la prochaine étape
+	 * @return false si la task était parasite
 	 * @throws AppException
 	 */
-	public void stepTask(String ns, String taskid, String param, long toStartAt) throws AppException ;
+	public boolean stepTask(TaskInfo ti, String param, long toStartAt) throws AppException ;
 	
 	/**
 	 * Fin d'une étape d'une tâche et son étape suivante se poursuit dans la même requête.
-	 * @param ns
-	 * @param taskid
+	 * @param taskInfo
 	 * @param param paramètre de la prochaine étape
+	 * @return false si la task était parasite
 	 * @throws AppException
 	 */
-	public void stepTask(String ns, String taskid, String param) throws AppException ;
+	public boolean stepTask(TaskInfo ti, String param) throws AppException ;
 
 	/**
-	 * Fin de la dernière étape avec conservation du résultat pendant un certain temps
+	 * Fin de la dernière étape avec ou sans conservation du résultat pendant un certain temps
 	 * @param ns
-	 * @param taskid
+	 * @param taskInfo
 	 * @param toPurgeAt
-	 * @param param
+	 * @param param report synthétique de la task : si null pas de conservation et la task est purgée
+	 * @return false si la task était parasite
 	 * @throws AppException
 	 */
-	public void finalTask(String ns, String taskid, long toPurgeAt, String param) throws AppException;
+	public boolean finalTask(TaskInfo ti, long toPurgeAt, String param) throws AppException;
 	
 	/**
-	 * Suppression d'une task, soit sur fin normale de la dernière étape sans conservation du résult, soit sur demande de l'administeur
-	 * @param ns
-	 * @param taskid
+	 * Suppression d'une task sur demande de l'administrateur
+	 * @param taskInfo
 	 * @throws AppException
 	 */
 	public void removeTask(String ns, String taskid) throws AppException ;

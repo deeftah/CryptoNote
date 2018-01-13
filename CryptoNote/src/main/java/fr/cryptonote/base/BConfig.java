@@ -305,7 +305,9 @@ public class BConfig {
 	public static int 			NSSCANPERIODINSECONDS() { return g.NSSCANPERIODINSECONDS; }
 	public static int 			S2CLEANUPPERIODINHOURS() { return g.S2CLEANUPPERIODINHOURS; }
 	public static int 			DTIMEDELAYINHOURS() { return g.DTIMEDELAYINHOURS; }
-	public static int 			TASKRETRIESINMIN(int retry) { return g.TASKRETRIESINMIN[retry < 0 ? 0 : (retry >= g.TASKRETRIESINMIN.length ? g.TASKRETRIESINMIN.length - 1 : retry)];}
+	public static long 			RETRYSTARTAT(int retry) { 
+		return retry < 0 ? Stamp.minStamp.stamp() : (retry >= g.TASKRETRIESINMIN.length ? Stamp.minStamp.stamp() : Stamp.fromNow(g.TASKRETRIESINMIN[retry] * 60000).stamp());
+	}
 
 	public static String 		mailServer() { return g.mailServer; }
 	public static String 		adminMails() { return g.adminMails; }

@@ -954,10 +954,15 @@ public class ProviderPG implements DBProvider {
 	private static final String UPDTASK1 = "update taskqueue set exc = null, tostartat = null, starttime = ?, retry = retry + 1 where ns = ? and taskid = ?;";
 
 	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException {
-		TaskInfo ti = taskInfo(ns, taskid);
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK1;
 		try {
+			beginTransaction();
+			TaskInfo ti = taskInfo(ns, taskid);
+			if (ti == null) {
+				commitTransaction();
+				return null;
+			}
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setLong(j++, startTime);
@@ -965,66 +970,95 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setString(j++, taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			ti.retry++;
+			ti.startTime = startTime;
 			return ti;
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "startTask");
 		}
 	}
 	
-	private static final String UPDTASK2 = "update taskqueue set exc = ?, tostartat = ?, starttime = null where ns = ? and taskid = ?;";
+	private static final String UPDTASK2 = "update taskqueue set exc = ?, detail = ?, tostartat = ?, retry = ?, starttime = null where ns = ? and taskid = ?;";
 
 	@Override
-	public void excTask(String ns, String taskid, String exc, long toStartAt) throws AppException {
+	public void excTask(TaskInfo ti, AppException exc) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK2;
 		try {
+			beginTransaction();
+			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
+			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
+				commitTransaction();
+				return;
+			}
+			ti.retry++;
+			ti.toStartAt = ti.retryAt();
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
-			preparedStatement.setString(j++, exc);
-			preparedStatement.setLong(j++, toStartAt);
-			preparedStatement.setString(j++, ns);
-			preparedStatement.setString(j++, taskid);
+			preparedStatement.setString(j++, exc.code());
+			preparedStatement.setString(j++, exc.toJson());
+			preparedStatement.setLong(j++, ti.toStartAt);
+			preparedStatement.setInt(j++, ti.retry);
+			preparedStatement.setString(j++, ti.ns);
+			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			commitTransaction();
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "excTask");
 		}
 	}
 
-	private static final String UPDTASK3 = "update taskqueue set tostartat = ?, param = ?, exc = null, starttime = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
+	private static final String UPDTASK3 = "update taskqueue set tostartat = ?, param = ?, exc = null, detail = null, starttime = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
 
+	// Fin d'une étape d'une tâche avec relance d'une nouvelle requête pour continuation.
 	@Override
-	public void stepTask(String ns, String taskid, String param, long toStartAt) throws AppException {
+	public boolean stepTask(TaskInfo ti, String param, long toStartAt) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK3;
 		try {
+			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
+			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
+				return false;
+			}
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setLong(j++, toStartAt);
 			preparedStatement.setString(j++, param);
-			preparedStatement.setString(j++, ns);
-			preparedStatement.setString(j++, taskid);
+			preparedStatement.setString(j++, ti.ns);
+			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			return true;
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "excTask");
 		}
 	}
 
-	private static final String UPDTASK4 = "update taskqueue set param = ?, tostartat = null, exc = null, starttime = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
+	private static final String UPDTASK4 = "update taskqueue set param = ?, tostartat = null, exc = null, detail = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
 
+	// Fin d'une étape d'une tâche et son étape suivante se poursuit dans la même requête.
 	@Override
-	public void stepTask(String ns, String taskid, String param) throws AppException {
+	public boolean stepTask(TaskInfo ti, String param) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK4;
 		try {
+			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
+			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
+				return false;
+			}
 			preparedStatement = conn().prepareStatement(sql);
+			ti.step++;
 			int j = 1;
 			preparedStatement.setString(j++, param);
-			preparedStatement.setString(j++, ns);
-			preparedStatement.setString(j++, taskid);
+			preparedStatement.setString(j++, ti.ns);
+			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			return true;
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "excTask");
 		}
@@ -1032,19 +1066,28 @@ public class ProviderPG implements DBProvider {
 
 	private static final String UPDTASK5 = "update taskqueue set topurgeat = ?, param = ?, tostartat = null, exc = null, starttime = null, retry = 0, step = null where ns = ? and taskid = ?;";
 
+	// Fin de la dernière étape avec ou sans conservation du résultat pendant un certain temps
 	@Override
-	public void finalTask(String ns, String taskid, long toPurgeAt, String param) throws AppException {
+	public boolean finalTask(TaskInfo ti, long toPurgeAt, String param) throws AppException {
 		PreparedStatement preparedStatement = null;
-		sql = UPDTASK5;
+		sql = param == null ? DELTASK : UPDTASK5;
 		try {
+			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
+			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
+				return false;
+			}
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
-			preparedStatement.setLong(j++, toPurgeAt);
-			preparedStatement.setString(j++, param);
-			preparedStatement.setString(j++, ns);
-			preparedStatement.setString(j++, taskid);
+			if (param != null) {
+				preparedStatement.setLong(j++, toPurgeAt);
+				preparedStatement.setString(j++, param);
+			}
+			preparedStatement.setString(j++, ti.ns);
+			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			return true;
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "excTask");
 		}
