@@ -13,6 +13,7 @@ public class TaskInfo {
 	public int 		qn;
 	public int 		retry;
 	public String 	exc;
+	public String 	detail;
 	public long		startTime;
 	
 	public TaskInfo() { }

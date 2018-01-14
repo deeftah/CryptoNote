@@ -152,9 +152,10 @@ public interface DBProvider {
 	 * sinon c'esst une exception portant sur une exécution parasite à ignorer.
 	 * @param ti
 	 * @param exc AppException
+	 * @return false si la task était parasite
 	 * @throws AppException
 	 */
-	public void excTask(TaskInfo ti, AppException exc) throws AppException ;
+	public boolean excTask(TaskInfo ti, AppException exc) throws AppException ;
 
 	
 	/**

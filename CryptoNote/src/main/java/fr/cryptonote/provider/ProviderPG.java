@@ -951,7 +951,7 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-	private static final String UPDTASK1 = "update taskqueue set exc = null, tostartat = null, starttime = ?, retry = retry + 1 where ns = ? and taskid = ?;";
+	private static final String UPDTASK1 = "update taskqueue set exc = null, detail = null, tostartat = null, starttime = ?, retry = retry + 1 where ns = ? and taskid = ?;";
 
 	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException {
 		PreparedStatement preparedStatement = null;
@@ -971,6 +971,9 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 			ti.retry++;
+			ti.exc = null;
+			ti.detail = null;
+			ti.toStartAt = 0;
 			ti.startTime = startTime;
 			return ti;
 		} catch(Exception e){
@@ -978,10 +981,10 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 	
-	private static final String UPDTASK2 = "update taskqueue set exc = ?, detail = ?, tostartat = ?, retry = ?, starttime = null where ns = ? and taskid = ?;";
+	private static final String UPDTASK2 = "update taskqueue set exc = ?, detail = ?, tostartat = ?, starttime = null where ns = ? and taskid = ?;";
 
 	@Override
-	public void excTask(TaskInfo ti, AppException exc) throws AppException {
+	public boolean excTask(TaskInfo ti, AppException exc) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK2;
 		try {
@@ -990,7 +993,7 @@ public class ProviderPG implements DBProvider {
 			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
 				commitTransaction();
-				return;
+				return false;
 			}
 			ti.retry++;
 			ti.toStartAt = ti.retryAt();
@@ -1005,6 +1008,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 			commitTransaction();
+			return true;
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "excTask");
 		}

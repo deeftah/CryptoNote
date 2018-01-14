@@ -560,7 +560,10 @@ public class Servlet extends HttpServlet {
 			
 			result = r.nsqm.isQM ? QueueManager.doTmRequest(r.exec, inp) : r.exec.go(inp);
 			r.exec.closeAll();
-			writeResp(r.resp, 200, result, r.build);
+			if (r.isTask) {
+				sendText(200, null, r.resp);
+			} else 
+				writeResp(r.resp, 200, result, r.build);
 		} catch (Throwable t){
 			AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
 			r.exec.closeAll();
