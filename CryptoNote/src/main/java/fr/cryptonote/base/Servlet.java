@@ -28,7 +28,6 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import fr.cryptonote.base.BConfig.Nsqm;
-import fr.cryptonote.provider.DBProvider;
 
 public class Servlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -571,7 +570,7 @@ public class Servlet extends HttpServlet {
 				try {
 					r.exec.dbProvider().excTask(inp.taskInfo(), ex);
 				} catch (Exception e) {}
-				sendText(200, null, r.resp);
+				sendText(500, null, r.resp);
 			} else
 				writeResp(r.resp, ex.httpStatus(), Result.text(ex.toJson(), null, "application/json"), r.build);
 		}
@@ -612,15 +611,22 @@ public class Servlet extends HttpServlet {
 
 	/*********************************************************************************/
 	private InputData taskInputData(ReqCtx r) throws AppException {
+		InputData inp = new InputData();
 		String key = r.req.getParameter("key");
 		if (!r.nsqm.pwd().equals(key)) throw new AppException("STASKKEY");
-		InputData inp = new InputData();
-		DBProvider provider = BConfig.getDBProvider(r.nsqm.base).ns(r.nsqm.code);
-		inp.taskInfo = provider.taskInfo(r.nsqm.code, r.uri.substring(3));
-		inp.args.put("op", inp.taskInfo.opName);
-		inp.taskInfo.startTime = Stamp.fromNow(0).stamp();
-		provider.startTask(inp.taskInfo.ns, inp.taskInfo.taskid, inp.taskInfo.startTime);
-		return inp;
+		String s = r.uri.substring(3);
+		int i = s.indexOf('/');
+		String taskid = i == -1 ? s : s.substring(0, i);
+		s = s.substring(i + 1);
+		int step = 0;
+		try { step = Integer.parseInt(s); } catch (Exception e) {}
+		// public TaskInfo startTask(String ns, String taskid, int step, long startTime)
+		inp.taskInfo = r.exec.dbProvider().startTask(r.nsqm.code, taskid, step, Stamp.fromNow(0).stamp());
+		if (inp.taskInfo != null)  {
+			inp.args.put("op", inp.taskInfo.opName);
+			return inp;
+		} else
+			return null;
 	}
 	
 	/********************************************************************************/

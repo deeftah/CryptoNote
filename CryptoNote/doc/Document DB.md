@@ -293,7 +293,7 @@ Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au co
 #### Enregistrement du début d'exécution 
 Il est effectué dans le serveur d'exécution.
 - **enregistrement de `TaskQueue` non trouvé** : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. La tâche était terminée ou supprimée par l'administrateur.
-- **step demandée inférieure à celle enregistrée (ou celle enregistrée est null - trace)** : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. L'étape était terminée, le QM Datastore n'en savait rien (et a même lancé l'étape suivante).
+- **step demandée inférieure à celle enregistrée (ou celle enregistrée est 0 - trace)** : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. L'étape était terminée, le QM Datastore n'en savait rien (et a même lancé l'étape suivante).
 - **steps demandée et enregistrée identiques**.
     - l'état enregistré n'a pas de `startTime`. C'est le cas normal, du premier lancement ou d'une relance. On inscrit une `startTime` et le `retry` est incrémenté.
     - l'état enregistré a une `startTime`. On écrase la `startTime` (le `retry` est laissé tel quel) ce qui fera ignorer la fin de la précédente. La nouvelle exécution devient officielle (l'autre ayant de fortes chances de ne plus être suivie par le QM Datastore).

@@ -776,7 +776,7 @@ public class ProviderPG implements DBProvider {
 			}
 
 			if (collect.s2Purge != null) for(String clid : collect.s2Purge) blobProvider().blobDeleteAll(clid);
-			if (collect.tq != null) for(TaskInfo ti : collect.tq) insertTask(ti);
+			if (collect.tq != null) for(TaskInfo ti : collect.tq) newTask(ti);
 			if (collect.s2Cleanup != null) for(String clid : collect.s2Cleanup) S2Cleanup.startCleanup(clid);
 			commitTransaction();
 			collect.afterCommit();
@@ -906,6 +906,7 @@ public class ProviderPG implements DBProvider {
 	CREATE TABLE taskqueue (
 	  	ns varchar(16) NOT NULL,
 	  	taskid varchar(255) NOT NULL,
+		step int NOT NULL,
 		tostartat bigint,
 		topurgeat bigint, 
 	  	opname varchar(16) NOT NULL,
@@ -926,10 +927,10 @@ public class ProviderPG implements DBProvider {
 	*/
 	
 	private static final String INSERTTASK = 
-		"insert into taskqueue (ns, taskid, step, tostartat, opname, info, qn, retry, param) values (?,?,?,?,?,?,?,?,?);";
+		"insert into taskqueue (ns, taskid, step, tostartat, opname, info, qn, retry, param) values (?,?,1,?,?,?,?,0,?);";
 		
 	@Override 
-	public void insertTask(TaskInfo ti) throws AppException{
+	public void newTask(TaskInfo ti) throws AppException{
 		PreparedStatement preparedStatement = null;
 		sql = INSERTTASK;
 		try {
@@ -937,7 +938,6 @@ public class ProviderPG implements DBProvider {
 			int j = 1;
 			preparedStatement.setString(j++, ti.ns);
 			preparedStatement.setString(j++, ti.taskid);
-			preparedStatement.setInt(j++, 1);
 			preparedStatement.setLong(j++, ti.toStartAt);
 			preparedStatement.setString(j++, ti.opName);
 			preparedStatement.setString(j++, ti.info == null ? "" : ti.info);
@@ -951,26 +951,28 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-	private static final String UPDTASK1 = "update taskqueue set exc = null, detail = null, tostartat = null, starttime = ?, retry = retry + 1 where ns = ? and taskid = ?;";
+	private static final String UPDTASK1 = "update taskqueue set exc = null, detail = null, tostartat = null, starttime = ?, retry = ? where ns = ? and taskid = ?;";
 
-	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException {
+	@Override public TaskInfo startTask(String ns, String taskid, int step, long startTime) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK1;
 		try {
 			beginTransaction();
 			TaskInfo ti = taskInfo(ns, taskid);
-			if (ti == null) {
+			if (ti == null || ti.step == 0 || step != ti.step) {
 				commitTransaction();
 				return null;
 			}
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setLong(j++, startTime);
+			if (ti.startTime == 0) 	ti.retry++;
+			preparedStatement.setInt(j++, ti.retry);
 			preparedStatement.setString(j++, ns);
 			preparedStatement.setString(j++, taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
-			ti.retry++;
+			commitTransaction();
 			ti.exc = null;
 			ti.detail = null;
 			ti.toStartAt = 0;
@@ -980,8 +982,27 @@ public class ProviderPG implements DBProvider {
 			throw err(preparedStatement, null, e, "startTask");
 		}
 	}
-	
-	private static final String UPDTASK2 = "update taskqueue set exc = ?, detail = ?, tostartat = ?, starttime = null where ns = ? and taskid = ?;";
+
+	private static final String UPDTASK2b = "update taskqueue set exc = 'LOST', detail = null, tostartat = ?, retry = retry + 1, starttime = null "
+			+ "where starttime IS NOT NULL and starttime  <= ?;";
+
+	public void setLostTask(long minStartTime, long toStartAt) throws AppException {
+		PreparedStatement preparedStatement = null;
+		sql = UPDTASK2b;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setLong(j++, toStartAt);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+			commitTransaction();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "setLostTask");
+		}
+		
+	}
+
+	private static final String UPDTASK2 = "update taskqueue set exc = ?, detail = ?, tostartat = ?, retry = ?, starttime = null where ns = ? and taskid = ?;";
 
 	@Override
 	public boolean excTask(TaskInfo ti, AppException exc) throws AppException {
@@ -990,7 +1011,7 @@ public class ProviderPG implements DBProvider {
 		try {
 			beginTransaction();
 			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
-			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+			if (tidb == null || tidb.startTime != ti.startTime) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
 				commitTransaction();
 				return false;
@@ -1016,15 +1037,16 @@ public class ProviderPG implements DBProvider {
 
 	private static final String UPDTASK3 = "update taskqueue set tostartat = ?, param = ?, exc = null, detail = null, starttime = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
 
-	// Fin d'une étape d'une tâche avec relance d'une nouvelle requête pour continuation.
+	// Fin d'une étape d'une tâche avec lancement d'une nouvelle requête pour continuation à l'étape suivante.
 	@Override
 	public boolean stepTask(TaskInfo ti, String param, long toStartAt) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK3;
 		try {
 			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
-			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+			if (tidb == null || tidb.startTime != ti.startTime) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
+				commitTransaction();
 				return false;
 			}
 			preparedStatement = conn().prepareStatement(sql);
@@ -1035,6 +1057,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			commitTransaction();
 			return true;
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "excTask");
@@ -1050,25 +1073,30 @@ public class ProviderPG implements DBProvider {
 		sql = UPDTASK4;
 		try {
 			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
-			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+			if (tidb == null || tidb.startTime != ti.startTime) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
+				commitTransaction();
 				return false;
 			}
 			preparedStatement = conn().prepareStatement(sql);
 			ti.step++;
+			ti.retry = 0;
+			ti.exc = null;
+			ti.toStartAt = 0;
 			int j = 1;
 			preparedStatement.setString(j++, param);
 			preparedStatement.setString(j++, ti.ns);
 			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
+			commitTransaction();
 			return true;
 		} catch(Exception e){
 			throw err(preparedStatement, null, e, "excTask");
 		}
 	}
 
-	private static final String UPDTASK5 = "update taskqueue set topurgeat = ?, param = ?, tostartat = null, exc = null, starttime = null, retry = 0, step = null where ns = ? and taskid = ?;";
+	private static final String UPDTASK5 = "update taskqueue set topurgeat = ?, param = ?, tostartat = null, exc = null, starttime = null, retry = 0, step = 0 where ns = ? and taskid = ?;";
 
 	// Fin de la dernière étape avec ou sans conservation du résultat pendant un certain temps
 	@Override
@@ -1077,8 +1105,9 @@ public class ProviderPG implements DBProvider {
 		sql = param == null ? DELTASK : UPDTASK5;
 		try {
 			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
-			if (tidb == null || (tidb.step != ti.step && tidb.startTime != ti.startTime)) {
+			if (tidb == null || tidb.startTime != ti.startTime) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
+				commitTransaction();
 				return false;
 			}
 			preparedStatement = conn().prepareStatement(sql);
@@ -1115,16 +1144,64 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-//	public static class TaskMin implements Comparable<TaskMin> {
-//		public String 	ns;
-//		public String 	taskid;
-//		public long 	startAt;
-//		public int		qn;
-
-	private static final String SELTI2 = "select ns, taskid, startat, qn from taskqueue where startat is not null and startat <= ?;";
+	private static final String SELTI3a = "select step, tostartat, topurgeat, opname, info, qn, retry, exc, startTime";
+	private static final String SELTI3b = ", param, detail ";
+	private static final String SELTI3c = " from taskqueue where ";
 	
 	@Override
-	public Collection<TaskMin> candidateTasks(long before, Collection<String> listNs) throws AppException {
+	public TaskInfo taskInfo(String ns, String taskid) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		TaskInfo ti = null;
+		sql = SELTI3a + SELTI3b + SELTI3c + " ns = ? and taskid = ?;";
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
+			rs = preparedStatement.executeQuery();
+			if (rs.next())
+				ti = ti(rs, false);
+			rs.close();
+			preparedStatement.close();
+			return ti;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "taskReport");
+		}
+	}
+	
+	private TaskInfo ti(ResultSet rs, boolean court) throws SQLException {
+		TaskInfo ti = new TaskInfo();
+		ti.ns = rs.getString("ns");;
+		ti.taskid = rs.getString("taskid");;;
+		ti.step = rs.getInt("step");
+		Long l = rs.getLong("tostartAt");
+		ti.toStartAt = l == null ? 0 : l;
+		l = rs.getLong("topurgeat");
+		ti.toPurgeAt = l == null ? 0 : l;
+		ti.opName = rs.getString("opname");
+		if (!court) ti.param = rs.getString("param");
+		ti.info = rs.getString("info");
+		ti.qn = rs.getInt("qn");
+		ti.retry = rs.getInt("retry");
+		ti.exc = rs.getString("exc");
+		if (!court) ti.detail = rs.getString("detail");
+		l = rs.getLong("startTime");
+		ti.startTime = l == null ? 0 : l;
+		return ti;
+	}
+	
+	//	public static class TaskMin implements Comparable<TaskMin> {
+	//	public String 	ns;
+	//	public String 	taskid;
+	//  public int		step;
+	//	public long 	startAt;
+	//	public int		qn;
+	
+	private static final String SELTI2 = "select ns, taskid, step, startat, qn from taskqueue where startat is not null and startat <= ?;";
+	
+	@Override
+	public Collection<TaskMin> candidateTasks(long before) throws AppException {
 		ArrayList<TaskMin> lst = new ArrayList<TaskMin>();
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
@@ -1134,7 +1211,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setLong(1, before);
 			rs = preparedStatement.executeQuery();
 			while (rs.next())
-				lst.add(new TaskMin(rs.getString("ns"), rs.getString("taskid"), rs.getLong("startAt"), rs.getInt("qn")));
+				lst.add(new TaskMin(rs.getString("ns"), rs.getString("taskid"), rs.getInt("step"), rs.getLong("startAt"), rs.getInt("qn")));
 			rs.close();
 			preparedStatement.close();
 			return lst;
@@ -1142,92 +1219,73 @@ public class ProviderPG implements DBProvider {
 			throw err(preparedStatement, rs, e, "taskReport");
 		}
 	}
-
-	private static final String SELTI3 = 
-		"select step, startat, opname, param, info, qn, retry, exc, startTime from taskqueue where ns = ? and taskid = ?;";
 	
 	@Override
-	public TaskInfo taskInfo(String ns, String taskid) throws AppException {
+	public Collection<TaskInfo> errTask(String ns, long toStartAtMin, long toStartAtMax, String exc) throws AppException {
+		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
+		StringBuffer sb = new StringBuffer();
+		sb.append(SELTI3a).append(SELTI3c).append(" toStartAt NOT NULL");
+		if (toStartAtMin != 0) sb.append(" and tostartat >= ?");
+		if (toStartAtMax != 0) sb.append(" and tostartat >= ?");
+		if (ns != null) sb.append(" and ns = ?");
+		if (exc != null) sb.append(" and exc = ?");
+		sb.setLength(sb.length() - 1);
+		sql = sb.append(";").toString();
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
-		TaskInfo ti = null;
-		sql = SELTI3;
 		try {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
-			preparedStatement.setString(j++, ns);
-			preparedStatement.setString(j++, taskid);
+			if (toStartAtMin != 0) preparedStatement.setLong(j++, toStartAtMin);
+			if (toStartAtMax != 0) preparedStatement.setLong(j++, toStartAtMax);
+			if (ns != null) preparedStatement.setString(j++, ns);
+			if (exc != null) preparedStatement.setString(j++, exc);
 			rs = preparedStatement.executeQuery();
-			if (rs.next()) {
-				ti = new TaskInfo();
-				ti.ns = ns;
-				ti.taskid = taskid;;
-				Integer x = rs.getInt("step");
-				ti.step = x == null ? 0 : x;
-				Long l = rs.getLong("startAt");
-				ti.toStartAt = l == null ? 0 : l;
-				ti.opName = rs.getString("opname");
-				ti.param = rs.getString("param");
-				ti.info = rs.getString("info");
-				ti.qn = rs.getInt("qn");
-				ti.retry = rs.getInt("retry");
-				ti.exc = rs.getString("exc");
-				l = rs.getLong("startTime");
-				ti.startTime = l == null ? 0 : l;
-			}
+			while (rs.next())
+				tiList.add(ti(rs, true));
 			rs.close();
 			preparedStatement.close();
-			return ti;
+			return tiList;
 		} catch(Exception e){
-			throw err(preparedStatement, rs, e, "taskReport");
+			throw err(preparedStatement, rs, e, "listTask");
 		}
 	}
 
-//	private static final String SELTI1 = "select clid, nextstart, retry, info from taskqueue ";
-//
-//	@Override
-//	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException {
-//		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
-//		StringBuffer sb = new StringBuffer();
-//		sb.append(SELTI1);
-//		int j = 1;
-//		if (BEGINclid != null) sb.append("where clid >= ? and clid < ?");
-//		if (AFTERnextstart != 0) {sb.append(j++ == 1 ? "where " : " and ").append("nextstart <= ?");}
-//		if (MINretry != 0) {sb.append(j++ == 1 ? "where " : " and ").append("retry >= ?");}
-//		if (CONTAINSinfo != null) {sb.append(j++ == 1 ? "where " : " and ").append("info CONTAINS ?");}
-//		sql = sb.append(";").toString();
-//		PreparedStatement preparedStatement = null;
-//		ResultSet rs = null;
-//		try {
-//			preparedStatement = conn().prepareStatement(sql);
-//			j = 1;
-//			if (BEGINclid != null) {
-//				preparedStatement.setString(j++, BEGINclid);
-//				preparedStatement.setString(j++, BEGINclid + '\u1FFF');
-//			}
-//			if (AFTERnextstart != 0) preparedStatement.setLong(j++, AFTERnextstart);
-//			if (MINretry != 0) preparedStatement.setInt(j++, MINretry);
-//			if (CONTAINSinfo != null) preparedStatement.setString(j++, CONTAINSinfo);
-//			rs = preparedStatement.executeQuery();
-//			while (rs.next()){
-//				long nextStart = rs.getLong("nextstart");
-//				Id id = new Id(rs.getString("clid"));
-//				int retry = rs.getInt("retry");
-//				String info = rs.getString("info");
-//				tiList.add(new TaskInfo(ns(), id, nextStart, retry, info));
-//			}
-//			rs.close();
-//			preparedStatement.close();
-//			return tiList;
-//		} catch(Exception e){
-//			throw err(preparedStatement, rs, e, "listTask");
-//		}
-//	}
+	@Override
+	public Collection<TaskInfo> traceTask(String ns, long toPurgeAtMin, long toPurgeAtMax, String opname) throws AppException {
+		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
+		StringBuffer sb = new StringBuffer();
+		sb.append(SELTI3a).append(SELTI3c).append(" toStartAt IS NULL and startTime is NULL and step = 0 ");
+		if (toPurgeAtMin != 0) sb.append(" and topurgeat >= ?");
+		if (toPurgeAtMax != 0) sb.append(" and topurgeat >= ?");
+		if (ns != null) sb.append(" and ns = ?");
+		if (opname != null) sb.append(" and opname = ?");
+		sb.setLength(sb.length() - 1);
+		sql = sb.append(";").toString();
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			if (toPurgeAtMin != 0) preparedStatement.setLong(j++, toPurgeAtMin);
+			if (toPurgeAtMax != 0) preparedStatement.setLong(j++, toPurgeAtMax);
+			if (ns != null) preparedStatement.setString(j++, ns);
+			if (opname != null) preparedStatement.setString(j++, opname);
+			rs = preparedStatement.executeQuery();
+			while (rs.next())
+				tiList.add(ti(rs, true));
+			rs.close();
+			preparedStatement.close();
+			return tiList;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "listTask");
+		}
+	}
 
 	private static String SELTIPARAM = "select param from task where ns = ? and taskid = ? ;";
 
 	@Override
-	public String taskReport(String ns, String taskid) throws AppException {
+	public String taskParam(String ns, String taskid) throws AppException {
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String report = "";
@@ -1240,6 +1298,30 @@ public class ProviderPG implements DBProvider {
 			rs = preparedStatement.executeQuery();
 			if (rs.next())
 				report = rs.getNString("param");
+			rs.close();
+			preparedStatement.close();
+			return report;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "taskReport");
+		}
+	}
+
+	private static String SELTIDETAIL = "select detail from task where ns = ? and taskid = ? ;";
+
+	@Override
+	public String taskDetail(String ns, String taskid) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		String report = "";
+		sql = SELTIDETAIL;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			int j = 1;
+			preparedStatement.setString(j++, ns);
+			preparedStatement.setString(j++, taskid);
+			rs = preparedStatement.executeQuery();
+			if (rs.next())
+				report = rs.getNString("detail");
 			rs.close();
 			preparedStatement.close();
 			return report;
@@ -1313,7 +1395,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setString(j++, clid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
-			insertTask(ti);
+			newTask(ti);
 			if (!transaction) commitTransaction();
 		} catch(Exception e){ 
 			throw err(preparedStatement, null, e, "setS2Cleanup");

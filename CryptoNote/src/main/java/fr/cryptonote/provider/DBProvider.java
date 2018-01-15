@@ -133,7 +133,7 @@ public interface DBProvider {
 	 * @param ti
 	 * @throws AppException
 	 */
-	public void insertTask(TaskInfo ti) throws AppException ;
+	public void newTask(TaskInfo ti) throws AppException ;
 
 	public TaskInfo taskInfo(String ns, String taskid) throws AppException;
 
@@ -141,11 +141,12 @@ public interface DBProvider {
 	 * Lancement d'une task, fixe startTime et incrémente retry. startAt et exc sont mis à null.<br>
 	 * @param ns
 	 * @param taskid
+	 * @param step
 	 * @param startTime
 	 * @return TaskInfo mis à jour. null si la tâche n'existe plus.
 	 * @throws AppException
 	 */
-	public TaskInfo startTask(String ns, String taskid, long startTime) throws AppException ;
+	public TaskInfo startTask(String ns, String taskid, int step, long startTime) throws AppException ;
 
 	/**
 	 * Sortie d'une task en exception. Il faut que que startTime et step soient égaux en ti et dans TaskQueue
@@ -190,25 +191,26 @@ public interface DBProvider {
 	public boolean finalTask(TaskInfo ti, long toPurgeAt, String param) throws AppException;
 	
 	/**
+	 * Positionne l'exception LOST à toutes les TaskInfo dont la startTime est non null et inférieure à minStartTime.
+	 * retry est incrémenté, startTime mis à null.
+	 * @param minStartTime
+	 * @param toStartAt
+	 * @throws AppException
+	 */
+	public void setLostTask(long minStartTime, long toStartAt) throws AppException;
+	
+	/**
 	 * Suppression d'une task sur demande de l'administrateur
 	 * @param taskInfo
 	 * @throws AppException
 	 */
 	public void removeTask(String ns, String taskid) throws AppException ;
 
-//	/**
-//	 * Liste les tasks en attente filtré le cas échéant par les paramètres de ti
-//	 * @param ti
-//	 * ti.id.docclass : restreint aux tasks de cette classe
-//	 * ti.id.docid : restreint à celles commençant par ce docid
-//	 * ti.nexstart : restreint à celles à lancer avant et à cette stamp
-//	 * ti.cron : restreint à celles de ce cron
-//	 * @return
-//	 * @throws AppException
-//	 */
-//	public Collection<TaskInfo> listTask(String BEGINclid, long AFTERnextstart, int MINretry, String CONTAINSinfo) throws AppException ;
+	public Collection<TaskMin> candidateTasks(long before) throws AppException ;
 
-	public Collection<TaskMin> candidateTasks(long before, Collection<String> listNs) throws AppException ;
+	public Collection<TaskInfo> errTask(String ns, long toStartAtMin, long toStartAtMax, String exc) throws AppException ;
+
+	public Collection<TaskInfo> traceTask(String ns, long toPurgeAtMin, long toPurgeAtMax, String opname) throws AppException ;
 
 	/**
 	 * Retourne le report d'une task 
@@ -217,7 +219,16 @@ public interface DBProvider {
 	 * @return
 	 * @throws AppException
 	 */
-	public String taskReport(String ns, String taskid) throws AppException;
+	public String taskParam(String ns, String taskid) throws AppException;
+
+	/**
+	 * Retourne le report d'une task 
+	 * @param ns
+	 * @param taskid
+	 * @return
+	 * @throws AppException
+	 */
+	public String taskDetail(String ns, String taskid) throws AppException;
 
 	/*************************************************************************************/
 	/**

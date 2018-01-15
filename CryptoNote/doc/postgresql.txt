@@ -59,7 +59,7 @@ DROP TABLE IF EXISTS taskqueue;
 CREATE TABLE taskqueue (
   	ns varchar(16) NOT NULL,
   	taskid varchar(255) NOT NULL,
-  	step int,
+  	step int NOT NULL,
 	tostartat bigint, 
 	topurgeat bigint, 
   	opname varchar(16) NOT NULL,

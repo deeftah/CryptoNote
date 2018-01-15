@@ -106,9 +106,7 @@ public class QueueManager implements Runnable {
 		}
 		
 		if ("list".equals(op)){
-			Result r = new Result();
-			r.out = listBackLog();
-			return r;
+			return Result.json(listBackLog());
 		}
 		
 		throw new AppException("BQMOP", op);
@@ -178,14 +176,14 @@ public class QueueManager implements Runnable {
 			if (tx != null) {
 				if (tx.step != tm.step) {
 					if (tx.workerIndex != 0)
-						tx.workerIndex.toIgnore(); 	// pour que le worker ne tente plus de retry éventuel de l'ancienne, voire ne la lance pas
-				} else {							// cette step est déjà connue ici
+						qm.toIgnore(tx.workerIndex); 	// pour que le worker ne tente plus de retry éventuel de l'ancienne, voire ne la lance pas
+				} else {								// cette step est déjà connue ici
 					if (tx.workerIndex != 0) 
-						return;						// déjà en cours d'exécution par un worker (rien de nouveau, il faut le laisser finir)	
+						return;							// déjà en cours d'exécution par un worker (rien de nouveau, il faut le laisser finir)	
 				}
-				byStamp.remove(tx.stampKey()); 		// on enlève l'ancienne de la queue (si elle l'y était)
+				byStamp.remove(tx.stampKey()); 			// on enlève l'ancienne de la queue (si elle l'y était)
 			}
-			rawinsert(tm);							// on insère la nouvelle étape (ce qui peut cacher l'ancienne)	
+			rawinsert(tm);								// on insère la nouvelle étape (ce qui peut cacher l'ancienne)	
 		}
 
 		private synchronized void remove(Worker w){
@@ -213,6 +211,11 @@ public class QueueManager implements Runnable {
 				workers[k] = new Worker(i, j+1);
 	}
 
+	private void toIgnore(int workerIndex) {
+		if (workerIndex >= 0 && workerIndex < workers.length)
+			workers[workerIndex].toIgnore = true;
+	}
+	
 	private void startWorkers(){
 		for(int i = 0; i < workers.length; i++){
 			Worker w = workers[i];
@@ -249,13 +252,13 @@ public class QueueManager implements Runnable {
 		ArrayList<TaskMin> tmp = new ArrayList<TaskMin>();
 		nextFullScan = Stamp.fromNow(myNsqm.scanlapseinseconds * 1000);
 		long minStartTime = Stamp.fromNow(- myNsqm.scanlapseinseconds * 4000).stamp();
-		long startAt = Stamp.fromNow(0).stamp();
+		long toStartAt = Stamp.fromNow(0).stamp();
 		for(String db : myDBs) {
 			DBProvider provider = null;
 			try {
 				provider = BConfig.getDBProvider(db);
-				provider.lostTask(minStartTime, startAt);
-				Collection<TaskMin> tiList = provider.candidateTasks(nextFullScan.stamp(), myNSnames);
+				provider.setLostTask(minStartTime, toStartAt);
+				Collection<TaskMin> tiList = provider.candidateTasks(nextFullScan.stamp());
 				for(TaskMin ti : tiList) tmp.add(ti);
 			} catch (AppException e){
 				Util.log.log(Level.SEVERE, "Queue Scan [" + db + "]", e);
@@ -309,6 +312,7 @@ public class QueueManager implements Runnable {
 	private class Worker implements Runnable {
 		private int 	queue;
 		private int 	index;
+		private boolean toIgnore = false;
 		private TaskMin tm;
 		private BlockingQueue<TaskMin> workerQueue =  new ArrayBlockingQueue<TaskMin>(10);
 		
@@ -321,11 +325,13 @@ public class QueueManager implements Runnable {
 						Thread.sleep(10000);
 						if (!running) break;
 					} else {
+						toIgnore = false;
 						tm = workerQueue.poll(10, TimeUnit.SECONDS);
 						if (!running) break;
 						if (tm != null) {
 							for(int i = 0; i < 3; i++) {
-								int st = Util.postSrv(tm.ns, tm.taskid, null);
+								if (toIgnore) break;
+								int st = Util.postSrv(tm.ns, tm.taskid + "/" + tm.step, null);
 								if (!running) break;
 								if (st != 2) break;
 								// on tente quand même de surmonter un problème techniquue fugitif

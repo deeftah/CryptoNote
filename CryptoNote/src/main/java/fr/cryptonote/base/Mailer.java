@@ -217,11 +217,9 @@ public class Mailer {
 			boolean isPing = false;
 		}
 		Param param;
-		@Override public void work() throws AppException {
-			if (param.isPing)
-				result().text = pingMail();
-			else
-				result().text = sendMail(param.mailer, param.to, param.subject, param.text);
+		@Override public Result work() throws AppException {
+			String text = param.isPing ? pingMail() : sendMail(param.mailer, param.to, param.subject, param.text);
+			return Result.text(text, "UTF-8", "text/plain");
 		}
 	}
 }

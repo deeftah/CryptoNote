@@ -43,12 +43,13 @@ public class OnOff {
 		}
 		private Param param;
 		
-		@Override public void work() throws AppException {
+		@Override public Result work() throws AppException {
 			if (!isSudo())	throw new AppException("SADMINOP");
 			if (param.onoff < 0) param.onoff = 0;
 			String nsc = execContext().nsqm().code;
 			if (!nsc.equals(NAMESPACE)) param.ns = nsc;
 			execContext().dbProvider().setOnOff(param.ns, param.onoff);
+			return Result.empty();
 		}
 		
 		@Override public void afterWork() throws AppException {
@@ -64,15 +65,15 @@ public class OnOff {
 		@SuppressWarnings("unused")
 		private Param param;
 		
-		@Override public void work() throws AppException {
+		@Override public Result work() throws AppException {
 			String nsc = execContext().nsqm().code;
 			if (!nsc.equals(NAMESPACE)) {
 				HashMap<String,Integer> st = new HashMap<String,Integer>();
 				st.put(nsc, status(nsc, false));
 				st.put("z", status("z", false));
-				result().text = JSON.toJson(st);
+				return Result.json(st);
 			} else {
-				result().text = JSON.toJson(status());				
+				return Result.json(status());				
 			}
 		}
 		

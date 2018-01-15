@@ -43,7 +43,7 @@ public class TaskInfo {
 		public transient int workerIndex;
 		public TaskMin() {}
 		public TaskMin(TaskInfo ti) { ns = ti.ns; taskid = ti.taskid; step = ti.step; toStartAt = ti.toStartAt; qn = ti.qn; }
-		public TaskMin(String ns, String taskid, long startAt, int qn) { this.ns = ns; this.taskid = taskid; this.toStartAt = startAt; this.qn = qn; }
+		public TaskMin(String ns, String taskid, int step, long startAt, int qn) { this.ns = ns; this.taskid = taskid; this.step = step; this.toStartAt = startAt; this.qn = qn; }
 		public long startAtEpoch() { return Stamp.fromStamp(toStartAt).epoch(); }
 		
 		public String pk() { return ns + "." + taskid; }

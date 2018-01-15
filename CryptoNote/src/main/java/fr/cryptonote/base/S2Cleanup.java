@@ -76,12 +76,13 @@ public class S2Cleanup extends Document {
 		
 		Param param;
 
-		@Override public void work() throws AppException {
+		@Override public Result work() throws AppException {
 			DBProvider dbProvider = ExecContext.current().dbProvider();
 			HashSet<String> shas = dbProvider.shas(new Id(param.clid));
 			boolean emptyBasket = dbProvider.blobProvider().cleanup(param.clid, shas);
 			if (!emptyBasket)
 				startCleanup(param.clid);
+			return Result.taskComplete();
 		}
 	}
 	
