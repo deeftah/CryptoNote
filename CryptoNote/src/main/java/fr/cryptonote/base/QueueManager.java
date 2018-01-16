@@ -78,36 +78,44 @@ public class QueueManager implements Runnable {
 		if (!hostsQM) return null;
 		String op = inp.args().get("op");
 		String key = inp.args().get("key");
+		String jsonp = inp.args().get("param");
 
 		if ("inq".equals(op)){
 			if (key == null || !key.equals(myNsqm.pwd())) throw new AppException("SQMKEY");
-			String jsonp = inp.args().get("param");
-			if (jsonp != null) {
-				try {
-					TaskMin tm = JSON.fromJson(jsonp, TaskMin.class);
-					qm.tiStore.put(tm);
-					qm.wakeup();	
-				} catch (Exception e){
-					throw new AppException(e, "BQMJSONTI", jsonp);
-				}
-			}
-			return null;
+			if (jsonp == null) return Result.empty();
+			try { return JSON.fromJson(jsonp, Inq.class).doIt(); } catch (Exception e){ throw new AppException(e, "BQMJSONTI", jsonp); }
 		}
 		
 		if (!myNsqm.isPwd(key)) throw new AppException("SQMKEY");
 		if ("suspend".equals(op)){
 			suspendQM();
-			return null;
+			return Result.empty();
 		}
 		
 		if ("restart".equals(op)){
 			startQM();
-			return null;
+			return Result.empty();
 		}
 		
 		if ("list".equals(op)){
-			return Result.json(listBackLog());
+			ArrayList<TaskMin> res = new ArrayList<TaskMin>();
+			if (qm != null)
+				for(TaskMin tm : qm.tiStore.candidates(qm.nextFullScan)) res.add(tm);
+			return Result.json(res);
 		}
+		
+		if (jsonp == null) return Result.empty();
+		
+		if ("errTasks".equals(op))
+			try { return JSON.fromJson(jsonp, ErrTasks.class).doIt(); } catch (Exception e){ throw new AppException(e, "BQMJSONTI", jsonp); }
+		if ("traceTasks".equals(op))
+			try { return JSON.fromJson(jsonp, TraceTasks.class).doIt(); } catch (Exception e){ throw new AppException(e, "BQMJSONTI", jsonp); }
+		if ("candidateTasks".equals(op))
+			try { return JSON.fromJson(jsonp, CandidateTasks.class).doIt(); } catch (Exception e){ throw new AppException(e, "BQMJSONTI", jsonp); }
+		if ("taskDetail".equals(op))
+			try { return JSON.fromJson(jsonp, TaskDetail.class).doIt(); } catch (Exception e){ throw new AppException(e, "BQMJSONTI", jsonp); }
+		if ("taskParem".equals(op))
+			try { return JSON.fromJson(jsonp, TaskParam.class).doIt(); } catch (Exception e){ throw new AppException(e, "BQMJSONTI", jsonp); }
 		
 		throw new AppException("BQMOP", op);
 	}
@@ -130,7 +138,7 @@ public class QueueManager implements Runnable {
 		}
 	}
 
-	public static void toQueue(TaskMin tm) {
+	public static void toQueue(Inq tm) {
 		Nsqm ns = BConfig.namespace(tm.ns, false);
 		if (ns == null) return;
 		Nsqm nsqm = BConfig.queueManager(ns.qm, false);
@@ -142,15 +150,10 @@ public class QueueManager implements Runnable {
 		} else {
 			HashMap<String,String> args = new HashMap<String,String>();
 			args.put("param", JSON.toJson(tm));
+			args.put("op", "inq");
+			args.put("key", nsqm.pwd());
 			Util.postSrv(nsqm.code, "op/", args);
 		}
-	}
-	
-	private static ArrayList<TaskMin> listBackLog(){
-		ArrayList<TaskMin> res = new ArrayList<TaskMin>();
-		if (qm != null)
-			for(TaskMin tm : qm.tiStore.candidates(qm.nextFullScan)) res.add(tm);
-		return res;
 	}
 	
 	/** TiStore **********************************************/
@@ -251,14 +254,14 @@ public class QueueManager implements Runnable {
 	private ArrayList<TaskMin> getAllFromDB() {
 		ArrayList<TaskMin> tmp = new ArrayList<TaskMin>();
 		nextFullScan = Stamp.fromNow(myNsqm.scanlapseinseconds * 1000);
-		long minStartTime = Stamp.fromNow(- myNsqm.scanlapseinseconds * 4000).stamp();
+		long minStartTime = Stamp.fromNow(BConfig.TASKLOSTINMINUTES() * 60000).stamp();
 		long toStartAt = Stamp.fromNow(0).stamp();
 		for(String db : myDBs) {
 			DBProvider provider = null;
 			try {
 				provider = BConfig.getDBProvider(db);
 				provider.setLostTask(minStartTime, toStartAt);
-				Collection<TaskMin> tiList = provider.candidateTasks(nextFullScan.stamp());
+				Collection<TaskMin> tiList = provider.candidateTasks(null, nextFullScan.stamp());
 				for(TaskMin ti : tiList) tmp.add(ti);
 			} catch (AppException e){
 				Util.log.log(Level.SEVERE, "Queue Scan [" + db + "]", e);
@@ -348,4 +351,90 @@ public class QueueManager implements Runnable {
 		
 	}
 	
+	/** QM operations ***************************************************/
+	interface QMOP {
+		Result doIt() throws AppException;
+	}
+	
+	private static DBProvider dbProvider(String nsCode) throws AppException {
+		Nsqm ns = BConfig.namespace(nsCode, false);
+		if (ns == null) throw new AppException("ANSUNKNOWN", nsCode);
+		return BConfig.getDBProvider(ns.base());
+	}
+
+	static class Inq extends TaskMin implements QMOP {
+		public Inq(TaskInfo ti) {
+			super(ti);
+		}
+		public Result doIt() throws AppException {
+			qm.tiStore.put(this);
+			qm.wakeup();	
+			return Result.empty();
+		}
+	}
+
+	static class TraceTasks implements QMOP {
+		// Collection<TaskInfo> traceTasks(String ns, long toPurgeAtMin, long toPurgeAtMax, String opname)
+		String ns;
+		long toPurgeAtMin;
+		long toPurgeAtMax;
+		String opname;
+		public Result doIt() throws AppException {
+			if (ns != null)
+				return Result.json(dbProvider(ns).traceTasks(ns, toPurgeAtMin, toPurgeAtMax, opname));
+			ArrayList<TaskInfo> res = new ArrayList<TaskInfo>();
+			for(String db : BConfig.bases())
+				res.addAll(BConfig.getDBProvider(db).traceTasks(ns, toPurgeAtMin, toPurgeAtMax, opname));
+			return Result.json(res);
+		}
+	}
+
+	static class ErrTasks implements QMOP {
+		// Collection<TaskInfo> errTasks(String ns, long toStartAtMin, long toStartAtMax, String exc)
+		String ns;
+		long toStartAtMin;
+		long toStartAtMax;
+		String exc;
+		public Result doIt() throws AppException {
+			if (ns != null)
+				return Result.json(dbProvider(ns).errTasks(ns, toStartAtMin, toStartAtMax, exc));
+			ArrayList<TaskInfo> res = new ArrayList<TaskInfo>();
+			for(String db : BConfig.bases())
+				res.addAll(BConfig.getDBProvider(db).errTasks(ns, toStartAtMin, toStartAtMax, exc));
+			return Result.json(res);
+		}
+	}
+
+	static class CandidateTasks implements QMOP {
+		// Collection<TaskMin> candidateTasks(long before)
+		String ns;
+		long before;
+		public Result doIt() throws AppException {
+			if (ns != null)
+				return Result.json(dbProvider(ns).candidateTasks(ns, before));
+			ArrayList<TaskMin> res = new ArrayList<TaskMin>();
+			for(String db : BConfig.bases())
+				res.addAll(BConfig.getDBProvider(db).candidateTasks(ns, before));
+			return Result.json(res);
+		}
+	}
+
+	static class TaskDetail implements QMOP {
+		// Collection<TaskMin> candidateTasks(long before)
+		String ns;
+		String taskid;
+		public Result doIt() throws AppException {
+			return Result.json(dbProvider(ns).taskDetail(ns, taskid));
+		}
+	}		
+
+	static class TaskParam implements QMOP {
+		// Collection<TaskMin> candidateTasks(long before)
+		String ns;
+		String taskid;
+		public Result doIt() throws AppException {
+			return Result.json(dbProvider(ns).taskParam(ns, taskid));
+		}
+	}		
+
 }

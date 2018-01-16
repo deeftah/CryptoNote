@@ -424,7 +424,7 @@ public class ExecContext {
 		public void afterCommit(){
 			Cache.current().afterValidateCommit(version, docsToSave, docsToDelForced);
 			if (tq != null && tq.size() != 0)
-				for(TaskInfo ti : tq) QueueManager.toQueue(new TaskMin(ti));
+				for(TaskInfo ti : tq) QueueManager.toQueue(new QueueManager.Inq(ti));
 		}
 
 		private void checkVersion(Document doc){

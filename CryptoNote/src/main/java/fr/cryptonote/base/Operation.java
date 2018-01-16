@@ -2,13 +2,10 @@ package fr.cryptonote.base;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import fr.cryptonote.base.Servlet.Attachment;
 import fr.cryptonote.base.Servlet.InputData;
@@ -88,13 +85,11 @@ public abstract class Operation {
 	/**********************************************************************************/
 	private ExecContext execContext;
 	private InputData inputData;
-	private Result result = new Result();
 	private OperationDescriptor opd;
 	
 	public ExecContext execContext() { return execContext;}
 	public InputData inputData() { return inputData;}
 	public Object getParam() { try { return opd.paramField.get(this);} catch (Exception e) { return null; } }
-	public Result result() { return result;}
 	public TaskInfo taskInfo() { return inputData.taskInfo();}
 	public boolean isTask() { return inputData.isTask(); }
 	public boolean isReadOnly() { return false; }
@@ -121,24 +116,6 @@ public abstract class Operation {
 		}
 	}
 	
-	public void gzipResultat(String res) throws AppException {
-		byte[] bytes = null;
-		if (res == null || res.length() == 0)
-			bytes = new byte[0];
-		else
-			try { bytes = res.getBytes("UTF-8"); } catch (UnsupportedEncodingException e) {	}
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		try {
-			GZIPOutputStream zos = new GZIPOutputStream(bos);
-			zos.write(bytes);
-			zos.close();
-			result.bytes = bos.toByteArray();
-			result.mime = "application/x-gzip";
-		} catch (IOException e) {
-			throw new AppException(e, "XGZIPEXC", this.getClass().getSimpleName());
-		}
-	}
-
 	/**********************************************************************************/
 	// A surcharger
 	public Result work() throws AppException { return null; }

@@ -1,5 +1,10 @@
 package fr.cryptonote.base;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.zip.GZIPOutputStream;
+
 public final class Result {
 	public String out;
 	public String syncs;
@@ -64,8 +69,30 @@ public final class Result {
 
 	public static Result binary(byte[] bytes, String mime) {
 		Result r = new Result();
+		r.type = 2;
 		r.bytes = bytes;
 		r.mime = mime;
+		return r;
+	}
+
+	public static Result gzip(String res) {
+		Result r = new Result();
+		r.type = 2;
+		byte[] bytes = null;
+		if (res == null || res.length() == 0)
+			bytes = new byte[0];
+		else
+			try { bytes = res.getBytes("UTF-8"); } catch (UnsupportedEncodingException e) {	}
+		r.mime = "application/x-gzip";
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try {
+			GZIPOutputStream zos = new GZIPOutputStream(bos);
+			zos.write(bytes);
+			zos.close();
+			r.bytes = bos.toByteArray();
+		} catch (IOException e) {
+			r.bytes = new byte[0];
+		}
 		return r;
 	}
 

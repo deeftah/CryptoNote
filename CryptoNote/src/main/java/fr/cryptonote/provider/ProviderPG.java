@@ -1198,17 +1198,19 @@ public class ProviderPG implements DBProvider {
 	//	public long 	startAt;
 	//	public int		qn;
 	
-	private static final String SELTI2 = "select ns, taskid, step, startat, qn from taskqueue where startat is not null and startat <= ?;";
+	private static final String SELTI2 = "select ns, taskid, step, startat, qn from taskqueue where startat is not null and startat <= ?";
 	
 	@Override
-	public Collection<TaskMin> candidateTasks(long before) throws AppException {
+	public Collection<TaskMin> candidateTasks(String ns, long before) throws AppException {
 		ArrayList<TaskMin> lst = new ArrayList<TaskMin>();
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
-		sql = SELTI2;
+		sql = SELTI2 + (ns == null ? ";" : " and ns = ?");
 		try {
 			preparedStatement = conn().prepareStatement(sql);
-			preparedStatement.setLong(1, before);
+			int j = 1;
+			if (ns != null) preparedStatement.setString(j++, ns);
+			preparedStatement.setLong(j++, before);
 			rs = preparedStatement.executeQuery();
 			while (rs.next())
 				lst.add(new TaskMin(rs.getString("ns"), rs.getString("taskid"), rs.getInt("step"), rs.getLong("startAt"), rs.getInt("qn")));
@@ -1221,7 +1223,7 @@ public class ProviderPG implements DBProvider {
 	}
 	
 	@Override
-	public Collection<TaskInfo> errTask(String ns, long toStartAtMin, long toStartAtMax, String exc) throws AppException {
+	public Collection<TaskInfo> errTasks(String ns, long toStartAtMin, long toStartAtMax, String exc) throws AppException {
 		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
 		StringBuffer sb = new StringBuffer();
 		sb.append(SELTI3a).append(SELTI3c).append(" toStartAt NOT NULL");
@@ -1252,7 +1254,7 @@ public class ProviderPG implements DBProvider {
 	}
 
 	@Override
-	public Collection<TaskInfo> traceTask(String ns, long toPurgeAtMin, long toPurgeAtMax, String opname) throws AppException {
+	public Collection<TaskInfo> traceTasks(String ns, long toPurgeAtMin, long toPurgeAtMax, String opname) throws AppException {
 		ArrayList<TaskInfo> tiList = new ArrayList<TaskInfo>();
 		StringBuffer sb = new StringBuffer();
 		sb.append(SELTI3a).append(SELTI3c).append(" toStartAt IS NULL and startTime is NULL and step = 0 ");

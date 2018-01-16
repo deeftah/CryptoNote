@@ -206,12 +206,6 @@ public interface DBProvider {
 	 */
 	public void removeTask(String ns, String taskid) throws AppException ;
 
-	public Collection<TaskMin> candidateTasks(long before) throws AppException ;
-
-	public Collection<TaskInfo> errTask(String ns, long toStartAtMin, long toStartAtMax, String exc) throws AppException ;
-
-	public Collection<TaskInfo> traceTask(String ns, long toPurgeAtMin, long toPurgeAtMax, String opname) throws AppException ;
-
 	/**
 	 * Retourne le report d'une task 
 	 * @param ns
@@ -229,6 +223,12 @@ public interface DBProvider {
 	 * @throws AppException
 	 */
 	public String taskDetail(String ns, String taskid) throws AppException;
+
+	public Collection<TaskMin> candidateTasks(String ns, long before) throws AppException ;
+
+	public Collection<TaskInfo> errTasks(String ns, long toStartAtMin, long toStartAtMax, String exc) throws AppException ;
+
+	public Collection<TaskInfo> traceTasks(String ns, long toPurgeAtMin, long toPurgeAtMax, String opname) throws AppException ;
 
 	/*************************************************************************************/
 	/**

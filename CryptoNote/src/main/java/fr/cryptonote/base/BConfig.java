@@ -217,6 +217,7 @@ public class BConfig {
 				setMF(mfDics, lg, "z/" + code + "/" + lg + "/" + BASEDICS);
 				setMF(mfDics, lg, "z/" + code + "/" + lg + "/" + APPDICS);
 			}
+			if (base != null && base.length() != 0) g.bases.add(base);
 		}
 	}
 
@@ -260,6 +261,7 @@ public class BConfig {
 		private String 		url = "http://localhost:8080/";
 		
 		private int 		TASKMAXTIMEINSECONDS = 1800;
+		private int			TASKLOSTINMINUTES = 30;
 		private int 		OPERATIONMAXTIMEINSECONDS = 120;
 		private int 		CACHEMAXLIFEINMINUTES = 120;
 		private int 		CACHEMAXSIZEINMO = 50;
@@ -269,6 +271,7 @@ public class BConfig {
 		private int 		DTIMEDELAYINHOURS = 24 * 8;
 		private int[] 		TASKRETRIESINMIN = {1, 10, 60, 180};
 		
+		private HashSet<String>				bases = new HashSet<String>();
 		private HashMap<String,Nsqm> 		queueManagers;
 		private HashMap<String,Nsqm> 		namespaces;
 		private HashMap<String,S2Storage> 	s2Storages;
@@ -298,6 +301,7 @@ public class BConfig {
 	public static String 		defaultBase() { return g.defaultBase; }
 
 	public static int 			TASKMAXTIMEINSECONDS() { return g.TASKMAXTIMEINSECONDS;}
+	public static int			TASKLOSTINMINUTES() { return g.TASKLOSTINMINUTES; }
 	public static int 			OPERATIONMAXTIMEINSECONDS() { return g.OPERATIONMAXTIMEINSECONDS;}
 	public static int 			CACHEMAXLIFEINMINUTES() { return g.CACHEMAXLIFEINMINUTES;}
 	public static int 			CACHEMAXSIZEINMO() { return g.CACHEMAXSIZEINMO;} 
@@ -321,6 +325,13 @@ public class BConfig {
 	public static int			queueIndexByOp(String op) { return appConfig.queueIndexByOp(op); }
 	
 	public static String[]		themes() { return g.themes; };
+	
+	private static String[] 	dbases;
+	public static String[] 		bases() {
+		if (dbases == null)
+			dbases = g.bases.toArray(new String[g.bases.size()]);
+		return dbases;
+	}
 	
 	public static Nsqm namespace(String ns, boolean fresh) { 
 		Nsqm x = g.namespaces.get(ns);
