@@ -9,6 +9,7 @@ import fr.cryptonote.base.ExecContext;
 import fr.cryptonote.base.ISyncFilter;
 import fr.cryptonote.base.AExportedField;
 import fr.cryptonote.base.Operation;
+import fr.cryptonote.base.Result;
 
 public class Repertoire extends Document {
 	
@@ -66,7 +67,7 @@ public class Repertoire extends Document {
 		
 		Param param;
 		
-		@Override public void work() throws AppException {
+		@Override public Result work() throws AppException {
 			Repertoire r = Repertoire.get(param.rep);
 			for(int i=param.n1; i < param.n2; i++){
 				Contact c = r.contact("c" + i);
@@ -75,6 +76,7 @@ public class Repertoire extends Document {
 				c.codePostal = "" + (94200 + i);
 				c.commit();
 			}
+			return Result.empty();
 		}
 	}
 
@@ -88,7 +90,7 @@ public class Repertoire extends Document {
 		
 		Param param;
 		
-		@Override public void work() throws AppException {
+		@Override public Result work() throws AppException {
 			Repertoire r = null;
 			r = Repertoire.get(param.rep);
 			for(int i = param.n1; i < param.n2; i++){
@@ -96,6 +98,7 @@ public class Repertoire extends Document {
 				c.nom = param.nom + i;
 				c.commit();
 			}
+			return Result.empty();
 		}
 	}
 
@@ -107,9 +110,9 @@ public class Repertoire extends Document {
 		
 		Param param;
 		
-		@Override public void work() throws AppException {
+		@Override public Result work() throws AppException {
 			Cond<String> c = new Cond<String>(Cond.Type.gele, param.cp1, param.cp2).name("codepostal");
-			result().out = searchDocIdsByIndexes(Repertoire.class, Contact.class, c);
+			return Result.json(searchDocIdsByIndexes(Repertoire.class, Contact.class, c));
 		}
 	}
 

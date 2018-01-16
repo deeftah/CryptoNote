@@ -362,7 +362,7 @@ public class QueueManager implements Runnable {
 		return BConfig.getDBProvider(ns.base());
 	}
 
-	static class Inq extends TaskMin implements QMOP {
+	public static class Inq extends TaskMin implements QMOP {
 		public Inq(TaskInfo ti) {
 			super(ti);
 		}

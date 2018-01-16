@@ -16,6 +16,10 @@ public class TaskInfo {
 	public String 	detail;
 	public long		startTime;
 	
+	public transient int taskType; // 4:task complete 5:task complete + param 6:next step même requête 7:next step nouvelle requête
+	public transient String taskJsonParam;
+	public transient long taskT; // toStartAt(7) ou toPurgeAt(5)
+
 	public TaskInfo() { }
 	
 	public long retryAt() { return BConfig.RETRYSTARTAT(retry); }
@@ -32,6 +36,21 @@ public class TaskInfo {
 		this.opName = op.getSimpleName();
 		this.qn = qn;
 		this.step = 1;
+	}
+	
+	public TaskInfo clone(){
+		TaskInfo t = new TaskInfo();
+		t.ns = ns;
+		t.taskid = taskid;
+		t.step = step;
+		t.toStartAt = toStartAt;
+		t.toPurgeAt = toPurgeAt;
+		t.opName = opName;
+		t.info = info;
+		t.qn = qn;
+		t.retry = retry;
+		t.startTime = startTime;
+		return t;
 	}
 		
 	public static class TaskMin implements Comparable<TaskMin> {

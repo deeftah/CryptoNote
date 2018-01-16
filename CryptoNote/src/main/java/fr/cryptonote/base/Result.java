@@ -6,15 +6,19 @@ import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPOutputStream;
 
 public final class Result {
-	public String out;
-	public String syncs;
-	public transient String text;
-	public transient String encoding;
-	public transient byte[] bytes;
-	public transient String mime;
-	public transient Stamp t;
-	public transient int type;
+	String out;
+	String syncs;
+	transient String text;
+	transient String encoding;
+	transient byte[] bytes;
+	transient String mime;
+	transient Stamp t;
+	transient int type; // 0:vide 1:json 2:binaire 3:texte 4:task complete 5:task complete + param 6:next step même requête 7:next step nouvelle requête
 	
+	boolean nextStepInRequest() { return type == 6; }
+
+	boolean mayHaveSyncs() { return type <= 1; }
+
 	void setSyncs(String syncs) {
 		if (type <= 1){
 			this.syncs = syncs == null ? "{}" : syncs;
@@ -103,7 +107,7 @@ public final class Result {
 		r.encoding = encoding == null ? "UTF-8" : encoding;
 		if (!"UTF-8".equals(r.encoding))
 			try { "a".getBytes(r.encoding);	} catch (Exception x) {	r.encoding = "UTF-8"; }
-		r.type = 2;
+		r.type = 3;
 		return r;
 	}
 
@@ -112,7 +116,7 @@ public final class Result {
 	 */
 	public static Result taskComplete() {
 		Result r = new Result();
-		r.type = 3;
+		r.type = 4;
 		return r;
 	}
 
@@ -121,7 +125,7 @@ public final class Result {
 	 */
 	public static Result taskComplete(Stamp toPurgeAt) {
 		Result r = new Result();
-		r.type = 4;
+		r.type = 5;
 		r.t = toPurgeAt;
 		return r;
 	}
@@ -132,7 +136,7 @@ public final class Result {
 	 */
 	public static Result nextStep() {
 		Result r = new Result();
-		r.type = 5;
+		r.type = 6;
 		return r;
 	}
 
@@ -142,7 +146,7 @@ public final class Result {
 	 */
 	public static Result nextStep(Stamp toStartAt) {
 		Result r = new Result();
-		r.type = 6;
+		r.type = 7;
 		r.t = toStartAt;
 		return r;
 	}

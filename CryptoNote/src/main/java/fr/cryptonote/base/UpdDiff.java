@@ -82,7 +82,7 @@ public class UpdDiff extends Operation {
 
 	Param param;
 	
-	@Override public void work() throws AppException {
+	@Override public Result work() throws AppException {
 		HashMap<String,ByDocClass> todo = todo(param.items);
 		DBProvider provider = execContext().dbProvider();
 		HashMap<String,ArrayList<ByTargetClkey>> byDoc = new HashMap<String,ArrayList<ByTargetClkey>>();
@@ -100,5 +100,6 @@ public class UpdDiff extends Operation {
 			}
 		}
 		provider.rawDuplicate(param.vop, byDoc);
+		return null;
 	}
 }

@@ -14,7 +14,6 @@ import fr.cryptonote.base.Document.ExportedFields;
 import fr.cryptonote.base.Document.Id;
 import fr.cryptonote.base.Document.Sync;
 import fr.cryptonote.base.Servlet.InputData;
-import fr.cryptonote.base.TaskInfo.TaskMin;
 import fr.cryptonote.provider.DBProvider;
 
 public class ExecContext {	
@@ -263,24 +262,47 @@ public class ExecContext {
 		 */
 
 		if (!"sync".equalsIgnoreCase(operationName())) {
-			boolean done = false;
-			do {
+			boolean hasNextStep = false;
+			Object param = null;
+			TaskInfo taskInfo = isTask() ? inp.taskInfo() : null;
+			String jsonParam = inp.args().get("param");
+			
+			do { // boucle pour les tasks sur N étapes dans la m^me requête
 				
 				for(int retry = 0;;retry++) {
-					if (retry != 0) cs[2]++;
+					TaskInfo tiTemp = null;
+					if (retry != 0) {
+						cs[2]++;
+						param = null; // pour forcer à désérialiser le param en json
+					}
 					startTime = null;
 					maxTime();
 					try {
 						long t0 = System.currentTimeMillis();
 						clearCaches();
-						operation = Operation.newOperation(operationName());
+						operation = Operation.newOperation(operationName(), jsonParam, param);
 						phase = 1;
+						
 						result = operation.work();
 						long t1 = System.currentTimeMillis();
 						cs[5] += (int)(t1 - t0);
-						ExecCollect collect = new ExecCollect();
+						if (isTask()) {
+							tiTemp = taskInfo.clone();
+							if (result == null)
+								tiTemp.taskType = 4;
+							else {
+								if (result.type > 4) {
+									tiTemp.taskType = result.type;
+									tiTemp.taskJsonParam = JSON.toJson(operation.getParam());
+									tiTemp.taskT = result.t.stamp();
+								} else
+									tiTemp.taskType = 4;
+							}
+						}
 						
-						if (!collect.nothingToCommit(isTask() ? operation.getParam() : null, result)) {
+						ExecCollect collect = new ExecCollect(tiTemp);
+						
+						if (isTask() || !collect.nothingToCommit()) {
 							phase = 2;
 							HashMap<String,Long> badDocs = dbProvider().validateDocument(collect);
 							cs[6] += (int)(System.currentTimeMillis() - t1);
@@ -292,12 +314,15 @@ public class ExecContext {
 						}
 						
 						phase = 3;	
-						if (isTask())
-							done = result == null || result.completed || result.t != null;
-						else {
+						if (isTask()) {								
+							hasNextStep = result != null && result.nextStepInRequest();
+							if (hasNextStep) {
+								taskInfo = tiTemp;
+								jsonParam = tiTemp.taskJsonParam;
+								param = operation.getParam();
+							}
+						} else
 							operation.afterWork();
-							done = true;
-						}
 						break; // OK : break retry
 					} catch (Throwable t){
 						AppException ex = t instanceof AppException ? (AppException)t : new AppException(t, "X0");
@@ -315,25 +340,23 @@ public class ExecContext {
 					}
 				}
 				
-			} while(!done);
+			} while(isTask() && hasNextStep);
 			cs[0] = 1;
 		}
 
-		if (!isTask()) {
+		if (result == null)	result = Result.empty();
+		if (!isTask() && result.mayHaveSyncs()) {
 			String json = inputData.args().get("syncs");
-			if (json != null && json.length() != 0) {
-				phase = 4;
-				Sync[] syncs;
+			if (json != null && json.length() != 0)
 				try {
+					phase = 4;
 					long t2 = System.currentTimeMillis();
-					syncs = JSON.fromJson(json,  Sync[].class);
+					Sync[] syncs = JSON.fromJson(json,  Sync[].class);
 					cs[7] += (int)(System.currentTimeMillis() - t2);
+					result.syncs = sync(syncs);
 				} catch (AppException e){
 					throw new AppException(e.cause(), "BEXECSYNCSPARSE", operationName());
 				}
-				if (result == null)	result = new Result();
-				result.syncs = sync(syncs);
-			}
 		}
 		
 		phase = 5;
@@ -414,17 +437,16 @@ public class ExecContext {
 //		HashMap<String,Document> deletedDocuments = new HashMap<String,Document>();
 //		HashSet<String> forcedDeletedDocuments = new HashSet<String>();
 		
-		public boolean nothingToCommit(Object param, Result result) {
+		public boolean nothingToCommit() {
 			return versionsToCheckAndLock.size() == 0 && docsToDelForced.size() == 0 && (tq == null || tq.size() == 0); 
 		}
 						
-		public long version; 	// future version des documenrs mis à jour / crés ou des items détruits
-		public long dtime;		// future dtime des documenrs mis à jour
+		public long 	version; 		// future version des documenrs mis à jour / crés ou des items détruits
+		public long 	dtime;			// future dtime des documenrs mis à jour
+		public TaskInfo	taskInfo;
 		
 		public void afterCommit(){
 			Cache.current().afterValidateCommit(version, docsToSave, docsToDelForced);
-			if (tq != null && tq.size() != 0)
-				for(TaskInfo ti : tq) QueueManager.toQueue(new QueueManager.Inq(ti));
 		}
 
 		private void checkVersion(Document doc){
@@ -463,7 +485,8 @@ public class ExecContext {
 			}
 		}
 		
-		ExecCollect() throws AppException {
+		ExecCollect(TaskInfo tiTemp) throws AppException {
+			taskInfo = tiTemp;
 			tq = tasks;
 			docsToDelForced = forcedDeletedDocuments;
 			version = Stamp.fromNow(0).stamp();

@@ -23,6 +23,7 @@ import fr.cryptonote.base.Document.ItemId;
 import fr.cryptonote.base.Document.XItem;
 import fr.cryptonote.base.Document.XItemFilter;
 import fr.cryptonote.base.DocumentDescr;
+import fr.cryptonote.base.QueueManager;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.ExecContext.ItemIUD;
@@ -751,11 +752,36 @@ public class ProviderPG implements DBProvider {
 //
 //		// Tasks
 //		public HashMap<String,TaskInfo> tq;
-
+//
+//		public TaskInfo taskInfo; // tâche actuelle
+		
 		try {			
 			beginTransaction();
 			HashMap<String,Long> badDocs = checkAndLock(collect.versionsToCheckAndLock);
 			if (badDocs != null) { rollbackTransaction(); return badDocs; }
+			
+			if (collect.taskInfo != null){
+				TaskInfo ti = collect.taskInfo;
+				switch (ti.taskType){
+				case 4 : { // fin tâche sans sauvegarde de param
+					removeTask(ti.ns, ti.taskid);
+					break;
+				}
+				case 5 : { // fin tâche avec sauvegarde de param
+					finalTask(ti, ti.taskT, ti.taskJsonParam);
+					break;
+				}
+				case 6 : { // nextStep interne
+					stepTaskSR(ti, ti.taskJsonParam, Stamp.fromNow(0).stamp());
+					break;
+				}
+				case 7 : { // nextStep nouvelle requête
+					stepTaskNR(ti, ti.taskJsonParam, ti.taskT);
+					break;
+				}
+				}
+			}
+			
 			if (collect.docsToDelForced != null) for(String clid : collect.docsToDelForced) purge(clid);
 			
 			for (IuCDoc x : collect.docsToSave) {
@@ -778,8 +804,16 @@ public class ProviderPG implements DBProvider {
 			if (collect.s2Purge != null) for(String clid : collect.s2Purge) blobProvider().blobDeleteAll(clid);
 			if (collect.tq != null) for(TaskInfo ti : collect.tq) newTask(ti);
 			if (collect.s2Cleanup != null) for(String clid : collect.s2Cleanup) S2Cleanup.startCleanup(clid);
+			
 			commitTransaction();
+			
 			collect.afterCommit();
+			
+			if (collect.tq != null && collect.tq.size() != 0)
+				for(TaskInfo ti : collect.tq) QueueManager.toQueue(new QueueManager.Inq(ti));
+			if (collect.taskInfo != null && collect.taskInfo.taskType == 7)
+				QueueManager.toQueue(new QueueManager.Inq(collect.taskInfo));
+
 			return null;
 		} catch (Throwable t){
 			rollbackTransaction();
@@ -1039,14 +1073,13 @@ public class ProviderPG implements DBProvider {
 
 	// Fin d'une étape d'une tâche avec lancement d'une nouvelle requête pour continuation à l'étape suivante.
 	@Override
-	public boolean stepTask(TaskInfo ti, String param, long toStartAt) throws AppException {
+	public boolean stepTaskNR(TaskInfo ti, String param, long toStartAt) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK3;
 		try {
 			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
 			if (tidb == null || tidb.startTime != ti.startTime) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
-				commitTransaction();
 				return false;
 			}
 			preparedStatement = conn().prepareStatement(sql);
@@ -1057,25 +1090,23 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
-			commitTransaction();
 			return true;
 		} catch(Exception e){
-			throw err(preparedStatement, null, e, "excTask");
+			throw err(preparedStatement, null, e, "stepTaskNR");
 		}
 	}
 
-	private static final String UPDTASK4 = "update taskqueue set param = ?, tostartat = null, exc = null, detail = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
+	private static final String UPDTASK4 = "update taskqueue set param = ?, starttime = ?, tostartat = null, exc = null, detail = null, retry = 0, step = step + 1 where ns = ? and taskid = ?;";
 
 	// Fin d'une étape d'une tâche et son étape suivante se poursuit dans la même requête.
 	@Override
-	public boolean stepTask(TaskInfo ti, String param) throws AppException {
+	public boolean stepTaskSR(TaskInfo ti, String param, long startTime) throws AppException {
 		PreparedStatement preparedStatement = null;
 		sql = UPDTASK4;
 		try {
 			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
 			if (tidb == null || tidb.startTime != ti.startTime) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
-				commitTransaction();
 				return false;
 			}
 			preparedStatement = conn().prepareStatement(sql);
@@ -1083,16 +1114,17 @@ public class ProviderPG implements DBProvider {
 			ti.retry = 0;
 			ti.exc = null;
 			ti.toStartAt = 0;
+			ti.startTime = startTime;
 			int j = 1;
 			preparedStatement.setString(j++, param);
+			preparedStatement.setLong(j++, ti.startTime);
 			preparedStatement.setString(j++, ti.ns);
 			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
-			commitTransaction();
 			return true;
 		} catch(Exception e){
-			throw err(preparedStatement, null, e, "excTask");
+			throw err(preparedStatement, null, e, "stepTaskSR");
 		}
 	}
 
@@ -1107,7 +1139,6 @@ public class ProviderPG implements DBProvider {
 			TaskInfo tidb = taskInfo(ti.ns, ti.taskid);
 			if (tidb == null || tidb.startTime != ti.startTime) {
 				// ignore cette fin de tak, c'était une exécution parasite (ou une trace de task).
-				commitTransaction();
 				return false;
 			}
 			preparedStatement = conn().prepareStatement(sql);

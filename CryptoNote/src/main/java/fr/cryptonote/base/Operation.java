@@ -58,9 +58,8 @@ public abstract class Operation {
 	}
 
 	/**********************************************************************************/
-	static Operation newOperation(String operationName) throws AppException {
+	static Operation newOperation(String operationName, String json, Object param) throws AppException {
 		if (operationName != null) operationName = operationName.toLowerCase();
-		Object param = null;
 		Operation op = null;
 		try {
 			OperationDescriptor opd = operationClasses.get(operationName);
@@ -70,10 +69,10 @@ public abstract class Operation {
 			op.execContext = ExecContext.current();
 			op.inputData = op.execContext.inputData();
 			if (opd.paramField != null) {
-				String json = op.inputData.args().get("param");
-				if (json == null) json = "{}";
-				try { param = JSON.fromJson(json, opd.paramClass);
-				} catch (AppException e){ throw new AppException(e.cause(), "BBADOPERATION1", operationName); }
+				if (param == null) {
+					try { param = JSON.fromJson(json == null ? "{}" : json, opd.paramClass);
+					} catch (AppException e){ throw new AppException(e.cause(), "BBADOPERATION1", operationName); }
+				}
 				opd.paramField.set(op, param);
 			}
 		} catch (Exception e){

@@ -168,7 +168,7 @@ public interface DBProvider {
 	 * @return false si la task était parasite
 	 * @throws AppException
 	 */
-	public boolean stepTask(TaskInfo ti, String param, long toStartAt) throws AppException ;
+	public boolean stepTaskNR(TaskInfo ti, String param, long toStartAt) throws AppException ;
 	
 	/**
 	 * Fin d'une étape d'une tâche et son étape suivante se poursuit dans la même requête.
@@ -177,7 +177,7 @@ public interface DBProvider {
 	 * @return false si la task était parasite
 	 * @throws AppException
 	 */
-	public boolean stepTask(TaskInfo ti, String param) throws AppException ;
+	public boolean stepTaskSR(TaskInfo ti, String param, long startTime) throws AppException ;
 
 	/**
 	 * Fin de la dernière étape avec ou sans conservation du résultat pendant un certain temps
