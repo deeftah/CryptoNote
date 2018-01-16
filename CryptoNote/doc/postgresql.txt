@@ -38,7 +38,7 @@ CREATE TABLE onoff (
 );
 ALTER TABLE onoff OWNER TO "docdb";
 
-/* une table unique par base */
+/* Par BASE *****************************************************/
 DROP TABLE IF EXISTS dbinfo;
 CREATE TABLE dbinfo (
 	info text NOT NULL
@@ -54,7 +54,6 @@ CREATE TABLE stats (
 	CONSTRAINT stats_pk PRIMARY KEY (hour, ns)
 );
 
-/* une table unique par base */
 DROP TABLE IF EXISTS taskqueue;
 CREATE TABLE taskqueue (
   	ns varchar(16) NOT NULL,
@@ -73,33 +72,27 @@ CREATE TABLE taskqueue (
 	CONSTRAINT taskqueue_pk PRIMARY KEY (ns, taskid)
 );
 ALTER TABLE taskqueue OWNER TO "docdb";
-DROP INDEX IF EXISTS taskqueue_startat;
-CREATE INDEX taskqueue_startat on taskqueue (startat, ns, taskid) where startat is not null;
+DROP INDEX IF EXISTS taskqueue_tostartat;
+CREATE INDEX taskqueue_tostartat on taskqueue (tostartat, ns, taskid) where tostartat is not null;
 DROP INDEX IF EXISTS taskqueue_starttime;
 CREATE INDEX taskqueue_starttime on taskqueue (starttime, ns, taskid) where starttime is not null;
 
-/* une table pour chaque namespace NS hébergé dans la base*/
-DROP TABLE IF EXISTS s2cleanup_NS;
-CREATE TABLE s2cleanup_NS (
+DROP TABLE IF EXISTS s2cleanup;
+CREATE TABLE s2cleanup (
   	clid varchar(255) NOT NULL,
-  	hour int,
-  	CONSTRAINT s2cleanup_NS_pk PRIMARY KEY (clid, hour)
+  	hour int
 );
-ALTER TABLE s2cleanup_NS OWNER TO "docdb";
+ALTER TABLE s2cleanup OWNER TO "docdb";
 
-/* une table doc_NS (hérite de doc) pour chaque namespace NS hébergé dans la base*/
 DROP TABLE IF EXISTS doc;
 CREATE TABLE doc (
 	clid varchar(255) NOT NULL,
 	version bigint NOT NULL,
 	ctime bigint NOT NULL,
-	dtime bigint NOT NULL,
-	CONSTRAINT doc_NS_pk PRIMARY KEY (clid)
+	dtime bigint NOT NULL
 );
 ALTER TABLE doc OWNER TO "docdb";
 
-/* une table item_NS_DC (hérite de item) pour chaque document DC de chaque namespace NS hébergé dans la base */
-/* PLUS une table item_NS_DC_IT (hérite de item_NS_DC) pour chaque item IT ayant des champs exportés */
 DROP TABLE IF EXISTS item;
 CREATE TABLE item (
   	docid varchar(255) NOT NULL,
@@ -108,36 +101,37 @@ CREATE TABLE item (
   	vop bigint NOT NULL,
   	sha varchar(255),
   	contentt text,
-	contentb bytea,
-	CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
+	contentb bytea
 );
 ALTER TABLE item OWNER TO "docdb";
 
-/* index item_NS_DC_v et _p pour chaque document DC de chaque namespace NS hébergé dans la base */
-DROP INDEX IF EXISTS item_v;
+/* Pour chaque namespace NS hébergé dans la base ******************************/
+DROP TABLE IF EXISTS s2cleanup_NS;
+CREATE TABLE s2cleanup_NS (CONSTRAINT s2cleanup_NS_pk PRIMARY KEY (clid, hour)) INHERITS (s2cleanup);
+ALTER TABLE s2cleanup_NS OWNER TO "docdb";
+
+DROP TABLE IF EXISTS doc_NS;
+CREATE TABLE doc_NS (CONSTRAINT doc_NS_pk PRIMARY KEY (clid)) INHERITS (doc);
+ALTER TABLE doc_namespace OWNER TO "docdb";
+
+/* Pour chaque document DC de chaque NS 
+DROP TABLE IF EXISTS item_NS_DC;
+CREATE TABLE item_NS_DC (CONSTRAINT item_NS_DC_pk PRIMARY KEY (docid, clkey)) INHERITS (item);
+ALTER TABLE item_NS_DC OWNER TO "docdb";
 CREATE INDEX item_NS_DC_v on item_NS_DC (docid, version, clkey);
 CREATE INDEX item_NS_DC_p on item_NS_DC (docid, sha) where sha is NOT NULL;
 
-
-/*********************************************************/
-/* seulement dans la base qui héberge le namespace "namespace" */
-DROP TABLE IF EXISTS doc_namespace;
-CREATE TABLE doc_namespace () INHERITS (doc);
-ALTER TABLE doc_namespace OWNER TO "docdb";
-
-DROP TABLE IF EXISTS item_namespace_nsdoc;
-CREATE TABLE item_namespace_nsdoc () INHERITS (item);
-ALTER TABLE item_namespace_nsdoc OWNER TO "docdb";
-CREATE INDEX item_namespace_nsdoc_v on item_namespace_nsdoc (docid, version, clkey);
-CREATE INDEX item_namespace_nsdoc_p on item_namespace_nsdoc (docid, sha) where sha is NOT NULL;
+/* Pour chaque item IT de DC de NS ayant des champs exportés : une table item_NS_DC_IT (hérite de item_NS_DC) ***************************/
+DROP TABLE IF EXISTS item_NS_DC_IT;
+CREATE TABLE item_NS_DC_IT (
+	toto int
+) INHERITS (item_NS_DC);
+ALTER TABLE item_NS_DC_IT OWNER TO "docdb";
+CREATE INDEX item_NS_DC_IT_toto on item_NS_DC_IT (toto, docid, clkey);
 
 /*********************************************************/
 DROP TABLE IF EXISTS s2cleanup_test;
-CREATE TABLE s2cleanup_test (
-  	clid varchar(255) NOT NULL,
-  	hour int,
-  	CONSTRAINT s2cleanup_test_pk PRIMARY KEY (clid, hour)
-);
+CREATE TABLE s2cleanup_test (CONSTRAINT s2cleanup_test_pk PRIMARY KEY (clid, hour)) INHERITS (s2cleanup);
 ALTER TABLE s2cleanup_test OWNER TO "docdb";
 
 DROP TABLE IF EXISTS doc_test;
