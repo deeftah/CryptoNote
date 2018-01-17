@@ -8,7 +8,7 @@ App.setTheme("z", {
 "--font-medium" : "1.3rem",
 "--font-reg" : "1rem",
 "--font-small" : "0.8rem",
-"--bg-imglg" : "url('../z/z/post-it.png')",
+"--bg-imglg" : "url('../z/z/icon.png')",
 
 "--btnstd-color": "var(--paper-indigo-900)",
 "--btnstd-colorhover" : "var(--paper-indigo-50)",

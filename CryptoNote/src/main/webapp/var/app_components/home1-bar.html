@@ -1,0 +1,28 @@
+<dom-module id="home1-bar">
+<template>
+	<style is="custom-style">
+	</style>
+	<style>
+		:host { font-family: var(--font-cf); font-size:1.2rem;}
+		:host .top { background-color:var(--paper-teal-800); color:white; height:3rem; overflow:hidden;}
+	</style>
+<div class="top">Ma belle top bar 1
+</div>
+</template>
+<script>
+    class Home1Bar extends Polymer.Element {
+		static get is() { return "home1-bar"; }
+		static get properties() { return { 
+			lang : {type:String, value:"xx"},
+			}
+		}
+
+		lib(code, lang) { return App.lib(code);}
+
+      	constructor() { super(); }
+      	      	
+	}
+customElements.define(Home1Bar.is, Home1Bar);
+</script>
+</dom-module>
+	

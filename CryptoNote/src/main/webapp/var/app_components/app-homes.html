@@ -2,6 +2,9 @@
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animated-pages.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animatable.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animations.html">	
 
 <link rel="import" href="confirm-box.html">
 <link rel="import" href="message-box.html">
@@ -12,12 +15,19 @@
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 <link rel="import" href="wait-home.html">
+<link rel="import" href="home1-bar.html">
+<link rel="import" href="home2-bar.html">
 
 <dom-module id="app-homes">
 <template>
+	<style is="custom-style" include="iron-flex iron-flex-alignment">
+	</style>
 	<style>
 	  	:host { margin:0; padding:0;}
 	  	:host .top { margin:0; padding:0; height: 100vh; width: 100vw; position:relative; }
+	  	:host .bar { margin:0; padding:0;}
+	  	:host .main { margin:0; padding:0;}
+	  	:host .wb {background-color:white; height:2rem;}
   	</style>
 	<div class="top">
 		<confirm-box id="confirm"></confirm-box>
@@ -26,60 +36,19 @@
 		<reqerr-panel id="reqerr" lang="[[lang]]"></reqerr-panel>
 		<scripterr-panel id="scripterr" lang="[[lang]]"></scripterr-panel>
 		<help-panel id="help" lang="[[lang]]"></help-panel>
-		<iron-pages class="top" attr-for-selected="id" selected="[[home]]">
-			<home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home>
-			<home2-home id="home2" lang="[[lang]]"></home2-home>
-			<wait-home id="wait" lang="[[lang]]"></wait-home>
-		</iron-pages>
+		<div class="top layout vertical flex-start">
+			<iron-pages class="bar" attr-for-selected="bar" selected="[[home]]">
+				<home1-bar id="home1-bar" bar="home1" lang="[[lang]]" owner="Scott"></home1-bar>
+				<home2-bar id="home2-bar" bar="home2" lang="[[lang]]"></home2-bar>
+				<div id="wait-bar" bar="wait" class="wb"></div>
+			</iron-pages>
+			<neon-animated-pages  class="main flex" attr-for-selected="id" selected="[[anpage]]" entry-animation="[[enan]]" exit-animation="[[exan]]">		
+				<neon-animatable id="anhome1"><home1-home id="home1" lang="[[lang]]" owner="Scott"></home1-home></neon-animatable>
+				<neon-animatable id="anhome2"><home2-home id="home2" lang="[[lang]]"></home2-home></neon-animatable>
+				<neon-animatable id="anwait"><wait-home id="wait" lang="[[lang]]"></wait-home></neon-animatable>
+			</neon-animated-pages>
+		</div>
 	</div>
 </template>
-<script>
-    class AppHomes extends Polymer.Element {
-		static get is() { return "app-homes"; }
-		static get properties() { return { home: {String, value:"wait"}, lang:{type:String, value:App.lang} } ; }
-      	constructor() { 
-      		super(); 
-      	}
-      	ready() {
-      		super.ready();
-      		App.confirmBox = this.$.confirm;
-      		App.messageBox = this.$.message;
-      		App.globalSpinner = this.$.spin;
-      		App.globalReqErr = this.$.reqerr;
-      		App.scriptErrPanel = this.$.scripterr;
-      		App.helpPanel = this.$.help;
-      		App.appHomes = this;
-      		if (App.rootcomplete)
-      			this.starting();
-      	}
-      	async starting() {
-      		this.setTheme(App.theme);
-  			if (App.Custom && App.Custom.ready)
-  				await App.Custom.ready();
-  			this.setHome(App.home);
-      	}
-      	setHome(home) {
-      		this.home = home;
-      		if (this.$[home].init)
-      			this.$[home].init();
-      	}
-      	setLang(lang) { 
-      		App.lang = lang;
-      		this.setTheme(App.theme);
-      	}
-      	setTheme(theme) {
-      		App.theme = theme;
-      		const sty = {};
-      		let t = App.customThemes["z"];
-      		if (t) for(let k in t) sty[k] = t[k];
-      		t = App.customThemes[theme];
-      		if (t) for(let k in t) sty[k] = t[k];
-      		t = App.customThemes[App.lang];
-      		if (t) for(let k in t) sty[k] = t[k];
-      		Polymer.updateStyles(sty);
-      		this.lang = App.lang;
-      	}
-    }
-	customElements.define(AppHomes.is, AppHomes);
-</script>
+<script src="../js/app-homes.js"></script>
 </dom-module>

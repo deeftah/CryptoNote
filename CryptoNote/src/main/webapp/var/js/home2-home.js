@@ -18,6 +18,31 @@ class Home2Home extends Polymer.Element {
 
 	lib(code, lang) { return App.lib(code);}
 
+    show(arg, previousPage) {
+  	  this.arg = arg;
+  	  this.previousPage = previousPage;
+    }
+    
+    title() {
+    	return "La belle page Home2";
+    }
+    
+    async mayHide() {
+  	  return true;
+    }
+    
+    back() {
+  	  App.appHomes.back();
+    }
+    
+    home1() {
+  	  App.appHomes.forward("home1", {texte:"Bonjour home1"});
+    }
+
+    home1b() {
+    	App.appHomes.setPage("home1", {texte:"Bonjour home1"});
+	}
+
 	confirm2() {
 		App.confirmBox.show("Ceci est un beau message.", "OK", "Bullshit")
 		.then(() => {

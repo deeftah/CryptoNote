@@ -8,6 +8,11 @@
 	  		font-family: var(--font-mono);
 	  	}
   </style>
+  	<div>
+  		<button on-tap="back">Back</button>&nbsp;
+  	  	<button on-tap="home2">Home2</button>
+  	</div>
+  
   	<p>[[bonjour]] <b>[[owner]] [[build]]</b>'s name-tag element.</p>
      <iron-input bind-value="{{owner}}">
       <input is="iron-input" placeholder="Your name here...">
@@ -41,6 +46,24 @@
           {first: 'Fatma', last: 'Kumari'},
           {first: 'Tony', last: 'Morelli'}
         ]; 
+      }
+      
+      show(arg, previousPage) {
+    	  this.arg = arg;
+    	  this.previousPage = previousPage;
+      }
+      
+      async mayHide() {
+    	  if (this.owner != "Daniel") return true;
+    	  return await 	App.confirmBox.show("Voulez-vous vraiment quitter cette page ?", "OUI", "Ben non finalement");
+      }
+      
+      back() {
+    	  App.appHomes.back();
+      }
+      
+      home2() {
+    	  App.appHomes.forward("home2", {texte:"Bonjour"});
       }
     }
   customElements.define(Home1Home.is, Home1Home);
