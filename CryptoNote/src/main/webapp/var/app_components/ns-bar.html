@@ -1,0 +1,64 @@
+<link rel="import" 	href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+<dom-module id="ns-bar">
+<template>
+	<style is="custom-style" include="iron-flex iron-flex-alignment">
+		paper-dialog.size-position-left-panel { margin:0 !important;
+			position:fixed; top:0; left:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
+		paper-icon-button.ic1 {
+			color: white;
+			width: var(--font-xlarge);
+			height: var(--font-xlarge);
+			padding: 0;
+		}
+	    paper-icon-button.ic1:hover {
+			background-color: var(--paper-blue-grey-300);
+			color: var(--paper-blue-grey-700);
+	    }
+	    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */
+    		color: var(--paper-blue-grey-300);
+    	}
+	    
+	</style>
+	<style>
+		:host { font-family: var(--font-cf); font-size:1.2rem;}
+		:host .top { background-color:var(--paper-blue-grey-700); color:white; height:2rem; overflow:hidden;}
+	</style>
+<div class="top">
+	<paper-icon-button class="ic1" disabled="[[!previousPage]]" on-tap="back" title="[[libPreviousPage]]" icon="icons:arrow-back"></paper-icon-button>
+	Ma belle top bar 2
+</div>
+</template>
+<script>
+    class NsBar extends Polymer.Element {
+		static get is() { return "ns-bar"; }
+		static get properties() { return { 
+			lang : {type:String, value:"xx"},
+			previousPage : {type:Object, value:null},
+			libPreviousPage : {type:String, value:""}
+			}
+		}
+
+		lib(code, lang) { return App.lib(code);}
+
+		constructor() {
+			super();
+			App.setMsg("fr", "tb_back", "Cliquer pour revenir à la vue précédente");
+			App.setMsg("fr", "tb_back2", "Cliquer pour revenir à {0}");
+		} 
+		
+		setPreviousPage(p) { 
+			this.previousPage = p;
+			if (!p)
+				this.libPreviousPage = "";
+			else
+				this.libPreviousPage = p.title ? App.format('tb_back2', p.title()) : App.lib('tb_back');
+		}
+		
+		back() { App.appHomes.back(); }
+		
+	}
+customElements.define(NsBar.is, NsBar);
+</script>
+</dom-module>
+	

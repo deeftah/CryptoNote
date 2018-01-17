@@ -47,7 +47,12 @@ public class OnOff {
 			if (!isSudo())	throw new AppException("SADMINOP");
 			if (param.onoff < 0) param.onoff = 0;
 			String nsc = execContext().nsqm().code;
-			if (!nsc.equals(NAMESPACE)) param.ns = nsc;
+			if (!nsc.equals(NAMESPACE)) {
+				param.ns = nsc;
+				if (BConfig.nsqm(param.ns, false) == null) throw new AppException("ANSUNKNOWN", param.ns);
+			} else {
+				if (!"z".equals(param.ns) && BConfig.nsqm(param.ns, false) == null) throw new AppException("ANSUNKNOWN", param.ns);
+			}
 			execContext().dbProvider().setOnOff(param.ns, param.onoff);
 			return Result.empty();
 		}
@@ -73,7 +78,7 @@ public class OnOff {
 				st.put("z", status("z", false));
 				return Result.json(st);
 			} else {
-				return Result.json(status());				
+				return Result.json(status);				
 			}
 		}
 		

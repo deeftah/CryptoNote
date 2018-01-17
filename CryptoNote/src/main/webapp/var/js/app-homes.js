@@ -2,7 +2,8 @@ class AppHomes extends Polymer.Element {
 	static get is() { return "app-homes"; }
 	
 	static get properties() { return { 
-		home: {type:String, value:"wait"}, 
+		anpage: {type:String, value:"z-wait"}, 
+		bar: {type:String, value:"z-wait-bar"}, 
 		lang:{type:String, value:App.lang},
 		history: {type:Array, value:[]}
 		};
@@ -32,8 +33,9 @@ class AppHomes extends Polymer.Element {
   	
   	async setHome(home) {
   		this.home = home;
-  		this.setPage(home, {});
-  		App.topBar = this.$[home + "-bar"];
+  		this.bar = App.namespace + "-" + home + "-bar";
+  		this.setPage(App.namespace + "-" + home, {});
+  		App.topBar = this.$[App.namespace + "-" + home + "-bar"];
   	}
   	
   	setLang(lang) { 
@@ -82,7 +84,7 @@ class AppHomes extends Polymer.Element {
   		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(null);
   		this.anim(0);
   		this.page = page;
-  		this.anpage = "an" + this.page;
+  		this.anpage = this.page + "-page";
   		if (this.$[this.page].show)
   			this.$[this.page].show(arg, null);
   	}
@@ -95,7 +97,7 @@ class AppHomes extends Polymer.Element {
   		this.history.push({page:page, arg:arg});
   		this.anim(1);
   		this.page = page;
-  		this.anpage = "an" + this.page;
+  		this.anpage = this.page + "-page";
   		if (this.$[this.page].show)
   			this.$[this.page].show(arg, pb);
   	}
@@ -110,7 +112,7 @@ class AppHomes extends Polymer.Element {
   		const top = this.history[this.history.length - 1];
   		this.anim(2);
   		this.page = top.page;
-  		this.anpage = "an" + this.page;
+  		this.anpage = this.page + "-page";
   		if (this.$[this.page].show)
   			this.$[this.page].show(top.arg, pb);
   	}

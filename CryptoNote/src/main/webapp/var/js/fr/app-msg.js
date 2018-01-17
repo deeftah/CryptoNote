@@ -1,5 +1,5 @@
 App.setAll("fr", {
-"application":"Crypt''n''Share",
+"application":"The a-social Network",
 "ns_test":"Test : associations et groupes de travail",
-"ns_namespace":"Administration des organisations hébergées" 
+"ns_ns":"Administration des organisations hébergées" 
 });

@@ -1,0 +1,72 @@
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-in-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+
+<dom-module id="phrase-box">
+<template>
+<style is="custom-style" include="iron-flex iron-flex-alignment">
+	paper-dialog.size-position { margin:0 !important; min-width:320px; max-width:500px; width:50%; overflow:hidden;}
+	paper-button.color-std { color : var(--btnstd-color); }
+	paper-button.color-std:hover { 	@apply --btnstd-hover; }
+	paper-button.color-def { color : var(--btndef-color); }
+	paper-button.color-def:hover { @apply --btndef-hover; }
+	
+	paper-icon-button.ic1 {
+		color: var(--paper-grey-700);
+		width: var(--font-xlarge);
+		height: var(--font-xlarge);
+		padding: 0;
+	}
+    paper-icon-button.ic1:hover {
+		background-color: var(--paper-grey-700);
+		color: white;
+    }
+    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */
+   		color: var(--paper-grey-300);
+   	}
+    
+    #inp {
+    	--paper-input-container-input: {
+			@apply --mono-reg;
+			color: var(--paper-blue-700);
+		}
+    }
+</style>
+<style>
+	:host { font-family: var(--font-std); }
+	:host .body { margin:0; padding:0.5rem;}
+	:host .title {font-family: var(--font-cf); font-size:var(--font-reg);}
+	:host .cpt, :host .avis {font-family: var(--font-std); font-size:var(--font-small); }
+	:host .red {color:var(--paper-red-700); font-weight:700;}
+	:host .grey {color:var(--paper-grey-700);}
+	:host .avis { font-style:italic; color:var(--paper-grey-700); }
+</style>
+<paper-dialog id="panel" class="size-position" modal entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+	<div class="body layout vertical">
+		<div class="layout horizontal justified">
+			<div class="title">[[text]]</div>
+			<help-button help="ns-ps"></help-button>
+		</div>
+	 	<paper-input id="inp" label="[[lib('pb_ex',lang)]]" type="[[type]]" value="{{typed}}">
+			<paper-icon-button slot="suffix" on-tap="clearInput" icon="clear" alt="clear" title="clear"></paper-icon-button>
+		</paper-input>
+		<div class="layout horizontal justified">
+			<paper-checkbox id="cb" checked="{{enclair}}">[[lib('pb_ec',lang)]]</paper-checkbox>
+			<div class$="[[diagcl]]">[[diag]]</div>
+		</div>
+		<div class="avis">[[avis]]</div>
+	</div>
+	
+	<div class="buttons">
+		<paper-button dialog-dismiss class="color-def">[[lib('pb_ko',lang)]]</paper-button>
+		<paper-button dialog-confirm raised class="color-std" disabled="[[er]]">[[lib('pb_ok',lang)]]</paper-button>
+	</div>
+</paper-dialog>
+</template>
+<script src="../js/phrase-box.js"></script>
+</dom-module>
+	

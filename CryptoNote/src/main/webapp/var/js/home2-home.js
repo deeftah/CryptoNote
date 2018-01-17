@@ -36,11 +36,11 @@ class Home2Home extends Polymer.Element {
     }
     
     home1() {
-  	  App.appHomes.forward("home1", {texte:"Bonjour home1"});
+  	  App.appHomes.forward("test-home1", {texte:"Bonjour home1"});
     }
 
     home1b() {
-    	App.appHomes.setPage("home1", {texte:"Bonjour home1"});
+    	App.appHomes.setPage("test-home1", {texte:"Bonjour home1"});
 	}
 
 	confirm2() {
