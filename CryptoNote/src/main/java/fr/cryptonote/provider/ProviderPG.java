@@ -810,9 +810,9 @@ public class ProviderPG implements DBProvider {
 			collect.afterCommit();
 			
 			if (collect.tq != null && collect.tq.size() != 0)
-				for(TaskInfo ti : collect.tq) QueueManager.toQueue(new QueueManager.Inq(ti));
+				for(TaskInfo ti : collect.tq) QueueManager.enqueue(new TaskMin(ti));
 			if (collect.taskInfo != null && collect.taskInfo.taskType == 7)
-				QueueManager.toQueue(new QueueManager.Inq(collect.taskInfo));
+				QueueManager.enqueue(new TaskMin(collect.taskInfo));
 
 			return null;
 		} catch (Throwable t){

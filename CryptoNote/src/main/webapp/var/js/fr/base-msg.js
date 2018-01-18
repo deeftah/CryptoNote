@@ -51,6 +51,7 @@ App.setAll("fr", {
 
 
 "SADMINOP":"Opération requérant une clé d''administrateur",
+"SADMINOPNS":"Seul l''administrateur de l''instance peut accéder au QueueManager d''une autre organisation",
 
 "XRESSOURCECLASS":"Classe [{0}] non trouvée ou sans constructeur par défaut",
 
@@ -78,6 +79,8 @@ App.setAll("fr", {
 
 "ANSBADNS":"Opération uniquement accessible depuis l''espace de noms [{0}] (pas depuis [{1}])",
 "ANSUNKNOWN":"Espace de noms [{0}] non reconnu",
+"BNSUNKNOWN":"Espace de noms [{0}] non reconnu",
+"BNSQMUNKNOWN":"QueueManager inconnu pour l'espace de noms [{0}]",
 "ANSZRES":"Ressource de nom [{0}] sans valeur par défaut dans l'application",
 "ANSEMPTY":"Pas de fichier joint",
 

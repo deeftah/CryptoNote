@@ -10,6 +10,11 @@ import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 
+import fr.cryptonote.base.QueueManager.CandidateTasks;
+import fr.cryptonote.base.QueueManager.ErrTasks;
+import fr.cryptonote.base.QueueManager.DetailTask;
+import fr.cryptonote.base.QueueManager.ParamTask;
+import fr.cryptonote.base.QueueManager.TraceTasks;
 import fr.cryptonote.provider.DBProvider;
 
 public class BConfig {
@@ -523,6 +528,11 @@ public class BConfig {
 			Operation.register(OnOff.GetOnOff.class);
 			Operation.register(OnOff.SetOnOff.class);
 			Operation.register(Mailer.SendMail.class);
+			Operation.register(TraceTasks.class);
+			Operation.register(ErrTasks.class);
+			Operation.register(CandidateTasks.class);
+			Operation.register(DetailTask.class);
+			Operation.register(ParamTask.class);
 		} catch (Exception e) {
 			throw Servlet.exc(e, _format(0, "BCONFIGOP"));
 		}

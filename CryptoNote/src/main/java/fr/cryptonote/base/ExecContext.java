@@ -121,7 +121,7 @@ public class ExecContext {
 	public boolean isSudo() {
 		if (xAdmin == 0) {
 			String sudo = inputData.args().get("sudo");
-			xAdmin = sudo != null && (nsqm.isPwd(sudo) || (isDebug && sudo.equals("nonuke"))) ? 1 : -1;
+			xAdmin = sudo != null && nsqm.isPwd(sudo) ? 1 : -1;
 		}
 		return xAdmin > 0;
 	}

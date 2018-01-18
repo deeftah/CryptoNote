@@ -212,6 +212,13 @@ public class Util {
 		try { return URLEncoder.encode(s, "UTF-8"); } catch (Exception e) { return ""; }
 	}
 
+	public static class PostResponse {
+		public int status;
+		public String text;
+		public PostResponse() {}
+		public PostResponse(int status, String text) {this.status = status; this.text = text;}
+	}
+	
 	/**
 	 * Poste une requête au serveur indiqué par ns avec les arguments cités et ne retourne qu'un statut (pas de résultat).
 	 * @param ns désigne soit un namespace soit un queue manager
@@ -219,7 +226,8 @@ public class Util {
 	 * @param args les arguments String à passer qui seront URL encodés
 	 * @return 0:succès (200) 1:réponse négative (pas 200) 2:exception technique, donc inconnu sur la réception / le traitement
 	 */
-	public static int postSrv(String ns, String endUrl, HashMap<String,String> args) {
+	public static PostResponse postSrv(String ns, String endUrl, HashMap<String,String> args) {
+		PostResponse pr = new PostResponse();
 		try {
 			StringBuffer sb = new StringBuffer();
 			Nsqm nsqm = BConfig.nsqm(ns, false);
@@ -239,11 +247,19 @@ public class Util {
 		    DataOutputStream output = new DataOutputStream(con.getOutputStream()); 
 		    output.writeBytes(query);
 		    output.close();    
-		    int status = con.getResponseCode();
-		    return status == 200 ? 0 : 1;
+		    pr.status = con.getResponseCode();
+	    	InputStream response = null;
+	    	if (pr.status != 200)
+	    		response = con.getErrorStream();
+		    if (response == null)
+		    	response = con.getInputStream();
+		    if (response != null)
+		    	pr.text = fromUTF8(bytesFromStream(response));
 		} catch (Exception e) {
-			return 2;
+			pr.status = 999;
+			pr.text = e.getMessage();
 		}
+		return pr;
 	}
 
 //	private static final boolean[] reserved = new boolean[123];
