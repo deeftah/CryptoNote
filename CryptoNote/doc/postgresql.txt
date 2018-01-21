@@ -63,6 +63,7 @@ CREATE TABLE taskqueue (
 	topurgeat bigint, 
   	opname varchar(16) NOT NULL,
   	info varchar(255),
+  	cron varchar(16),
   	param text,
 	qn int NOT NULL,
 	retry int NOT NULL,

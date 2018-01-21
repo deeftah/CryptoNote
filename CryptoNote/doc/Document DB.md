@@ -1,31 +1,38 @@
 # Document DB
 
-La base du stockage persistant est de considéré des documents ayant une identification et une version.  
+La base du stockage persistant est de considérer des documents ayant une identification et une version.  
 La mise en œuvre est considérée sous deux environnements :
 - DS/GAE : Google App Engine (servlets Java) et son datastore.
 - PG/SQL : serveurs de servlets Java avec une base de données SQL, en l'occurrence PostgreSQL (PG).
 
-# Espaces de noms (namespaces)
-Pour une instance donnée par son URL, l'application apparaît comme N applications **de logiciel identique** travaillant chacune sur **son propre espace de données** indépendant des autres et identifié par un nom court.  
-Un espace spécifique, par défaut `"z"` (mais la configuration peut lui donner un autre code) est dédié à la gestion de la configuration des espaces de données. Cette configuration consiste en : 
-- quelques paramètres élémentaires techniques ;
-- quelques fichiers de ressources utilisables en particulier depuis le Web.
+# Instances internes
+Pour un serveur (ou un pool de serveurs) identifié par son URL, l'application apparaît comme N instances **de logiciel identique** travaillant chacune sur **son propre espace de données** indépendant des autres et identifié par un nom court. C'est un moyen pour héberger plusieurs organisations au sein du même serveur ou pool de serveurs, et de mutualiser les ressources.
+
+Une instance spécifique, `admin` est dédiée à la mise on/off des instances et à l'administration surveillance centralisée des tâches différées en attente (ou archivées).
+
+Le fichier de configuration général comporte, en plus de paramètres généraux, une entrée spécifique par instance. Une instance peut avoir une customisation spécifique partielle :
+- des thèmes graphiques spécifiques.
+- des libellés / traductions spécifiques pouvant se substituer à ceux généraux.
+- des dictionnaires et langues spécifiques.
+- quelques options, principalement de session terminale spécifiques.
+- des pages d'accueil spécifiques, voire quelques pages internes spécifiques.
  
-Avec un déploiement sur R-DBMS chaque espace correspond à une base de données : l'espace `z` peut au choix être hébergé par un autre ou disposer de sa (très petite) base dédiée.  
-Avec un déploiement GAE Datastore, chaque espace correspond à un `namespace`.
+#### Déploiement sur R-DBMS 
+Les données de chaque instance sont stockées dans des tables portant le code de l'instance. Il peut exister **plusieurs bases de données**, chacune hébergeant donc les tables d'une ou plusieurs instances.  
+`admin` ne comporte qu'une toute petite table et est hébergé par la base d'une instance.  
 
-Chaque espace étant a priori considéré comme étanche aux autres, voire ignorant de leur existence pour les utilisateurs, tout ce qui suit se rapporte à un seul espace.  
-Une section de l'API est dédiée à la description,
-- des quelques actions spécifiques à l'espace **z**;
-- des quelques possibilités offertes à un espace pour consulter les données des autres avec des restrictions significatives.
+Chaque instance peut avoir des tâches différées : une table `TaskQueue` de celles-ci permet à Queue Manager de lancer les tâches à l'heure prévue. Il n'existe au plus qu'une table `TaskQueue` par base : la configuration indique quel QueueManager gère sa `TaskQueue`, le cas échéant aggrégée à des TaskQueue d'autres instances gérée sur une autre base.
 
-Le nombre d'espaces peut être de ***quelques dizaines au plus***, limite raisonnable d'administration de R-DBMS pour un serveur.  
-C'est un moyen important pour augmenter le débit global et permettre des migrations d'espaces d'un hébergeur vers un autre.
+##### Déploiement GAE Datastore
+Chaque instance correspond à un `namespace`.  
+Le Datastore a son lanceur de tâches mais la table TaskQueue (entity TaskQueue) existe cependant avec les mêmes données : elle réside toutefois dans ce cas sous le même namespace que l'instance.
+
+Chaque instance étant tanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de TaskQueue et OnOff qui peuvent être relatives à plusieurs instances. 
 
 # Documents et items
 Le stockage de données apparaît comme un ensemble de ***documents*** :
 - un document a une **classe** qui en Java étend la classe `Document`.
-- un document est **identifié** par un `String` nommé par la suite `docid`.
+- un document est **identifié** par un `String` nommé par la suite `docid` avec la seule contrainte d'une longueur maximale de 255.
 - un document a une **version**, une date-heure en millisecondes UTC sous forme d'un `long` lisible (171128094052123) et croissante dans le temps : la version est la date-heure de la dernière opération ayant mis à jour le document.
 - un document a une **date-heure de création `ctime`** : un document peut être détruit et recréé plus tard avec un même `docid` : `ctime` permet à une mémoire externe retardée de savoir si elle détient une version retardée de la *même vie* du document (dont le contenu peut être valable en partie) ou une version *d'une vie antérieure* (dont le contenu est totalement obsolète).
 - un document à une **`dtime`** qui est la date-heure au delà de laquelle le document a gardé la trace des items détruits (voir la gestion des mémoires persistante et cache).
@@ -47,11 +54,11 @@ Leurs propriétés peuvent être :
 - d'un des types primitifs : `long, int, double, boolean` ; 
 - d'une classe interne `?` ou des `Map<String,?>` ou des `Collection<?>` où les classes `?` elles-même peuvent avoir le même type de propriétés. 
 
-> ***Remarque :*** les noms des classes de Document et d'Item dans un document doivent être le plus court possible afin de réduire la taille des index et clés en stockage.
+>***Remarque :*** les noms des classes de Document et d'Item dans un document doivent être le plus court possible afin de réduire la taille des index et clés en stockage.
 
 **Sérialisation en JSON** : les propriétés `transient` ne sont pas sérialisées et les propriétés ayant une valeur `null` non plus (sauf en tant que valeurs à l'intérieur d'une `Map` ou `Collection`).
 
-##### Pièces jointes attachés à un document
+##### Pièces jointes attachées à un document
 Il est possible d'attacher à un document des pièces jointes par des items de classe prédéfinie `Document.P` mémorisant pour chaque pièce jointe (une suite d'octets) :
 - `key` : sa clé d'accès (comme pour tout item) ;
 - `mime` : son type mime (qui n'est pas contrôlé) le cas échéant comportant une extension quand le fichier a été gzippé / crypté (`.g` `.c` `.g` `.gc` ou rien);
@@ -61,7 +68,7 @@ Il est possible d'attacher à un document des pièces jointes par des items de c
 Le stockage des pièces jointes bénéficie de la même cohérence temporelle que les items avec les détails suivants :
 - le volume des fichiers eux-mêmes est décompté en tant que `v2` (secondaire) et non `v1`. Selon les fournisseurs d'infrastructure le coût du stockage peut être bien inférieur en espace secondaire qu'en espace primaire.;
 - quand des documents ont des pièces jointes ayant le même contenu (même `sha`) elles ne sont stockées qu'une fois mais décomptés en v2 autant de fois que cités dans les items P;
-- une pièce jointe ayant été modifié (donc ayant désormais un `sha` différent) reste accessible *un certain temps* sous son ancien `sha` (s'il est demandé par son `sha` et non sa clé).  Ceci facilite l'exportation cohérente à une version donnée d'un document et de ses pièces jointes, même quand elle est volumineuse en raison de la taille des pièces jointes. Des exportations incrémentales de documents peuvent être effectuées à coût réseau minimal en évitant le re-transfert de pièces jointes déjà détenues à distance.
+- une pièce jointe ayant été modifiée (donc ayant désormais un `sha` différent) reste accessible *un certain temps* sous son ancien `sha` (s'il est demandé par son `sha` et non sa clé).  Ceci facilite l'exportation cohérente à une version donnée d'un document et de ses pièces jointes, même quand elle est volumineuse en raison de la taille des pièces jointes. Des exportations incrémentales de documents peuvent être effectuées à coût réseau minimal en évitant le re-transfert de pièces jointes déjà détenues à distance.
 
 ### Mémoires persistante de référence et cache
 Il n'existe qu'une **mémoire persistante de référence** (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.
@@ -126,7 +133,7 @@ La mise à niveau s'effectue de manière identique au cas 1 mais comporte une ph
 # Opérations
 Une opération est une succession d'actions de lecture, d'écriture (création / modification / suppression) de documents et d'items de documents et de calculs sur ces données :
 - **une opération est "atomique"** vis à vis de la mise à jour des documents, tous mis à jour et datés du même instant ou aucun.
-- **une opération est "isolée"** et travaille sur tous les groupes de documents accédés comme si elle était seule le faire.
+- **une opération est "isolée"** et travaille sur tous les documents accédés comme si elle était seule le faire.
 - **une opération peut retourner un résultat** ou aucun. Ce résultat peut être :
     - n'importe quel **contenu binaire** ayant un type mime.
     - le couple, a) d'un **résultat structuré** sous forme d'un objet JSON, b) d'une **liste de synchronisations** donnant tous les changements opérés depuis une version donnée sur les documents que le demandeur de l'opération avait cité à des fins de synchronisation.
@@ -140,9 +147,9 @@ Une opération est initiée par l'arrivée d'une requête externe HTTPS le cas �
 
 Une opération est matérialisée par un objet `operation` d'une classe étendant `Operation` et ayant deux méthodes `work()` et `afterwork()`, l'étape *validation* intervenant entre elles:
 
-- `work()` : cette méthode lit les arguments de la requête qui l'a initiée, effectue les traitements nécessaires et consigne le résultat éventuel dans la variable `result` de l'opération.
+- `work()` : cette méthode lit les arguments de la requête qui l'a initiée, effectue les traitements nécessaires et retourne un résultat éventuel de classe `Result`.
 - à la fin de `work()` l'étape de **validation** vérifie la consistance temporelle des documents utilisés au cours du traitement et le cas échéant rend persistant les documents créés / modifiés / supprimés au cours de `work()` : la validation peut échouer en cas d'inconsistance temporelle des documents et/ou de problèmes de contention sur la base de données ;
-- `afterWork()` : cette méthode est exécutée après la validation et peut le cas échéant modifier le résultat pour y intégrer la valeur de la version -la date-heure de validation de l'opération désormais connue. En général et par défaut elle ne fait rien.
+- `afterWork()` : cette méthode est exécutée après la validation et peut le cas échéant diffuser des e-mails par exemple. En général et par défaut elle ne fait rien.
 
 En cas d'exception au cours du traitement, un nouvel objet `operation` est recréé et le cycle **`work()` -> validation->  `afterwork()`** est relancé (après un certain délai, au plus 3 fois et pas pour toutes les exceptions). 
 
@@ -176,7 +183,7 @@ Si l'opération demande un document avec une tolérance temporelle supérieure �
 >Si un document a évolué entre la phase de traitement et la validation, l'opération subit une exception : la validation s'interrompt, libère les verrous et l'opération est recyclée. Elle prendra alors la dernière version du / des documents ayant provoqué cette exception.
 >Le nombre de recyclages est limité et un certain temps est laissé entre chaque cycle : in fine l'opération peut sortir définitivement en erreur du fait d'un excès de contention d'accès sur les documents persistants.
 
-Ce mode de gestion *optimiste* table sur le fait que les opérations vont travailler sur peu de documents (il y a une limite autoritaire à 32). Elle optimise aussi la connaissance entre plusieurs instances de serveurs des dernières versions des documents et rend la gestion des caches locales à chaque instance plus efficientes.
+Ce mode de gestion *optimiste* table sur le fait que les opérations vont travailler sur peu de documents (il y a une limite autoritaire à 32). Elle optimise aussi la connaissance entre plusieurs serveurs des dernières versions des documents et rend la gestion des caches locales à chaque instance plus efficientes.
 
 ##### Consistance structurelle entre plusieurs documents : documents verrous
 Parfois un groupe de documents doit être considéré comme immobile dès lors qu'une opération travaille sur l'un deux :
@@ -184,9 +191,9 @@ Parfois un groupe de documents doit être considéré comme immobile dès lors q
 - dans ce cas il faut déterminer un document représentatif du groupe (le cas échéant avec un singleton quasi vide) et s'astreindre à le demander avec une tolérance 0 dans toutes les opérations portant sur un des documents du groupe.
 
 ### Opérations de mise à jour et synchronisations
-Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents du même groupe ou non. 
+Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents du même groupe ou non.
 
-En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une ***synchronisation*** qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session ayant émis la requête a cité "à synchroniser" (avec la version et le `dtime` détenus pour chacun).  
+En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une ***synchronisation*** qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session ayant émis la requête a cité *à synchroniser* (avec la version et le `dtime` détenus pour chacun).  
 Une session peut ainsi effectuer des actions de mises à jour et récupérer toutes les conséquences de ces actions sur les documents dont elle détient une copie (plus ou moins retardée).
 
 **Une opération de mise à jour doit être idempotente** : l'exécuter plusieurs fois successivement doit laisser l'ensemble des documents dans le même état qu'une exécution unique ce qui exige le cas échéant de détecter que la mise à jour a déjà été faite ou qu'elle peut être faite plusieurs fois sans dommage pour la logique métier.  
@@ -206,7 +213,7 @@ Si une opération de reporting retourne un résultat en JSON, elle *peut* être 
 Opérations et synchronisations retournent une ***exception*** en cas d'échec aboutissant à un status HTTP 400 (404 pour les N). 
 
 ### Codes MAJOR / MINOR
-La première lettre du code **MINOR** de l'exception définit son code **MAJOR** (1 à 7) :
+La première lettre du **code** de l'exception définit son code **MAJOR** (1 à 7) :
 - 1 : ***A - métier*** : les conditions fonctionnelles sont non satisfaisantes sur le contenu des documents vis à vis des paramètres de l'opération. Recommencer l'opération avec les mêmes paramètres a de fortes chances de provoquer la même exception ...  sauf si les données sur le serveur ont évolué favorablement depuis, typiquement du fait d'une requête émise par une autre session depuis la requête initiale.
 - 1 : ***N - ressource inexistante*** : l'opération a demandé typiquement le contenu d'une pièce jointe inexistante (404).
 - 2 : ***B - bug*** : l'application *a rencontré et bien détecté* une conjonction des valeurs de données qui n'auraient jamais dû exister (selon le développeur). Recommencer l'opération avec les mêmes paramètres a des chances de provoquer la même exception, sauf si les données sur le serveur ont évolué depuis de sorte que cette conjonction non prévue n'apparaisse plus (chance ... relative, c'est un incident non reproductible et peut-être difficile à corriger).
@@ -236,7 +243,7 @@ Comme une opération doit avoir un temps d'exécution réduit et surtout ne pas 
 Par ailleurs une opération *principale* peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations *secondaires* différées par rapport à l'opération principale.
 
 Une tâche est constituée d'une succession d'étapes de 1 à N, chacune marquant un point de reprise persistant :
-- chaque fin d'étape spécifie s'il y a ou non une étape ultérieure et quels sont son objet paramètre d'exécution. Cet objet porte également, si souhaité, des informations de reporting sur le travail déjà exécuté.
+- chaque fin d'étape spécifie s'il y a ou non une étape ultérieure et quel est son objet paramètre d'exécution. Cet objet porte également, si souhaité, des informations de reporting sur le travail déjà exécuté.
 - la fin de la dernière étape spécifie si son résultat doit être conservé, et si oui combien de temps, ou si la trace de la tâche est à détruire immédiatement.
 
 ##### TaskQueue
@@ -260,9 +267,9 @@ Le GAE Datastore a son propre Queue Manager. Afin d'uniformiser la gestion des t
 - le QM Datastore gère la relance des étapes tombées en exception. Toutefois au bout d'un certain nombre de fois il abandonne silencieusement. La tâche apparaît dans `TaskQueue`, 
     - soit comme sortie en exception, 
     - soit comme présumée perdue si son exception n'a pas pu être attrapée.
-- une tâche périodique Cron du datastore est en charge :
+- une tâche périodique `Cron` du datastore est en charge :
     - de récupérer les tâches présumées perdues et de les relancer en tant que nouvelle task pour le QM Datastore. 
-    - d'envoyer un e-mail d'alerte à l'administrateur signalant les tâches en erreur ayant un indice de retry important et marquées à relancer à la fin du siècle. 
+    - d'envoyer un e-mail d'alerte à l'administrateur signalant les tâches en erreur ayant un indice de `retry` important et marquées à relancer à la fin du siècle. 
 
 La différence se situe dans la récupération dans les QM d'une exécution dont la fin n'a pas été attrapée / enregistrée sur le serveur exécutant :
 - la requête HTTP dans un QM Datastore récupère un statut non 200 ou une exception de rupture de connexion. Il considère que c'est une exception et relance l'étape.
@@ -279,6 +286,7 @@ Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au co
 - `param` : un JSON contenant les paramètres requis. Si ceux-ci sont très volumineux, on créé un document et `param` en contient juste l'identification.
 - `info` : texte d'information indexé permettant des filtrages pour l'administrateur.
 - `step` : le numéro d'étape est 1, c'est celui de la **prochaine** étape à exécuter.
+- `cron` : un code `Cron` (voir ci-après).
 - `retry` : son numéro d'ordre d'exécution dans l'étape `step` est 0. Il est incrémenté à chaque relance après exception.
 - `toStartAt` : la date-heure de son lancement / relance au plus tôt.
 - `startTime` : la date-heure du début d'exécution de l'étape courante. `null` quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.
@@ -304,9 +312,9 @@ Elle est exécutée par l'opération, soit sur fin normale, soit en exception :
 - toute exécution qui se termine alors que l'état enregistré ne correspond pas à sa signature `startTime` est ignorée, non enregistrée et la transaction non validée : c'est une exécution perdue qui a été relancée depuis. Son retour est un status 200 afin que le QM Datastore surtout ne relance rien (au cas improbable où il écouterait encore).
 - la fin sur exception est enregistrée (transaction non validée) et retourne un 500 afin que le QM Datastore relance.
 - la fin normale est enregistrée, la transaction est validée et retourne un status 200 afin que le QM Datastore ne relance pas. La fin normale correspond à,
-    - soit la fin de la dernière étape avec trace (step est null, toPurgetAt est renseignée). 
+    - soit la fin de la dernière étape avec trace (`step` est `null`, `toPurgetAt` est renseignée). 
     - soit la fin de la dernière étape sans trace (l'enregistrement est supprimé). 
-    - soit la demande d'une nouvelle étape (step est incrémenté, retry à 0, toStratAt est renseignée). 
+    - soit la demande d'une nouvelle étape (`step` est incrémenté, `retry` à 0, `toStartAt` est renseignée). 
 
 #### Fin d'étape d'une tâche
 La fin d'une étape *intermédiaire* donne lieu :
@@ -317,7 +325,7 @@ La fin d'une étape *intermédiaire* donne lieu :
 La fin de la *dernière* étape donne lieu :
 - à l'enregistrement du `param` qui, s'il n'est pas `null`, ne contient plus que des données de compte rendu synthétique d'exécution;
 - à l'enregistrement d'une date-heure de purge de l'enregistrement de suivi de la tâche.
-- à la mise à null du numéro de la prochaine étape et de la date-heure de prochain lancement.
+- à la mise à `null` du numéro de la prochaine étape et de la date-heure de prochain lancement.
 
 A noter que si la dernière étape ne veut pas conserver de trace de traitement, son enregistrement est purement et simplement détruit.
 
@@ -328,15 +336,15 @@ C'est une opération normale. L'objet `param` et le nom de l'opération `opName`
 - elle bénéficie d'un quota de temps plus long pour son exécution.
 
 ### Principe d'exécution nominal
-Une opération inscrit une nouvelle tâche en ayant fourni `ns opName param info` : `taskid` est générée et `qn` obtenu de la configuration.  
+Une opération inscrit une nouvelle tâche en ayant fourni `ns opName param info cron` : `taskid` est générée et `qn` obtenu de la configuration.  
 Au commit :
 - la tâche est inscrite dans la table `TaskQueue`.
 - pour un Datastore, **avant le commit**, une tâche est mise en queue avec pour URL d'invocation `/ns/od/taskid/step?key=...`.
-- pour une base de données, **après le commit**, si la `toStartAt` est proche (moins de X minutes : X est le scan lapse du Queue Manager), le Queue Manager associé au namespace (`qm7`) reçoit une requête HTTP `/qm7/op?key=...&op=inq&param={ns:..,taskid:..,toStartAt:..,qn:..,step:N}` pour inscription de l'étape N de la tâche à relancer sans attendre le prochain scan.
+- pour une base de données, **après le commit**, si la `toStartAt` est proche (moins de X minutes : X est le scan lapse du Queue Manager), le Queue Manager associé à l'instance (`qm7`) reçoit une requête HTTP `/qm7/op?key=...&op=inq&param={ns:..,taskid:..,toStartAt:..,qn:..,step:N}` pour inscription de l'étape N de la tâche à relancer sans attendre le prochain scan.
 
-**Quand le Queue Manager peut / doit lancer la tâche**, il cherche un thread worker libre qui émet vers le serveur du namespace une requête HTTP avec `/ns/od/taskid?key=...` :
-- `ns` : le namespace (comme pour toute requête),
-- `od` au lieu de op pour identifier qu'il s'agit d'une opération différée,
+**Quand le Queue Manager peut / doit lancer la tâche**, il cherche un thread worker libre qui émet vers le serveur du namespace une requête HTTP avec `/ns/od/taskid/step?key=...` :
+- `ns` : le code de l'instance (comme pour toute requête),
+- `od` au lieu de `op` pour identifier qu'il s'agit d'une opération différée,
 - `taskid/step` dans l'URL.
 - le paramètre `key` : mot de passe permettant de s'assurer que c'est bien le Queue Manager qui a émis la requête et non une session externe (en fait sur un POST, `key` n'apparaît pas dans l'URL comme dans celle ci-dessus qui est employée en test).
 
@@ -358,10 +366,10 @@ L'opération souhaitée s'exécute ensuite :
     - sauf Datastore, si la `nexstart` est proche (moins de X minutes), le Queue Manager associé au namespace reçoit une requête HTTP pour inscription de la tâche à relancer sans attendre le prochain scan.
 
 **Scan périodique des TaskQueue par le Queue Manager**
-Un Queue Manager gère un ou plusieurs namespaces et fait donc face à une ou plusieurs base de données.  
-Seule les étapes des tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :
-- une `startAt` antérieure à la date-heure du scan suivant,
-- ayant l'un des namespaces dont il est en charge,
+Un Queue Manager gère une ou plusieurs instances et fait donc face à une ou plusieurs base de données.  
+Seules les étapes des tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :
+- une `toStartAt` antérieure à la date-heure du scan suivant,
+- ayant l'un des codes d'instance dont il est en charge,
 - un numéro d'étape : si `null` la tâche est terminée et l'enregistrement n'est qu'une trace,
 - ayant une `startTime` `null` (tâche pas en cours).
 
@@ -386,12 +394,11 @@ On va considérer que l'étape de la tâche s'est mal terminée sans que son exc
 Une tâche perdue est *supposée* être perdue mais en fait elle peut être cachée en exécution et dans ce cas il peut exister à un moment donné plus d'une exécution en cours, voire dans le pire des cas avec des numéros d'étapes différents.
 
 ### Exécution de plusieurs étapes successives dans la même requête
-La phase `work()` se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat comportant :
-- `completed` : `true` - tâche terminée (c'était la dernière étape).
-    - `t` : indique la date-heure à laquelle il faut purger l'enregistrement de trace. Si 0, l'enregistrement est immédiatement détruit.
-- `completed` : `false` - passage à l'étape suivante 
-   - `t` : `null` - dans la même requête. 
-   - `t` : non `null` - dans une autre requête dont `t` est `toStartAt`.
+La phase `work()` se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat obtenu par les méthodes :
+- `Result taskComplete()` : tâche terminée (c'était la dernière étape). L'enregistrement est immédiatement détruit.
+- `Result taskComplete(Stamp toPurgeAt)` : indique la date-heure à laquelle il faut purger l'enregistrement de trace. 
+- `Result nextStep()` : passage à l'étape suivante dans la même requête. 
+- `Result nextStep(Stamp toStartAt)` : passage à l'étape suivante dans une autre requête.
 
 Enchaîner un grand nombre d'étapes dans la même requête a l'avantage évident de limiter l'overhead de nouvelles requêtes mais plusieurs inconvénients :
 - monopoliser un thread de calcul pour une tâche de fond au détriment du passage de requêtes de front;
@@ -400,7 +407,7 @@ Enchaîner un grand nombre d'étapes dans la même requête a l'avantage éviden
 ### La classe `Cron`
 Une tâche peut être périodique : à la fin d'une exécution, une nouvelle tâche est inscrite pour exécution ultérieure.  
 Par exemple une tâche mensuelle prévue le 2 du mois à 3h30, sera inscrite dès sa fin d'exécution pour le 2 du mois suivant à 3h30.  
-Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi utiliser la classe `Cron` qui depuis un court texte calcule la prochaine échéance en fonction de la date-heure courante, du moins dans les cas usuels.
+Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi inscrire un code `cron` qui va faire invoquer la classe `Cron` pour calculer la prochaine échéance `toStartAt` en fonction de la date-heure courante.
 
 `Cron` gère une période qui peut être : 
 - Y : annuelle, 
@@ -416,14 +423,28 @@ Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi
 - `M100425` : soit le 10 de ce mois si on est avant le 10 à 4h25, soit le 10 du mois suivant à 4h25 ;
 - `Y11100425` : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.
 
-Normalement un traitement dont la `startAt` a été calculée depuis `Cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le `Cron`.
+Normalement un traitement dont la `toStartAt` a été calculée depuis son `cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le `Cron`.
 
 ## Administration des tâches
-Un certain nombre d'opérations permettent d'assurer les services sur le serveur et des pages spécifiques permettent d'en assurer l'interface : le namespace est le code du Queue Manager géré.   - ce namespace n'a pas de base données directement associée et agit avec toutes les bases de données de tous les namespaces qu'il gère.
+Le privilège d'administration permet de joindre un Queue Manager et de lui soumettre les requêtes suivantes :
+- suspension de fonctionnement.
+- relance de fonctionnement.
+- liste des tâches en attente pour lancement proche.
 
-La liste des tâches peut être consultée et filtrée depuis `TaskQueue`.
-- tous namespaces confondus avec seulement des filtres sur `startTime retry opName`.
-- par namespace avec un filtre plus fonctionnel sur `opName info` qui est un champ indexé.
+### Interrogation / mise à jour de TaskQueue
+Le privilège d'administration générale permet d'accéder à tous les TaskQueue (de toutes les instances).  
+
+Le privilège d'administration d'une instance ne permet d'accéder qu'au seul TaskQueue de l'instance.
+
+Les opérations possibles sont :
+- liste des tâches candidates.
+- liste des tâches en erreur.
+- liste de tâches terminées.
+- obtention du `param` (tâche en cours ou terminée).
+- obtention du `detail` d'une tâche en erreur.
+- destruction d'une tâche.
+- rectification de sa `toStartAt`, de son `cron` et avec énormément de prudence de son `param`.
+- inscription d'une nouvelle tâche avec beaucoup de prudence pour tous les paramètres : `opName`, `info`, `cron`, `param`, `toStartAt`. C'est utile surtout pour initialiser la première tâche d'un `cron` sans avoir à coder une opération qui ne serait utiliser que très peu : cela suppose quand même que le JSON `param` soit bien formé et correct et que l'opération existe. A la limite ça peut se limiter à une page de session, sans développement serveur.
 
 Une tâche peut être supprimée :
 - en Datastore elle sera toutefois lancée mais se terminera immédiatement.
@@ -437,12 +458,7 @@ Une tâche peut être reculée :
 - en Datastore une autre tâche sera créée plus tard, la première sera ignorée à l'exécution.
 - en base de données le Queue Manager est notifié, en général à temps avant lancement.
 
-En Datastore c'est aussi un moyen de faire une relance de tâche après erreur quand lui a renoncé de le faire.
-
-Hors Datastore, l'administrateur peut,
-- suspendre un Queue Manager,
-- lever sa suspension, 
-- interroger son *backlog* en mémoire (tâches à lancer très prochainement et en cours).
+En Datastore c'est aussi un moyen de faire une relance de tâche après erreur quand le Datastore a renoncé aux relances.
 
 # Réplications différées d'items
 Une opération ne doit travailler que sur peu de documents : en conséquence un document A1 ayant à répliquer son état synthétique sur des dizaines / centaines d'autres documents ne peut pas le faire dans le cadre d'une opération unique. L'usage d'une tâche différée permet d'y remédier.
@@ -486,10 +502,10 @@ Moyennant ces contraintes, toute mise à jour de `Sta` ou d'un `Adh` dans le doc
 
 # Identification / authentification
 Ce service est géré au niveau de l'application : chaque requête est autonome des précédentes et il n'y a pas de concept de session dans le serveur.  
-Chaque requête peut être porteuse de propriétés, ***par exemple*** `account` `key` `admin` où,
+Chaque requête peut être porteuse de propriétés, ***par exemple*** `account` `key` `sudo` où,
 - `account` : identifie un compte,
 - `key` : donne le mot de passe, tout autre élément d'authentification, un jeton de session etc.
-- `admin` : donne pour certaines opérations une clé d'autorisation de privilège administrateur.
+- `sudo` : donne pour certaines opérations une clé d'autorisation de privilège administrateur.
 
 Des opérations de login *peuvent* être écrites pour identifier des sessions d'utilisation avec un utilisateur identifié par le login qui déclare (ou retrouve) une session puis des requêtes qui ne font que référencer des sessions déclarées.
 

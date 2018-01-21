@@ -1,0 +1,2233 @@
+<html>
+<head>
+	<title>Markdown Edit Preview</title>
+	<!-- Must have base tag with id of "base-tag-id" -->
+	<base id="base-tag-id">
+	<!-- Don't delete this X-UA tag. The browser control behaves like IE8 otherwise -->
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<style type="text/css">
+		body { font-family: arial, 'segoe ui', sans-serif; line-height: 1.4; padding-left: 12pt; font-size: 12pt; }
+		code { white-space: pre }
+		ul, ol { padding: 8pt; }
+		h1, h2, h3, h4, h5, h6 { font-family: arial, cambria, serif; }
+		blockquote { padding: 0 12pt; color: #777; border-left: 3pt solid #ddd;  }
+		table{ display: block; width: 100%; overflow: auto; word-break: normal; word-break: keep-all; border-collapse: collapse;  }
+		table th{ font-weight: bold; background-color: #f8f8f8; }
+		table th, #content table td{ padding: 6px 13px; border: 1px solid #ddd; }
+		table tr{ background-color: #fff; border-top: 1px solid #ccc; page-break-inside: avoid; }
+	</style>
+	<style type="text/css">
+		._sprite{ background-image: url('emoji-sprite.png'); } 
+		._sprite{ background-color: transparent; background-repeat: no-repeat; display: inline-block; zoom:0.39; vertical-align: middle; }
+		._shipit{ width: 75px; height: 75px; background-position: 0 -27520px; }
+		._0023-20e3{ width: 64px; height: 64px; background-position: 0 -27456px; }
+		._0030-20e3{ width: 64px; height: 64px; background-position: -64px 0; }
+		._0031-20e3{ width: 64px; height: 64px; background-position: -64px -64px; }
+		._0032-20e3{ width: 64px; height: 64px; background-position: 0 -27392px; }
+		._0033-20e3{ width: 64px; height: 64px; background-position: -64px -128px; }
+		._0034-20e3{ width: 64px; height: 64px; background-position: 0 -27328px; }
+		._0035-20e3{ width: 64px; height: 64px; background-position: -64px -192px; }
+		._0036-20e3{ width: 64px; height: 64px; background-position: 0 -27264px; }
+		._0037-20e3{ width: 64px; height: 64px; background-position: -64px -256px; }
+		._0038-20e3{ width: 64px; height: 64px; background-position: 0 -27200px; }
+		._0039-20e3{ width: 64px; height: 64px; background-position: -64px -320px; }
+		._00a9{ width: 64px; height: 64px; background-position: 0 -27136px; }
+		._00ae{ width: 64px; height: 64px; background-position: -64px -384px; }
+		._1f004{ width: 64px; height: 64px; background-position: 0 -27072px; }
+		._1f0cf{ width: 64px; height: 64px; background-position: -64px -448px; }
+		._1f170{ width: 64px; height: 64px; background-position: 0 -27008px; }
+		._1f171{ width: 64px; height: 64px; background-position: -64px -512px; }
+		._1f17e{ width: 64px; height: 64px; background-position: 0 -26944px; }
+		._1f17f{ width: 64px; height: 64px; background-position: -64px -576px; }
+		._1f18e{ width: 64px; height: 64px; background-position: 0 -26880px; }
+		._1f191{ width: 64px; height: 64px; background-position: -64px -640px; }
+		._1f192{ width: 64px; height: 64px; background-position: 0 -26816px; }
+		._1f193{ width: 64px; height: 64px; background-position: -64px -704px; }
+		._1f194{ width: 64px; height: 64px; background-position: 0 -26752px; }
+		._1f195{ width: 64px; height: 64px; background-position: -64px -768px; }
+		._1f196{ width: 64px; height: 64px; background-position: 0 -26688px; }
+		._1f197{ width: 64px; height: 64px; background-position: -64px -832px; }
+		._1f198{ width: 64px; height: 64px; background-position: 0 -26624px; }
+		._1f199{ width: 64px; height: 64px; background-position: -64px -896px; }
+		._1f19a{ width: 64px; height: 64px; background-position: 0 -26560px; }
+		._1f1e8-1f1f3{ width: 64px; height: 64px; background-position: -64px -960px; }
+		._1f1e9-1f1ea{ width: 64px; height: 64px; background-position: 0 -26496px; }
+		._1f1ea-1f1f8{ width: 64px; height: 64px; background-position: -64px -1024px; }
+		._1f1eb-1f1f7{ width: 64px; height: 64px; background-position: 0 -26432px; }
+		._1f1ec-1f1e7{ width: 64px; height: 64px; background-position: -64px -1088px; }
+		._1f1ee-1f1f9{ width: 64px; height: 64px; background-position: 0 -26368px; }
+		._1f1ef-1f1f5{ width: 64px; height: 64px; background-position: -64px -1152px; }
+		._1f1f0-1f1f7{ width: 64px; height: 64px; background-position: 0 -26304px; }
+		._1f1f7-1f1fa{ width: 64px; height: 64px; background-position: -64px -1216px; }
+		._1f1fa-1f1f8{ width: 64px; height: 64px; background-position: 0 -26240px; }
+		._1f201{ width: 64px; height: 64px; background-position: -64px -1280px; }
+		._1f202{ width: 64px; height: 64px; background-position: 0 -26176px; }
+		._1f21a{ width: 64px; height: 64px; background-position: -64px -1344px; }
+		._1f22f{ width: 64px; height: 64px; background-position: 0 -26112px; }
+		._1f232{ width: 64px; height: 64px; background-position: -64px -1408px; }
+		._1f233{ width: 64px; height: 64px; background-position: 0 -26048px; }
+		._1f234{ width: 64px; height: 64px; background-position: -64px -1472px; }
+		._1f235{ width: 64px; height: 64px; background-position: 0 -25984px; }
+		._1f236{ width: 64px; height: 64px; background-position: -64px -1536px; }
+		._1f237{ width: 64px; height: 64px; background-position: 0 -25920px; }
+		._1f238{ width: 64px; height: 64px; background-position: -64px -1600px; }
+		._1f239{ width: 64px; height: 64px; background-position: 0 -25856px; }
+		._1f23a{ width: 64px; height: 64px; background-position: -64px -1664px; }
+		._1f250{ width: 64px; height: 64px; background-position: 0 -25792px; }
+		._1f251{ width: 64px; height: 64px; background-position: -64px -1728px; }
+		._1f300{ width: 64px; height: 64px; background-position: 0 -25728px; }
+		._1f301{ width: 64px; height: 64px; background-position: -64px -1792px; }
+		._1f302{ width: 64px; height: 64px; background-position: 0 -25664px; }
+		._1f303{ width: 64px; height: 64px; background-position: -64px -1856px; }
+		._1f304{ width: 64px; height: 64px; background-position: 0 -25600px; }
+		._1f305{ width: 64px; height: 64px; background-position: -64px -1920px; }
+		._1f306{ width: 64px; height: 64px; background-position: 0 -25536px; }
+		._1f307{ width: 64px; height: 64px; background-position: -64px -1984px; }
+		._1f308{ width: 64px; height: 64px; background-position: 0 -25472px; }
+		._1f309{ width: 64px; height: 64px; background-position: -64px -2048px; }
+		._1f30a{ width: 64px; height: 64px; background-position: 0 -25408px; }
+		._1f30b{ width: 64px; height: 64px; background-position: -64px -2112px; }
+		._1f30c{ width: 64px; height: 64px; background-position: 0 -25344px; }
+		._1f30d{ width: 64px; height: 64px; background-position: -64px -2176px; }
+		._1f30e{ width: 64px; height: 64px; background-position: 0 -25280px; }
+		._1f30f{ width: 64px; height: 64px; background-position: -64px -2240px; }
+		._1f310{ width: 64px; height: 64px; background-position: 0 -25216px; }
+		._1f311{ width: 64px; height: 64px; background-position: -64px -2304px; }
+		._1f312{ width: 64px; height: 64px; background-position: 0 -25152px; }
+		._1f313{ width: 64px; height: 64px; background-position: -64px -2368px; }
+		._1f314{ width: 64px; height: 64px; background-position: 0 -25088px; }
+		._1f315{ width: 64px; height: 64px; background-position: -64px -2432px; }
+		._1f316{ width: 64px; height: 64px; background-position: 0 -25024px; }
+		._1f317{ width: 64px; height: 64px; background-position: -64px -2496px; }
+		._1f318{ width: 64px; height: 64px; background-position: 0 -24960px; }
+		._1f319{ width: 64px; height: 64px; background-position: -64px -2560px; }
+		._1f31a{ width: 64px; height: 64px; background-position: 0 -24896px; }
+		._1f31b{ width: 64px; height: 64px; background-position: -64px -2624px; }
+		._1f31c{ width: 64px; height: 64px; background-position: 0 -24832px; }
+		._1f31d{ width: 64px; height: 64px; background-position: -64px -2688px; }
+		._1f31e{ width: 64px; height: 64px; background-position: 0 -24768px; }
+		._1f31f{ width: 64px; height: 64px; background-position: -64px -2752px; }
+		._1f320{ width: 64px; height: 64px; background-position: 0 -24704px; }
+		._1f330{ width: 64px; height: 64px; background-position: -64px -2816px; }
+		._1f331{ width: 64px; height: 64px; background-position: 0 -24640px; }
+		._1f332{ width: 64px; height: 64px; background-position: -64px -2880px; }
+		._1f333{ width: 64px; height: 64px; background-position: 0 -24576px; }
+		._1f334{ width: 64px; height: 64px; background-position: -64px -2944px; }
+		._1f335{ width: 64px; height: 64px; background-position: 0 -24512px; }
+		._1f337{ width: 64px; height: 64px; background-position: -64px -3008px; }
+		._1f338{ width: 64px; height: 64px; background-position: 0 -24448px; }
+		._1f339{ width: 64px; height: 64px; background-position: -64px -3072px; }
+		._1f33a{ width: 64px; height: 64px; background-position: 0 -24384px; }
+		._1f33b{ width: 64px; height: 64px; background-position: -64px -3136px; }
+		._1f33c{ width: 64px; height: 64px; background-position: 0 -24320px; }
+		._1f33d{ width: 64px; height: 64px; background-position: -64px -3200px; }
+		._1f33e{ width: 64px; height: 64px; background-position: 0 -24256px; }
+		._1f33f{ width: 64px; height: 64px; background-position: -64px -3264px; }
+		._1f340{ width: 64px; height: 64px; background-position: 0 -24192px; }
+		._1f341{ width: 64px; height: 64px; background-position: -64px -3328px; }
+		._1f342{ width: 64px; height: 64px; background-position: 0 -24128px; }
+		._1f343{ width: 64px; height: 64px; background-position: -64px -3392px; }
+		._1f344{ width: 64px; height: 64px; background-position: 0 -24064px; }
+		._1f345{ width: 64px; height: 64px; background-position: -64px -3456px; }
+		._1f346{ width: 64px; height: 64px; background-position: 0 -24000px; }
+		._1f347{ width: 64px; height: 64px; background-position: -64px -3520px; }
+		._1f348{ width: 64px; height: 64px; background-position: 0 -23936px; }
+		._1f349{ width: 64px; height: 64px; background-position: -64px -3584px; }
+		._1f34a{ width: 64px; height: 64px; background-position: 0 -23872px; }
+		._1f34b{ width: 64px; height: 64px; background-position: -64px -3648px; }
+		._1f34c{ width: 64px; height: 64px; background-position: 0 -23808px; }
+		._1f34d{ width: 64px; height: 64px; background-position: -64px -3712px; }
+		._1f34e{ width: 64px; height: 64px; background-position: 0 -23744px; }
+		._1f34f{ width: 64px; height: 64px; background-position: -64px -3776px; }
+		._1f350{ width: 64px; height: 64px; background-position: 0 -23680px; }
+		._1f351{ width: 64px; height: 64px; background-position: -64px -3840px; }
+		._1f352{ width: 64px; height: 64px; background-position: 0 -23616px; }
+		._1f353{ width: 64px; height: 64px; background-position: -64px -3904px; }
+		._1f354{ width: 64px; height: 64px; background-position: 0 -23552px; }
+		._1f355{ width: 64px; height: 64px; background-position: -64px -3968px; }
+		._1f356{ width: 64px; height: 64px; background-position: 0 -23488px; }
+		._1f357{ width: 64px; height: 64px; background-position: -64px -4032px; }
+		._1f358{ width: 64px; height: 64px; background-position: 0 -23424px; }
+		._1f359{ width: 64px; height: 64px; background-position: -64px -4096px; }
+		._1f35a{ width: 64px; height: 64px; background-position: 0 -23360px; }
+		._1f35b{ width: 64px; height: 64px; background-position: -64px -4160px; }
+		._1f35c{ width: 64px; height: 64px; background-position: 0 -23296px; }
+		._1f35d{ width: 64px; height: 64px; background-position: -64px -4224px; }
+		._1f35e{ width: 64px; height: 64px; background-position: 0 -23232px; }
+		._1f35f{ width: 64px; height: 64px; background-position: -64px -4288px; }
+		._1f360{ width: 64px; height: 64px; background-position: 0 -23168px; }
+		._1f361{ width: 64px; height: 64px; background-position: -64px -4352px; }
+		._1f362{ width: 64px; height: 64px; background-position: 0 -23104px; }
+		._1f363{ width: 64px; height: 64px; background-position: -64px -4416px; }
+		._1f364{ width: 64px; height: 64px; background-position: 0 -23040px; }
+		._1f365{ width: 64px; height: 64px; background-position: -64px -4480px; }
+		._1f366{ width: 64px; height: 64px; background-position: 0 -22976px; }
+		._1f367{ width: 64px; height: 64px; background-position: -64px -4544px; }
+		._1f368{ width: 64px; height: 64px; background-position: 0 -22912px; }
+		._1f369{ width: 64px; height: 64px; background-position: -64px -4608px; }
+		._1f36a{ width: 64px; height: 64px; background-position: 0 -22848px; }
+		._1f36b{ width: 64px; height: 64px; background-position: -64px -4672px; }
+		._1f36c{ width: 64px; height: 64px; background-position: 0 -22784px; }
+		._1f36d{ width: 64px; height: 64px; background-position: -64px -4736px; }
+		._1f36e{ width: 64px; height: 64px; background-position: 0 -22720px; }
+		._1f36f{ width: 64px; height: 64px; background-position: -64px -4800px; }
+		._1f370{ width: 64px; height: 64px; background-position: 0 -22656px; }
+		._1f371{ width: 64px; height: 64px; background-position: -64px -4864px; }
+		._1f372{ width: 64px; height: 64px; background-position: 0 -22592px; }
+		._1f373{ width: 64px; height: 64px; background-position: -64px -4928px; }
+		._1f374{ width: 64px; height: 64px; background-position: 0 -22528px; }
+		._1f375{ width: 64px; height: 64px; background-position: -64px -4992px; }
+		._1f376{ width: 64px; height: 64px; background-position: 0 -22464px; }
+		._1f377{ width: 64px; height: 64px; background-position: -64px -5056px; }
+		._1f378{ width: 64px; height: 64px; background-position: 0 -22400px; }
+		._1f379{ width: 64px; height: 64px; background-position: -64px -5120px; }
+		._1f37a{ width: 64px; height: 64px; background-position: 0 -22336px; }
+		._1f37b{ width: 64px; height: 64px; background-position: -64px -5184px; }
+		._1f37c{ width: 64px; height: 64px; background-position: 0 -22272px; }
+		._1f380{ width: 64px; height: 64px; background-position: -64px -5248px; }
+		._1f381{ width: 64px; height: 64px; background-position: 0 -22208px; }
+		._1f382{ width: 64px; height: 64px; background-position: -64px -5312px; }
+		._1f383{ width: 64px; height: 64px; background-position: 0 -22144px; }
+		._1f384{ width: 64px; height: 64px; background-position: -64px -5376px; }
+		._1f385{ width: 64px; height: 64px; background-position: 0 -22080px; }
+		._1f386{ width: 64px; height: 64px; background-position: -64px -5440px; }
+		._1f387{ width: 64px; height: 64px; background-position: 0 -22016px; }
+		._1f388{ width: 64px; height: 64px; background-position: -64px -5504px; }
+		._1f389{ width: 64px; height: 64px; background-position: 0 -21952px; }
+		._1f38a{ width: 64px; height: 64px; background-position: -64px -5568px; }
+		._1f38b{ width: 64px; height: 64px; background-position: 0 -21888px; }
+		._1f38c{ width: 64px; height: 64px; background-position: -64px -5632px; }
+		._1f38d{ width: 64px; height: 64px; background-position: 0 -21824px; }
+		._1f38e{ width: 64px; height: 64px; background-position: -64px -5696px; }
+		._1f38f{ width: 64px; height: 64px; background-position: 0 -21760px; }
+		._1f390{ width: 64px; height: 64px; background-position: -64px -5760px; }
+		._1f391{ width: 64px; height: 64px; background-position: 0 -21696px; }
+		._1f392{ width: 64px; height: 64px; background-position: -64px -5824px; }
+		._1f393{ width: 64px; height: 64px; background-position: 0 -21632px; }
+		._1f3a0{ width: 64px; height: 64px; background-position: -64px -5888px; }
+		._1f3a1{ width: 64px; height: 64px; background-position: 0 -21568px; }
+		._1f3a2{ width: 64px; height: 64px; background-position: -64px -5952px; }
+		._1f3a3{ width: 64px; height: 64px; background-position: 0 -21504px; }
+		._1f3a4{ width: 64px; height: 64px; background-position: -64px -6016px; }
+		._1f3a5{ width: 64px; height: 64px; background-position: 0 -21440px; }
+		._1f3a6{ width: 64px; height: 64px; background-position: -64px -6080px; }
+		._1f3a7{ width: 64px; height: 64px; background-position: 0 -21376px; }
+		._1f3a8{ width: 64px; height: 64px; background-position: -64px -6144px; }
+		._1f3a9{ width: 64px; height: 64px; background-position: 0 -21312px; }
+		._1f3aa{ width: 64px; height: 64px; background-position: -64px -6208px; }
+		._1f3ab{ width: 64px; height: 64px; background-position: 0 -21248px; }
+		._1f3ac{ width: 64px; height: 64px; background-position: -64px -6272px; }
+		._1f3ad{ width: 64px; height: 64px; background-position: 0 -21184px; }
+		._1f3ae{ width: 64px; height: 64px; background-position: -64px -6336px; }
+		._1f3af{ width: 64px; height: 64px; background-position: 0 -21120px; }
+		._1f3b0{ width: 64px; height: 64px; background-position: -64px -6400px; }
+		._1f3b1{ width: 64px; height: 64px; background-position: 0 -21056px; }
+		._1f3b2{ width: 64px; height: 64px; background-position: -64px -6464px; }
+		._1f3b3{ width: 64px; height: 64px; background-position: 0 -20992px; }
+		._1f3b4{ width: 64px; height: 64px; background-position: -64px -6528px; }
+		._1f3b5{ width: 64px; height: 64px; background-position: 0 -20928px; }
+		._1f3b6{ width: 64px; height: 64px; background-position: -64px -6592px; }
+		._1f3b7{ width: 64px; height: 64px; background-position: 0 -20864px; }
+		._1f3b8{ width: 64px; height: 64px; background-position: -64px -6656px; }
+		._1f3b9{ width: 64px; height: 64px; background-position: 0 -20800px; }
+		._1f3ba{ width: 64px; height: 64px; background-position: -64px -6720px; }
+		._1f3bb{ width: 64px; height: 64px; background-position: 0 -20736px; }
+		._1f3bc{ width: 64px; height: 64px; background-position: -64px -6784px; }
+		._1f3bd{ width: 64px; height: 64px; background-position: 0 -20672px; }
+		._1f3be{ width: 64px; height: 64px; background-position: -64px -6848px; }
+		._1f3bf{ width: 64px; height: 64px; background-position: 0 -20608px; }
+		._1f3c0{ width: 64px; height: 64px; background-position: -64px -6912px; }
+		._1f3c1{ width: 64px; height: 64px; background-position: 0 -20544px; }
+		._1f3c2{ width: 64px; height: 64px; background-position: -64px -6976px; }
+		._1f3c3{ width: 64px; height: 64px; background-position: 0 -20480px; }
+		._1f3c4{ width: 64px; height: 64px; background-position: -64px -7040px; }
+		._1f3c6{ width: 64px; height: 64px; background-position: 0 -20416px; }
+		._1f3c7{ width: 64px; height: 64px; background-position: -64px -7104px; }
+		._1f3c8{ width: 64px; height: 64px; background-position: 0 -20352px; }
+		._1f3c9{ width: 64px; height: 64px; background-position: -64px -7168px; }
+		._1f3ca{ width: 64px; height: 64px; background-position: 0 -20288px; }
+		._1f3e0{ width: 64px; height: 64px; background-position: -64px -7232px; }
+		._1f3e1{ width: 64px; height: 64px; background-position: 0 -20224px; }
+		._1f3e2{ width: 64px; height: 64px; background-position: -64px -7296px; }
+		._1f3e3{ width: 64px; height: 64px; background-position: 0 -20160px; }
+		._1f3e4{ width: 64px; height: 64px; background-position: -64px -7360px; }
+		._1f3e5{ width: 64px; height: 64px; background-position: 0 -20096px; }
+		._1f3e6{ width: 64px; height: 64px; background-position: -64px -7424px; }
+		._1f3e7{ width: 64px; height: 64px; background-position: 0 -20032px; }
+		._1f3e8{ width: 64px; height: 64px; background-position: -64px -7488px; }
+		._1f3e9{ width: 64px; height: 64px; background-position: 0 -19968px; }
+		._1f3ea{ width: 64px; height: 64px; background-position: -64px -7552px; }
+		._1f3eb{ width: 64px; height: 64px; background-position: 0 -19904px; }
+		._1f3ec{ width: 64px; height: 64px; background-position: -64px -7616px; }
+		._1f3ed{ width: 64px; height: 64px; background-position: 0 -19840px; }
+		._1f3ee{ width: 64px; height: 64px; background-position: -64px -7680px; }
+		._1f3ef{ width: 64px; height: 64px; background-position: 0 -19776px; }
+		._1f3f0{ width: 64px; height: 64px; background-position: -64px -7744px; }
+		._1f400{ width: 64px; height: 64px; background-position: 0 -19712px; }
+		._1f401{ width: 64px; height: 64px; background-position: -64px -7808px; }
+		._1f402{ width: 64px; height: 64px; background-position: 0 -19648px; }
+		._1f403{ width: 64px; height: 64px; background-position: -64px -7872px; }
+		._1f404{ width: 64px; height: 64px; background-position: 0 -19584px; }
+		._1f405{ width: 64px; height: 64px; background-position: -64px -7936px; }
+		._1f406{ width: 64px; height: 64px; background-position: 0 -19520px; }
+		._1f407{ width: 64px; height: 64px; background-position: -64px -8000px; }
+		._1f408{ width: 64px; height: 64px; background-position: 0 -19456px; }
+		._1f409{ width: 64px; height: 64px; background-position: -64px -8064px; }
+		._1f40a{ width: 64px; height: 64px; background-position: 0 -19392px; }
+		._1f40b{ width: 64px; height: 64px; background-position: -64px -8128px; }
+		._1f40c{ width: 64px; height: 64px; background-position: 0 -19328px; }
+		._1f40d{ width: 64px; height: 64px; background-position: -64px -8192px; }
+		._1f40e{ width: 64px; height: 64px; background-position: 0 -19264px; }
+		._1f40f{ width: 64px; height: 64px; background-position: -64px -8256px; }
+		._1f410{ width: 64px; height: 64px; background-position: 0 -19200px; }
+		._1f411{ width: 64px; height: 64px; background-position: -64px -8320px; }
+		._1f412{ width: 64px; height: 64px; background-position: 0 -19136px; }
+		._1f413{ width: 64px; height: 64px; background-position: -64px -8384px; }
+		._1f414{ width: 64px; height: 64px; background-position: 0 -19072px; }
+		._1f415{ width: 64px; height: 64px; background-position: -64px -8448px; }
+		._1f416{ width: 64px; height: 64px; background-position: 0 -19008px; }
+		._1f417{ width: 64px; height: 64px; background-position: -64px -8512px; }
+		._1f418{ width: 64px; height: 64px; background-position: 0 -18944px; }
+		._1f419{ width: 64px; height: 64px; background-position: -64px -8576px; }
+		._1f41a{ width: 64px; height: 64px; background-position: 0 -18880px; }
+		._1f41b{ width: 64px; height: 64px; background-position: -64px -8640px; }
+		._1f41c{ width: 64px; height: 64px; background-position: 0 -18816px; }
+		._1f41d{ width: 64px; height: 64px; background-position: -64px -8704px; }
+		._1f41e{ width: 64px; height: 64px; background-position: 0 -18752px; }
+		._1f41f{ width: 64px; height: 64px; background-position: -64px -8768px; }
+		._1f420{ width: 64px; height: 64px; background-position: 0 -18688px; }
+		._1f421{ width: 64px; height: 64px; background-position: -64px -8832px; }
+		._1f422{ width: 64px; height: 64px; background-position: 0 -18624px; }
+		._1f423{ width: 64px; height: 64px; background-position: -64px -8896px; }
+		._1f424{ width: 64px; height: 64px; background-position: 0 -18560px; }
+		._1f425{ width: 64px; height: 64px; background-position: -64px -8960px; }
+		._1f426{ width: 64px; height: 64px; background-position: 0 -18496px; }
+		._1f427{ width: 64px; height: 64px; background-position: -64px -9024px; }
+		._1f428{ width: 64px; height: 64px; background-position: 0 -18432px; }
+		._1f429{ width: 64px; height: 64px; background-position: -64px -9088px; }
+		._1f42a{ width: 64px; height: 64px; background-position: 0 -18368px; }
+		._1f42b{ width: 64px; height: 64px; background-position: -64px -9152px; }
+		._1f42c{ width: 64px; height: 64px; background-position: 0 -18304px; }
+		._1f42d{ width: 64px; height: 64px; background-position: -64px -9216px; }
+		._1f42e{ width: 64px; height: 64px; background-position: 0 -18240px; }
+		._1f42f{ width: 64px; height: 64px; background-position: -64px -9280px; }
+		._1f430{ width: 64px; height: 64px; background-position: 0 -18176px; }
+		._1f431{ width: 64px; height: 64px; background-position: -64px -9344px; }
+		._1f432{ width: 64px; height: 64px; background-position: 0 -18112px; }
+		._1f433{ width: 64px; height: 64px; background-position: -64px -9408px; }
+		._1f434{ width: 64px; height: 64px; background-position: 0 -18048px; }
+		._1f435{ width: 64px; height: 64px; background-position: -64px -9472px; }
+		._1f436{ width: 64px; height: 64px; background-position: 0 -17984px; }
+		._1f437{ width: 64px; height: 64px; background-position: -64px -9536px; }
+		._1f438{ width: 64px; height: 64px; background-position: 0 -17920px; }
+		._1f439{ width: 64px; height: 64px; background-position: -64px -9600px; }
+		._1f43a{ width: 64px; height: 64px; background-position: 0 -17856px; }
+		._1f43b{ width: 64px; height: 64px; background-position: -64px -9664px; }
+		._1f43c{ width: 64px; height: 64px; background-position: 0 -17792px; }
+		._1f43d{ width: 64px; height: 64px; background-position: -64px -9728px; }
+		._1f43e{ width: 64px; height: 64px; background-position: 0 -17728px; }
+		._1f440{ width: 64px; height: 64px; background-position: -64px -9792px; }
+		._1f442{ width: 64px; height: 64px; background-position: 0 -17664px; }
+		._1f443{ width: 64px; height: 64px; background-position: -64px -9856px; }
+		._1f444{ width: 64px; height: 64px; background-position: 0 -17600px; }
+		._1f445{ width: 64px; height: 64px; background-position: -64px -9920px; }
+		._1f446{ width: 64px; height: 64px; background-position: 0 -17536px; }
+		._1f447{ width: 64px; height: 64px; background-position: -64px -9984px; }
+		._1f448{ width: 64px; height: 64px; background-position: 0 -17472px; }
+		._1f449{ width: 64px; height: 64px; background-position: -64px -10048px; }
+		._1f44a{ width: 64px; height: 64px; background-position: 0 -17408px; }
+		._1f44b{ width: 64px; height: 64px; background-position: -64px -10112px; }
+		._1f44c{ width: 64px; height: 64px; background-position: 0 -17344px; }
+		._1f44d{ width: 64px; height: 64px; background-position: -64px -10176px; }
+		._1f44e{ width: 64px; height: 64px; background-position: 0 -17280px; }
+		._1f44f{ width: 64px; height: 64px; background-position: -64px -10240px; }
+		._1f450{ width: 64px; height: 64px; background-position: 0 -17216px; }
+		._1f451{ width: 64px; height: 64px; background-position: -64px -10304px; }
+		._1f452{ width: 64px; height: 64px; background-position: 0 -17152px; }
+		._1f453{ width: 64px; height: 64px; background-position: -64px -10368px; }
+		._1f454{ width: 64px; height: 64px; background-position: 0 -17088px; }
+		._1f455{ width: 64px; height: 64px; background-position: -64px -10432px; }
+		._1f456{ width: 64px; height: 64px; background-position: 0 -17024px; }
+		._1f457{ width: 64px; height: 64px; background-position: -64px -10496px; }
+		._1f458{ width: 64px; height: 64px; background-position: 0 -16960px; }
+		._1f459{ width: 64px; height: 64px; background-position: -64px -10560px; }
+		._1f45a{ width: 64px; height: 64px; background-position: 0 -16896px; }
+		._1f45b{ width: 64px; height: 64px; background-position: -64px -10624px; }
+		._1f45c{ width: 64px; height: 64px; background-position: 0 -16832px; }
+		._1f45d{ width: 64px; height: 64px; background-position: -64px -10688px; }
+		._1f45e{ width: 64px; height: 64px; background-position: 0 -16768px; }
+		._1f45f{ width: 64px; height: 64px; background-position: -64px -10752px; }
+		._1f460{ width: 64px; height: 64px; background-position: 0 -16704px; }
+		._1f461{ width: 64px; height: 64px; background-position: -64px -10816px; }
+		._1f462{ width: 64px; height: 64px; background-position: 0 -16640px; }
+		._1f463{ width: 64px; height: 64px; background-position: -64px -10880px; }
+		._1f464{ width: 64px; height: 64px; background-position: 0 -16576px; }
+		._1f465{ width: 64px; height: 64px; background-position: -64px -10944px; }
+		._1f466{ width: 64px; height: 64px; background-position: 0 -16512px; }
+		._1f467{ width: 64px; height: 64px; background-position: -64px -11008px; }
+		._1f468{ width: 64px; height: 64px; background-position: 0 -16448px; }
+		._1f469{ width: 64px; height: 64px; background-position: -64px -11072px; }
+		._1f46a{ width: 64px; height: 64px; background-position: 0 -16384px; }
+		._1f46b{ width: 64px; height: 64px; background-position: -64px -11136px; }
+		._1f46c{ width: 64px; height: 64px; background-position: 0 -16320px; }
+		._1f46d{ width: 64px; height: 64px; background-position: -64px -11200px; }
+		._1f46e{ width: 64px; height: 64px; background-position: 0 -16256px; }
+		._1f46f{ width: 64px; height: 64px; background-position: -64px -11264px; }
+		._1f470{ width: 64px; height: 64px; background-position: 0 -16192px; }
+		._1f471{ width: 64px; height: 64px; background-position: -64px -11328px; }
+		._1f472{ width: 64px; height: 64px; background-position: 0 -16128px; }
+		._1f473{ width: 64px; height: 64px; background-position: -64px -11392px; }
+		._1f474{ width: 64px; height: 64px; background-position: 0 -16064px; }
+		._1f475{ width: 64px; height: 64px; background-position: -64px -11456px; }
+		._1f476{ width: 64px; height: 64px; background-position: 0 -16000px; }
+		._1f477{ width: 64px; height: 64px; background-position: -64px -11520px; }
+		._1f478{ width: 64px; height: 64px; background-position: 0 -15936px; }
+		._1f479{ width: 64px; height: 64px; background-position: -64px -11584px; }
+		._1f47a{ width: 64px; height: 64px; background-position: 0 -15872px; }
+		._1f47b{ width: 64px; height: 64px; background-position: -64px -11648px; }
+		._1f47c{ width: 64px; height: 64px; background-position: 0 -15808px; }
+		._1f47d{ width: 64px; height: 64px; background-position: -64px -11712px; }
+		._1f47e{ width: 64px; height: 64px; background-position: 0 -15744px; }
+		._1f47f{ width: 64px; height: 64px; background-position: -64px -11776px; }
+		._1f480{ width: 64px; height: 64px; background-position: 0 -15680px; }
+		._1f481{ width: 64px; height: 64px; background-position: -64px -11840px; }
+		._1f482{ width: 64px; height: 64px; background-position: 0 -15616px; }
+		._1f483{ width: 64px; height: 64px; background-position: -64px -11904px; }
+		._1f484{ width: 64px; height: 64px; background-position: 0 -15552px; }
+		._1f485{ width: 64px; height: 64px; background-position: -64px -11968px; }
+		._1f486{ width: 64px; height: 64px; background-position: 0 -15488px; }
+		._1f487{ width: 64px; height: 64px; background-position: -64px -12032px; }
+		._1f488{ width: 64px; height: 64px; background-position: 0 -15424px; }
+		._1f489{ width: 64px; height: 64px; background-position: -64px -12096px; }
+		._1f48a{ width: 64px; height: 64px; background-position: 0 -15360px; }
+		._1f48b{ width: 64px; height: 64px; background-position: -64px -12160px; }
+		._1f48c{ width: 64px; height: 64px; background-position: 0 -15296px; }
+		._1f48d{ width: 64px; height: 64px; background-position: -64px -12224px; }
+		._1f48e{ width: 64px; height: 64px; background-position: 0 -15232px; }
+		._1f48f{ width: 64px; height: 64px; background-position: -64px -12288px; }
+		._1f490{ width: 64px; height: 64px; background-position: 0 -15168px; }
+		._1f491{ width: 64px; height: 64px; background-position: -64px -12352px; }
+		._1f492{ width: 64px; height: 64px; background-position: 0 -15104px; }
+		._1f493{ width: 64px; height: 64px; background-position: -64px -12416px; }
+		._1f494{ width: 64px; height: 64px; background-position: 0 -15040px; }
+		._1f495{ width: 64px; height: 64px; background-position: -64px -12480px; }
+		._1f496{ width: 64px; height: 64px; background-position: 0 -14976px; }
+		._1f497{ width: 64px; height: 64px; background-position: -64px -12544px; }
+		._1f498{ width: 64px; height: 64px; background-position: 0 -14912px; }
+		._1f499{ width: 64px; height: 64px; background-position: -64px -12608px; }
+		._1f49a{ width: 64px; height: 64px; background-position: 0 -14848px; }
+		._1f49b{ width: 64px; height: 64px; background-position: -64px -12672px; }
+		._1f49c{ width: 64px; height: 64px; background-position: 0 -14784px; }
+		._1f49d{ width: 64px; height: 64px; background-position: -64px -12736px; }
+		._1f49e{ width: 64px; height: 64px; background-position: 0 -14720px; }
+		._1f49f{ width: 64px; height: 64px; background-position: -64px -12800px; }
+		._1f4a0{ width: 64px; height: 64px; background-position: 0 -14656px; }
+		._1f4a1{ width: 64px; height: 64px; background-position: -64px -12864px; }
+		._1f4a2{ width: 64px; height: 64px; background-position: 0 -14592px; }
+		._1f4a3{ width: 64px; height: 64px; background-position: -64px -12928px; }
+		._1f4a4{ width: 64px; height: 64px; background-position: 0 -14528px; }
+		._1f4a5{ width: 64px; height: 64px; background-position: -64px -12992px; }
+		._1f4a6{ width: 64px; height: 64px; background-position: 0 -14464px; }
+		._1f4a7{ width: 64px; height: 64px; background-position: -64px -13056px; }
+		._1f4a8{ width: 64px; height: 64px; background-position: 0 -14400px; }
+		._1f4a9{ width: 64px; height: 64px; background-position: -64px -13120px; }
+		._1f4aa{ width: 64px; height: 64px; background-position: 0 -14336px; }
+		._1f4ab{ width: 64px; height: 64px; background-position: -64px -13184px; }
+		._1f4ac{ width: 64px; height: 64px; background-position: 0 -14272px; }
+		._1f4ad{ width: 64px; height: 64px; background-position: -64px -13248px; }
+		._1f4ae{ width: 64px; height: 64px; background-position: 0 -14208px; }
+		._1f4af{ width: 64px; height: 64px; background-position: -64px -13312px; }
+		._1f4b0{ width: 64px; height: 64px; background-position: 0 -14144px; }
+		._1f4b1{ width: 64px; height: 64px; background-position: -64px -13376px; }
+		._1f4b2{ width: 64px; height: 64px; background-position: 0 -14080px; }
+		._1f4b3{ width: 64px; height: 64px; background-position: -64px -13440px; }
+		._1f4b4{ width: 64px; height: 64px; background-position: 0 -14016px; }
+		._1f4b5{ width: 64px; height: 64px; background-position: -64px -13504px; }
+		._1f4b6{ width: 64px; height: 64px; background-position: 0 -13952px; }
+		._1f4b7{ width: 64px; height: 64px; background-position: -64px -13568px; }
+		._1f4b8{ width: 64px; height: 64px; background-position: 0 -13888px; }
+		._1f4b9{ width: 64px; height: 64px; background-position: -64px -13632px; }
+		._1f4ba{ width: 64px; height: 64px; background-position: 0 -13824px; }
+		._1f4bb{ width: 64px; height: 64px; background-position: -64px -13696px; }
+		._1f4bc{ width: 64px; height: 64px; background-position: 0 -13760px; }
+		._1f4bd{ width: 64px; height: 64px; background-position: -64px -13760px; }
+		._1f4be{ width: 64px; height: 64px; background-position: 0 -13696px; }
+		._1f4bf{ width: 64px; height: 64px; background-position: -64px -13824px; }
+		._1f4c0{ width: 64px; height: 64px; background-position: 0 -13632px; }
+		._1f4c1{ width: 64px; height: 64px; background-position: -64px -13888px; }
+		._1f4c2{ width: 64px; height: 64px; background-position: 0 -13568px; }
+		._1f4c3{ width: 64px; height: 64px; background-position: -64px -13952px; }
+		._1f4c4{ width: 64px; height: 64px; background-position: 0 -13504px; }
+		._1f4c5{ width: 64px; height: 64px; background-position: -64px -14016px; }
+		._1f4c6{ width: 64px; height: 64px; background-position: 0 -13440px; }
+		._1f4c7{ width: 64px; height: 64px; background-position: -64px -14080px; }
+		._1f4c8{ width: 64px; height: 64px; background-position: 0 -13376px; }
+		._1f4c9{ width: 64px; height: 64px; background-position: -64px -14144px; }
+		._1f4ca{ width: 64px; height: 64px; background-position: 0 -13312px; }
+		._1f4cb{ width: 64px; height: 64px; background-position: -64px -14208px; }
+		._1f4cc{ width: 64px; height: 64px; background-position: 0 -13248px; }
+		._1f4cd{ width: 64px; height: 64px; background-position: -64px -14272px; }
+		._1f4ce{ width: 64px; height: 64px; background-position: 0 -13184px; }
+		._1f4cf{ width: 64px; height: 64px; background-position: -64px -14336px; }
+		._1f4d0{ width: 64px; height: 64px; background-position: 0 -13120px; }
+		._1f4d1{ width: 64px; height: 64px; background-position: -64px -14400px; }
+		._1f4d2{ width: 64px; height: 64px; background-position: 0 -13056px; }
+		._1f4d3{ width: 64px; height: 64px; background-position: -64px -14464px; }
+		._1f4d4{ width: 64px; height: 64px; background-position: 0 -12992px; }
+		._1f4d5{ width: 64px; height: 64px; background-position: -64px -14528px; }
+		._1f4d6{ width: 64px; height: 64px; background-position: 0 -12928px; }
+		._1f4d7{ width: 64px; height: 64px; background-position: -64px -14592px; }
+		._1f4d8{ width: 64px; height: 64px; background-position: 0 -12864px; }
+		._1f4d9{ width: 64px; height: 64px; background-position: -64px -14656px; }
+		._1f4da{ width: 64px; height: 64px; background-position: 0 -12800px; }
+		._1f4db{ width: 64px; height: 64px; background-position: -64px -14720px; }
+		._1f4dc{ width: 64px; height: 64px; background-position: 0 -12736px; }
+		._1f4dd{ width: 64px; height: 64px; background-position: -64px -14784px; }
+		._1f4de{ width: 64px; height: 64px; background-position: 0 -12672px; }
+		._1f4df{ width: 64px; height: 64px; background-position: -64px -14848px; }
+		._1f4e0{ width: 64px; height: 64px; background-position: 0 -12608px; }
+		._1f4e1{ width: 64px; height: 64px; background-position: -64px -14912px; }
+		._1f4e2{ width: 64px; height: 64px; background-position: 0 -12544px; }
+		._1f4e3{ width: 64px; height: 64px; background-position: -64px -14976px; }
+		._1f4e4{ width: 64px; height: 64px; background-position: 0 -12480px; }
+		._1f4e5{ width: 64px; height: 64px; background-position: -64px -15040px; }
+		._1f4e6{ width: 64px; height: 64px; background-position: 0 -12416px; }
+		._1f4e7{ width: 64px; height: 64px; background-position: -64px -15104px; }
+		._1f4e8{ width: 64px; height: 64px; background-position: 0 -12352px; }
+		._1f4e9{ width: 64px; height: 64px; background-position: -64px -15168px; }
+		._1f4ea{ width: 64px; height: 64px; background-position: 0 -12288px; }
+		._1f4eb{ width: 64px; height: 64px; background-position: -64px -15232px; }
+		._1f4ec{ width: 64px; height: 64px; background-position: 0 -12224px; }
+		._1f4ed{ width: 64px; height: 64px; background-position: -64px -15296px; }
+		._1f4ee{ width: 64px; height: 64px; background-position: 0 -12160px; }
+		._1f4ef{ width: 64px; height: 64px; background-position: -64px -15360px; }
+		._1f4f0{ width: 64px; height: 64px; background-position: 0 -12096px; }
+		._1f4f1{ width: 64px; height: 64px; background-position: -64px -15424px; }
+		._1f4f2{ width: 64px; height: 64px; background-position: 0 -12032px; }
+		._1f4f3{ width: 64px; height: 64px; background-position: -64px -15488px; }
+		._1f4f4{ width: 64px; height: 64px; background-position: 0 -11968px; }
+		._1f4f5{ width: 64px; height: 64px; background-position: -64px -15552px; }
+		._1f4f6{ width: 64px; height: 64px; background-position: 0 -11904px; }
+		._1f4f7{ width: 64px; height: 64px; background-position: -64px -15616px; }
+		._1f4f9{ width: 64px; height: 64px; background-position: 0 -11840px; }
+		._1f4fa{ width: 64px; height: 64px; background-position: -64px -15680px; }
+		._1f4fb{ width: 64px; height: 64px; background-position: 0 -11776px; }
+		._1f4fc{ width: 64px; height: 64px; background-position: -64px -15744px; }
+		._1f500{ width: 64px; height: 64px; background-position: 0 -11712px; }
+		._1f501{ width: 64px; height: 64px; background-position: -64px -15808px; }
+		._1f502{ width: 64px; height: 64px; background-position: 0 -11648px; }
+		._1f503{ width: 64px; height: 64px; background-position: -64px -15872px; }
+		._1f504{ width: 64px; height: 64px; background-position: 0 -11584px; }
+		._1f505{ width: 64px; height: 64px; background-position: -64px -15936px; }
+		._1f506{ width: 64px; height: 64px; background-position: 0 -11520px; }
+		._1f507{ width: 64px; height: 64px; background-position: -64px -16000px; }
+		._1f508{ width: 64px; height: 64px; background-position: 0 -11456px; }
+		._1f509{ width: 64px; height: 64px; background-position: -64px -16064px; }
+		._1f50a{ width: 64px; height: 64px; background-position: 0 -11392px; }
+		._1f50b{ width: 64px; height: 64px; background-position: -64px -16128px; }
+		._1f50c{ width: 64px; height: 64px; background-position: 0 -11328px; }
+		._1f50d{ width: 64px; height: 64px; background-position: -64px -16192px; }
+		._1f50e{ width: 64px; height: 64px; background-position: 0 -11264px; }
+		._1f50f{ width: 64px; height: 64px; background-position: -64px -16256px; }
+		._1f510{ width: 64px; height: 64px; background-position: 0 -11200px; }
+		._1f511{ width: 64px; height: 64px; background-position: -64px -16320px; }
+		._1f512{ width: 64px; height: 64px; background-position: 0 -11136px; }
+		._1f513{ width: 64px; height: 64px; background-position: -64px -16384px; }
+		._1f514{ width: 64px; height: 64px; background-position: 0 -11072px; }
+		._1f515{ width: 64px; height: 64px; background-position: -64px -16448px; }
+		._1f516{ width: 64px; height: 64px; background-position: 0 -11008px; }
+		._1f517{ width: 64px; height: 64px; background-position: -64px -16512px; }
+		._1f518{ width: 64px; height: 64px; background-position: 0 -10944px; }
+		._1f519{ width: 64px; height: 64px; background-position: -64px -16576px; }
+		._1f51a{ width: 64px; height: 64px; background-position: 0 -10880px; }
+		._1f51b{ width: 64px; height: 64px; background-position: -64px -16640px; }
+		._1f51c{ width: 64px; height: 64px; background-position: 0 -10816px; }
+		._1f51d{ width: 64px; height: 64px; background-position: -64px -16704px; }
+		._1f51e{ width: 64px; height: 64px; background-position: 0 -10752px; }
+		._1f51f{ width: 64px; height: 64px; background-position: -64px -16768px; }
+		._1f520{ width: 64px; height: 64px; background-position: 0 -10688px; }
+		._1f521{ width: 64px; height: 64px; background-position: -64px -16832px; }
+		._1f522{ width: 64px; height: 64px; background-position: 0 -10624px; }
+		._1f523{ width: 64px; height: 64px; background-position: -64px -16896px; }
+		._1f524{ width: 64px; height: 64px; background-position: 0 -10560px; }
+		._1f525{ width: 64px; height: 64px; background-position: -64px -16960px; }
+		._1f526{ width: 64px; height: 64px; background-position: 0 -10496px; }
+		._1f527{ width: 64px; height: 64px; background-position: -64px -17024px; }
+		._1f528{ width: 64px; height: 64px; background-position: 0 -10432px; }
+		._1f529{ width: 64px; height: 64px; background-position: -64px -17088px; }
+		._1f52a{ width: 64px; height: 64px; background-position: 0 -10368px; }
+		._1f52b{ width: 64px; height: 64px; background-position: -64px -17152px; }
+		._1f52c{ width: 64px; height: 64px; background-position: 0 -10304px; }
+		._1f52d{ width: 64px; height: 64px; background-position: -64px -17216px; }
+		._1f52e{ width: 64px; height: 64px; background-position: 0 -10240px; }
+		._1f52f{ width: 64px; height: 64px; background-position: -64px -17280px; }
+		._1f530{ width: 64px; height: 64px; background-position: 0 -10176px; }
+		._1f531{ width: 64px; height: 64px; background-position: -64px -17344px; }
+		._1f532{ width: 64px; height: 64px; background-position: 0 -10112px; }
+		._1f533{ width: 64px; height: 64px; background-position: -64px -17408px; }
+		._1f534{ width: 64px; height: 64px; background-position: 0 -10048px; }
+		._1f535{ width: 64px; height: 64px; background-position: -64px -17472px; }
+		._1f536{ width: 64px; height: 64px; background-position: 0 -9984px; }
+		._1f537{ width: 64px; height: 64px; background-position: -64px -17536px; }
+		._1f538{ width: 64px; height: 64px; background-position: 0 -9920px; }
+		._1f539{ width: 64px; height: 64px; background-position: -64px -17600px; }
+		._1f53a{ width: 64px; height: 64px; background-position: 0 -9856px; }
+		._1f53b{ width: 64px; height: 64px; background-position: -64px -17664px; }
+		._1f53c{ width: 64px; height: 64px; background-position: 0 -9792px; }
+		._1f53d{ width: 64px; height: 64px; background-position: -64px -17728px; }
+		._1f550{ width: 64px; height: 64px; background-position: 0 -9728px; }
+		._1f551{ width: 64px; height: 64px; background-position: -64px -17792px; }
+		._1f552{ width: 64px; height: 64px; background-position: 0 -9664px; }
+		._1f553{ width: 64px; height: 64px; background-position: -64px -17856px; }
+		._1f554{ width: 64px; height: 64px; background-position: 0 -9600px; }
+		._1f555{ width: 64px; height: 64px; background-position: -64px -17920px; }
+		._1f556{ width: 64px; height: 64px; background-position: 0 -9536px; }
+		._1f557{ width: 64px; height: 64px; background-position: -64px -17984px; }
+		._1f558{ width: 64px; height: 64px; background-position: 0 -9472px; }
+		._1f559{ width: 64px; height: 64px; background-position: -64px -18048px; }
+		._1f55a{ width: 64px; height: 64px; background-position: 0 -9408px; }
+		._1f55b{ width: 64px; height: 64px; background-position: -64px -18112px; }
+		._1f55c{ width: 64px; height: 64px; background-position: 0 -9344px; }
+		._1f55d{ width: 64px; height: 64px; background-position: -64px -18176px; }
+		._1f55e{ width: 64px; height: 64px; background-position: 0 -9280px; }
+		._1f55f{ width: 64px; height: 64px; background-position: -64px -18240px; }
+		._1f560{ width: 64px; height: 64px; background-position: 0 -9216px; }
+		._1f561{ width: 64px; height: 64px; background-position: -64px -18304px; }
+		._1f562{ width: 64px; height: 64px; background-position: 0 -9152px; }
+		._1f563{ width: 64px; height: 64px; background-position: -64px -18368px; }
+		._1f564{ width: 64px; height: 64px; background-position: 0 -9088px; }
+		._1f565{ width: 64px; height: 64px; background-position: -64px -18432px; }
+		._1f566{ width: 64px; height: 64px; background-position: 0 -9024px; }
+		._1f567{ width: 64px; height: 64px; background-position: -64px -18496px; }
+		._1f5fb{ width: 64px; height: 64px; background-position: 0 -8960px; }
+		._1f5fc{ width: 64px; height: 64px; background-position: -64px -18560px; }
+		._1f5fd{ width: 64px; height: 64px; background-position: 0 -8896px; }
+		._1f5fe{ width: 64px; height: 64px; background-position: -64px -18624px; }
+		._1f5ff{ width: 64px; height: 64px; background-position: 0 -8832px; }
+		._1f600{ width: 64px; height: 64px; background-position: -64px -18688px; }
+		._1f601{ width: 64px; height: 64px; background-position: 0 -8768px; }
+		._1f602{ width: 64px; height: 64px; background-position: -64px -18752px; }
+		._1f603{ width: 64px; height: 64px; background-position: 0 -8704px; }
+		._1f604{ width: 64px; height: 64px; background-position: -64px -18816px; }
+		._1f605{ width: 64px; height: 64px; background-position: 0 -8640px; }
+		._1f606{ width: 64px; height: 64px; background-position: -64px -18880px; }
+		._1f607{ width: 64px; height: 64px; background-position: 0 -8576px; }
+		._1f608{ width: 64px; height: 64px; background-position: -64px -18944px; }
+		._1f609{ width: 64px; height: 64px; background-position: 0 -8512px; }
+		._1f60a{ width: 64px; height: 64px; background-position: -64px -19008px; }
+		._1f60b{ width: 64px; height: 64px; background-position: 0 -8448px; }
+		._1f60c{ width: 64px; height: 64px; background-position: -64px -19072px; }
+		._1f60d{ width: 64px; height: 64px; background-position: 0 -8384px; }
+		._1f60e{ width: 64px; height: 64px; background-position: -64px -19136px; }
+		._1f60f{ width: 64px; height: 64px; background-position: 0 -8320px; }
+		._1f610{ width: 64px; height: 64px; background-position: -64px -19200px; }
+		._1f611{ width: 64px; height: 64px; background-position: 0 -8256px; }
+		._1f612{ width: 64px; height: 64px; background-position: -64px -19264px; }
+		._1f613{ width: 64px; height: 64px; background-position: 0 -8192px; }
+		._1f614{ width: 64px; height: 64px; background-position: -64px -19328px; }
+		._1f615{ width: 64px; height: 64px; background-position: 0 -8128px; }
+		._1f616{ width: 64px; height: 64px; background-position: -64px -19392px; }
+		._1f617{ width: 64px; height: 64px; background-position: 0 -8064px; }
+		._1f618{ width: 64px; height: 64px; background-position: -64px -19456px; }
+		._1f619{ width: 64px; height: 64px; background-position: 0 -8000px; }
+		._1f61a{ width: 64px; height: 64px; background-position: -64px -19520px; }
+		._1f61b{ width: 64px; height: 64px; background-position: 0 -7936px; }
+		._1f61c{ width: 64px; height: 64px; background-position: -64px -19584px; }
+		._1f61d{ width: 64px; height: 64px; background-position: 0 -7872px; }
+		._1f61e{ width: 64px; height: 64px; background-position: -64px -19648px; }
+		._1f61f{ width: 64px; height: 64px; background-position: 0 -7808px; }
+		._1f620{ width: 64px; height: 64px; background-position: -64px -19712px; }
+		._1f621{ width: 64px; height: 64px; background-position: 0 -7744px; }
+		._1f622{ width: 64px; height: 64px; background-position: -64px -19776px; }
+		._1f623{ width: 64px; height: 64px; background-position: 0 -7680px; }
+		._1f624{ width: 64px; height: 64px; background-position: -64px -19840px; }
+		._1f625{ width: 64px; height: 64px; background-position: 0 -7616px; }
+		._1f626{ width: 64px; height: 64px; background-position: -64px -19904px; }
+		._1f627{ width: 64px; height: 64px; background-position: 0 -7552px; }
+		._1f628{ width: 64px; height: 64px; background-position: -64px -19968px; }
+		._1f629{ width: 64px; height: 64px; background-position: 0 -7488px; }
+		._1f62a{ width: 64px; height: 64px; background-position: -64px -20032px; }
+		._1f62b{ width: 64px; height: 64px; background-position: 0 -7424px; }
+		._1f62c{ width: 64px; height: 64px; background-position: -64px -20096px; }
+		._1f62d{ width: 64px; height: 64px; background-position: 0 -7360px; }
+		._1f62e{ width: 64px; height: 64px; background-position: -64px -20160px; }
+		._1f62f{ width: 64px; height: 64px; background-position: 0 -7296px; }
+		._1f630{ width: 64px; height: 64px; background-position: -64px -20224px; }
+		._1f631{ width: 64px; height: 64px; background-position: 0 -7232px; }
+		._1f632{ width: 64px; height: 64px; background-position: -64px -20288px; }
+		._1f633{ width: 64px; height: 64px; background-position: 0 -7168px; }
+		._1f634{ width: 64px; height: 64px; background-position: -64px -20352px; }
+		._1f635{ width: 64px; height: 64px; background-position: 0 -7104px; }
+		._1f636{ width: 64px; height: 64px; background-position: -64px -20416px; }
+		._1f637{ width: 64px; height: 64px; background-position: 0 -7040px; }
+		._1f638{ width: 64px; height: 64px; background-position: -64px -20480px; }
+		._1f639{ width: 64px; height: 64px; background-position: 0 -6976px; }
+		._1f63a{ width: 64px; height: 64px; background-position: -64px -20544px; }
+		._1f63b{ width: 64px; height: 64px; background-position: 0 -6912px; }
+		._1f63c{ width: 64px; height: 64px; background-position: -64px -20608px; }
+		._1f63d{ width: 64px; height: 64px; background-position: 0 -6848px; }
+		._1f63e{ width: 64px; height: 64px; background-position: -64px -20672px; }
+		._1f63f{ width: 64px; height: 64px; background-position: 0 -6784px; }
+		._1f640{ width: 64px; height: 64px; background-position: -64px -20736px; }
+		._1f645{ width: 64px; height: 64px; background-position: 0 -6720px; }
+		._1f646{ width: 64px; height: 64px; background-position: -64px -20800px; }
+		._1f647{ width: 64px; height: 64px; background-position: 0 -6656px; }
+		._1f648{ width: 64px; height: 64px; background-position: -64px -20864px; }
+		._1f649{ width: 64px; height: 64px; background-position: 0 -6592px; }
+		._1f64a{ width: 64px; height: 64px; background-position: -64px -20928px; }
+		._1f64b{ width: 64px; height: 64px; background-position: 0 -6528px; }
+		._1f64c{ width: 64px; height: 64px; background-position: -64px -20992px; }
+		._1f64d{ width: 64px; height: 64px; background-position: 0 -6464px; }
+		._1f64e{ width: 64px; height: 64px; background-position: -64px -21056px; }
+		._1f64f{ width: 64px; height: 64px; background-position: 0 -6400px; }
+		._1f680{ width: 64px; height: 64px; background-position: -64px -21120px; }
+		._1f681{ width: 64px; height: 64px; background-position: 0 -6336px; }
+		._1f682{ width: 64px; height: 64px; background-position: -64px -21184px; }
+		._1f683{ width: 64px; height: 64px; background-position: 0 -6272px; }
+		._1f684{ width: 64px; height: 64px; background-position: -64px -21248px; }
+		._1f685{ width: 64px; height: 64px; background-position: 0 -6208px; }
+		._1f686{ width: 64px; height: 64px; background-position: -64px -21312px; }
+		._1f687{ width: 64px; height: 64px; background-position: 0 -6144px; }
+		._1f688{ width: 64px; height: 64px; background-position: -64px -21376px; }
+		._1f689{ width: 64px; height: 64px; background-position: 0 -6080px; }
+		._1f68a{ width: 64px; height: 64px; background-position: -64px -21440px; }
+		._1f68b{ width: 64px; height: 64px; background-position: 0 -6016px; }
+		._1f68c{ width: 64px; height: 64px; background-position: -64px -21504px; }
+		._1f68d{ width: 64px; height: 64px; background-position: 0 -5952px; }
+		._1f68e{ width: 64px; height: 64px; background-position: -64px -21568px; }
+		._1f68f{ width: 64px; height: 64px; background-position: 0 -5888px; }
+		._1f690{ width: 64px; height: 64px; background-position: -64px -21632px; }
+		._1f691{ width: 64px; height: 64px; background-position: 0 -5824px; }
+		._1f692{ width: 64px; height: 64px; background-position: -64px -21696px; }
+		._1f693{ width: 64px; height: 64px; background-position: 0 -5760px; }
+		._1f694{ width: 64px; height: 64px; background-position: -64px -21760px; }
+		._1f695{ width: 64px; height: 64px; background-position: 0 -5696px; }
+		._1f696{ width: 64px; height: 64px; background-position: -64px -21824px; }
+		._1f697{ width: 64px; height: 64px; background-position: 0 -5632px; }
+		._1f698{ width: 64px; height: 64px; background-position: -64px -21888px; }
+		._1f699{ width: 64px; height: 64px; background-position: 0 -5568px; }
+		._1f69a{ width: 64px; height: 64px; background-position: -64px -21952px; }
+		._1f69b{ width: 64px; height: 64px; background-position: 0 -5504px; }
+		._1f69c{ width: 64px; height: 64px; background-position: -64px -22016px; }
+		._1f69d{ width: 64px; height: 64px; background-position: 0 -5440px; }
+		._1f69e{ width: 64px; height: 64px; background-position: -64px -22080px; }
+		._1f69f{ width: 64px; height: 64px; background-position: 0 -5376px; }
+		._1f6a0{ width: 64px; height: 64px; background-position: -64px -22144px; }
+		._1f6a1{ width: 64px; height: 64px; background-position: 0 -5312px; }
+		._1f6a2{ width: 64px; height: 64px; background-position: -64px -22208px; }
+		._1f6a3{ width: 64px; height: 64px; background-position: 0 -5248px; }
+		._1f6a4{ width: 64px; height: 64px; background-position: -64px -22272px; }
+		._1f6a5{ width: 64px; height: 64px; background-position: 0 -5184px; }
+		._1f6a6{ width: 64px; height: 64px; background-position: -64px -22336px; }
+		._1f6a7{ width: 64px; height: 64px; background-position: 0 -5120px; }
+		._1f6a8{ width: 64px; height: 64px; background-position: -64px -22400px; }
+		._1f6a9{ width: 64px; height: 64px; background-position: 0 -5056px; }
+		._1f6aa{ width: 64px; height: 64px; background-position: -64px -22464px; }
+		._1f6ab{ width: 64px; height: 64px; background-position: 0 -4992px; }
+		._1f6ac{ width: 64px; height: 64px; background-position: -64px -22528px; }
+		._1f6ad{ width: 64px; height: 64px; background-position: 0 -4928px; }
+		._1f6ae{ width: 64px; height: 64px; background-position: -64px -22592px; }
+		._1f6af{ width: 64px; height: 64px; background-position: 0 -4864px; }
+		._1f6b0{ width: 64px; height: 64px; background-position: -64px -22656px; }
+		._1f6b1{ width: 64px; height: 64px; background-position: 0 -4800px; }
+		._1f6b2{ width: 64px; height: 64px; background-position: -64px -22720px; }
+		._1f6b3{ width: 64px; height: 64px; background-position: 0 -4736px; }
+		._1f6b4{ width: 64px; height: 64px; background-position: -64px -22784px; }
+		._1f6b5{ width: 64px; height: 64px; background-position: 0 -4672px; }
+		._1f6b6{ width: 64px; height: 64px; background-position: -64px -22848px; }
+		._1f6b7{ width: 64px; height: 64px; background-position: 0 -4608px; }
+		._1f6b8{ width: 64px; height: 64px; background-position: -64px -22912px; }
+		._1f6b9{ width: 64px; height: 64px; background-position: 0 -4544px; }
+		._1f6ba{ width: 64px; height: 64px; background-position: -64px -22976px; }
+		._1f6bb{ width: 64px; height: 64px; background-position: 0 -4480px; }
+		._1f6bc{ width: 64px; height: 64px; background-position: -64px -23040px; }
+		._1f6bd{ width: 64px; height: 64px; background-position: 0 -4416px; }
+		._1f6be{ width: 64px; height: 64px; background-position: -64px -23104px; }
+		._1f6bf{ width: 64px; height: 64px; background-position: 0 -4352px; }
+		._1f6c0{ width: 64px; height: 64px; background-position: -64px -23168px; }
+		._1f6c1{ width: 64px; height: 64px; background-position: 0 -4288px; }
+		._1f6c2{ width: 64px; height: 64px; background-position: -64px -23232px; }
+		._1f6c3{ width: 64px; height: 64px; background-position: 0 -4224px; }
+		._1f6c4{ width: 64px; height: 64px; background-position: -64px -23296px; }
+		._1f6c5{ width: 64px; height: 64px; background-position: 0 -4160px; }
+		._203c{ width: 64px; height: 64px; background-position: -64px -23360px; }
+		._2049{ width: 64px; height: 64px; background-position: 0 -4096px; }
+		._2122{ width: 64px; height: 64px; background-position: -64px -23424px; }
+		._2139{ width: 64px; height: 64px; background-position: 0 -4032px; }
+		._2194{ width: 64px; height: 64px; background-position: -64px -23488px; }
+		._2195{ width: 64px; height: 64px; background-position: 0 -3968px; }
+		._2196{ width: 64px; height: 64px; background-position: -64px -23552px; }
+		._2197{ width: 64px; height: 64px; background-position: 0 -3904px; }
+		._2198{ width: 64px; height: 64px; background-position: -64px -23616px; }
+		._2199{ width: 64px; height: 64px; background-position: 0 -3840px; }
+		._21a9{ width: 64px; height: 64px; background-position: -64px -23680px; }
+		._21aa{ width: 64px; height: 64px; background-position: 0 -3776px; }
+		._231a{ width: 64px; height: 64px; background-position: -64px -23744px; }
+		._231b{ width: 64px; height: 64px; background-position: 0 -3712px; }
+		._23e9{ width: 64px; height: 64px; background-position: -64px -23808px; }
+		._23ea{ width: 64px; height: 64px; background-position: 0 -3648px; }
+		._23eb{ width: 64px; height: 64px; background-position: -64px -23872px; }
+		._23ec{ width: 64px; height: 64px; background-position: 0 -3584px; }
+		._23f0{ width: 64px; height: 64px; background-position: -64px -23936px; }
+		._23f3{ width: 64px; height: 64px; background-position: 0 -3520px; }
+		._24c2{ width: 64px; height: 64px; background-position: -64px -24000px; }
+		._25aa{ width: 64px; height: 64px; background-position: 0 -3456px; }
+		._25ab{ width: 64px; height: 64px; background-position: -64px -24064px; }
+		._25b6{ width: 64px; height: 64px; background-position: 0 -3392px; }
+		._25c0{ width: 64px; height: 64px; background-position: -64px -24128px; }
+		._25fb{ width: 64px; height: 64px; background-position: 0 -3328px; }
+		._25fc{ width: 64px; height: 64px; background-position: -64px -24192px; }
+		._25fd{ width: 64px; height: 64px; background-position: 0 -3264px; }
+		._25fe{ width: 64px; height: 64px; background-position: -64px -24256px; }
+		._2600{ width: 64px; height: 64px; background-position: 0 -3200px; }
+		._2601{ width: 64px; height: 64px; background-position: -64px -24320px; }
+		._260e{ width: 64px; height: 64px; background-position: 0 -3136px; }
+		._2611{ width: 64px; height: 64px; background-position: -64px -24384px; }
+		._2614{ width: 64px; height: 64px; background-position: 0 -3072px; }
+		._2615{ width: 64px; height: 64px; background-position: -64px -24448px; }
+		._261d{ width: 64px; height: 64px; background-position: 0 -3008px; }
+		._263a{ width: 64px; height: 64px; background-position: -64px -24512px; }
+		._2648{ width: 64px; height: 64px; background-position: 0 -2944px; }
+		._2649{ width: 64px; height: 64px; background-position: -64px -24576px; }
+		._264a{ width: 64px; height: 64px; background-position: 0 -2880px; }
+		._264b{ width: 64px; height: 64px; background-position: -64px -24640px; }
+		._264c{ width: 64px; height: 64px; background-position: 0 -2816px; }
+		._264d{ width: 64px; height: 64px; background-position: -64px -24704px; }
+		._264e{ width: 64px; height: 64px; background-position: 0 -2752px; }
+		._264f{ width: 64px; height: 64px; background-position: -64px -24768px; }
+		._2650{ width: 64px; height: 64px; background-position: 0 -2688px; }
+		._2651{ width: 64px; height: 64px; background-position: -64px -24832px; }
+		._2652{ width: 64px; height: 64px; background-position: 0 -2624px; }
+		._2653{ width: 64px; height: 64px; background-position: -64px -24896px; }
+		._2660{ width: 64px; height: 64px; background-position: 0 -2560px; }
+		._2663{ width: 64px; height: 64px; background-position: -64px -24960px; }
+		._2665{ width: 64px; height: 64px; background-position: 0 -2496px; }
+		._2666{ width: 64px; height: 64px; background-position: -64px -25024px; }
+		._2668{ width: 64px; height: 64px; background-position: 0 -2432px; }
+		._267b{ width: 64px; height: 64px; background-position: -64px -25088px; }
+		._267f{ width: 64px; height: 64px; background-position: 0 -2368px; }
+		._2693{ width: 64px; height: 64px; background-position: -64px -25152px; }
+		._26a0{ width: 64px; height: 64px; background-position: 0 -2304px; }
+		._26a1{ width: 64px; height: 64px; background-position: -64px -25216px; }
+		._26aa{ width: 64px; height: 64px; background-position: 0 -2240px; }
+		._26ab{ width: 64px; height: 64px; background-position: -64px -25280px; }
+		._26bd{ width: 64px; height: 64px; background-position: 0 -2176px; }
+		._26be{ width: 64px; height: 64px; background-position: -64px -25344px; }
+		._26c4{ width: 64px; height: 64px; background-position: 0 -2112px; }
+		._26c5{ width: 64px; height: 64px; background-position: -64px -25408px; }
+		._26ce{ width: 64px; height: 64px; background-position: 0 -2048px; }
+		._26d4{ width: 64px; height: 64px; background-position: -64px -25472px; }
+		._26ea{ width: 64px; height: 64px; background-position: 0 -1984px; }
+		._26f2{ width: 64px; height: 64px; background-position: -64px -25536px; }
+		._26f3{ width: 64px; height: 64px; background-position: 0 -1920px; }
+		._26f5{ width: 64px; height: 64px; background-position: -64px -25600px; }
+		._26fa{ width: 64px; height: 64px; background-position: 0 -1856px; }
+		._26fd{ width: 64px; height: 64px; background-position: -64px -25664px; }
+		._2702{ width: 64px; height: 64px; background-position: 0 -1792px; }
+		._2705{ width: 64px; height: 64px; background-position: -64px -25728px; }
+		._2708{ width: 64px; height: 64px; background-position: 0 -1728px; }
+		._2709{ width: 64px; height: 64px; background-position: -64px -25792px; }
+		._270a{ width: 64px; height: 64px; background-position: 0 -1664px; }
+		._270b{ width: 64px; height: 64px; background-position: -64px -25856px; }
+		._270c{ width: 64px; height: 64px; background-position: 0 -1600px; }
+		._270f{ width: 64px; height: 64px; background-position: -64px -25920px; }
+		._2712{ width: 64px; height: 64px; background-position: 0 -1536px; }
+		._2714{ width: 64px; height: 64px; background-position: -64px -25984px; }
+		._2716{ width: 64px; height: 64px; background-position: 0 -1472px; }
+		._2728{ width: 64px; height: 64px; background-position: -64px -26048px; }
+		._2733{ width: 64px; height: 64px; background-position: 0 -1408px; }
+		._2734{ width: 64px; height: 64px; background-position: -64px -26112px; }
+		._2744{ width: 64px; height: 64px; background-position: 0 -1344px; }
+		._2747{ width: 64px; height: 64px; background-position: -64px -26176px; }
+		._274c{ width: 64px; height: 64px; background-position: 0 -1280px; }
+		._274e{ width: 64px; height: 64px; background-position: -64px -26240px; }
+		._2753{ width: 64px; height: 64px; background-position: 0 -1216px; }
+		._2754{ width: 64px; height: 64px; background-position: -64px -26304px; }
+		._2755{ width: 64px; height: 64px; background-position: 0 -1152px; }
+		._2757{ width: 64px; height: 64px; background-position: -64px -26368px; }
+		._2764{ width: 64px; height: 64px; background-position: 0 -1088px; }
+		._2795{ width: 64px; height: 64px; background-position: -64px -26432px; }
+		._2796{ width: 64px; height: 64px; background-position: 0 -1024px; }
+		._2797{ width: 64px; height: 64px; background-position: -64px -26496px; }
+		._27a1{ width: 64px; height: 64px; background-position: 0 -960px; }
+		._27b0{ width: 64px; height: 64px; background-position: -64px -26560px; }
+		._27bf{ width: 64px; height: 64px; background-position: 0 -896px; }
+		._2934{ width: 64px; height: 64px; background-position: -64px -26624px; }
+		._2935{ width: 64px; height: 64px; background-position: 0 -832px; }
+		._2b05{ width: 64px; height: 64px; background-position: -64px -26688px; }
+		._2b06{ width: 64px; height: 64px; background-position: 0 -768px; }
+		._2b07{ width: 64px; height: 64px; background-position: -64px -26752px; }
+		._2b1b{ width: 64px; height: 64px; background-position: 0 -704px; }
+		._2b1c{ width: 64px; height: 64px; background-position: -64px -26816px; }
+		._2b50{ width: 64px; height: 64px; background-position: 0 -640px; }
+		._2b55{ width: 64px; height: 64px; background-position: -64px -26880px; }
+		._3030{ width: 64px; height: 64px; background-position: 0 -576px; }
+		._303d{ width: 64px; height: 64px; background-position: -64px -26944px; }
+		._3297{ width: 64px; height: 64px; background-position: 0 -512px; }
+		._3299{ width: 64px; height: 64px; background-position: -64px -27008px; }
+		._bowtie{ width: 64px; height: 64px; background-position: 0 -448px; }
+		._feelsgood{ width: 64px; height: 64px; background-position: -64px -27072px; }
+		._finnadie{ width: 64px; height: 64px; background-position: 0 -384px; }
+		._fu{ width: 64px; height: 64px; background-position: -64px -27136px; }
+		._goberserk{ width: 64px; height: 64px; background-position: 0 -320px; }
+		._godmode{ width: 64px; height: 64px; background-position: -64px -27200px; }
+		._hurtrealbad{ width: 64px; height: 64px; background-position: 0 -256px; }
+		._metal{ width: 64px; height: 64px; background-position: -64px -27264px; }
+		._neckbeard{ width: 64px; height: 64px; background-position: 0 -192px; }
+		._octocat{ width: 64px; height: 64px; background-position: -64px -27328px; }
+		._rage1{ width: 64px; height: 64px; background-position: 0 -128px; }
+		._rage2{ width: 64px; height: 64px; background-position: -64px -27392px; }
+		._rage3{ width: 64px; height: 64px; background-position: 0 -64px; }
+		._rage4{ width: 64px; height: 64px; background-position: -64px -27456px; }
+		._suspect{ width: 64px; height: 64px; background-position: 0 0; }
+		._trollface{ width: 64px; height: 64px; background-position: -75px -27520px; }
+	</style>
+	
+	<!-- 
+    Change code block syntax highlighting styles by commenting out the 
+	  default MDE sytle and uncommenting one of the styles below.
+	  Works only with GitHub Markdown engine
+	-->
+	
+	<!-- Default MDE syntax style -->
+	<style type="text/css">
+		code { font-family: consolas, monospace; background-color: #f7f7f7; padding: .2pt; border-radius: 2pt; line-height: 1.3; }
+		pre { background-color: transparent; }
+		pre code { font-size: 95%; padding: 12pt; display: block; border-radius: 2pt; }
+	</style>
+	
+	<!-- pygments -->
+	<!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code > span.dt { color: #902000; } /* DataType */
+    code > span.dv { color: #40a070; } /* DecVal */
+    code > span.bn { color: #40a070; } /* BaseN */
+    code > span.fl { color: #40a070; } /* Float */
+    code > span.ch { color: #4070a0; } /* Char */
+    code > span.st { color: #4070a0; } /* String */
+    code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code > span.ot { color: #007020; } /* Other */
+    code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code > span.fu { color: #06287e; } /* Function */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    code > span.cn { color: #880000; } /* Constant */
+    code > span.sc { color: #4070a0; } /* SpecialChar */
+    code > span.vs { color: #4070a0; } /* VerbatimString */
+    code > span.ss { color: #bb6688; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { color: #19177c; } /* Variable */
+    code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code > span.op { color: #666666; } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #bc7a00; } /* Preprocessor */
+    code > span.at { color: #7d9029; } /* Attribute */
+    code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- kate -->
+  <!--
+    <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #dddddd; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { font-weight: bold; } /* Keyword */
+    code > span.dt { color: #800000; } /* DataType */
+    code > span.dv { color: #0000ff; } /* DecVal */
+    code > span.bn { color: #0000ff; } /* BaseN */
+    code > span.fl { color: #800080; } /* Float */
+    code > span.ch { color: #ff00ff; } /* Char */
+    code > span.st { color: #dd0000; } /* String */
+    code > span.co { color: #808080; font-style: italic; } /* Comment */
+    code > span.al { color: #00ff00; font-weight: bold; } /* Alert */
+    code > span.fu { color: #000080; } /* Function */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #ff0000; font-weight: bold; } /* Warning */
+    code > span.cn { color: #000000; } /* Constant */
+    code > span.sc { color: #ff00ff; } /* SpecialChar */
+    code > span.vs { color: #dd0000; } /* VerbatimString */
+    code > span.ss { color: #dd0000; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #808080; font-style: italic; } /* Documentation */
+    code > span.an { color: #808080; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #808080; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #808080; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- monochrome -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { font-weight: bold; } /* Keyword */
+    code > span.dt { text-decoration: underline; } /* DataType */
+    code > span.co { font-style: italic; } /* Comment */
+    code > span.al { font-weight: bold; } /* Alert */
+    code > span.er { font-weight: bold; } /* Error */
+    code > span.wa { font-style: italic; } /* Warning */
+    code > span.cf { font-weight: bold; } /* ControlFlow */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.do { font-style: italic; } /* Documentation */
+    code > span.an { font-style: italic; } /* Annotation */
+    code > span.cv { font-style: italic; } /* CommentVar */
+    code > span.in { font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- expresso -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #2a211c; color: #bdae9d; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #2a211c; color: #bdae9d; border-right: 1px solid #bdae9d; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { color: #bdae9d; background-color: #2a211c; }
+    code > span.kw { color: #43a8ed; font-weight: bold; } /* Keyword */
+    code > span.dt { text-decoration: underline; } /* DataType */
+    code > span.dv { color: #44aa43; } /* DecVal */
+    code > span.bn { color: #44aa43; } /* BaseN */
+    code > span.fl { color: #44aa43; } /* Float */
+    code > span.ch { color: #049b0a; } /* Char */
+    code > span.st { color: #049b0a; } /* String */
+    code > span.co { color: #0066ff; font-style: italic; } /* Comment */
+    code > span.al { color: #ffff00; } /* Alert */
+    code > span.fu { color: #ff9358; font-weight: bold; } /* Function */
+    code > span.er { color: #ffff00; font-weight: bold; } /* Error */
+    code > span.wa { color: #ffff00; font-weight: bold; } /* Warning */
+    code > span.cn { } /* Constant */
+    code > span.sc { color: #049b0a; } /* SpecialChar */
+    code > span.vs { color: #049b0a; } /* VerbatimString */
+    code > span.ss { color: #049b0a; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #43a8ed; font-weight: bold; } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #0066ff; font-style: italic; } /* Documentation */
+    code > span.an { color: #0066ff; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.co { color: #0066ff; font-weight: bold; font-style: italic; } /* Comment */
+    code > span.in { color: #0066ff; font-weight: bold; font-style: italic; } /* Information */
+  </style>  
+  -->
+  
+  <!-- zenburn -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #303030; color: #cccccc; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { color: #cccccc; background-color: #303030; }
+    code > span.kw { color: #f0dfaf; } /* Keyword */
+    code > span.dt { color: #dfdfbf; } /* DataType */
+    code > span.dv { color: #dcdccc; } /* DecVal */
+    code > span.bn { color: #dca3a3; } /* BaseN */
+    code > span.fl { color: #c0bed1; } /* Float */
+    code > span.ch { color: #dca3a3; } /* Char */
+    code > span.st { color: #cc9393; } /* String */
+    code > span.co { color: #7f9f7f; } /* Comment */
+    code > span.ot { color: #efef8f; } /* Other */
+    code > span.al { color: #ffcfaf; } /* Alert */
+    code > span.fu { color: #efef8f; } /* Function */
+    code > span.er { color: #c3bf9f; } /* Error */
+    code > span.wa { color: #7f9f7f; font-weight: bold; } /* Warning */
+    code > span.cn { color: #dca3a3; font-weight: bold; } /* Constant */
+    code > span.sc { color: #dca3a3; } /* SpecialChar */
+    code > span.vs { color: #cc9393; } /* VerbatimString */
+    code > span.ss { color: #cc9393; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #f0dfaf; } /* ControlFlow */
+    code > span.op { color: #f0efd0; } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #ffcfaf; font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #7f9f7f; } /* Documentation */
+    code > span.an { color: #7f9f7f; font-weight: bold; } /* Annotation */
+    code > span.cv { color: #7f9f7f; font-weight: bold; } /* CommentVar */
+    code > span.in { color: #7f9f7f; font-weight: bold; } /* Information */
+  </style>
+  -->
+  
+  <!-- haddock -->
+  <!--
+   <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { color: #0000ff; } /* Keyword */
+    code > span.ch { color: #008080; } /* Char */
+    code > span.st { color: #008080; } /* String */
+    code > span.co { color: #008000; } /* Comment */
+    code > span.ot { color: #ff4000; } /* Other */
+    code > span.al { color: #ff0000; } /* Alert */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #008000; font-weight: bold; } /* Warning */
+    code > span.cn { } /* Constant */
+    code > span.sc { color: #008080; } /* SpecialChar */
+    code > span.vs { color: #008080; } /* VerbatimString */
+    code > span.ss { color: #008080; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #0000ff; } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #ff4000; } /* Preprocessor */
+    code > span.do { color: #008000; } /* Documentation */
+    code > span.an { color: #008000; } /* Annotation */
+    code > span.cv { color: #008000; } /* CommentVar */
+    code > span.at { } /* Attribute */
+    code > span.in { color: #008000; } /* Information */
+  </style>
+  -->
+  
+  <!-- tango -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #f8f8f8; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { background-color: #f8f8f8; }
+    code > span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+    code > span.dt { color: #204a87; } /* DataType */
+    code > span.dv { color: #0000cf; } /* DecVal */
+    code > span.bn { color: #0000cf; } /* BaseN */
+    code > span.fl { color: #0000cf; } /* Float */
+    code > span.ch { color: #4e9a06; } /* Char */
+    code > span.st { color: #4e9a06; } /* String */
+    code > span.co { color: #8f5902; font-style: italic; } /* Comment */
+    code > span.ot { color: #8f5902; } /* Other */
+    code > span.al { color: #ef2929; } /* Alert */
+    code > span.fu { color: #000000; } /* Function */
+    code > span.er { color: #a40000; font-weight: bold; } /* Error */
+    code > span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+    code > span.cn { color: #000000; } /* Constant */
+    code > span.sc { color: #000000; } /* SpecialChar */
+    code > span.vs { color: #4e9a06; } /* VerbatimString */
+    code > span.ss { color: #4e9a06; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { color: #000000; } /* Variable */
+    code > span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+    code > span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+    code > span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+    code > span.ex { } /* Extension */
+    code > span.at { color: #c4a000; } /* Attribute */
+    code > span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+    code > span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+  </style>  
+  -->
+<style>
+ #content {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      color: black;
+      font-family: "Roboto", Arial, sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.3rem;
+      word-wrap: break-word;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+ h1,h2,h3,h4,h5,h6 {
+      font-family: "Roboto", Arial, sans-serif;
+      font-weight: bold;
+      color: #777;
+    }
+
+ h1 {
+      margin: 1.6em -0.5rem 0.5rem -0.5rem;
+      padding: 0.3rem 0.5em;
+      font-size: 1.6em;
+      background-color: rgb(240,240,240);
+      border-top: 3px solid rgb(200,200,200);
+    }
+
+ h2 {
+      margin: 1.5em -0.5rem 0.5rem -0.5em;
+      padding: 0.3rem 0.5em;
+      background-color: rgb(240,240,240);
+      font-size: 1.5em;
+    }
+
+ h3 {
+      margin-top: 1.3em;
+      margin-bottom: 0.3em;
+      padding-top: 0.2em;
+      padding-bottom: 0.2em;
+      font-size: 1.3em;
+    }
+
+ h4 {
+      margin-top: 1.2em;
+      margin-bottom: 0.2em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1.2em;
+    }
+
+ h5 {
+      margin-top: 1.1em;
+      margin-bottom: 0.1em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1.1em;
+    }
+
+ h6 {
+      margin-top: 1.1em;
+      margin-bottom: 0.1em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1em;
+    }
+
+ ul, ol {
+      padding: 0;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+ ol ol, ul ol {
+      list-style-type: lower-roman;
+    }
+
+ ul ul ol, ul ol ol, ol ul ol, ol ol ol {
+      list-style-type: lower-alpha;
+    }
+
+ blockquote, ul, ol, dl, table, pre {
+      margin-top: 0;
+      margin-bottom: 0.5em;
+    }
+
+ hr {
+      height: 4px;
+      padding: 0;
+      margin: 16px 0;
+      background-color: #e7e7e7;
+      border: 0 none;
+    }
+
+ ul, ol {
+      padding-left: 2em;
+    }
+
+ ul ul, ul ol, ol ol, ol ul {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+ li>p {
+      margin-top: 16px;
+    }
+
+ blockquote { background-color: rgb(240,240,240); margin: 1em 0; padding: 0.2em 0.5em; border-left:0.4em solid rgb(180,180,180); }
+ 
+ code { background-color: rgb(240,240,240); padding: 0 3px; font-family: "Roboto Mono", "Courier new", monospace; font-size:1em;}
+
+ table, th, td { border: 1px solid rgb(200,200,200); border-collapse: collapse; padding:0.5em; }
+
+ p {font-size:1em; margin:0.5em 0;}
+
+ em {color:#cc0000!important; }
+</style>
+  </head>
+<body>
+<!-- Content goes here. The div must have an id of "content" -->
+<div id="content"><h1>Un réseau a-social</h1>
+<p>Les personnes ayant un <strong>compte</strong> dans une <em>instance</em> de cette application peuvent se réunir sur des <strong>forum</strong> afin de partager (ou non) des notes et avoir des conversations privées avec d'autres personnes en contrôlant avec qui et en étant assuré de la non accessibilité des informations intelligibles, même en cas d'écoute intempestive du réseau comme de détournement des données.</p>
+<p>Une <strong>note</strong> est constituée,</p>
+<ul>
+<li><strong>d'un texte</strong> de quelques à quelques milliers de caractères pouvant apparaître sous une présentation simple agréable (niveaux de titre, gras / italique, liste à puces ...).</li>
+<li><strong>d'une pièce jointe</strong> facultative de n'importe quel type : photo, clip vidéo, etc.</li>
+</ul>
+<p>Une  <strong>conversation</strong>  est une suite chronologique <strong>d'échanges textuels</strong> entre ses participants. Une conversation dans un forum peut aussi supporter un vote validant ou invalidant une décision à prendre collégialement.</p>
+<p><strong>Le compte d'une personne</strong> dispose principalement :</p>
+<ul>
+<li><strong>d'un ou plusieurs CV</strong>, pouvant comporter une photo d'identité, de présentation pour les autres comptes.</li>
+<li>d'un <strong>répertoire de contacts</strong> avec d'autres comptes pouvant comporter un de leurs CV, avec qui une conversation privée peut avoir lieu et que le titulaire peut inviter sur ses forums.</li>
+<li>de <strong>notes personnelles</strong>.</li>
+</ul>
+<p>Un <strong>forum</strong> comporte :</p>
+<ul>
+<li>un <strong>répertoire de ses participants</strong>, chacun y apparaissant avec un CV.</li>
+<li>des <strong>conversations</strong> entre les participants.</li>
+<li>des <strong>notes</strong> partagées par les participants.</li>
+</ul>
+<p><em>La gouvernance d'un forum</em> est régie par quelques paramètres explicitant quelles décisions (invitation, clôture, etc.) sont soumises à approbation collégiale et quelles sont les règles de décompte des votes qui indique aussi comment la gouvernance peut être changée. A titre d'exemple,</p>
+<ul>
+<li>un forum peut être à caractère <em>autocratique</em> : son créateur est seul modérateur et décide seul qui il invite, qui il exclut, comment il modère les contenus, créé et détruit les conversations et in fine le forum lui-même.</li>
+<li>un forum peut aussi être à caractère <em>démocratique</em> et exiger une majorité ou un consensus pour ses décisions de gestion.</li>
+<li>un forum peut être aussi à caractère <em>collégial</em>, toute décision importante devant être co-signée par un ou N modérateurs.</li>
+</ul>
+<h5>Instances de l'application</h5>
+<p>Toute organisation / association / société ... (sous condition d'en payer les frais d'hébergement / administration technique) peut déployer <em>sa propre instance</em> qui lui sera privée et aura ses propres règles de gouvernance et de déontologie. Une instance est identifiée par l'URL de son serveur central.<br>
+Les instances déployées sont étanches les unes des autres :</p>
+<ul>
+<li>il n'est pas possible de savoir combien ont été déployées et par qui elles sont utilisées.</li>
+<li>les comptes des personnes et les forums sont propres à chaque instance.</li>
+<li>la suite du document ne considère qu'une instance.</li>
+</ul>
+<h5>Logiciels de l'application</h5>
+<p>L'application fonctionne par la collaboration de plusieurs logiciels :</p>
+<ul>
+<li><strong><em>une application serveur</em></strong> s'exécute sur un pool de serveurs du <em>cloud</em> disposant d'un espace de stockage de données persistant et sécurisé (base de données ...) : l'URL de ce pool est l'identifiant de l'instance ;</li>
+<li><strong><em>une application browser</em></strong> s'exécute sur tous les terminaux  (mobiles / tablettes / PC ...) supportant un browser compatible et pouvant y disposer, facultativement, d'un espace de stockage persistant réservé à cette application et privé pour chaque utilisateur du browser. Cette application peut avoir des sessions de travail :
+<ul>
+<li><strong><em>en mode incognito</em></strong> : rien n'est mémorisé sur le terminal utilisé, les données proviennent du cloud et les mises à jour ne se font que sur le cloud ;</li>
+<li><strong><em>en mode synchronisé</em></strong> : l'espace local de stockage du browser est maintenu synchronisé avec le cloud pour le sous ensemble des données qui a été souhaité comme tel par l'utilisateur spécifiquement pour ce terminal ;</li>
+<li><strong><em>en mode avion</em></strong> : l'application s'exécute sans accès réseau sur les seules données stockées localement sur le terminal à l'occasion d'une session antérieure synchronisée.</li>
+</ul>
+</li>
+<li><strong><em>une application utilitaire</em></strong> peut s'exécuter sur un terminal sous Linux / Windows / MacOs afin d'effectuer des sorties des données, en clair ou crypté, sur un répertoire du système de fichiers local.</li>
+</ul>
+<blockquote>
+<p>Une personne disposant de plusieurs terminaux <em>peut</em> avoir localement sur chacun une copie partielle des données qui l'intéresse et utiliser le mécanisme des sessions en mode synchronisé pour les conserver au même niveau sur tous ses terminaux et pouvoir travailler le cas échéant en mode local sur chacun.</p>
+</blockquote>
+<h1>Pourquoi &quot;a-social&quot; ?</h1>
+<p>Toutes les données humainement signifiantes sont <strong><em>cryptés</em></strong> sur les terminaux, transitent cryptées sur le réseau, sont stockées cryptées sur les serveurs du cloud comme dans les mémoires des terminaux (en modes synchronisé et avion). Elles ne peuvent être <strong><em>décryptées</em></strong> que dans l'application qui s'exécute sur les terminaux des titulaires des comptes.</p>
+<blockquote>
+<p>Le détournement de données, que ce soit la base de données du serveur comme celles locales des terminaux ou de celles transitant sur les réseaux, est inexploitable : les données y sont indéchiffrables.</p>
+</blockquote>
+<blockquote>
+<p>Aucune utilisation <em>commerciale</em> des données n'est possible puisqu'elles sont toutes indéchiffrables, même et surtout pour le prestataire de l'application et ses hébergeurs.</p>
+</blockquote>
+<p><strong>Aucun répertoire central ne peut être constitué, ile ne contiendrait que des données inintelligible</strong> : il est impossible de chercher un compte ou un forum dans une instance de l'application en fonction de critères lisibles comme les noms, intitulés des forums, centres d'intérêt, mots clés ...</p>
+<blockquote>
+<p>On ne s'y connaît que par cooptation, contact direct et rencontre sur un forum.</p>
+</blockquote>
+<h2>Les Comptes</h2>
+<h5>Phrase secrète d'un compte</h5>
+<p>La connexion à un compte ne requiert que d'en connaître <strong><em>la phrase secrète</em></strong> mémorisée nulle part dans l'application.</p>
+<p><strong>L'oubli de la phrase secrète d'un compte le rend irrémédiablement indéchiffrable, inutilisable</strong> : les clés de cryptage techniques permettant de crypter et décrypter les informations sur le terminal sont elles-mêmes, directement ou indirectement, cryptées par la phrase secrète du compte.<br>
+Aucun compte privilégié n'a la possibilité technologique de  réinitialiser une phrase secrète perdue : les données restent cryptées par l'ancienne phrase.</p>
+<p>La phrase secrète d'un compte peut être changée à condition de pouvoir fournir la phrase actuelle.</p>
+<p>Tous les comptes ont des phrases secrètes différentes, un dispositif interdit des <em>présomptions de ressemblance</em> entre phrases secrètes.</p>
+<h5>Nom immuable d'un compte</h5>
+<p><strong>Un compte a un nom</strong> que son titulaire lui a attribué à sa création : ce nom est <strong>immuable</strong>, ne peut plus être changé, est <strong>unique</strong> dans l'application et un mécanisme interdit des <em>présomptions de ressemblance</em> entre noms.</p>
+<p>Au fil du temps, le nom d'un compte apparaît à d'autres comptes : après avoir accordé leur confiance à un nom, ils sont assurés qu'aucune usurpation d'identité ou réemploi de nom n'est possible.</p>
+<blockquote>
+<p><strong>Le numéro d'un compte</strong> est obtenu en brouillant aléatoirement son nom par un procédé de calcul fastidieux tel qu'il est impossible en interrogeant l'application ou en détournant la base de données,</p>
+<ul>
+<li>de connaître la liste des noms des comptes,</li>
+<li>de tester l'existence d'un compte en essayant des noms tirés de listes de noms usuels ou par force brute (essai de toutes les combinaisons).</li>
+</ul>
+</blockquote>
+<h5>Certificat d'identité d'un compte</h5>
+<p><em>Un compte a son identité certifiée par un ou plusieurs autres comptes</em> : en certifiant l'identité d'un compte A, un compte C ne fait qu'affirmer que le nom du compte A est bien représentatif de la personne qui en est titulaire. Ceci ne signifie rien en termes d'amitié ou de convergence de vue, seulement une affirmation sur l'adéquation entre le nom présenté et la personne physique correspondante.</p>
+<blockquote>
+<p>Le certificat d'identité d'un compte est la liste des couples (numéro de compte,  nom) des comptes ayant certifié son identité.</p>
+</blockquote>
+<blockquote>
+<p>Un compte A <em>actif</em> (ni en création, ni résilié) a toujours au moins un compte dans son certificat d'identité. Quand un compte certifiant est résilié il apparaît en tant que tel dans le certificat d'identité de A (ce qui réduit la crédibilité que les autres peuvent avoir dans le compte A).</p>
+</blockquote>
+<p>Comme au départ il n'y a pas de comptes dans l'instance, il est possible de créer ou ou quelques comptes <strong>auto-certifiés</strong> (voir plus avant).</p>
+<h5>Phrase secrète d'administration</h5>
+<p>Cette phrase se transmet humainement hors de l'application : un brouillage complexe de cette phrase donne une clé de cryptage qui est mémorisée (elle-même brouillée) dans le configuration de l'instance : le serveur peut vérifier qu'un détenteur présumé de cette phrase l'est réellement sans que cette clé ne soit physiquement écrite quelque part.</p>
+<h5>Compte auto-certifié</h5>
+<p>Une personne connaissant la phrase secrète d'administration peut créer un compte <strong>auto-certifié</strong> en fournissant un brouillage de cette phrase après l'avoir saisie sur son terminal :</p>
+<ul>
+<li>la création du compte est immédiate .</li>
+<li>elle ne requiert pas qu'un autre compte certifie l'identité du compte créé.</li>
+</ul>
+<p>Le premier compte créé dans une instance est par principe un compte auto-certifié, les suivants pouvant se faire certifier par le compte auto-certifié. Mis à part qu'ils se sont auto-certifiés à leur création, ces comptes sont comme les autres et peuvent d'ailleurs ultérieurement avoir leur identité certifiée par d'autres comptes.</p>
+<h4>Cercles des comptes connus d'un compte A</h4>
+<p><strong>Le premier cercle</strong> est l'ensemble des comptes inscrits dans le répertoire personnel des contacts de A.<br>
+<strong>Le deuxième cercle</strong> est l'ensemble des comptes des participants inscrits aux mêmes forum que A (et par convention qui ne sont pas dans le premier cercle).<br>
+<strong>Le troisième cercle</strong>, plus indirect, est celui des comptes ayant certifié l'identité d'un compte d'un des deux premiers cercles.</p>
+<p><strong>Pour inscrire un contact dans son répertoire personnel, A doit l'avoir trouvé dans l'un des deuxième ou troisième cercles.</strong><br>
+Comme au départ un nouveau compte ne connaît personne d'autre que son propre certificateur (seul présent dans son répertoire personnel), ses cercles de connaissances ne peuvent pas s'agrandir, du moins tant que son certificateur ne l'a pas invité au moins à participer à un forum où il pourra rencontrer d'autres comptes.</p>
+<p><strong>Contacts en attente d'approbation</strong><br>
+A peut enregistrer dans son répertoire un contact C en attente d'approbation : il faut pour cela que A ait rencontré dans la vraie vie la personne C ayant un compte dans l'application et lui ayant confié l'adresse d'une de ses (4 au plus) <em>boîtes postales</em>.</p>
+<ul>
+<li>A peut inscrire C en attente d'approbation en donnant cette adresse de boîte postale et un court message de courtoisie destiné à se faire reconnaître.</li>
+<li>C peut reconnaître A et accepter l'établissement de leur contact mutuel en inscrivant A dans son répertoire et en transmettant son nom à A.</li>
+<li>mais C peut aussi se raviser, ne pas reconnaître A, suspecter une usurpation d'identité, bref refuser le contact : C reste un contact anonyme dans le répertoire de A. Si C a répondu au message de courtoisie de A en motivant son refus, A pourra le lire, sinon A n'a plus qu'à détruire cette entrée en attente qui encombre son répertoire.</li>
+</ul>
+<p>L'adresse de boîte postale peut aussi être employée pour inviter un compte C à un forum quand aucun participant du forum ne peut lancer une invitation nommée faute de disposer du nom de C dans l'un de ses trois cercles.</p>
+<h2>Les Forum</h2>
+<p>Un compte peut créer un forum dès qu'il souhaite partager des notes et/ou ouvrir des conversations avec plusieurs autres comptes.</p>
+<ul>
+<li>le forum ainsi créé a un identifiant interne tiré au hasard à sa création.</li>
+<li><strong>le créateur devient le premier participant</strong>, avec un statut de modérateur, du forum.</li>
+<li><strong>il peut inviter certains des comptes</strong> de ses cercles de connaissance, ou connue par une adresse de boîte postale, à participer au forum.</li>
+<li>ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumise à approbation des autres participants.</li>
+</ul>
+<p>Partager des informations privées à plusieurs suppose d'avoir confiance en ceux avec qui ça sera fait. Cette acquisition de confiance joue autant pour les <strong>invitants</strong> (<em>puis-je avoir confiance dans cet invité ?</em>) que pour <strong>l'invité</strong> (<em>avec qui vais-je partager des informations ?</em>).</p>
+<p>Une note ou une conversation du forum peut avoir un <strong>degré de confidentialité</strong> :</p>
+<ul>
+<li>lisible par les <strong>invités</strong>.</li>
+<li>privées pour les <strong>participants confirmés</strong>.</li>
+</ul>
+<p>Un invité reçoit avec son invitation une clé de cryptage qui lui permet :</p>
+<ul>
+<li><strong>de lire la liste des participants</strong>, leur CV (du moins celui choisi pour être visible par les participants et invités de ce forum) et leurs certificats d'identité (qui les certifie).</li>
+<li><strong>de lire la ou les notes et conversation déclarées lisibles aux invités</strong> et qui peuvent présenter l'objet du forum et le cas échéant ses règles internes.</li>
+</ul>
+<p>Ainsi un invité peut se forger une opinion sur le forum qui l'invite et il peut choisir d'accepter cette invitation ou de la décliner.</p>
+<p><strong>S'il l'accepte</strong>, il fournit un de ses CV et son certificat d'identité pour que les autres participants sachent si oui ou non il est souhaitable de valider cette participation.</p>
+<ul>
+<li><strong>si oui</strong> l'invité devenu <em>participant confirmé</em> reçoit les clés de cryptage lui permettant d'accéder aux notes et conversations privées du forum.</li>
+<li><strong>si non</strong>, l'invité est recalé. Il aura eu le temps de lire la liste des participants et la ou les quelques notes de présentation mais rien d'autre.</li>
+</ul>
+<p>Dans les cas simples ou un invité est particulièrement et favorablement bien connu, <em>son invitation peut se faire avec approbation implicite</em> pour raccourcir le délai. Il reçoit dès l'invitation les clés permettant d'accéder à tout le forum, le serveur ne lui donnant effectivement accès qu'aux notes / conversations réservées aux invités tant que l'invitation n'est pas confirmée.</p>
+<p>La vie du forum est pour l'essentiel marquée par :</p>
+<ul>
+<li>la lecture et l'écriture de notes et de leurs pièces jointes.</li>
+<li>l'ouverture de conversations et la poursuite de conversations en y ajoutant des échanges.</li>
+</ul>
+<h5>Statut d'un participant</h5>
+<p>Un participant peut avoir plusieurs niveaux de statut :</p>
+<ul>
+<li><strong>invité</strong> en attente d'acceptation ou de refus de l'invité.</li>
+<li><strong>en attente d'approbation</strong> par les participants.</li>
+<li><strong>observateur</strong> : il peut lire mais pas écrire, ni note, ni échange de conversations. Il ne prend pas part aux votes.</li>
+<li><strong>régulier</strong> : il peut lire et écrire des notes et participer aux conversations. Il prend part aux votes selon les règles de gouvernance du forum.</li>
+<li><strong>modérateur</strong> : il peut de plus modérer des notes (et leurs pièces jointes) et échanges des conversation en les masquant (seuls les modérateurs peuvent les lire) ou les démasquant (lisibles par tous) ou détruisant le contenu. Les règles de gouvernance peuvent,
+<ul>
+<li>fixer un poids supérieur aux décisions des modérateurs dans le forum.</li>
+<li>décider de ne pas avoir de modérateur.</li>
+</ul>
+</li>
+</ul>
+<h5>Conversations</h5>
+<p>Une conversation est créée par un participant qui peut éventuellement restreindre la liste des participants pouvant la lire et y participer (listes qui peuvent être ultérieurement étendues mais pas restreintes). Par défaut c'est l'ensemble des participants.<br>
+Chaque échange d'un participant est inscrit par ordre chronologique et ne peut plus être rectifié, avec les deux exceptions suivantes :</p>
+<ul>
+<li>son auteur a le droit d'effacement de ses propres échanges (oups !) mais pas de correction.</li>
+<li>un modérateur a le droit à le classer <em>modéré</em> (lisible par les seuls modérateurs) et/ou l'effacer mais jamais d'en changer le contenu.</li>
+</ul>
+<p><strong>La plupart des conversations sont à objet libre</strong>: la première ligne du premier échange en donne l'intitulé.<br>
+Un sondage implicite est toujours ouvert mais dans bien des cas n'est pas utilisé.</p>
+<p><strong>Certaines conversations ont pour objet la prise d'une décision formelle</strong>, comme par exemple :</p>
+<ul>
+<li>l'invitation d'un nouveau participant et son approbation, le changement de son statut.</li>
+<li>l'exclusion d'un participant.</li>
+<li>la suppression de conversations / notes obsolètes et consommatrices d'espaces.</li>
+<li>la clôture du forum lui-même.</li>
+</ul>
+<p>Dans ce cas le vote de la conversation a pour but de valider (ou d'invalider) une décision d'action, formelle et ayant des paramètres précis :</p>
+<ul>
+<li>la conversation peut faire évoluer les paramètres de la décision soumise à discussion : cela annule les votes antérieurs.</li>
+<li>un participant peut voter plusieurs fois, le vote le plus récent est seul pris en compte.</li>
+<li>les votes sont publics, vérifiables par chacun.</li>
+<li>la fin de la conversation a lieu :
+<ul>
+<li>soit parce que son initiateur y renonce : elle est annulée.</li>
+<li>soit sur constat d'un vote négatif, la décision n'est pas approuvée.</li>
+<li>soit par la réalisation de l'action décidée, qui peut se conclure normalement ou sur un échec.</li>
+</ul>
+</li>
+</ul>
+<h5>Notes et pièces jointes</h5>
+<p><strong>Une note peut être créée par tout participant régulier</strong> qui devient son <em>propriétaire</em>.</p>
+<ul>
+<li>elle comporte au moins une ligne de texte qui lui sert de titre / descriptif.</li>
+<li>elle <em>peut</em> avoir une pièce jointe.</li>
+<li>elle <em>peut</em> être marquée comme associée à une conversation précise ou au forum. Si elle est associée à une conversation elle disparaîtra quand celle-ci est détruite.</li>
+<li>la liste des participants autorisés à lire / écrire <em>peut</em> être restreinte au départ (par défaut tous les participants au forum sont autorisés), peut être augmentée mais pas réduite.</li>
+<li>elle peut être déclarée <em>archivée</em> par son propriétaire : elle ne pourra plus être modifiée par personne.</li>
+<li>son propriétaire peut en transmettre la propriété à un autre participant.</li>
+<li>un modérateur (s'il en existe sur le forum) peut modérer son contenu :
+<ul>
+<li>la note n'est plus lisible que par son propriétaire (désormais seul à pouvoir la modifier) et les autres modérateurs.</li>
+<li>elle peut être détruite par un modérateur.</li>
+<li>elle peut avoir sa modération levée par un modérateur (si elle n'a pas été détruite).</li>
+<li>un modérateur ne peut pas en changer le contenu.</li>
+</ul>
+</li>
+</ul>
+<h5>Clôture d'un forum</h5>
+<p>Elle se passe en deux temps :</p>
+<ul>
+<li>une annonce de clôture proche qui le place en état zombie laissant le temps de copier des contenus jugés utiles et surtout ouvrant un délai de remord.</li>
+<li>une destruction effective un certain temps après.</li>
+</ul>
+<p>Il est possible de réactiver un forum zombie quand on a un remord ou de prolonger l'état zombie.</p>
+<p>La destruction effective supprime physiquement les données et retourne le quota aux comptes détenteurs (voir ci-près).</p>
+<blockquote>
+<p><strong>Remarque</strong> : dans le cas le plus simple un forum s'ouvre instantanément sur demande d'un compte qui y invite immédiatement les contacts qu'il souhaite avec approbation par défaut. Une gouvernance par défaut s'installe, et les participants peuvent sur l'instant accepter l'invitation et participer à une conversation et s'échanger des notes.</p>
+</blockquote>
+<h2>Gouvernance et contrôle de l'espace : volumes, quotas</h2>
+<p>Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :</p>
+<ul>
+<li>(1) l'une correspond à toutes les données sauf les pièces jointes attachées aux notes.</li>
+<li>(2) l'autre correspond aux pièces jointes attachées aux notes.</li>
+</ul>
+<p>Selon les options techniques retenues pour chaque instance les coûts de stockage peuvent être significativement différents pour les deux types.</p>
+<h3>Gouvernance de l'instance</h3>
+<p>Héberger un serveur et occuper de l'espace a un coût qui peut être couvert de diverses façons :</p>
+<ul>
+<li>un mécène payeur s'acquitte des frais sans obligation ni contrepartie pour les comptes hébergés.</li>
+<li>le payeur global refacture les frais de l'instance, typiquement par disque virtuel.</li>
+<li>les comptes acquittent par ailleurs, éventuellement, une cotisation qui peut être associée au disque virtuel qu'ils utilisent.</li>
+</ul>
+<p>La gouvernance de l'instance fait face aux questions suivantes :</p>
+<ul>
+<li><strong>doit-on réguler le volume utilisé</strong> et si oui comment ?</li>
+<li><strong>que fait-on des comptes, et indirectement des forums, inactifs</strong> sur une longue durée et immobilisant en pure perte des ressources de stockage ?</li>
+</ul>
+<p>L'instance a été créée par une personne physique ou une organisation ayant un but : une charte de déontologie peut être explicitement proposée aux comptes qui s'engagent à la respecter. Sans émettre aucun jugement une organisation suprémaciste n'a pas envie d'héberger des discours et des campagnes défendant l'idée qu'il n'y a pas de races humaines donc de suprématie de l'une sur les autres alors que la déontologie d'une association anti-raciste aura exactement les objectifs opposés.</p>
+<p>Sachant que le contenu des notes et conversations d'un compte lui sont totalement personnelles et impossibles à décrypter, <strong>aucun contrôle déontologique de peut s'effectuer sur les notes d'un compte</strong>.<br>
+C'est un peu différent pour une conversation entre deux comptes : elle est certes totalement privée (et techniquement indiscutablement privée) et aucun des deux interlocuteurs n'est obligé à la poursuivre, chacun peut l'interrompre à son gré. Mais certains pays ont des lois réprimant l'insulte <em>même non publique</em> (même si l'application en est peu fréquente). Un compte peut être amené à se plaindre d'un autre et à justifier cette plainte par un texte indiscutable (non répudiable par son auteur).<br>
+De plus un compte représente une personne physique qui peut finalement être jugée <em>persona non grata</em> sur l'instance en raison de sa <em>notoriété</em> dans le vrai monde, voire des autorités judiciaires qui peuvent vouloir priver quelqu'un de toute capacité d'échange et d'enregistrement même personnel d'informations.</p>
+<p>Sur un forum c'est un peu différent : plusieurs comptes ont accès aux contenus et l'un d'entre eux peut estimer qu'un ou plusieurs contenus ne respectent pas la charte déontologique de l'instance. Un forum est certes strictement privé et ne fait pas partie de l'espace public :</p>
+<ul>
+<li>en toute rigueur la liberté d'expression <em>privée</em> n'est légalement pas réprimée (enfin en général).</li>
+<li>mais les insultes, mêmes privées, peuvent parfois légalement ne pas être admises.</li>
+<li><strong>enfin l'instance est sous gouvernance privée</strong> : elle peut avoir les règles déontologiques de son choix.</li>
+</ul>
+<p>Quelques grands paramètres de gouvernance l'instance sont fixés en paramètre :</p>
+<ul>
+<li>un quota attribué peut-il revu à la baisse ?</li>
+<li>le droit de dissolution d'un compte pour non respect de son quota est-il possible ?</li>
+<li>des comptes inactifs peuvent-ils être supprimés ?</li>
+<li>des alertes de non respect de la déontologie sont-elles recevables auprès d'un compte modérateur général de l'instance ?
+<ul>
+<li>Le lanceur d'une alerte peut-il être anonyme ? Toujours, jamais, à sa convenance ?</li>
+<li>un compte peut-il être résilié par la modération générale pour cause de non respect de la charte déontologique ?</li>
+</ul>
+</li>
+</ul>
+<p>Ainsi une instance peut avoir une gouvernance qui peut osciller entre :</p>
+<ul>
+<li>ultra libertarienne et le cas échéant être dissoute par action violente hors de l'application. Fermeture du site par l'hébergeur, arrestations, etc.</li>
+<li>moyennement contrôlée en y acceptant que des gentlemen ou des ladies.</li>
+<li>structurée afin de protéger le plus grand nombre de dérives éventuelles de quelques uns.</li>
+</ul>
+<h3>Techniques de contrôle du volume</h3>
+<h4>Disques virtuels</h4>
+<p>L'espace de stockage global est constitué d'un ensemble de  <strong>disques virtuels</strong> chacun ayant :</p>
+<ul>
+<li>un code court qui est son identifiant immuable.</li>
+<li>un quota d'espace distingué en q1 / q2.</li>
+<li>une clé de cryptage spécifique mémorisée cryptée par la clé d'administration. Cette clé ne crypte que son libellé, pas les contenus qu y sont inscrits.</li>
+<li>un libellé crypté par cette clé.</li>
+<li>une restriction d'accès :
+<ul>
+<li><em>aucune restriction, lecture seule, accès interdit</em>.</li>
+<li><em>un code d'alerte</em> : quelques codes sont prédéfinis par instance et qualifie à la fois le reproche fait aux utilisateurs du disque et un niveau de menace sur leurs comptes.</li>
+</ul>
+</li>
+<li>un ou quelques <strong>comptes contrôleurs</strong>.</li>
+</ul>
+<p>Un compte connaissant la phrase secrète d'administration peut :</p>
+<ul>
+<li>accéder à la liste des disques virtuels, en ajouter et sous certaines conditions en supprimer.</li>
+<li>modifier leurs quotas q1 / q2.</li>
+<li>changer leurs comptes contrôleurs des disque virtuel.</li>
+<li>en cas de changement de la phrase secrète d'administration mettre à jour le cryptage des clés des disques par la clé d'administration en fournissant l'ancienne et la nouvelle clé d'administration.</li>
+</ul>
+<h4>Contrôle de l'espace global</h4>
+<p>Globalement chaque disque virtuel doit respecter son quota.<br>
+L'administration de l'instance peut, par un compte connaissant la phrase secrète d'administration, <strong>restreindre voire supprimer l'accès à un disque virtuel</strong>, et in fine le cas échéant le détruire.</p>
+<h4>Contrôle de l'espace sur un disque virtuel</h4>
+<p>Son ou ses comptes contrôleurs gèrent les attributions de quotas aux comptes utilisant ce disque. Ils peuvent aussi contraindre ceux-ci au respect de leurs obligations en usant à leur égard d'une possible restriction d'accès puis de blocage et in fine le cas échéant de la destruction d'un compte. Ils sont en particulier capables :
+- de révoquer les comptes obsolètes utilisant des quotas qui seraient utiles à d'autres.
+- de restreindre l'accès voire supprimer des comptes suite à décision de modération.</p>
+<h4>Quota initial d'un compte A</h4>
+<p>A la validation de sa création, lorsqu'un compte certificateur C a accepté de certifier l'identité de A, A reçoit de C un quota minimal du disque virtuel auquel C est associé.<br>
+A cette occasion une <strong>conversation</strong> est ouverte (mais vide) entre A et le ou les comptes contrôleurs (passés, actuels ou futurs) de son disque virtuel.</p>
+<h5>Demandes d'augmentation de quota</h5>
+<p>Le compte A peut faire une demande d'augmentation de son quota : elle est enregistrée sur la <strong>conversation</strong> entre le compte et son disque virtuel.</p>
+<ul>
+<li>un exemplaire est enregistré dans le dossier du disque virtuel : les comptes contrôleurs y ont accès.</li>
+<li>l'autre exemplaire est enregistré dans le dossier du compte.</li>
+</ul>
+<p>La demande peut ainsi être :</p>
+<ul>
+<li>satisfaite, complètement ou partiellement (mas pas plus que le niveau de la demande).</li>
+<li>refusée.</li>
+<li>conservée en attente, prioritaire ou non.</li>
+<li>archivée un certain temps.</li>
+<li>détruite.</li>
+</ul>
+<h5>Transfert d'un disque à un autre</h5>
+<p>Une demande de quota peut aussi comporter le souhait du compte à être transféré sur un autre disque plus adapté à l'usage ou à l'organisation.<br>
+Tout contrôleur du disque étant aussi contrôleur d'un autre disque peut effectuer ce transfert qui se limite à une opération sur les quotas et à fournir la clé de cryptage du nouveau disque.</p>
+<h4>Quota d'un forum</h4>
+<p>Un forum reçoit à sa création un quota prélevé sur le quota du compte créateur.</p>
+<ul>
+<li>il peut recevoir ensuite des quotas en provenance d'autres comptes participants.</li>
+<li>ces quotas restent <strong>concédés</strong> par les comptes participants au forum : son quota est virtuellement la somme des quotas concédés par les participants.</li>
+<li>quand un forum décide de remettre à disposition du quota inutile, celui-ci est rendu aux participants concessionnaires, la règle de proportionnalité pouvant être contrariée par un vote des participants. C'est la même situation quand le forum est clôturé.</li>
+<li>un forum ne fait pas de demande d’accroissement de quota, ce sont ses participants qui y contribue.</li>
+</ul>
+<h4>Restriction d'accès à un disque posée par un administrateur de l'instance</h4>
+<p>Elle peut prendre les valeurs suivantes :</p>
+<ul>
+<li>pas de restriction : lecture / écriture possible. Si l'écriture conduit à une <em>augmentation</em> de volume alors que le quota est déjà dépassé,  elle est refusée.</li>
+<li>lecture seule : toute modification des conversations et notes est impossible.</li>
+<li>accès bloqué (ni lecture, ni écriture).</li>
+</ul>
+<p>La restriction est accompagnée d'un code explicitant la raison de la restriction ou de sa levée afin que les mesures correctives puissent être prises.</p>
+<h4>Restriction d'accès à un compte posée par un compte contrôleur</h4>
+<p>Une restriction similaire peut être apposée sur un compte par un des contrôleurs de son disque virtuel avec le même objectif. Le contrôleur peut motiver sa décision par un échange sur la conversation permanente ouverte avec le compte.<br>
+La restriction effectivement applicable au compte est le plus restrictive des deux, mais les deux sont visibles pour un compte.</p>
+<h3>Résiliations autoritaires de comptes</h3>
+<p>Un compte peut ne pas respecte la limitation de quota qui lui a été fixée. Comme il n'est pas possible de créer / modifier des contenus qui feraient passer au dessus du quota d'un compte ou d'un forum, cette situation n'apparaît qu'en cas de restriction a posteriori :</p>
+<ul>
+<li>un compte a eu son quota réduit autoritairement par un contrôleur de son disque : son volume utilisé courant peut excéder le quota restant ;</li>
+<li>un forum a eu un participant résilié ou qui a réduit son le quota qu'il avait concédé au forum. Le volume utilisé par le forum peut excéder son quota et par rebond le volume imputé aux autres comptes étant accru en proportion peut leur faire excéder leur propre quota.</li>
+</ul>
+<p>Un forum, donc indirectement des comptes, ou un compte a été la cible d'un lanceur d'alerte à propos d'un contenu non conforme à la charte éthique de l'instance et une décision de modération générale a été prise de fermeture.</p>
+<p>Un contrôleur de disque a la possibilité de lister les comptes morts, n'ayant eu aucune activité depuis un certain temps. Chaque compte participant d'un forum est aussi en mesure de détecter de son côté quels sont les forums morts et peuvent s'en exclure.</p>
+<p>La résiliation autoritaire est voisine d'une auto-résiliation du compte (voir ci-après).</p>
+<h1>Compte : ses contacts, sa création et sa résiliation</h1>
+<h5>CV (curriculum vitae) d'une personne</h5>
+<p>Un compte peut se déclarer de 1 à 4 CV comportant :</p>
+<ul>
+<li>un court libellé plus explicite que le numéro de 1 à 4 du CV pour en choisir un à l'écran.</li>
+<li><strong>un texte de présentation</strong> de son choix, plus ou moins détaillé selon l'audience à qui le CV s'adresse. Il peut y figurer des données de contact permettant d'être joint dans la vraie vie comme un numéro de téléphone Signal ou Telegram, d'où l'importance de savoir quel CV est montré à qui ou quel forum.</li>
+<li><strong>une photo d'identité</strong> facultative de faible définition.</li>
+</ul>
+<h5>Adresses de boîte postale</h5>
+<p>Un compte peut se déclarer jusqu'à 4 adresses de boîte postale qui peuvent être modifiées / supprimées au gré du titulaire du compte. Chaque adresse est,</p>
+<ul>
+<li><em>un texte libre</em> de 30 à 72 caractères.</li>
+<li><em>garanti unique</em> dans l'instance et ne doit pas ressembler de trop près à une autre adresse déjà déclarée.</li>
+</ul>
+<p>Une adresse de boîte postale d'un compte A permet à une personne C ayant rencontré A hors de l'application,</p>
+<ul>
+<li>d'établir avec elle une <em>conversation d'échange de contact</em>,</li>
+<li>de l'inviter à participer à un forum.</li>
+</ul>
+<h2>Répertoire des contacts personnels d'un compte A</h2>
+<p>Un compte A peut enregistrer spécifiquement dans <em>son répertoire des contacts personnels</em> un certain nombre de comptes qu'il a pu rencontrer au cours de ses sessions.<br>
+Pour chaque compte C ainsi répertorié, il est noté :</p>
+<ul>
+<li><strong>le numéro de compte</strong> de C.</li>
+<li><strong>son nom</strong>, s'il le connaît, ce qui, au moins temporairement, n'est pas systématique. Par exemple après avoir contacté C par une adresse de boîte postale, le nom de C reste inconnu de A jusqu'à ce que C réponde en acceptant de lui fournir son nom (ce qu'il n'est pas obligé de faire). L'absence de nom qualifie une entrée <em>en attente d'approbation</em>.</li>
+<li><strong>un mémo</strong> personnel facultatif à propos de C. La première ligne de ce mémo vient compléter le nom à l'affichage.</li>
+<li><strong>le numéro du CV</strong> que A a décidé de monter à C ce qui exprime <em>la confiance que A porte à C</em>.</li>
+<li>si cette entrée de répertoire est <em>favorite, normale ou masquée</em> à l'affichage.</li>
+<li><strong>la date-heure d'inscription</strong> de cette entrée dans le répertoire.</li>
+<li><strong>la date-heure de résiliation</strong> si C est résilié. Le nom et le mémo restent mais pas le numéro du CV auquel C avait (éventuellement) accès.</li>
+<li><strong>la relation initiale entre A et C</strong>, comment A a connu C :
+<ul>
+<li>par une adresse de boîte postale,</li>
+<li>en tant que coparticipant à un forum,</li>
+<li>en tant que certificateur d'un de ses contacts inscrits au répertoire,</li>
+<li>en tant que certificateur d'un des coparticipants à un forum.</li>
+<li>parce que C l'a contacté à l'un des titres ci-dessus.</li>
+</ul>
+</li>
+<li><strong>la liste des relations qui unissent A à C</strong>, à quels titres A connaît C, peut ensuite être étoffée / réduite par A de manière à ne conserver que les plus pertinentes.</li>
+<li><strong>l'indicateur de demande de certification</strong> : si A a fait cette demande à C et qu'elle n'a pas (encore) été honorée.</li>
+<li><strong>liste noire</strong>: A refuse que C ait des échanges avec lui. Seul A, s'il le souhaite, peut envoyer un échange à C (si A n'est pas en liste noire de C). Tout ce que C peut faire est de lever un drapeau demandant à A de bien vouloir le retirer de sa liste noire (A en faisant ce que bon lui chante).</li>
+<li>réciproquement, A connaît ces informations issues du répertoire de C :
+<ul>
+<li>C et A sont-ils contacts réciproques, C as-t-il une entrée de répertoire pour A.</li>
+<li>si oui, C y connaît-il le nom de A.</li>
+<li>si oui, quel CV C a-t-il décidé de montrer à A (C a-t-il confiance en A).</li>
+<li>C a-t-il demandé à avoir son identité certifiée par A.</li>
+<li>C a-t-il inscrit A en liste noire.</li>
+</ul>
+</li>
+</ul>
+<h5>Contacts réciproques entre A et C</h5>
+<p>Quand le compte A a inscrit C dans son répertoire et que C a aussi inscrit A dans son répertoire, les contacts sont dits <strong>réciproques</strong> mais ne sont pour autant pas forcément de même niveau :</p>
+<ul>
+<li>A peut connaître le nom de C sans que C ne connaisse le nom de A.</li>
+<li>A peut accorder sa confiance à C en lui présentant un de ses CV sans que C n'accorde sa confiance à A (A ne voyant pas de CV de C).</li>
+<li>A peut être certifié par C sans que C ne soit certifié par A.</li>
+</ul>
+<h5>Opérations de gestion du répertoire</h5>
+<p>La création d'une entrée se fait :</p>
+<ul>
+<li>soit en désignant un des comptes coparticipant à un forum, soit d'un compte certificateur d'un de ses contacts existants ou d'un coparticipant à un forum.</li>
+<li>soit en donnant une adresse de boîte postale et en ouvrant une conversation avec le compte correspondant. Dans ce cas le nom est à ce stade inconnu, le contact est en attente d'approbation.</li>
+</ul>
+<p>Les actions possibles sur un contact inscrit au répertoire sont les suivantes :</p>
+<ul>
+<li>enregistrement du nom du contact quand il était inconnu et vient d'être accessible,</li>
+<li>mise à disposition de son nom pour le contact qui ne le connaissait pas et souhaitait en disposer,</li>
+<li>déclaration / suppression de confiance (CV) au contact,</li>
+<li>demande de certification d'identité par le contact,</li>
+<li>annulation de cette demande,</li>
+<li>certification de l'identité du contact,</li>
+<li>suppression de cette certification,</li>
+<li>suppression de la certification accordée par le contact,</li>
+<li>mise à jour du mémo personnel à propos du contact,</li>
+<li>mise à jour du statut favori / normal / masqué de l'entrée de répertoire pour le contact,</li>
+<li>suppression de l'entrée dans le répertoire pour ce contact.</li>
+<li>déclaration d'une <em>relation</em> avec le contact (rencontre à un autre titre que ceux déjà identifiés), suppression d'une <em>relation</em> enregistrée, vérification de validité des relations enregistrées.</li>
+<li>mise en liste noire ou retrait de la liste noire.</li>
+</ul>
+<h5>Certification d'identité</h5>
+<p>A ne peut certifier l'identité de C qu'à condition,</p>
+<ul>
+<li>que C ait accordé sa confiance à A en lui montrant un de ses CV.</li>
+<li>que C le lui ait demandé explicitement.</li>
+</ul>
+<p><strong>Retrait de certification :</strong></p>
+<ul>
+<li>A peut librement retirer sa certification de C comme C peut retirer librement sa certification de A.</li>
+<li>si C retire sa confiance à A, cela retire la certification (éventuelle) de C par A.</li>
+<li>tout compte (sauf auto-certifié) doit avoir au moins un compte certifiant son identité.</li>
+</ul>
+<h4>Fiche Information à propos d'un autre compte</h4>
+<p>A partir d'un numéro d'un compte C le serveur peut rechercher si ce compte C est pour un compte A <em>contact de confiance / membre d'un même groupe / participant à un même mur</em> et si c'est le cas en retourner une fiche information comportant :</p>
+<ul>
+<li>son <strong>nom</strong>,</li>
+<li>s'il est inscrit dans le répertoire de A, le <strong>mémo</strong> enregistré pour lui.</li>
+<li>la liste de ses *<em>CV</em> que A peut voir,</li>
+<li>son <strong>certificat d'identité</strong>,</li>
+<li>la liste des <strong>forums auxquels A et C participent tous deux</strong> avec pour chacun,
+<ul>
+<li>son <em>intitulé</em>,</li>
+<li>les statuts de A et C (observateur / régulier / modérateur),</li>
+<li>les <em>numéros</em> des CV rendus visibles respectivement par A et C.</li>
+</ul>
+</li>
+</ul>
+<h4>Recherches possibles</h4>
+<p>A étant un compte authentifié, la session apportant la preuve de sa connaissance de sa phrase secrète de A, il est possible d'effectuer des recherches d'autres compte.</p>
+<p><strong><em>Depuis le numéro de compte de A :</em></strong></p>
+<ul>
+<li>la liste des comptes dont A certifie l'identité,</li>
+<li>la liste des comptes qui certifient l'identité de A,</li>
+</ul>
+<p><strong><em>Depuis un forum auquel A participe :</em></strong></p>
+<ul>
+<li>la liste des comptes des autres participants.</li>
+</ul>
+<p><strong><em>Depuis un numéro de compte C</em></strong> :</p>
+<ul>
+<li>la liste des contacts, avec leur nom, communs aux répertoires de A et C.</li>
+<li>la liste des comptes, avec leur nom, inscrits dans le répertoire de A dont C est certificateur.</li>
+<li>la liste des comptes, avec leur nom, inscrits au répertoire de C dont A est certificateur.</li>
+<li>la liste des participants, avec leur nom, aux forum auxquels A est participant dont C est certificateur.</li>
+<li>la liste des participants, avec leur nom, aux forums de C dont A est certificateur.</li>
+<li>la liste des forums où A et C sont tous deux participants.</li>
+</ul>
+<p><strong><em>Depuis deux numéros de comptes X et Y</em></strong></p>
+<ul>
+<li>la liste des forums où ils peuvent se rencontrer.</li>
+<li>leurs inscriptions dans leurs répertoires respectifs.</li>
+</ul>
+<blockquote>
+<p><strong>Lister <em>tous</em> les comptes de <em>tous</em> les forums auxquels A participe</strong> n'a pas de sens en raison de la taille potentielle de la liste résultante : A peut participer à une centaine de forums ayant chacun des dizaines de participants.</p>
+</blockquote>
+<h2>Processus de création d'un compte</h2>
+<p>Avant de pouvoir créer son compte, A doit préalablement :</p>
+<ul>
+<li>connaître une adresse de boîte postale d'un compte C ayant accepté de le parrainer en certifiant son nom.</li>
+<li>choisir un nom qui ne ressemble pas trop à un nom déjà enregistré.</li>
+<li>choisir une phrase secrète qui ne ressemble pas trop à une phrase déjà enregistrée.</li>
+<li>établir son premier CV à l'intention de C si possible avec une photo.</li>
+<li>écrire un mot de courtoisie pour C.</li>
+</ul>
+<p>Une fois ces conditions remplies, l'opération de création du compte s'effectue :</p>
+<ul>
+<li>le compte de A est créé et est en état <em>en création</em>. Il a des possibilités limitées et un quota très réduit.</li>
+<li>le répertoire des contacts de A est créé avec une unique entrée, celle de C. Y figure : le numéro de CV #1 (A accorde sa confiance d'avance à C) et l'indication que A souhaite que C certifie son nom.</li>
+<li>une conversation est engagée entre A et C : C reçoit le mot de courtoisie de A et pourra y répondre.</li>
+</ul>
+<p><strong>Cas 1 : C accepte de certifier le nom de A.</strong></p>
+<ul>
+<li>le nom de C est désormais inscrit dans le répertoire de A. C a même pu à cette occasion accorder sa confiance à A en lui indiquant auquel de ses CV il lui donne accès.</li>
+<li>A est inscrit réciproquement, avec son nom, dans le répertoire des contacts de C.</li>
+<li>C est inscrit dans le certificat d'identité de A.</li>
+<li>A reçoit pour quota celui que C a souhaité lui donner (avec un minimum), ce quota étant associé au même disque virtuel que celui supportant le quota de C.</li>
+<li>le compte de A passe à l'état <em>actif</em>.</li>
+</ul>
+<p><strong>Cas 2 : C refuse de certifier le nom de A (ou ne répond pas).</strong></p>
+<ul>
+<li>le compte de A est toujours <em>en création</em> et tout ce que A peut faire est :
+<ul>
+<li>de modifier / créer des CV.</li>
+<li>mettre à jour quelques courtes notes personnelles (mais son quota est minimal).</li>
+<li>et surtout ouvrir un dialogue d'échange de contact avec un autre compte C2, dont il s'est procuré une adresse de boîte postale, avec demande de certification de son nom.</li>
+</ul>
+</li>
+<li>au bout de quelque jours passés en état <em>en création</em> le compte de A est automatiquement résilié.</li>
+</ul>
+<h2>Vie d'un compte actif</h2>
+<p>La vie d'un compte actif est ponctuée par une suite d'opérations :</p>
+<ul>
+<li>de mise à jour des notes personnelles, des CV, des adresses de boîte postale.</li>
+<li>de gestion de son quota : réduction de quota, ou <em>demande</em> d'augmentation de quota ou de  transfert vers un autre disque virtuel.</li>
+<li>de gestion de son répertoire de contacts.</li>
+<li>d'échange sur les conversations avec ses contacts personnels. Il existe potentiellement une conversation ouverte avec chaque contact du répertoire. Il est possible :
+<ul>
+<li>d'y ajouter un échange textuel,</li>
+<li>de supprimer un échange précédent (oups !) des deux côtés,</li>
+<li>de purger de son côté les échanges trop vieux ou sans intérêt.-</li>
+</ul>
+</li>
+<li>de participation aux forums qu'il a créé ou auxquels il a été convié.</li>
+</ul>
+<h2>Résiliation d'un compte par lui-même</h2>
+<p>Elle s'effectue en deux temps :</p>
+<ul>
+<li><strong>Résiliation du compte</strong>: le compte passe en état <em>zombie</em> pendant quelque jours (le temps d'un remord).</li>
+<li><strong>A la fin de ce délai le compte est physiquement détruit</strong> ainsi que les forums dont il était l'unique participant.</li>
+</ul>
+<p><strong>Le titulaire du compte peut revenir sur sa propre résiliation pendant quelques jours</strong>. Il peut également prolonger l'état zombie.</p>
+<h4>Résiliation par un des comptes contrôleurs de son disque virtuel</h4>
+<p>La seule différence avec le résiliation par le compte lui-même est qu'il ne lui est pas possible d'arrêter par lui-même cette destruction, ni prolonger son état zombie, ni en sortir.<br>
+En état zombie toutefois la conversation avec ses contrôleurs de son disque virtuel reste active.</p>
+<h4>Destruction physique d'un compte</h4>
+<p>Cette destruction s'effectue N jours après,</p>
+<ul>
+<li>soit sa création si le compte est toujours <em>en création</em>.</li>
+<li>soit sa résiliation l'ayant plongé en état <em>zombie</em> (par lui-même ou son compte premier).</li>
+</ul>
+<p>Le compte est physiquement supprimé et certaines autres mises à jour interviennent également :</p>
+<ul>
+<li><em>le compte est marqué résilié dans la liste des participants de tous les forums</em> auxquels il participait.</li>
+<li><em>le compte est marqué résilié</em> dans tous les répertoires des autres comptes qui le référençait.</li>
+<li>si le compte avait alloué un quota au forum, ce quota s'annule ce qui peut mettre le forum est pénurie d'espace.</li>
+</ul>
+<p><em>Remarque :</em></p>
+<ul>
+<li>si le compte était <em>en création</em> il ne subsiste rien du compte.</li>
+<li>si le compte était <em>actif</em>, il ne subsiste que le minimum d'information bloquant techniquement l'utilisation d'un nom trop ressemblant au compte résilié avec juste ses dates de création / début et fin d'activité.</li>
+</ul>
+<h1>Vie d'un forum</h1>
+<h4>Décisions collégiales de déclenchement d'une opération de gestion</h4>
+<p>Pour chaque opération de gestion, une règle de gouvernance fixe ses conditions d'approbation :</p>
+<ul>
+<li>le nombre de vote <em>pour</em> doit être supérieur au nombre de votes <em>contre</em> et <em>veto</em>.</li>
+<li>selon l'option choisie, un <em>veto</em> bloque l'approbation ou est compté comme vote <em>contre</em>.</li>
+<li>un nombre et un pourcentage (par rapport aux participants réguliers ou aux seuls votants) de votes <em>pour</em> minimaux requis pour valoir approbation.</li>
+<li>le collège des votants : tous les participants réguliers au forum ou les seuls modérateurs.</li>
+<li>le nombre minima de N heures d'ouverture du vote : une approbation n'est pas valide avant.</li>
+</ul>
+<p>A titre d'exemple, un vote <em>minimal de 1 et de 1% sans veto ouvert a minima 0h</em>, permet de lancer l'opération immédiatement si le demandeur vote <em>pour</em> l'ouverture de la conversation.</p>
+<p>Tous les participants peuvent intervenir plusieurs fois dans la conversation :</p>
+<ul>
+<li>en donnant leurs commentaires ;</li>
+<li>en exprimant leur vote <em>abstention pour contre blanc veto</em>. Seul le vote le plus récent de chacun compte.</li>
+<li>en modifiant les paramètres de l'opération proposée ce qui invalide les votes antérieurs.</li>
+</ul>
+<p><strong>L'opération est lancée automatiquement dès qu'un vote fait basculer la décision d'approbation</strong> et que le délai minimal d'ouverture du vote est dépassé : la conversation est close avec pour statut final celui de l'opération.</p>
+<p>Au delà du délai minimal requis et sur demande explicite d'un participant à la conversation,</p>
+<ul>
+<li>si l'approbation est acquise : l'opération est lancée. La conversation est close avec pour statut final celui de l'opération.</li>
+<li>si l'approbation n'est pas acquise : la conversation est close avec pour statut final <em>désapprouvée</em>.</li>
+</ul>
+<p>Ceci laisse la latitude de prolonger la durée de vote en tentant de convaincre d'autres votants.</p>
+<p>L'initiateur de la conversation peut à tout instant l'annuler : elle est close avec pour statut final <em>annulée</em>.</p>
+<h5>Processus de gestion du forum</h5>
+<p>Les processus courants sont :</p>
+<ul>
+<li><strong>Invitation d'un nouveau participant</strong>.
+<ul>
+<li>Les paramètres sont :
+<ul>
+<li>son statut : observateur, régulier, modérateur.</li>
+<li>approbation automatique ou non en cas d'acceptation de l'invité.</li>
+</ul>
+</li>
+<li>l'invité peut :
+<ul>
+<li><em>accepter cette invitation</em> en fournissant un CV consultable par leurs autres membres. Si l'approbation était automatique, il devient participant avec le statut prévu.</li>
+<li><em>décliner l'invitation</em> au forum.</li>
+</ul>
+</li>
+<li>en cas d'acceptation le vote valide l'approbation ou la rejette.</li>
+</ul>
+</li>
+<li><strong>Changement de statut d'un participant</strong> entre observateur / régulier / modérateur.</li>
+<li><strong>Révocation d'un participant</strong>.
+<ul>
+<li>en cas de vote positif, le participant a un statut <em>révoqué</em>, ne peut plus accéder au forum.</li>
+<li>La trace de son passage dans les notes et conversations perdure après révocation : son droit à l'oubli se heurte au droit des autres à ne pas oublier. Les notes où il figurait comme seul auteur lui resteront attribuées (sauf en cas d'effacement pour raison éthiques). Son nom reste lisible mais son CV est effacé.</li>
+</ul>
+</li>
+<li><strong>Modération d'une note ou d'un échange</strong> : le collège est celui des modérateurs. En général il est requis une voix, parfois N pour une approbation collégiale.</li>
+<li><strong>Restitution de quota</strong>. Le vote porte sur le montant restitué et en particulier à quels participants en ayant concédé et combien.</li>
+<li><strong>Changement de gouvernance du forum</strong>.</li>
+<li><strong>Dissolution du forum</strong>. En cas de vote positif, le forum ne passe pas en en état zombie, aucun remord n'est possible le vote ayant déjà pris du temps de réflexion (la décision ne peut pas être un loupé ou une faute de frappe).</li>
+</ul>
+<h2>Contenus des notes et échanges d'un conversation</h2>
+<p>Une conversation ou une note d'un forum peut être créée avec deux listes restrictives :</p>
+<ul>
+<li>celle des participants ayant droit de lecture,</li>
+<li>celle de ceux ayant droit d'écriture.</li>
+</ul>
+<p>Par défaut ces listes sont vides (autorisation à tous).</p>
+<p>Un échange d'une conversation n'a qu'un auteur.</p>
+<p>Une note porte à la fois,</p>
+<ul>
+<li>l'identification de son propriétaire (le premier auteur sauf en cas de transmission de propriété par son auteur initial).</li>
+<li>la suite de ses auteurs successifs.</li>
+</ul>
+<h5>Cryptage d'un contenu</h5>
+<p>Un contenu est crypté :</p>
+<ul>
+<li>soit par la clé délivrée aux invités du forum : il peut être lu par n'importe quel invité, même si sa participation n'est finalement pas approuvée.</li>
+<li>soit par la clé réservée aux participants <strong>en cours au moment de l'écriture</strong>. Le contenu n'est lisible que par les participants approuvés.</li>
+</ul>
+<p>Le contenu d'un échange ou le texte d'une note peut contenir des <strong>hashtags</strong> qui facilitent leur sélection en session. Ces hashtags sont cryptés par la clé d'invitation.</p>
+<h5>Pourquoi plusieurs clés de cryptage des contenus ?</h5>
+<p>Un participant régulier à un instant t1 :</p>
+<ul>
+<li>peut lire une note N, il dispose de la clé et peut techniquement la sortir de l'application et conserver sur son terminal, comme il peut conserver sur son terminal le texte en clair de la note.</li>
+<li>il peut se faire exclure du forum à t2.</li>
+<li>la note N peut être mise à jour à t3 par un autre compte.</li>
+<li>il ne peut plus lire la nouvelle version de la note N sur le serveur officiel.</li>
+<li>s'il a accès à une copie détournée de la base, il pourrait lire la nouvelle version de la note N puisqu'il a pu conserver la clé de cryptage ... mais ceci va échouer.</li>
+<li>après son exclusion une nouvelle clé de cryptage a été ajoutée : les nouveaux contenus, dont la note N à t3 sont cryptés avec cette nouvelle clé créée à t3 et qu'il n'a pas. Les seuls contenus qu'il peut obtenir de la base détournée sont ceux qu'il pouvait lire avant son exclusion (cryptés par des clés datant d'avant t2) et qui n'ont pas changé.</li>
+</ul>
+<p>Chaque contenu dispose en conséquence de l'indice de la clé de cryptage qui le crypte et chaque participant dispose de toutes les clés de cryptage qui ont pu être utilisées dans le passé (il n'est pas concevable de ré-encrypter tous les contenus).</p>
+<h5>Digest d'un contenu</h5>
+<p>Tout contenu dispose du digest de son texte en clair :</p>
+<ul>
+<li>digest court pour les textes des notes et des échanges.</li>
+<li>digest long pour les pièces jointes.</li>
+</ul>
+<p>Le serveur n'ayant jamais les contenus en clair est incapable de vérifier la validité de ce digest mais toute session lisant un contenu peut le faire et ainsi savoir,</p>
+<ul>
+<li>si l'auteur a utilisé une session licite pour l'écrire et le transmettre au serveur,</li>
+<li>ou s'il s'agit d'un contenu émis par une session opérée par un logiciel pirate (et maladroit).</li>
+</ul>
+<p>Dans ce dernier cas le découvreur de ce problème peut lancer une alerte au modérateur général de l'instance en lui transmettant :</p>
+<ul>
+<li>le contenu en clair mais ré-encrypté pour le modérateur,</li>
+<li>la référence du contenu dont le numéro de compte de l'auteur.</li>
+</ul>
+<p>Le modérateur peut vérifier :</p>
+<ul>
+<li>si cette référence est réelle.</li>
+<li>si le digest enregistré est bien celui qu'il obtient lui en le recalculant sur le texte en clair.</li>
+<li>en conséquence si l'alerte est valide et qu'effectivement ce compte est indélicat.</li>
+<li>le cas échéant le compte peut être résilié.</li>
+</ul>
+<blockquote>
+<p>L'objectif est surtout de faire apparaître aux pirates que leurs tentatives de boguer l'application sont certes possibles mais sont détectables et leurs comptes repérables.<br>
+Un pirate qui s'introduit sur un forum a toujours la possibilité d'effacer ou de caviarder les notes sur lesquelles il peut écrire, et ceci par les moyens techniques les plus licites.</p>
+</blockquote>
+<h1>Traces d'activités sur les comptes et forum</h1>
+<p>Il n'est pas naturel de savoir si un compte ou un forum est <em>actif</em> :</p>
+<ul>
+<li>les opérations de mise à jour modifient la date-heure du dossier correspondant. On peut savoir quand s'est opéré la dernière mise à jour technique. Toutefois un échange par exemple écrit par C pour A, ne signifie pas pour autant que A est actif / vivant et pourtant le dossier a eu sa date-heure modifiée.</li>
+<li>la pure consultation ne laisse aucune trace dans les dossiers, elle est pourtant la marque d'une indéniable activité.</li>
+</ul>
+<p>Des opérations techniques arbitraires sont définies pour signer une activité :</p>
+<ul>
+<li><strong>ouverture d'une session sur un compte</strong> : ça a un sens indéniable dans l'application terminale (c'est du superflu pour les dossiers sur le serveur). Cette consultation est transformée en opération rien que pour signer la <em>date-heure de dernière visite d'un compte</em> par son titulaire.</li>
+<li><strong>accès à un forum</strong> : sur l'application terminale c'est plus ou moins le moment ou l'onglet / page du forum est accédée.</li>
+</ul>
+<p>L'application terminale a toujours facilement un concept <em>d'ouverture de session</em>: il est rare de laisser une page ouverte sur une application des jours entiers, elle est en général ouverte, puis fermée au plus quelques heures après, et rien n'empêche la session terminale de se considérer elle-même comme ré-ouverte si elle dure plus d'un temps raisonnable.</p>
+<h3>Date-heures de dernières visites</h3>
+<p>Dès lors l'application terminale est conviée à invoquer des opérations :</p>
+<ul>
+<li>première visite d'un compte dans la session,</li>
+<li>première visite d'un forum dans la session.</li>
+</ul>
+<p>Ceci permet d'enregistrer la date-heure de la session la plus récente ayant <em>visité</em> un compte ou un forum.</p>
+<p>Ceci fournit :</p>
+<ul>
+<li>à un compte les date-heure de <strong>sa</strong> dernière visite,
+<ul>
+<li>à son compte,</li>
+<li>à chacun des forums dont il est participant.</li>
+</ul>
+</li>
+<li>à un compte contrôleur,
+<ul>
+<li>la date de dernière visite d'un compte.</li>
+<li>la date de dernière visite d'un forum (encore que ce ne soit guère utile).</li>
+</ul>
+</li>
+</ul>
+<h2>Notifications</h2>
+<p>L'objectif est d'allumer pour une session des signaux en face des conversations, notes, forums ... sur lesquels il s'est passé quelque chose d'intéressant pour la session depuis sa dernière visite.</p>
+<p>Il faut,</p>
+<ul>
+<li>caractériser les événements intéressants pour un compte,</li>
+<li>savoir identifier quels comptes sont intéressés pour un forum,</li>
+<li>savoir remonter cette donnée en synthèse sur le dossier du compte.</li>
+</ul>
+<p>A suivre.</p>
+<h1>Cryptographie</h1>
+<h2>Éléments très simplifiés de cryptographie</h2>
+<h4>Octet : nombre de 0 à 255</h4>
+<p>Un grand nombre (dépassant 255) peut être représenté par une suite d'octets.<br>
+Une chaîne de caractères est représentée par une suite d'octets : le codage standard UTF-8 définit comment chaque caractère est codé en 1 2 ou 3 octets.</p>
+<h4>Codage en Base 64 d'une suite d'octets</h4>
+<p>La conversion d'une suite d'octets en base 64 donne une suite de lettres et chiffres (<code>A-Z a-z 0-9</code>), des signes <code>+</code> et <code>/</code> et complétée par <code>==</code> ou <code>=</code> pour obtenir un nombre de caractères multiple de 4.<br>
+Il faut 4 caractères pour coder 3 octets.</p>
+<p><strong>Option URL</strong> : <code>-</code> remplace <code>+</code> et <code>_</code> remplace <code>/</code> et il n'y a pas de remplissage <code>=</code> ou <code>==</code> à la fin.  De tels strings peuvent être clé de documents ou d'items, noms de fichier et apparaître dans les URLs.</p>
+<p>Tous les identifiants et noms sont en base 64 URL.</p>
+<h4>Cryptage symétrique AES-256</h4>
+<p>Une <strong><em>clé symétrique</em></strong> (AES-256) est générée <strong>depuis une suite de 32 octets</strong>. Elle  permet de crypter une suite d'octets (donc un texte) de n'importe quelle longueur et de décrypter la suite résultante avec la même clé pour ré-obtenir la suite initiale. Le cryptage / décryptage symétrique est rapide.</p>
+<h4>Cryptage asymétrique RSA-2048</h4>
+<p>Un <strong><em>couple asymétrique de clés</em></strong> (RSA-2048) (<em>publique</em> de cryptage / <em>privée</em> de décryptage) utilise deux clés de 256 octets :</p>
+<ul>
+<li>on <strong>crypte</strong> avec la clé <strong>publique</strong> un texte court de longueur inférieure à 256 octets.</li>
+<li>on <strong>décrypte</strong> avec la clé <strong>privée</strong> du couple.</li>
+</ul>
+<p>Depuis une clé RSA générée aléatoirement on exporte une forme dite JWK textuelle des clés publique et privées : l'importation de ces clés permet de reconstruire la clé RSA initiale.</p>
+<ul>
+<li>l'export de la clé publique est comme son nom l'indique publiable <em>en clair</em> sans restriction afin de permettre à n'importe qui de crypter un texte à destination du détenteur de la clé privée correspondante.</li>
+<li>l'export de la clé privée du couple de clés est <em>encrypté</em> par son propriétaire par le moyen de son choix de manière à être le seul à pourvoir décrypter un texte crypté par la clé publique correspondante.</li>
+</ul>
+<p>On se sert d'un couple de clés publique/privée typiquement pour encrypter une clé symétrique à destination d'un unique destinataire et servir de cette clé pour échanger des textes de longueur quelconque.<br>
+<strong>Le cryptage / décryptage asymétrique est lent</strong> et le <strong>texte crypté a une longueur fixe de 256 octets</strong> même quand le texte à crypter est plus court.</p>
+<h4>Hachage Java d'un string (court)</h4>
+<p>Cette fonction retourne un entier depuis un string : cet entier est ensuite converti en base 64 URL. Le nombre de collisions est élevé, non admissible pour s'assurer qu'on est en présence du même texte quand on est en présence de deux hachages identiques.</p>
+<h4>Hachage SHA-256 (long)</h4>
+<p>Le SHA-256 d'une suite d'octets est une suite de 32 octets tel qu'il est <em>très coûteux</em> (mais concevable pour des textes relativement courts de moins d'une quinzaine de caractères) de retrouver la suite d'octets originale depuis son digest.<br>
+Le nombre de collisions est négligeable : deux textes différents ont, en pratique, deux digests différents. Le calcul est rapide.</p>
+<h4>Hachage BCRYPT d'un string</h4>
+<p>L'objectif du hachage BRCYPT est de rendre impossible de retrouver un string origine depuis son hachage : le calcul est, volontairement, très coûteux et ne peut pas être accéléré par des processeurs ad hoc.</p>
+<ul>
+<li>une recherche par <em>force brute</em> (essai de toutes les combinaisons) est sans espoir dès que la longueur du texte excède une douzaine de caractères.</li>
+<li>une recherche depuis des <em>dictionnaires de textes fréquemment utilisés</em> (les prénoms, noms de fleurs, 1234 ...) est sans espoir également si le texte est long et est brouillé par des séparateurs exotiques.</li>
+</ul>
+<p>Le hachage BCRYPT d'un string ne traite que les 72 premiers octets de sa conversion en UTF-8 et retourne un string de 60 caractères qui :</p>
+<ul>
+<li>commence par la constante <code>salt</code> : <code>$2a$10$</code> + 22 caractères en base 64 spécifique de BCRYPT contenant des caractères <code>.</code> et <code>/</code></li>
+<li>se termine par le <code>hash</code> de 31 caractères en base 64 spécifique de BCRYPT.</li>
+</ul>
+<p>Pour éviter ces séparateurs et raccourcir le résultat,</p>
+<ul>
+<li>on enlève les 29 premiers caractères (le <code>salt</code> considéré comme une constante du code),</li>
+<li>on remplace dans le <code>hash</code> les <code>.</code> par <code>-</code> et les <code>/</code> par <code>_</code> pour utiliser le même jeu de caractères qu'un base 64 URL.</li>
+</ul>
+<p>Sur le serveur on vérifie la validité d'un hachage BCRYPT en vérifiant sa longueur (31) et les caractères employés (base 64 URL).</p>
+<p>Pour obtenir une clé AES d'un hachage BCRYPT un vecteur de 32 octets est créé avec les 31 du <code>hash</code> et un 0 binaire à la fin.</p>
+<h2>Noms, phrases secrètes et identifiants</h2>
+<h3>Normalisation / réduction d'un texte</h3>
+<p>La <strong>normalisation</strong> d'un texte consiste à y remplacer par un seul espace les <code>white space</code> consécutifs et en ignorant ceux de tête et de queue.</p>
+<blockquote>
+<p>White space : space, tab, form feed, line feed and other Unicode spaces.<br>
+[ \f\n\r\t\v\u00a0\u1680\u180e\u2000\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]</p>
+</blockquote>
+<p>La <strong>réduction</strong> d'un texte consiste à ne garder que 2 caractères sur 3 : le texte réduit est toujours ensuite haché par BCRYPT.</p>
+<h3>Nom, nom réduit, initiales, numéro d'un compte</h3>
+<p>Le <strong>nom</strong> est la suite <strong>normalisée</strong> de caractères saisie par le titulaire à la création du compte.  Sa réduction est employée pour s'assurer que deux noms ne sont pas trop proches.</p>
+<p>Les <strong>initiales</strong> sont la <em>mise en majuscule</em> du premier caractère de chaque mot du nom (découpé par les espaces et tiret) quand il en existe un équivalent <em>non accentué</em> de A-Z ou a-z (les initiales de <code>Jean élan</code> sont <code>JE</code>, celles de <code>jean 23</code> sont <code>J</code>.).</p>
+<p>Le <strong>nom suffixé</strong> est le nom suivi de @ et de 12 caractères aléatoires en base 64 : dans l'application partout où il est mentionné un <em>nom</em> il est toujours <em>suffixé</em>. A l'affichage une session cliente enlève le suffixe.</p>
+<p>Le numéro d'un compte <strong>nc</strong> est le <strong>BCRYPT</strong> de son <strong>nom suffixé</strong>. Par construction les numéros de compte ne sont pas réutilisés.</p>
+<blockquote>
+<p>Du fait que chaque fois que le <em>nom</em> d'un compte est donné il s'agit de <em>son nom suffixé</em> et qu'il est toujours accompagné du <em>numéro de son compte</em>, une session peut vérifier qu'un faux nom n'a pas été donné à la place du vrai par une session pirate(du moins de détecter cette anomalie) en recalculant le BCRYPT du nom suffixé et en le comparant avec le numéro de compte.</p>
+</blockquote>
+<h3>Phrase secrète d'un compte</h3>
+<p>La phrase secrète d'un compte permet d'identifier et d'authentifier un compte :</p>
+<ul>
+<li><strong>identifier</strong> : un seul compte correspond à cette phrase secrète.</li>
+<li><strong>authentifier</strong> : c'est bien le titulaire du compte qui désigne ce compte.</li>
+</ul>
+<p>Une phrase secrète est une suite de mots constitués chacun d'un chiffre de 1 à 9 suivi de 1 à N lettres de a à z.</p>
+<ul>
+<li>chaque lettre d'un mot est codée en un caractère dont la valeur décimale est le numéro d'ordre de la lettre dans l'alphabet (0 à 25) multiplié par le chiffre 1 à 9 de tête du mot + 32.</li>
+<li>la suite des mots donne un string inintelligible utilisant des caractères bizarres.</li>
+</ul>
+<p>Elle n'existe <em>en clair</em> (si on peut dire !) que le temps court de sa saisie à l'intérieur de la mémoire d'une session terminale et en sort sous trois formes :</p>
+<ul>
+<li><code>clé S</code> : la clé AES de cryptage de la clé <code>0</code> du compte obtenue depuis le SHA-256 du string de la phrase secrète. <strong>Elle ne sort jamais de la session</strong>.</li>
+<li><code>psB</code> : le BCRYPT du string de la phrase secrète (qui sort de la session).</li>
+<li>le SHA-256 de <code>psB</code> qui est enregistré dans la base.</li>
+<li><code>psRB</code> : le BCRYPT du string réduit de la phrase secrète (qui sort de la session).</li>
+</ul>
+<blockquote>
+<p>La phrase réduite est garantie unique afin d'empêcher de tomber par hasard (ou usage d'un robot) sur une phrase secrète enregistrée ouvrant un accès à un compte.  Ainsi il n'existe pas deux comptes ayant déclaré des phrases secrètes <em>trop proches</em>.
+En supposant que le logiciel du serveur ait été substitué par une version pirate indélicate qui enregistrerait les requêtes en clair, et donc <code>psB</code>, une session non officielle pourrait se faire reconnaître comme disposant d'un compte authentifié vis à vis du serveur sans disposer de la phrase secrète. Elle ne serait toutefois pas capable de décrypter la clé <em>mère</em> S obtenue cryptée par le SHA-256 du string de la phrase secrète originale connue du seul titulaire et serait incapable de déchiffre la moindre donnée du compte.</p>
+</blockquote>
+<p><em>Pratique interdite</em> : la clé S pourrait être conservée en données persistantes dans le browser cryptée par un code PIN numérique de 4 caractères : un utilisateur tentant une connexion rapide a alors 3 essais sinon la clé S mémorisée est détruite (et la phrase secrète demandée). Un simple passage du browser en debug exhibe cette valeur cryptée permet de la copier puis de tester les 10000 clés AES possibles (ce qui va être court).</p>
+<h3>Phrase secrète d'administration</h3>
+<p>C'est une phrase secrète dont le SHA-256 de la <code>psB</code> est enregistré dans la configuration de l'instance. Même le piratage de cette <code>psB</code> par un serveur indélicat ne sert à rien : c'est la clé S, qui n'est jamais sortie de la session et directement issue du string de la phrase secrète qui permet de décrypter les informations.</p>
+<h3>Numéro long : forum</h3>
+<p>Un vecteur de 15 octets tirés au hasard est codé en base 64 URL de 20 caractères.</p>
+<blockquote>
+<p>Le numéro d'un compte se distingue de celui d'un forum par sa longueur (31 pour un numéro de compte, 20 pour un groupe).</p>
+</blockquote>
+<h3>Numéro court : conversation / note</h3>
+<p>Un vecteur de 9 octets tirés au hasard est codé en base 64 URL de 12 caractères.</p>
+<h2>Logique de cryptage</h2>
+<p>On distingue deux niveaux de protection par cryptage :</p>
+<ul>
+<li>le niveau 1 protège une information même au cas ou la base serait détournée.</li>
+<li>le niveau 2 protège l'information sur la base officielle mais si une clé a été conservée par une session qui y avait droit mais ne l'a plus et que la base est détournée, l'information peut être décryptée.</li>
+</ul>
+<h3>Clé de cryptage d'un disque</h3>
+<p>Un disque virtuel a les clés suivantes générées à sa création :</p>
+<ul>
+<li>une clé symétrique SD du disque virtuel stockée cryptée aussi par la clé SA. Elle sert à crypter le commentaire associé au disque pour les comptes connaissant la phrase secrète d'administration.</li>
+<li>un couple de clé publique (stockée en clair) / privée stockée cryptée par la clé SD.</li>
+</ul>
+<p>Lorsqu'un compte connaissant la phrase d'administration ajoute un compte contrôleur à un disque virtuel, il lui transmet la clé SD cryptée par sa clé publique : le contrôleur connaît ainsi la clé SD et la clé privée du disque.</p>
+<p>A sa validation par la certification de son nom par un compte certificateur, ce dernier lui transmet à la fois l'identifiant du disque sur lequel il s'installe mais aussi la clé de cryptage de ce disque. Si le compte certificateur est contrôleur de plusieurs disques, il peut choisir sur lequel des disques qu'il contrôle le nouveau compte sera installé.</p>
+<h5>Changement de la phrase secrète d'administration</h5>
+<p>La session effectuant cette opération connaît l'ancienne et la nouvelle clé. Pour chaque disque DV, elle décrypte la clé SD et la ré-encrypte par la nouvelle.</p>
+<h5>Ouverture d'une conversation entre un contrôleur de disque et un compte</h5>
+<p>Sur initiative du contrôleur :</p>
+<ul>
+<li>génération de la clé symétrique dédiée à cette conversation.</li>
+<li>cryptée par SD pour l'exemplaire du disque.</li>
+<li>cryptée par la clé publique du compte (qui la ré-encryptera par sa clé 0).</li>
+</ul>
+<p>Sur initiative du compte :</p>
+<ul>
+<li>génération de la clé symétrique dédiée à cette conversation.</li>
+<li>cryptée par la clé publique du disque pour l'exemplaire du disque. Elle sera ré-encryptée par la clé SD par le premier contrôleur traitant la conversation.</li>
+<li>cryptée par la clé 0 du compte.</li>
+</ul>
+<p>Les échanges sont ensuite cryptés par la clé de la conversation.</p>
+<blockquote>
+<p>Tout compte ayant été un jour contrôleur d'un disque peut techniquement conserver sa clé SD et est potentiellement capable de décrypter les conversations associées à ce disque depuis une base détournée. Ce n'est pas assez critique au point de gérer des clés changeantes et historisées. La protection du commentaire à propos du disque et des conversations à propos de ce disque est de niveau 2.</p>
+</blockquote>
+<h3>Clés d'un compte</h3>
+<p><strong>La clé 0</strong> est la clé majeure de cryptage d'un compte :</p>
+<ul>
+<li>elle est générée aléatoirement dans la session terminale à la création du compte.</li>
+<li>elle est immuable au cours de la vie du compte.</li>
+<li>elle est stockée dans l'entête du dossier du compte cryptée par la clé S tirée de la phrase secrète. Changer de phrase secrète n'a pour seule conséquence que le ré-encryptage de la clé 0.</li>
+</ul>
+<p><strong>La clé 1</strong> sert à crypter les noms suffixés des certificateurs dans le certificat d'identité du compte et le nom du compte lui-même :</p>
+<ul>
+<li>elle est générée aléatoirement dans la session terminale à la création du compte.</li>
+<li>elle est immuable au cours de la vie du compte.</li>
+<li>le nom du compte est mémorisé crypté par cette clé 1 dans l'entête du compte.</li>
+<li>elle est stockée dans l'entête du compte cryptée par la clé 0 du compte.</li>
+</ul>
+<p><strong>La clé D</strong> est la clé de la conversation courante avec le / les contrôleurs du disque virtuel du compte : elle est inexistante s'il n'y a pas de conversation en cours.</p>
+<p><strong>Le couple de clés PUB/PRIV asymétriques</strong> publique / privée :</p>
+<ul>
+<li>il est généré à la création du compte dans la session terminale.</li>
+<li>il est immuable au cours de la vie du compte.</li>
+<li>il est stocké dans l'entête du dossier du compte cryptée par la clé 0 du compte pour le clé privée et en clair pour la clé publique.</li>
+<li>il permet à un autre compte de crypter une clé entre eux par la clé publique. Ultérieurement dès que possible une session terminale du compte trouvant un tel cryptage (il est long), ré-encrypte la clé par la clé 0 (le résultat étant plus court).</li>
+</ul>
+<p><strong>Les clés des CV</strong> : à chaque fois qu'un CV #n est modifié,</p>
+<ul>
+<li>une nouvelle clé de cryptage de ce CV #n est générée aléatoirement dans la session terminale.</li>
+<li>elle est stockée cryptée par la clé 0 du compte.</li>
+<li>pour chaque forum auquel le compte participe, elle est cryptée par la clé d'invitation du forum.</li>
+<li>pour chaque contact de confiance inscrit en répertoire, elle est cryptée par la clé mutuelle du compte avec son contact.</li>
+<li>la mise à jour d'un CV #n induit pour la session le ré-encryptage de sa (nouvelle) clé par la clé 0 du compte et un nombre plus ou moins important d'autres clés de forum et mutuelle de contact. En conséquence, même si une session avait gardé une clé de CV #n elle ne pourra en obtenir les mises à jour ultérieures que si elle en a toujours le droit.</li>
+</ul>
+<h3>Clé mutuelle entre deux comptes A et C</h3>
+<p>Quand un compte A inscrit une nouvelle entrée de son répertoire pour un compte C,</p>
+<ul>
+<li><em>soit le compte C a une entrée existante pour le compte A</em> :
+<ul>
+<li>la clé mutuelle entre les deux comptes existe.</li>
+<li>elle y est cryptée par la clé publique de A (ou sa clé 0 selon l'historique entre les deux comptes) et par la clé 0 de C.</li>
+<li>l'entrée du compte C dans le répertoire de A enregistre deux fois cette clé : a) cryptée par la clé 0 de A, b) cryptée par la clé 0 de C.</li>
+</ul>
+</li>
+<li><em>soit le compte C n'a pas d'entrée existante pour le compte A</em> : la session terminale génère aléatoirement une nouvelle clé mutuelle qui est enregistrée dans l'entrée de C du répertoire de A : a) cryptée par la clé 0 de A, b) cryptée par la clé publique de C.</li>
+</ul>
+<p>De ce fait cette clé mutuelle reste la même tant qu'au moins l'une des deux entrées (C dans le répertoire de A et A dans le répertoire de C) existe.<br>
+Elle est utilisée pour crypter :</p>
+<ul>
+<li>dans les deux entrées, les noms de A et C.</li>
+<li>dans chaque entrée, la clé du CV #n proposé à l'autre en cas de confiance.</li>
+<li>dans l'entrée C du répertoire de A, la clé 1 de A quand A demande à C de lui certifier son nom. Elle est effacée si A renonce à cette demande de certification ou quand C a certifié le nom de A.</li>
+<li>pour crypter la conversation entre les comptes.</li>
+</ul>
+<h3>Clés d'un forum</h3>
+<p>Un forum a :</p>
+<ul>
+<li>une clé dite I disponible aux invités au forum. Ceux-ci pouvant refuser ou être exclu, peuvent avoir conserver cette clé obtenu du temps où ils étaient invités. Les conversation ou notes cryptées par la clé I sont donc de protection de niveau 2 (décryptable depuis une base détournée par un compte ayant eu un jour un accès licite comme invité).</li>
+<li>une suite de clés Fi : une nouvelle clé d'indice i est ajoutée lorsqu'un participant a été exclu, cette clé étant communiquée cryptée par la clé P de chaque participant. Les notes et échanges de conversation mises à jour / écrits après une exclusion procède à cette génération. Les notes et conversations cryptées par Fi ont une protection de niveau 1.</li>
+</ul>
+<h1>Purgatoire</h1>
+<h2>Modes synchronisé et local</h2>
+<p><strong>Le mode local permet d'exécuter sur un terminal l'application cliente sans connexion internet.</strong><br>
+Il faut préalablement avoir utilisé sur le même terminal le mode synchronisé pour un compte donné : le mode local ne permet d'accéder qu'aux comptes ayant été préalablement synchronisés en mode synchronisé et aux seuls forums ayant explicitement été déclarés comme devant être synchronisés sur ce terminal (pour une question de volume).</p>
+<p>Pour un forum synchronisé,</p>
+<ul>
+<li>toutes les notes et les fil de discussion le sont ;</li>
+<li>seuls les fichiers explicitement cités pour ce terminal le sont (toujours pour une question de volume).</li>
+</ul>
+<h3>Actions possibles en mode synchronisé</h3>
+<p>Toutes les actions faisables en mode <em>cloud</em> sont possibles. Il est possible de plus de décider de ne plus synchroniser le compte sur lequel le login a été fait et de détruire la mémoire correspondante, voire toute la mémoire y compris celles des autres comptes synchronisés.<br>
+Le comportement est celui de l'application en mode cloud pur, à la différence près d'une sauvegarde locale de données cryptées, non perceptible à l'utilisateur (tant qu'il y a assez de volume disponible).</p>
+<h3>Actions possibles en mode local</h3>
+<p><strong>Les données sont restreintes à celles d'un compte et de ceux des forums qu'il peut accéder et qui ont été déclarés accessibles sur cet appareil.</strong><br>
+<em>Les consultations des autres comptes sont impossibles</em> : ceci ne concerne en pratique que l'impossibilité de lire, la carte de visite, la photo, la liste des garants ou les forums en commun d'une personne dont on a le nom à l'écran.</p>
+<p>En mode local il est possible d'auto détruire sa propre mémoire ainsi que celle des autres comptes mémorisés localement sur l'appareil. C'est normal, l'appareil appartient à celui qui l'utilise : si l'appareil est partagé, les propriétaires doivent être unis et cohérents entre eux comme s'ils n'en étaient qu'un (ou utiliser des sessions distinctes du browser).</p>
+<blockquote>
+<p>La mémoire <em>locale</em> est celle <strong>d'un utilisateur du browser</strong> pour <strong>une session de l'OS hôte</strong>. Si plusieurs personnes autonomes utilisent le même appareil, elles ont autant de login sur l'appareil hôte et à tout le moins autant de <em>profiles</em> différents au sens de Chrome ou de Firefox.</p>
+</blockquote>
+<p>Les actions de mise à jour sont restreintes aux suivantes :</p>
+<ul>
+<li><strong>création d'une note ou d'un fichier</strong> (de taille réduite) ;</li>
+<li><strong>modification / suppression d'une note ou fichier</strong> ;</li>
+<li><strong>ajout d'items</strong> sur un fil de conversation (y compris la création d'un nouveau fil de conversation).</li>
+</ul>
+<p>Les modifications sont enregistrées localement <strong><em>sous réserve de validation à la prochaine synchronisation</em></strong>.</p>
+<h4>Prochaine resynchronisation</h4>
+<p>Si le compte a été fermé, la mémoire locale reste intacte (au moins elle peut être sauvegardée) mais rien ne sera mis à jour sur le cloud.</p>
+<p><strong><em>La resynchronisation consiste avant toute chose à mettre à jour la mémoire locale avec tout ce qui a pu changé sur le cloud</em></strong>.<br>
+Se pose <strong><em>ensuite</em></strong> la question de répercuter les mises à jour <em>en attente</em> en local sur le cloud.</p>
+<p>En cas d'insuffisance de quotas n'importe laquelle des mises à jour peut être refusée.</p>
+<p><strong>Les nouveaux items de conversation sont inscrits sur le cloud et les créations de note ou de fichier sont répercutées sur le cloud</strong>, sauf cas bien improbable mais possible, où le statut du compte aurait été rétrogradé de <em>rédacteur</em> à <em>lecteur</em> depuis la synchronisation précédente pour le forum concerné.</p>
+<p><strong><em>Les modifications de notes et fichiers posent problème en cas de collision, c'est à dire de mise à jour parallèle sur le serveur.</em></strong><br>
+Prenons l'exemple d'une note :</p>
+<ul>
+<li>au moment de la dernière synchronisation elle affichait <code>t1</code> comme date-heure de dernière mise à jour ;</li>
+<li>au moment de la resynchronisation elle affiche <code>t3</code> (&gt; <code>t1</code>).</li>
+</ul>
+<p><em>Que faut-il faire ?</em><br>
+La note a été resynchronisée en local avec la date-heure <code>t3</code> mais elle a été mise à jour (ou supprimée) en <code>t2</code> sur l'appareil en mode local.<br>
+Manifestement seul l'auteur de cette mise à jour peut décider de ce qu'il faut faire :</p>
+<ul>
+<li>les deux versions <code>t3</code> (validée, celle du serveur) et <code>t2</code> (en attente, celle du mode local) sont visibles ;</li>
+<li>le titulaire du compte recopie dans la note validée (celle en <code>t3</code>), les parties modifiées dans <code>t2</code> et jugées encore pertinentes ;</li>
+<li>en validant la réconciliation, l'auteur de la mise à jour enregistre la nouvelle version à <code>t4</code> et détruit la version <code>t2</code> en attente locale ;</li>
+<li><em>s'il s'agit d'une suppression</em> et non d'une mise à jour c'est plus simple : l'auteur doit valider si la suppression est toujours pertinente au vu d'une version dont il n'avait pas connaissance quand il a décidé cette suppression ;</li>
+<li>pour un fichier c'est un peu différent : fusionner deux textes n'a de sens que s'il s'agit de textes (et non de photos ou de clips ...) et de plus en format révisable. En gros l'auteur décide soit d'accepter la version <code>t3</code> actuelle, soit de l'écraser par sa version <code>t2</code> locale ou toute autre.</li>
+</ul>
+
+</div>
+<!-- Adds some scroll space to the bottom of the doucment -->
+<div style="height: 1pc">&nbsp;</div>
+<!-- Scripts to handle MathJax -->
+<script async="" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script async="" src="http://markdownedit.com/assets/js/mathjax-scripts.js"></script>
+</body>
+</html>
