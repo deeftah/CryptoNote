@@ -6,7 +6,8 @@ class PhraseBox extends Polymer.Element {
 		er: {type:Boolean, value:true},
 		enclair: {type:Boolean, value:true, notify:true, observer:"oncb"},
 		typed: {type:String, value:"", notify:true, observer:"onTyped"},
-		type: {type:String, value:"text"}
+		type: {type:String, value:"text"},
+		target: { type: Object },
 		}
 	}
 
@@ -28,19 +29,27 @@ class PhraseBox extends Polymer.Element {
   	
   	ready() {
   		super.ready();
+  		this.target = this.$.inp;
   		this.$.panel.addEventListener("iron-overlay-closed", (e) => { this.closing(e); });		
 	}
 
   	oncb() { this.type = this.enclair ? "text" : "password"; }
   	
 	async closing(e){
-		if (e.detail.confirmed) {
-			let res = await this.crypt();
-			this.typed = "";
-			this.resolve(res);
-		} else {
+		if (e.detail.confirmed)
+			this.onEnter()
+		else {
 			this.typed = "";
 			this.resolve(null);
+		}
+	}
+	
+	async onEnter() { 
+		if (!this.er) {
+			let res = await this.crypt();
+			this.typed = "";
+			this.$.panel.close();
+			this.resolve(res);
 		}
 	}
 	
@@ -61,10 +70,14 @@ class PhraseBox extends Polymer.Element {
 					n = 0;
 			}
 		}
-		let bcc = App.Util.bcrypt(x);
-		let bcr = App.Util.bcrypt(r);
-		let shabcc = App.B64.encode(await Util.sha256(bcc));
-		return {bcc:bcc, bcr:bcr, shabcc: shabcc};
+		let s = App.Util.bcrypt(x);
+		let u = new Uint8Array(32);
+		for(let i = 0; i < 32; i++) u[i] = s.charCodeAt(i);
+		u[31] = 0;
+		let cleS = await App.AES.newAES(u);
+		let prB = App.Util.bcrypt(r);
+		let prBD = App.B64.encode(await Util.sha256(prB));
+		return {cleS:cleS, prB:prB, prBD:prBD};
 	}
 	
 	async show(msg, nbmots, nbletters){

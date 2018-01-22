@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Crypto {
-	public static String randomB64(int n8) { return Servlet.SHA256b64(random(n8)); }
+	public static String randomB64(int n8) { return Servlet.SHA256b64(random(n8), false); }
 	
 	public static byte[] random(int n8) {
 		int n = n8 < 1 ? 1 : (n8 > 4 ? 4 : n8);

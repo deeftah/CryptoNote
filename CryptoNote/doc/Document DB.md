@@ -16,18 +16,25 @@ Le fichier de configuration général comporte, en plus de paramètres générau
 - des dictionnaires et langues spécifiques.
 - quelques options, principalement de session terminale spécifiques.
 - des pages d'accueil spécifiques, voire quelques pages internes spécifiques.
- 
+
 #### Déploiement sur R-DBMS 
 Les données de chaque instance sont stockées dans des tables portant le code de l'instance. Il peut exister **plusieurs bases de données**, chacune hébergeant donc les tables d'une ou plusieurs instances.  
 `admin` ne comporte qu'une toute petite table et est hébergé par la base d'une instance.  
-
 Chaque instance peut avoir des tâches différées : une table `TaskQueue` de celles-ci permet à Queue Manager de lancer les tâches à l'heure prévue. Il n'existe au plus qu'une table `TaskQueue` par base : la configuration indique quel QueueManager gère sa `TaskQueue`, le cas échéant aggrégée à des TaskQueue d'autres instances gérée sur une autre base.
+
+>Synthèse :
+>- chaque instance a son URL qui aboutit sur le *front end* (nginx)  joue un rôle de load balancing vers les hosts du pool de serveurs. Si on souhaite spécialiser des hosts pour des instances, le load balancing redirige les URLs des instances sur le sous pool correspondant.
+>- un ou quelques hosts hébergent chacun UN Queue Manager ayant une URL locale dans le pool. Chaque QM a un nom et la configuration du *front end* renvoie exactement cette URL sur LE host unique hébergeant CE QM.
+>- chaque instance spécifie :
+>    - sur quelle base ses données sont hébergées, y compris la table `TaskQueue` qui gère ses tâches différées.
+>    - quel QM gère ses tâches différées.
+>- en conséquence un QM peut gérer les tâches de N instances et réparties sur P tables `TaskQueue` de P bases différentes (P <= N).
 
 ##### Déploiement GAE Datastore
 Chaque instance correspond à un `namespace`.  
-Le Datastore a son lanceur de tâches mais la table TaskQueue (entity TaskQueue) existe cependant avec les mêmes données : elle réside toutefois dans ce cas sous le même namespace que l'instance.
+Le Datastore a son lanceur de tâches mais la table `TaskQueue` (entity TaskQueue) existe  avec les mêmes données : elle réside sous le même namespace que l'instance. Il n'y a pas de Queue Manager.
 
-Chaque instance étant tanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de TaskQueue et OnOff qui peuvent être relatives à plusieurs instances. 
+Chaque instance étant étanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de `TaskQueue` (une table par base) et OnOff (une table pour toutes les instances dans une base) qui peuvent être relatives à plusieurs instances. 
 
 # Documents et items
 Le stockage de données apparaît comme un ensemble de ***documents*** :
@@ -242,33 +249,41 @@ Certains traitements peuvent être constitués d'une séquence, possiblement lon
 Comme une opération doit avoir un temps d'exécution réduit et surtout ne pas accéder à trop de documents en tolérance 0, ces traitements s'exécutent sous la forme d'une suite d'opérations distinctes et différées.  
 Par ailleurs une opération *principale* peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations *secondaires* différées par rapport à l'opération principale.
 
-Une tâche est constituée d'une succession d'étapes de 1 à N, chacune marquant un point de reprise persistant :
+**Une tâche est constituée d'une succession d'étapes de 1 à N**, chacune marquant un point de reprise persistant :
+- une tâche est identifiée par le couple :
+    - `ns` : du code de l'instance qui l'a inscrite.
+    - `taskid` : d'un code aléatoire généré à la création.
 - chaque fin d'étape spécifie s'il y a ou non une étape ultérieure et quel est son objet paramètre d'exécution. Cet objet porte également, si souhaité, des informations de reporting sur le travail déjà exécuté.
 - la fin de la dernière étape spécifie si son résultat doit être conservé, et si oui combien de temps, ou si la trace de la tâche est à détruire immédiatement.
 
-##### TaskQueue
-Cette table / entité gère à la fois la liste des tâches et plus précisément son étape courante :
-- **en attente de traitement** : le numéro d'étape est renseigné et la `toStartAt` mentionne quand elle doit être lancée au plus tôt. C'est le code `exc` qui indique :
+##### `TaskQueue`
+Cette table / entité enregistre l'étape courante de chaque tâche :
+- **en attente**, de traitement de la prochaine / première étape ou de reprise de l'étape actuelle après une exécution tombée en exception. Le numéro de la prochaine étape à traiter est renseigné (à partir de 1) et la `toStartAt` mentionne quand elle doit être lancée au plus tôt. Le code `exc` indique :
      - non `null` : la dernière exécution est tombée en exception et c'est une relance (`retry` est > 0) qui est en attente.
      - `null` : la dernière exécution s'est terminée normalement et c'est la première exécution de cette étape qui est en attente (`retry` vaut 0).
-- **en cours de traitement** : le numéro d'étape est renseigné, `toStartAt` est `null` et `startTime` donne la date-heure de début de traitement.
-- **terminée** : le numéro d'étape est `null`. `toPurgetAt` indique quand cette trace doit être supprimée.
-- **présumée perdue** : c'est un cas particulier de l'état en traitement mais sa `startTime` est  ancienne et on suppose que sa fin, normale ou en exception, n'a pas pu être enregistrée.
+     - `detail` donne le détail de l'exception (quand il y a un code `exc`).
+- **en cours de traitement** : le numéro d'étape indique l'étape en cours de traitement, `toStartAt` est `null` et `startTime` donne la date-heure de début de traitement.
+- **terminée** : il s'agit de la trace d'exécution d'une tâche :
+    - `step` le numéro d'étape est `null` tout comme `toStartAt`. 
+    - `param` donne en JSON le rapport synthétique du travail exécuté.
+    - `toPurgetAt` indique quand cette trace doit être supprimée.
+
+Une tâche **présumée perdue** apparaît **en cours de traitement** avec une `startTime`   ancienne : périodiquement on scrute ces tâches, on suppose que leur fin, normale ou en exception, n'a pas pu être enregistrée et elles sont convertie en tâches en attente de relance avec un `retry` > 0 et un `exc` LOST..
 
 ##### Queue Manager
-C'est est un ensemble de threads chargés d'envoyer des requêtes HTTP demandant l'exécution des opérations différées inscrites et de réguler le flux des demandes afin de ne pas saturer les serveurs. Le Queue Manager joue un rôle de session externe mais non humaine :
+C'est est un ensemble de threads hébergés dans un des hosts et chargés d'envoyer des requêtes HTTP demandant l'exécution des opérations différées inscrites en régulant le flux des demandes afin de ne pas saturer les serveurs. Un Queue Manager joue un rôle de session externe mais non humaine :
 - il n'interprète pas le résultat qui peut être stocké afin d'être consultable un certain temps après la fin de la tâche par un administrateur.
 - il ne gère pas les exceptions des opérations : elles réapparaissent en queue avec un `retry` > 1 inscrites par la requête dans le catch final.
 - il récupère périodiquement les tâches *présumée perdues* dont la fin normale ou exception n'a pas pu être enregistrée.
 
 ##### Datastore
 Le GAE Datastore a son propre Queue Manager. Afin d'uniformiser la gestion des tâches, la politique suivante est appliquée :
-- le QM Datastore ne considère que les étapes individuellement : le lancement de l'étape suivante est géré par la fin de la précédente qui inscrit une task Datastore explicitement.
+- le QM Datastore ne considère que les étapes individuellement : le lancement de l'étape suivante est géré par la fin de la précédente qui inscrit une `task` Datastore explicitement.
 - le QM Datastore gère la relance des étapes tombées en exception. Toutefois au bout d'un certain nombre de fois il abandonne silencieusement. La tâche apparaît dans `TaskQueue`, 
     - soit comme sortie en exception, 
     - soit comme présumée perdue si son exception n'a pas pu être attrapée.
 - une tâche périodique `Cron` du datastore est en charge :
-    - de récupérer les tâches présumées perdues et de les relancer en tant que nouvelle task pour le QM Datastore. 
+    - de récupérer les tâches présumées perdues et de les relancer en tant que nouvelle `task` pour le QM Datastore. 
     - d'envoyer un e-mail d'alerte à l'administrateur signalant les tâches en erreur ayant un indice de `retry` important et marquées à relancer à la fin du siècle. 
 
 La différence se situe dans la récupération dans les QM d'une exécution dont la fin n'a pas été attrapée / enregistrée sur le serveur exécutant :
@@ -280,13 +295,13 @@ La différence se situe dans la récupération dans les QM d'une exécution dont
 
 #### Création d'une tâche et de sa première étape
 Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au commit de l'opération qui l'a créé avec les données suivantes :
-- `ns` : son namespace.
+- `ns` : le code son instance.
 - `taskid` : son identification aléatoire tirée à la création.
 - `opName` : le nom de l'opération en charge du traitement.
 - `param` : un JSON contenant les paramètres requis. Si ceux-ci sont très volumineux, on créé un document et `param` en contient juste l'identification.
 - `info` : texte d'information indexé permettant des filtrages pour l'administrateur.
 - `step` : le numéro d'étape est 1, c'est celui de la **prochaine** étape à exécuter.
-- `cron` : un code `Cron` (voir ci-après).
+- `cron` : un code `Cron` qui indique qu'il faut lancer automatiquement à la fin complète de la tâche une autre tâche de même opération, même paramètres, un certain temps plus tard (défini par `cron`).
 - `retry` : son numéro d'ordre d'exécution dans l'étape `step` est 0. Il est incrémenté à chaque relance après exception.
 - `toStartAt` : la date-heure de son lancement / relance au plus tôt.
 - `startTime` : la date-heure du début d'exécution de l'étape courante. `null` quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.
@@ -298,102 +313,13 @@ Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au co
 - `exc` : code d'exception du dernier traitement en erreur. `null` au lancement / relance.
 - `detail` : le détail de l'exception, stack etc.
 
-#### Enregistrement du début d'exécution 
-Il est effectué dans le serveur d'exécution.
-- **enregistrement de `TaskQueue` non trouvé** : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. La tâche était terminée ou supprimée par l'administrateur.
-- **step demandée inférieure à celle enregistrée (ou celle enregistrée est 0 - trace)** : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. L'étape était terminée, le QM Datastore n'en savait rien (et a même lancé l'étape suivante).
-- **steps demandée et enregistrée identiques**.
-    - l'état enregistré n'a pas de `startTime`. C'est le cas normal, du premier lancement ou d'une relance. On inscrit une `startTime` et le `retry` est incrémenté.
-    - l'état enregistré a une `startTime`. On écrase la `startTime` (le `retry` est laissé tel quel) ce qui fera ignorer la fin de la précédente. La nouvelle exécution devient officielle (l'autre ayant de fortes chances de ne plus être suivie par le QM Datastore).
-- **step demandée supérieure à celle enregistrée**. Situation a priori impossible : on ne fait rien et on retourne un status 200. 
-
-#### Fin d'exécution
-Elle est exécutée par l'opération, soit sur fin normale, soit en exception :
-- toute exécution qui se termine alors que l'état enregistré ne correspond pas à sa signature `startTime` est ignorée, non enregistrée et la transaction non validée : c'est une exécution perdue qui a été relancée depuis. Son retour est un status 200 afin que le QM Datastore surtout ne relance rien (au cas improbable où il écouterait encore).
-- la fin sur exception est enregistrée (transaction non validée) et retourne un 500 afin que le QM Datastore relance.
-- la fin normale est enregistrée, la transaction est validée et retourne un status 200 afin que le QM Datastore ne relance pas. La fin normale correspond à,
-    - soit la fin de la dernière étape avec trace (`step` est `null`, `toPurgetAt` est renseignée). 
-    - soit la fin de la dernière étape sans trace (l'enregistrement est supprimé). 
-    - soit la demande d'une nouvelle étape (`step` est incrémenté, `retry` à 0, `toStartAt` est renseignée). 
-
-#### Fin d'étape d'une tâche
-La fin d'une étape *intermédiaire* donne lieu :
-- à l'enregistrement du `param` de l'étape suivante, objet pouvant comporter facultativement des données de compte rendu synthétique d'exécution des étapes précédentes;
-- à l'incrémentation du compteur d'étapes `step`;
-- à l'enregistrement d'une nouvelle date-heure de lancement pour l'étape suivante.
-
-La fin de la *dernière* étape donne lieu :
-- à l'enregistrement du `param` qui, s'il n'est pas `null`, ne contient plus que des données de compte rendu synthétique d'exécution;
-- à l'enregistrement d'une date-heure de purge de l'enregistrement de suivi de la tâche.
-- à la mise à `null` du numéro de la prochaine étape et de la date-heure de prochain lancement.
-
-A noter que si la dernière étape ne veut pas conserver de trace de traitement, son enregistrement est purement et simplement détruit.
-
-### Opération associée à une tâche
+#### Opération associée à une tâche
 C'est une opération normale. L'objet `param` et le nom de l'opération `opName` ont été récupérés de `TaskQueue` avec les informations `startTime` `step` et `retry` rendues disponibles dans `InputData.args`.
 - elle retourne un résultat indiquant si une nouvelle étape est demandée, quand ou si c'est la dernière. Son objet `param` peut être mis à jour pour refléter à la fois le compte rendu d'exécution et les paramètres de l'étape suivante. L'opération n'effectue pas de calcul de synchronisation et n'a pas de phase `afterwork()` : elle ne fait *que* des mises à jour de documents et de son `param` dans sa phase `work()`.
 - elle peut inscrire des opérations différées.
 - elle bénéficie d'un quota de temps plus long pour son exécution.
 
-### Principe d'exécution nominal
-Une opération inscrit une nouvelle tâche en ayant fourni `ns opName param info cron` : `taskid` est générée et `qn` obtenu de la configuration.  
-Au commit :
-- la tâche est inscrite dans la table `TaskQueue`.
-- pour un Datastore, **avant le commit**, une tâche est mise en queue avec pour URL d'invocation `/ns/od/taskid/step?key=...`.
-- pour une base de données, **après le commit**, si la `toStartAt` est proche (moins de X minutes : X est le scan lapse du Queue Manager), le Queue Manager associé à l'instance (`qm7`) reçoit une requête HTTP `/qm7/op?key=...&op=inq&param={ns:..,taskid:..,toStartAt:..,qn:..,step:N}` pour inscription de l'étape N de la tâche à relancer sans attendre le prochain scan.
-
-**Quand le Queue Manager peut / doit lancer la tâche**, il cherche un thread worker libre qui émet vers le serveur du namespace une requête HTTP avec `/ns/od/taskid/step?key=...` :
-- `ns` : le code de l'instance (comme pour toute requête),
-- `od` au lieu de `op` pour identifier qu'il s'agit d'une opération différée,
-- `taskid/step` dans l'URL.
-- le paramètre `key` : mot de passe permettant de s'assurer que c'est bien le Queue Manager qui a émis la requête et non une session externe (en fait sur un POST, `key` n'apparaît pas dans l'URL comme dans celle ci-dessus qui est employée en test).
-
-Quand le Datastore lance la tâche il émet une requête HTTP sur l'URL `/ns/od/taskid/step?key=...`.
-
-L'opération souhaitée s'exécute ensuite :
-- **traitement OK** :
-    - la tâche `ns.taskid` est,
-        - soit supprimée de la table `TaskQueue` au commit.
-        - soit enregistrée pour une nouvelle étape.
-    - le retour est un status 200 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle étape de tâche ou signale au Datastore que l'étape de la tâche est finie.
-- **traitement en Exception** :
-    - la tâche `ns.taskid` est mise à jour dans `TaskQueue` :
-        - `starTime` y est mise à `null`;
-        - `retry` est incrémenté;
-        - `exc detail` sont renseignés;
-        - `toStartAt` est calculée à une valeur future d'autant plus lointaine que le numéro de `retry` est élevé, voire finalement infinie.
-    - le retour est un status 500 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle étape d'une tâche ou signale au Datastore qu'il faudra relancer.
-    - sauf Datastore, si la `nexstart` est proche (moins de X minutes), le Queue Manager associé au namespace reçoit une requête HTTP pour inscription de la tâche à relancer sans attendre le prochain scan.
-
-**Scan périodique des TaskQueue par le Queue Manager**
-Un Queue Manager gère une ou plusieurs instances et fait donc face à une ou plusieurs base de données.  
-Seules les étapes des tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :
-- une `toStartAt` antérieure à la date-heure du scan suivant,
-- ayant l'un des codes d'instance dont il est en charge,
-- un numéro d'étape : si `null` la tâche est terminée et l'enregistrement n'est qu'une trace,
-- ayant une `startTime` `null` (tâche pas en cours).
-
-Ce scan permet au Queue Manager de récupérer les tâches à relancer autant que celle à lancer une première fois.
-
-### Situations anormales
-##### Perte de contact par le worker du Queue Manager qui suit l'exécution d'une étape d'une tâche
-Sa requête HTTP sort prématurément en exception : la notification de fin ne lui parviendra pas.
-- le worker considère l'étape comme terminée.
-- le worker n'est en fait pas intéressé par le status de bonne ou mauvaise fin de celle-ci.
-
-Si l'étape de la tâche se termine bien, elle disparaîtra de `TaskQueue` ou aura un numéro d'étape supérieur.  
-Si la tâche sort en exception elle sera modifiée en `TaskQueue` pour une future relance de son étape et si cette relance est proche le Queue Manager sera notifié par HTTP pour accélérer la relance.
-
-##### Tâches perdues
-Il s'agit de tâches qui ont été lancées (ou relancées),
-- ayant une `startTime` ancienne,
-- dont le Queue Manager n'a pas de trace en exécution dans un worker.
-
-On va considérer que l'étape de la tâche s'est mal terminée sans que son exception n'ait pu être enregistrée dans `TaskQueue` : elle est enregistrée avec comme exception `LOST` et marquée avec une `toStartAt` pour une relance ultérieure (comme une exception normale). 
-
-Une tâche perdue est *supposée* être perdue mais en fait elle peut être cachée en exécution et dans ce cas il peut exister à un moment donné plus d'une exécution en cours, voire dans le pire des cas avec des numéros d'étapes différents.
-
-### Exécution de plusieurs étapes successives dans la même requête
+#### Exécution de plusieurs étapes successives dans la même requête
 La phase `work()` se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat obtenu par les méthodes :
 - `Result taskComplete()` : tâche terminée (c'était la dernière étape). L'enregistrement est immédiatement détruit.
 - `Result taskComplete(Stamp toPurgeAt)` : indique la date-heure à laquelle il faut purger l'enregistrement de trace. 
@@ -404,7 +330,7 @@ Enchaîner un grand nombre d'étapes dans la même requête a l'avantage éviden
 - monopoliser un thread de calcul pour une tâche de fond au détriment du passage de requêtes de front;
 - risquer une interruption pour excès de consommation de temps calcul pour une requête.
 
-### La classe `Cron`
+#### Lancement automatique d'une autre à la fin d'une tâche : `Cron`
 Une tâche peut être périodique : à la fin d'une exécution, une nouvelle tâche est inscrite pour exécution ultérieure.  
 Par exemple une tâche mensuelle prévue le 2 du mois à 3h30, sera inscrite dès sa fin d'exécution pour le 2 du mois suivant à 3h30.  
 Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi inscrire un code `cron` qui va faire invoquer la classe `Cron` pour calculer la prochaine échéance `toStartAt` en fonction de la date-heure courante.
@@ -423,7 +349,7 @@ Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi
 - `M100425` : soit le 10 de ce mois si on est avant le 10 à 4h25, soit le 10 du mois suivant à 4h25 ;
 - `Y11100425` : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.
 
-Normalement un traitement dont la `toStartAt` a été calculée depuis son `cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard ... sauf à ce que le traitement de la tâche contredise le calcul standard basé sur le `Cron`.
+Normalement un traitement dont la `toStartAt` a été calculée depuis son `cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard.
 
 ## Administration des tâches
 Le privilège d'administration permet de joindre un Queue Manager et de lui soumettre les requêtes suivantes :
@@ -431,10 +357,10 @@ Le privilège d'administration permet de joindre un Queue Manager et de lui soum
 - relance de fonctionnement.
 - liste des tâches en attente pour lancement proche.
 
-### Interrogation / mise à jour de TaskQueue
-Le privilège d'administration générale permet d'accéder à tous les TaskQueue (de toutes les instances).  
+### Interrogation / mise à jour de `TaskQueue`
+Le privilège d'administration générale permet d'accéder à tous les `TaskQueue` (de toutes les instances).  
 
-Le privilège d'administration d'une instance ne permet d'accéder qu'au seul TaskQueue de l'instance.
+Le privilège d'administration d'une instance ne permet d'accéder qu'au seul `TaskQueue` de l'instance.
 
 Les opérations possibles sont :
 - liste des tâches candidates.

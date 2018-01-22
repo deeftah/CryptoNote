@@ -16,6 +16,7 @@
     "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.1",
     "iron-icons": "PolymerElements/iron-icons#^2.0.1",
     "neon-animated-pages": "PolymerElements/neon-animated-pages#^2.0.2",
+    "iron-a11y-keys": "PolymerElements/iron-a11y-keys#^2.0.0",
     "web-animations-js": "web-animations-js#^2.3.1"
   }
 }

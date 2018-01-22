@@ -1,6 +1,6 @@
 <link rel="import" 	href="../bower_components/paper-icon-button/paper-icon-button.html">
 
-<dom-module id="ns-bar">
+<dom-module id="admin-bar">
 <template>
 	<style is="custom-style" include="iron-flex iron-flex-alignment">
 		paper-dialog.size-position-left-panel { margin:0 !important;
@@ -30,8 +30,8 @@
 </div>
 </template>
 <script>
-    class NsBar extends Polymer.Element {
-		static get is() { return "ns-bar"; }
+    class AdminBar extends Polymer.Element {
+		static get is() { return "admin-bar"; }
 		static get properties() { return { 
 			lang : {type:String, value:"xx"},
 			previousPage : {type:Object, value:null},
@@ -58,7 +58,7 @@
 		back() { App.appHomes.back(); }
 		
 	}
-customElements.define(NsBar.is, NsBar);
+customElements.define(AdminBar.is, AdminBar);
 </script>
 </dom-module>
 	

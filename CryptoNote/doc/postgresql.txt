@@ -11,9 +11,8 @@ https://test.sportes.fr:8443/postit/z/op/namespace/a/NsDoc/custom.css?
 
 fr.sportes.base.INSTANCE
 
-nonuke PBKDF2 (b64s)->
-key=oyuaWnlO9CgLtHY-Q6io4eA5bpgyOMG4Ph73hrVWELU
-sha=pH7TiudTjPGwh54TOXWFY-PvBLvS9ee8Z0-ifZ_xQq4
+9nucleaire8non7merci6jamais -> e8OYtmHOa1KPIPowUFfdY0tnkb6aSSf6oP1X8OfYTzM
+
 
 /*********************************************************/
 La description des ressources DOIT figurer dans le crytonote.xml dans le JETTY_RUN/webapps

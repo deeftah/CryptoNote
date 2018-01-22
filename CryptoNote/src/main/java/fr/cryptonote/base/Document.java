@@ -296,7 +296,7 @@ public class Document {
 		if (key == null || key.length() == 0) throw new AppException("BKEYBLOB", id().toString());
 		if (mime == null || mime.length() == 0) throw new AppException("BMIMEBLOB", id().toString(), key);
 		if (bytes == null || bytes.length == 0) throw new AppException("BEMPTYBLOB", id().toString(), key);
-		String sha = Servlet.SHA256b64(bytes);
+		String sha = Servlet.SHA256b64(bytes, false);
 		P p = (P)bitem(P.class, true, key);
 		p.mime = mime;
 		p.size = bytes.length;

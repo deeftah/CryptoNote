@@ -17,8 +17,8 @@
 <link rel="import" href="wait-home.html">
 <link rel="import" href="home1-bar.html">
 <link rel="import" href="home2-bar.html">
-<link rel="import" href="ns-bar.html">
-<link rel="import" href="ns-home.html">
+<link rel="import" href="admin-bar.html">
+<link rel="import" href="admin-home.html">
 
 <dom-module id="app-homes">
 <template>
@@ -42,14 +42,14 @@
 			<iron-pages class="bar" attr-for-selected="id" selected="[[bar]]">
 				<home1-bar id="test-home1-bar" lang="[[lang]]" owner="Scott"></home1-bar>
 				<home2-bar id="test-home2-bar" lang="[[lang]]"></home2-bar>
-				<ns-bar id="ns-admin-bar" lang="[[lang]]"></ns-bar>
+				<admin-bar id="admin-admin-bar" lang="[[lang]]"></admin-bar>
 				<div id="z-wait-bar" class="wb"></div>
 			</iron-pages>
 			<neon-animated-pages  class="main flex" attr-for-selected="id" selected="[[anpage]]" entry-animation="[[enan]]" exit-animation="[[exan]]">		
 				<neon-animatable id="test-home1-page"><home1-home id="test-home1" lang="[[lang]]" owner="Scott"></home1-home></neon-animatable>
 				<neon-animatable id="test-home2-page"><home2-home id="test-home2" lang="[[lang]]"></home2-home></neon-animatable>
 				<neon-animatable id="test-admin-page"><home2-home id="test-admin" lang="[[lang]]"></home2-home></neon-animatable>
-				<neon-animatable id="ns-admin-page"><ns-home id="ns-admin" lang="[[lang]]"></ns-home></neon-animatable>
+				<neon-animatable id="admin-admin-page"><admin-home id="admin-admin" lang="[[lang]]"></admin-home></neon-animatable>
 				<neon-animatable id="z-wait-page"><wait-home id="z-wait" lang="[[lang]]"></wait-home></neon-animatable>
 			</neon-animated-pages>
 		</div>

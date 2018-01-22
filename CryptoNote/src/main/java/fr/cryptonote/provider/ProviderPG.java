@@ -945,6 +945,7 @@ public class ProviderPG implements DBProvider {
 		topurgeat bigint, 
 	  	opname varchar(16) NOT NULL,
 	  	param text,
+	  	cron varchar(16),
 	  	info varchar(255),
 		qn int NOT NULL,
 		retry int NOT NULL,
@@ -961,7 +962,7 @@ public class ProviderPG implements DBProvider {
 	*/
 	
 	private static final String INSERTTASK = 
-		"insert into taskqueue (ns, taskid, step, tostartat, opname, info, qn, retry, param) values (?,?,1,?,?,?,?,0,?);";
+		"insert into taskqueue (ns, taskid, step, tostartat, opname, cron, info, qn, retry, param) values (?,?,?,1,?,?,?,?,0,?);";
 		
 	@Override 
 	public void newTask(TaskInfo ti) throws AppException{
@@ -974,6 +975,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement.setString(j++, ti.taskid);
 			preparedStatement.setLong(j++, ti.toStartAt);
 			preparedStatement.setString(j++, ti.opName);
+			preparedStatement.setString(j++, ti.cron);
 			preparedStatement.setString(j++, ti.info == null ? "" : ti.info);
 			preparedStatement.setInt(j++, ti.qn);
 			preparedStatement.setInt(j++, 0);
@@ -1175,7 +1177,7 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 
-	private static final String SELTI3a = "select step, tostartat, topurgeat, opname, info, qn, retry, exc, startTime";
+	private static final String SELTI3a = "select step, tostartat, topurgeat, opname, cron, info, qn, retry, exc, startTime";
 	private static final String SELTI3b = ", param, detail ";
 	private static final String SELTI3c = " from taskqueue where ";
 	
@@ -1211,6 +1213,7 @@ public class ProviderPG implements DBProvider {
 		l = rs.getLong("topurgeat");
 		ti.toPurgeAt = l == null ? 0 : l;
 		ti.opName = rs.getString("opname");
+		ti.cron = rs.getString("cron");
 		if (!court) ti.param = rs.getString("param");
 		ti.info = rs.getString("info");
 		ti.qn = rs.getInt("qn");

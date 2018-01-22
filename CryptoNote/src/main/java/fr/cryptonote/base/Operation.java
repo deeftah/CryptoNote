@@ -97,8 +97,7 @@ public abstract class Operation {
 	public String name() { return opd.operationName; }
 	public boolean isSudo() { return execContext.isSudo(); }
 	
-	public void addTask(Class<?> op, Object param, String info, long startAt, int qn) throws AppException { execContext().addTask(op, param, info, startAt, qn); }
-	public void addTaskByCron(Class<?> op, Object param, String cron, int qn) throws AppException { execContext().addTask(op, param, cron, new Cron(cron).nextStart().stamp(), qn); }
+	public void addTask(Class<?> op, Object param, String info, String cron, long startAt, int qn) throws AppException { execContext().addTask(op, param, info, cron, startAt, qn); }
 
 	/**********************************************************************************/
 	public String ungzip(Attachment a) throws AppException {

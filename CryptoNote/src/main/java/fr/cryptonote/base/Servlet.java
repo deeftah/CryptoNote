@@ -71,16 +71,29 @@ public class Servlet extends HttpServlet {
 		synchronized (digestSha256) {
 		    digestSha256.reset();
 		    digestSha256.update(x);
-		    return digestSha256.digest();
+		    byte[] b = digestSha256.digest();
+		    return b;
 		}
 	}
 	
-	public static String SHA256b64(String s) {
-		return Base64.getUrlEncoder().encodeToString(SHA256(Base64.getUrlDecoder().decode(s == null ? "" : s)));
+	public static String b64(byte[] b, boolean padding){
+		String s = Base64.getUrlEncoder().encodeToString(b);
+		if (padding) return s;
+		int l = s.length();
+		if (s.charAt(l - 1) == '=') {
+			l--;
+			if (s.charAt(l - 1) == '=') l--;
+			return s.substring(0, l);
+		} else
+			return s;
+	}
+	
+	public static String SHA256b64(String s, boolean padding) {
+		return b64(SHA256(s == null ? null : Util.toUTF8(s)), padding);
 	}
 
-	public static String SHA256b64(byte[] bytes) {
-		return Base64.getUrlEncoder().encodeToString(SHA256(bytes == null ? new byte[0] : bytes));
+	public static String SHA256b64(byte[] bytes, boolean padding) {
+		return b64(SHA256(bytes == null ? new byte[0] : bytes), padding);
 	}
 
 	/********************************************************************************/
@@ -322,16 +335,12 @@ public class Servlet extends HttpServlet {
 			}
 			uri = uri.substring(i + 1);
 			Resource res = null;
-			HashMap<String,String> rns;
 			if (uri.startsWith("z/")) {
-				rns = zres(nsqm.code);
-				String subst = rns.get("/var/" + uri);
-				if (subst != null)
-					res = getResource(subst);
+				String subst = zres(nsqm.code).get("/var/" + uri);
+				res =  getResource(subst != null ? subst : "/var/" + uri);
 			} else
 				res = getResource("/var/" + uri);
 			if (res == null) {
-//				sendText(200, "", resp);
 				resp.sendError(404);
 				Util.log.info("404 - " + urix);
 				return;
@@ -443,9 +452,12 @@ public class Servlet extends HttpServlet {
 			HashMap<String,String> rns = zres(nsqm.code);
 			sb.append("App.zres = {\n");
 			int l = "/var/z/z/".length();
-			for(String n : rns.keySet())
-				sb.append("\"").append(n.substring(l)).append("\":true,\n");
-			sb.setLength(sb.length() - 2);
+			Set<String> ks = rns.keySet();
+			if (ks.size() != 0) {
+				for(String n : ks)
+					sb.append("\"").append(n.substring(l)).append("\":true,\n");
+				sb.setLength(sb.length() - 2);
+			}
 			sb.append("};\n");
 			sb.append("</script>\n");
 			
@@ -786,7 +798,7 @@ public class Servlet extends HttpServlet {
 		public Resource(byte[] bytes, String mime) { 
 			this.bytes = bytes; 
 			this.mime = mime;  
-			sha = SHA256b64(bytes); 
+			sha = SHA256b64(bytes, false); 
 		}
 		public Resource(String text, String mime){ this(Util.toUTF8(text), mime); }
 		public String toString(){ String s = Util.fromUTF8(bytes); return s == null ? "" : s; }

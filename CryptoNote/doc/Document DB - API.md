@@ -842,77 +842,98 @@ Des index sont déclarés sur ces propriétés.
 
 Les index `P_sha` ne sont à déclarer que sur les documents ayant des pièces jointes.
 
-# Queue Manager 
-En GAE Datastore le Queue Manager est assuré par le Datastore.
 
-La queue des tâches en attente d'exécution est dans la table `taskqueue` :
+# Tâches : opérations différées
+#### Enregistrement du début d'exécution 
+Il est effectué dans le serveur d'exécution.
+- **enregistrement de `TaskQueue` non trouvé** : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. La tâche était terminée ou supprimée par l'administrateur.
+- **step demandée inférieure à celle enregistrée (ou celle enregistrée est 0 - trace)** : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. L'étape était terminée, le QM Datastore n'en savait rien (et a même lancé l'étape suivante).
+- **steps demandée et enregistrée identiques**.
+    - l'état enregistré n'a pas de `startTime`. C'est le cas normal, du premier lancement ou d'une relance. On inscrit une `startTime` et le `retry` est incrémenté.
+    - l'état enregistré a une `startTime`. On écrase la `startTime` (le `retry` est laissé tel quel) ce qui fera ignorer la fin de la précédente. La nouvelle exécution devient officielle (l'autre ayant de fortes chances de ne plus être suivie par le QM Datastore).
+- **step demandée supérieure à celle enregistrée**. Situation a priori impossible : on ne fait rien et on retourne un status 200. 
 
-Chaque serveur du pool peut initialiser un **Queue Manager**, une classe définissant l'exécution de plusieurs threads.  
-Un Queue Manager d'un serveur du pool à une liste de codes QM : il est en charge de gérer tous les namespaces ayant pour paramètre de configuration `qm` l'un des codes de cette liste. Les threads sont les suivants  :
-- un thread `QueueManager` chargé de distribuer les tâches à exécuter à un des threads **workers** ;
-- un pool de threads **workers**. Chaque worker est en attente d'une tâche à exécuter et invoque la requête HTTP-POST correspondante pour faire exécuter cette tâche par un des serveurs du pool. En cas de succès (retour 200) le worker réveille le thread `Queue Manager` qui recherche une nouvelle tâche à exécuter. 
-En cas d'échec un worker,
-- enregistre cet échec dans le row de la tâche dans `taskqueue` ;
-- le compteur `retry` est incrémenté ;
-- l'estampille `nextStart` est fixée à une date-heure plus ou moins proche selon la valeur du `retry`. Mais si le nombre de `retry` excède le maximum prévu, cette estampille est mise à la fin du siècle : l'administrateur agira en conséquence;
-- le retour de la requête de la tâche est aussi enregistrée comme report de la tâche : sa lecture permet le cas échéant à l'administrateur d'enquêter sur les causes de l'échec.
+#### Fin d'exécution
+Elle est exécutée par l'opération, soit sur fin normale, soit en exception :
+- toute exécution qui se termine alors que l'état enregistré ne correspond pas à sa signature `startTime` est ignorée, non enregistrée et la transaction non validée : c'est une exécution perdue qui a été relancée depuis. Son retour est un status 200 afin que le QM Datastore surtout ne relance rien (au cas improbable où il écouterait encore).
+- la fin sur exception est enregistrée (transaction non validée) et retourne un 500 afin que le QM Datastore relance.
+- la fin normale est enregistrée, la transaction est validée et retourne un status 200 afin que le QM Datastore ne relance pas. La fin normale correspond à,
+    - soit la fin de la dernière étape avec trace (`step` est `null`, `toPurgetAt` est renseignée). 
+    - soit la fin de la dernière étape sans trace (l'enregistrement est supprimé). 
+    - soit la demande d'une nouvelle étape (`step` est incrémenté, `retry` à 0, `toStartAt` est renseignée). 
 
-Ce mécanisme garantit en conséquence une reprise automatique en cas d'échec, du moins un certain nombre de fois.
+#### Fin d'étape d'une tâche
+La fin d'une étape *intermédiaire* donne lieu :
+- à l'enregistrement du `param` de l'étape suivante, objet pouvant comporter facultativement des données de compte rendu synthétique d'exécution des étapes précédentes;
+- à l'incrémentation du compteur d'étapes `step`;
+- à l'enregistrement d'une nouvelle date-heure de lancement pour l'étape suivante.
 
-Le thread `QueueManager` est reveillé par plusieurs événements :
+La fin de la *dernière* étape donne lieu :
+- à l'enregistrement du `param` qui, s'il n'est pas `null`, ne contient plus que des données de compte rendu synthétique d'exécution;
+- à l'enregistrement d'une date-heure de purge de l'enregistrement de suivi de la tâche.
+- à la mise à `null` du numéro de la prochaine étape et de la date-heure de prochain lancement.
 
-- ***une validation d'opération a des tâches à lancer*** : celles-ci sont transmises au thread `QueueManager`, soit directement s'il est hébergé dans le même serveur, soit par une requête HTTP. Une validation permet d'enchaîner sur une exécution de tâche différée quasi immédiate si nécessaire ;
-- ***la fin de traitement d'un worker*** désormais disponible pour lancer et suivre l'exécution d'une nouvelle tâche ;
-- ***périodiquement***, typiquement une fois par minute, pour exécuter un "full scan". Le full scan consiste à lire dans les bases de données de tous les namespaces gérés par le serveur du pool, la liste des tâches à exécuter dans la minute qui suit. Ceci garantit que même en cas d'interruption du `QueueManager` aucune tâche ne sera oubliée à la relance.
+A noter que si la dernière étape ne veut pas conserver de trace de traitement, son enregistrement est purement et simplement détruit.
 
-#### Options du QueueManager
-Elles ont données dans le fichier `config.json`.
+### Principe d'exécution nominal
+Une opération inscrit une nouvelle tâche en ayant fourni `ns opName param info cron` : `taskid` est générée et `qn` obtenu de la configuration.  
+Au commit :
+- la tâche est inscrite dans la table `TaskQueue`.
+- pour un Datastore, **avant le commit**, une tâche est mise en queue avec pour URL d'invocation `/ns/od/taskid/step?key=...`.
+- pour une base de données, **après le commit**, si la `toStartAt` est proche (moins de X minutes : X est le scan lapse du Queue Manager), le Queue Manager associé à l'instance (`qm7` par exemple) reçoit une requête HTTP `/qm7/op?key=...&op=inq&param={ns:..,taskid:..,toStartAt:..,qn:..,step:N}` pour inscription de l'étape N de la tâche à relancer sans attendre le prochain scan.
 
-  "instances":{
-    "default":{
-      "hostedQM": ["qm1", "qm2"],
-      "threads": [2,1],
-      "scanlapseinseconds":60,
-      "retriesInMin":[1, 10, 60, 180]
-    },
-    "A1":{
-      "hostedQM": ["qm3"],
-      "threads": [2,1],
-      "scanlapseinseconds":60,
-      "retriesInMin":[1, 10, 60, 180]
-    }
-  },
+**Quand le Queue Manager peut / doit lancer la tâche**, il cherche un thread worker libre qui émet vers le serveur du namespace une requête HTTP avec `/ns/od/taskid/step?key=...` :
+- `ns` : le code de l'instance (comme pour toute requête),
+- `od` au lieu de `op` pour identifier qu'il s'agit d'une opération différée,
+- `taskid/step` dans l'URL.
+- le paramètre `key` : mot de passe permettant de s'assurer que c'est bien le Queue Manager qui a émis la requête et non une session externe (en fait sur un POST, `key` n'apparaît pas dans l'URL comme dans celle ci-dessus qui est employée en test).
 
-Chaque serveur du pool est identifié par un code d'instance transmis sur la ligne de commande de son lanceur (`default` si absent, sinon un code réel).
-- `hostedQM` : si l'array est non vide, un Queue Manager est lancé pour cette instance et traitera tous les namespaces dont le code `qm` vaut `qm3` dans l'exemple de l'instance A1 ci-dessus.
-- `threads` donne le nombre de workers pour chaque "queue". Dans l'exemple ci-dessus il y a deux queues ayant respectivement 2 workers pour la queue 0 et 1 worker pour la queue 1.
-- `scanlapseinseconds` indique la fréquence d'exécution des "full scan" qui réinitialisent la liste des tâches à exécuter depuis la base de données pour faire face aux défaillances éventuelles de notifications en fin d'opération ou d'absence d'écoute à ces moments là.
-- `retriesInMin` indique combien de minutes il faut attendre après un premier, second, ... n-ième échec avant de relancer la tâche.
- 
-#### Affectation d'un numéro de queue à une tâche
-C'est une méthode de `Config` qui détermine le numéro de queue à affecter en fonction de l'information sur la tâche ('namespace' et surtout `docclass`).  
-Typiquement il existe une queue `0` pour les tâches pseudo temps réel de front et une queue `1` pour les tâches de fond de faible priorité.
+Quand le Datastore lance la tâche il émet une requête HTTP sur l'URL `/ns/od/taskid/step?key=...`.
 
-### Actions d'administration
-Elles ne concernent pas le GAE Datastore ayant sa propre console d'administration du Queue Manager.
+L'opération souhaitée s'exécute ensuite :
+- **traitement OK** :
+    - la tâche `ns.taskid` est,
+        - soit supprimée de la table `TaskQueue` au commit.
+        - soit enregistrée pour une nouvelle étape.
+    - le retour est un status 200 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle étape de tâche ou signale au Datastore que l'étape de la tâche est finie.
+- **traitement en Exception** :
+    - la tâche `ns.taskid` est mise à jour dans `TaskQueue` :
+        - `starTime` y est mise à `null`;
+        - `retry` est incrémenté;
+        - `exc detail` sont renseignés;
+        - `toStartAt` est calculée à une valeur future d'autant plus lointaine que le numéro de `retry` est élevé, voire finalement infinie.
+    - le retour est un status 500 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle étape d'une tâche ou signale au Datastore qu'il faudra relancer.
+    - sauf Datastore, si la `nexstart` est proche (moins de X minutes), le Queue Manager associé au namespace reçoit une requête HTTP pour inscription de la tâche à relancer sans attendre le prochain scan.
 
-Les quelques actions possibles sont les suivantes :
+**Scan périodique des `TaskQueue` par le Queue Manager**
+Un Queue Manager gère une ou plusieurs instances et fait donc face à une ou plusieurs base de données.  
+Seules les étapes des tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :
+- une `toStartAt` antérieure à la date-heure du scan suivant,
+- ayant l'un des codes d'instance dont il est en charge,
+- un numéro d'étape : si `null` la tâche est terminée et l'enregistrement n'est qu'une trace,
+- ayant une `startTime` `null` (tâche pas en cours).
 
-- `stop` : arrêt du Queue Manager ;
-- `start` : relance du Queue Manager ;
-- `list` : liste des tâches à lancer et en cours à brève échéance (jusqu'au prochain "full scan") ;
-- `report` : obtention du report de la dernière exécution en erreur d'une tâche ;
-- changement d'heure de lancement d'une tâche (et du compteur de `retry` le cas échéant).
-- suppression d'une tâche.
-- création d'une tâche : ceci est utile pour initialiser les tâches qui s'auto renouvellent ensuite par un *cron*.
- 
-Une sélection des tâches inscrites peut aussi être faite en fixant facultativement certains des éléments suivants :
-- sa classe de document,
-- sa date-heure de relance (toutes celles prévues avant cette heure),
-- son occurrence d'échec (première ou plus, seconde ou plus ...),
-- son texte d'information qui en général contient le code *cron* quand il s'agit d'une tâche périodique lancée par ce procédé..
+Ce scan permet au Queue Manager de récupérer les tâches à relancer autant que celle à lancer une première fois.
 
-# Congiguration
+### Situations anormales
+##### Perte de contact par le worker du Queue Manager qui suit l'exécution d'une étape d'une tâche
+Sa requête HTTP sort prématurément en exception : la notification de fin ne lui parviendra pas.
+- le worker considère l'étape comme terminée.
+- le worker n'est en fait pas intéressé par le status de bonne ou mauvaise fin de celle-ci.
+
+Si l'étape de la tâche se termine bien, elle disparaîtra de `TaskQueue` ou aura un numéro d'étape supérieur.  
+Si la tâche sort en exception elle sera modifiée en `TaskQueue` pour une future relance de son étape et si cette relance est proche le Queue Manager sera notifié par HTTP pour accélérer la relance.
+
+##### Tâches perdues
+Il s'agit de tâches qui ont été lancées (ou relancées),
+- ayant une `startTime` ancienne,
+- dont le Queue Manager n'a pas de trace en exécution dans un worker.
+
+On va considérer que l'étape de la tâche s'est mal terminée sans que son exception n'ait pu être enregistrée dans `TaskQueue` : elle est enregistrée avec comme exception `LOST` et marquée avec une `toStartAt` pour une relance ultérieure (comme une exception normale). 
+
+Une tâche perdue est *supposée* être perdue mais en fait elle peut être cachée en exécution et dans ce cas il peut exister à un moment donné plus d'une exécution en cours, voire dans le pire des cas avec des numéros d'étapes différents.
+
+# Configuration (à reprendre)
 Chaque instance de serveur du pool a un code identifiant qui lui permet de retrouver dans le fichier de configuration les options qui lui sont spécifiques.
 Ce code est donnée comme paramètre système :
 

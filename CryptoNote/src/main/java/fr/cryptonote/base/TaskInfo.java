@@ -9,6 +9,7 @@ public class TaskInfo {
 	public long 	toPurgeAt;
 	public String	opName;
 	public String 	param;
+	public String 	cron;
 	public String 	info;
 	public int 		qn;
 	public int 		retry;
@@ -27,9 +28,13 @@ public class TaskInfo {
 	/*
 	 * Si toStartAt est "petit" (nombre de secondes en un an) c'est un nombre de secondes par rapport à la date-heure actuelle.
 	 */
-	public TaskInfo(String ns, Class<?> op, Object param, String info, long toStartAt, int qn) {
+	public TaskInfo(String ns, Class<?> op, Object param, String info, String cron, long toStartAt, int qn) {
 		this.param = JSON.toJson(param);
-		this.toStartAt =  toStartAt < 366 * 86400 ? Stamp.fromNow(toStartAt * 1000).stamp() : toStartAt;
+		this.cron = cron;
+		if (cron != null && cron.length() != 0 && toStartAt == 0) {
+			this.toStartAt = new Cron(cron).nextStart().stamp();
+		} else
+			this.toStartAt =  toStartAt < 366 * 86400 ? Stamp.fromNow(toStartAt * 1000).stamp() : toStartAt;
 		this.ns = ns;
 		this.taskid = Crypto.randomB64(2);
 		this.info = info;
@@ -38,6 +43,20 @@ public class TaskInfo {
 		this.step = 1;
 	}
 	
+	public TaskInfo cloneCron(){
+		TaskInfo t = new TaskInfo();
+		t.ns = ns;
+		t.taskid = Crypto.randomB64(2);;
+		t.step = 1;
+		t.opName = opName;
+		t.toStartAt = new Cron(cron).nextStart().stamp();
+		t.cron = cron;
+		t.info = info;
+		t.qn = qn;
+		t.retry = 0;
+		return t;
+	}
+
 	public TaskInfo clone(){
 		TaskInfo t = new TaskInfo();
 		t.ns = ns;
@@ -46,6 +65,7 @@ public class TaskInfo {
 		t.toStartAt = toStartAt;
 		t.toPurgeAt = toPurgeAt;
 		t.opName = opName;
+		t.cron = cron;
 		t.info = info;
 		t.qn = qn;
 		t.retry = retry;

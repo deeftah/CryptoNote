@@ -1,0 +1,71 @@
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="phrase-box.html">
+
+<dom-module id="admin-home">
+<template>
+<style is="custom-style" include="iron-flex iron-flex-alignment">
+	paper-button.color-std { color : var(--btnstd-color); }
+	paper-button.color-std:hover { 	@apply --btnstd-hover; }
+</style>
+	<style>
+		:host { font-family: var(--font-std); font-size:1rem;}
+	</style>
+<div id="top">
+	<div class="auth" hidden$="[[sudo]]">
+		<paper-button on-tap="getPhrase" raised class="color-std">[[lib('admin_auth',lang)]]</paper-button>
+		<help-button help="admin-ps"></help-button>
+		<phrase-box id="phrase" lang=[[lang]]></phrase-box>
+	</div>
+</div>
+</template>
+<script>
+    class AdminHome extends Polymer.Element {
+		static get is() { return "admin-home"; }
+		static get properties() { return { 
+			lang : {type:String, value:"xx"},
+			sudo : {type:String, value:null},
+			}
+		}
+
+		lib(code, lang) { return App.lib(code);}
+
+      	constructor() { 
+      		super(); 
+      		App.setMsg("fr", "admin_auth", "S'authentifier");
+      		App.setMsg("fr", "admin_authok", "Authentification reconnue");
+      		App.setMsg("fr", "admin_authab", "Authentification abandonnée");
+      		App.setMsg("fr", "admin_authko", "Authentification non reconnue");
+      		App.setMsg("fr", "admin_lu", "Lu");
+      	}
+      	
+      	show(arg, prevPage) {
+      		this.sudo = App.sudo;
+      	} 
+      	
+      	async getPhrase() {
+      		let typed = await this.$.phrase.show("Phrase d'habilitation à l'administration :", 4, 20);
+      		if (typed) {
+      			console.log("prB: " + typed.prB + "\nprBD : " + typed.prBD);
+      			App.sudo = typed.prB;
+      			try {
+      				const ret = await new App.Req().setOp("sudo").setCred(2).setNoCatch("SADMINOP").go();
+      				App.messageBox.show(App.lib("admin_authok"), 3000);
+      				this.sudo = App.sudo;
+      			} catch (err) {
+      				if (err.code == "SADMINOP") {
+      					App.sudo = null;
+      					this.sudo = null;
+      					await App.confirmBox.show(App.lib("admin_authko"), App.lib("admin_lu"));
+      				}
+      			}
+      		} else {
+				App.sudo = null;
+  				this.sudo = null;
+  				App.messageBox.show(App.lib("admin_authab"), 3000, true);
+      		}
+      	}
+	}
+customElements.define(AdminHome.is, AdminHome);
+</script>
+</dom-module>
+	

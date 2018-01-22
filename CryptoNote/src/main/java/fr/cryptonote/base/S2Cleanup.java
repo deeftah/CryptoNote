@@ -62,7 +62,7 @@ public class S2Cleanup extends Document {
 			hours.put(clid,  hs2);
 			if (hs2 >= hour) return false;
 		}
-		TaskInfo ti = new TaskInfo(exec.nsqm().code, DoS2Cleanup.class, new DoS2Cleanup.Param(clid), clid, nextStart(shour), 0);
+		TaskInfo ti = new TaskInfo(exec.nsqm().code, DoS2Cleanup.class, new DoS2Cleanup.Param(clid), clid, null, nextStart(shour), 0);
 		exec.dbProvider().setS2Cleanup(ti, clid);
 		return true;
 	}

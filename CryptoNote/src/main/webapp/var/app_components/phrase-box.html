@@ -5,6 +5,7 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 
 <dom-module id="phrase-box">
 <template>
@@ -51,6 +52,7 @@
 			<div class="title">[[text]]</div>
 			<help-button help="ns-ps"></help-button>
 		</div>
+		<iron-a11y-keys id="a11y" target="[[target]]" keys="enter" on-keys-pressed="onEnter"></iron-a11y-keys>
 	 	<paper-input id="inp" label="[[lib('pb_ex',lang)]]" type="[[type]]" value="{{typed}}">
 			<paper-icon-button slot="suffix" on-tap="clearInput" icon="clear" alt="clear" title="clear"></paper-icon-button>
 		</paper-input>

@@ -141,8 +141,8 @@ public class ExecContext {
 	/*
 	 * Si startAt est "petit" (nombre de secondes en un an) c'est un nombre de secondes par rapport à la date-heure actuelle.
 	 */
-	public void addTask(Class<?> op, Object param, String info, long startAt, int qn) {
-		tasks.add(new TaskInfo(nsqm.code, op, param, info, startAt, qn));
+	public void addTask(Class<?> op, Object param, String info, String cron, long startAt, int qn) {
+		tasks.add(new TaskInfo(nsqm.code, op, param, info, cron, startAt, qn));
 	}
 
 	void forcedDeleteDoc(Id id) throws AppException{
@@ -488,6 +488,8 @@ public class ExecContext {
 		ExecCollect(TaskInfo tiTemp) throws AppException {
 			taskInfo = tiTemp;
 			tq = tasks;
+			if (taskInfo != null && taskInfo.cron != null && (taskInfo.taskType == 4 || taskInfo.taskType == 5))
+				tq.add(taskInfo.cloneCron());
 			docsToDelForced = forcedDeletedDocuments;
 			version = Stamp.fromNow(0).stamp();
 			dtime = Stamp.fromNow(- (BConfig.DTIMEDELAYINHOURS() * 3600000)).stamp();
@@ -512,7 +514,7 @@ public class ExecContext {
 			}
 			if (updDiff != null) {
 				updDiff.vop = version;
-				tq.add(new TaskInfo(nsqm.code, UpdDiff.class, updDiff, null, 0L, 0));
+				tq.add(new TaskInfo(nsqm.code, UpdDiff.class, updDiff, null, null, 0L, 0));
 			}
 			for(Document doc : deletedDocuments.values()) {
 				checkVersion(doc);

@@ -20,9 +20,9 @@
 	"TASKRETRIESINMIN":[1, 10, 60, 180],
 	
 	"namespaces" : {
-		"ns":{
-			"base":"cna", 
-			"pwd":"ns", 
+		"admin":{
+			"base":"cna",
+			"pwd":"admin",
 			"theme":"z",
 			"homes": {"admin":0},		
 			"lang":"fr"

@@ -385,7 +385,7 @@ public class QueueManager implements Runnable {
 	private static void auth(String ns, ExecContext exec) throws AppException {
 		if (exec.isSudo()) throw new AppException("SADMINOP");
 		String nsc = exec.nsqm().code;
-		if (!"ns".equals(nsc) && ns != null && !ns.equals(nsc)) throw new AppException("SADMINOPNS");
+		if (!OnOff.NAMESPACE.equals(nsc) && ns != null && !ns.equals(nsc)) throw new AppException("SADMINOPNS");
 	}
 
 	public static class TraceTasks extends Operation {

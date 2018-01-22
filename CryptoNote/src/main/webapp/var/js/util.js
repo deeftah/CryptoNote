@@ -644,7 +644,7 @@ class Req {
 		if (op.endsWith("ping")) { // "ping" ou "../ping"
 			this.url.append(op);
 		} else {
-			this.param = JSON.stringify(param); 
+			this.param = param ? JSON.stringify(param) : "{}"; 
 			this.url.append("op/").append(url ? url : "");
 			this.formData.append("op", this.op);
 			this.hasArgs = true;
@@ -683,7 +683,7 @@ class Req {
 		return this;
 	}
 	
-	setNoCatch(noCatch) { this.noCatch = noCatch; return this; }
+	setNoCatch(noCatch) { this.noCatch = noCatch + " "; return this; }
 	
 	setStartMsg(startMsg) {
 		if (startMsg)
@@ -695,12 +695,8 @@ class Req {
 		return new Promise((resolve, reject) => {
 			try{
 			if (this.cred) {
-				for(let a in cred) {
-					let v = cred[a];
-					if (this.isGet)
-						this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
-					else
-						this.formData.append(a,v);
+				for(let a in this.cred) {
+					this.formData.append(a, this.cred[a]);
 					this.hasArgs = true;
 				}
 			}

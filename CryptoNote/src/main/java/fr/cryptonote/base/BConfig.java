@@ -208,8 +208,8 @@ public class BConfig {
 		public int scanlapseinseconds() { return scanlapseinseconds; }
 		
 		public boolean isPwd(String key) {
-			String sha = Servlet.SHA256b64(key);
-			return sha != null && !sha.equals(pwd());
+			String sha = Servlet.SHA256b64(key, false);
+			return sha != null && sha.equals(pwd());
 		}
 		
 		private void compile() throws ServletException {
@@ -527,6 +527,7 @@ public class BConfig {
 			// déclarer Documents et opérations
 			Operation.register(OnOff.GetOnOff.class);
 			Operation.register(OnOff.SetOnOff.class);
+			Operation.register(OnOff.Sudo.class);
 			Operation.register(Mailer.SendMail.class);
 			Operation.register(TraceTasks.class);
 			Operation.register(ErrTasks.class);

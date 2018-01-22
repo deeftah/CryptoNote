@@ -627,7 +627,7 @@ A suivre.
 
 # Cryptographie
 
-## Éléments très simplifiés de cryptographie
+## Éléments simplifiés de cryptographie
 #### Octet : nombre de 0 à 255
 Un grand nombre (dépassant 255) peut être représenté par une suite d'octets.  
 Une chaîne de caractères est représentée par une suite d'octets : le codage standard UTF-8 définit comment chaque caractère est codé en 1 2 ou 3 octets.
@@ -709,18 +709,20 @@ Une phrase secrète est une suite de mots constitués chacun d'un chiffre de 1 �
 - la suite des mots donne un string inintelligible utilisant des caractères bizarres.
 
 Elle n'existe *en clair* (si on peut dire !) que le temps court de sa saisie à l'intérieur de la mémoire d'une session terminale et en sort sous trois formes :
-- `clé S` : la clé AES de cryptage de la clé `0` du compte obtenue depuis le SHA-256 du string de la phrase secrète. **Elle ne sort jamais de la session**.
-- `psB` : le BCRYPT du string de la phrase secrète (qui sort de la session). 
-- le SHA-256 de `psB` qui est enregistré dans la base.
-- `psRB` : le BCRYPT du string réduit de la phrase secrète (qui sort de la session).
+- `clé S` : la clé AES de cryptage de la clé `0` du compte obtenue depuis le BCrypt du string de la phrase secrète (complétée par un O, un BCRYPT a une longueur de 31, une clé AES de 32). **Elle ne sort jamais de la session**.
+- `prB` : le BCRYPT du string réduit de la phrase secrète. `prB` est transmis au serveur pour identifier un compte et à la création pour vérifier qu'un autre compte n'a pas une phrase secrète voisine. 
+- `prBD` : le SHA-256 de `prB` qui est enregistré dans la dossier du compte et permet au serveur de vérifier que le `prB` fourni par le terminal correspond bien à un compte.
 
->La phrase réduite est garantie unique afin d'empêcher de tomber par hasard (ou usage d'un robot) sur une phrase secrète enregistrée ouvrant un accès à un compte.  Ainsi il n'existe pas deux comptes ayant déclaré des phrases secrètes *trop proches*.
->En supposant que le logiciel du serveur ait été substitué par une version pirate indélicate qui enregistrerait les requêtes en clair, et donc `psB`, une session non officielle pourrait se faire reconnaître comme disposant d'un compte authentifié vis à vis du serveur sans disposer de la phrase secrète. Elle ne serait toutefois pas capable de décrypter la clé *mère* S obtenue cryptée par le SHA-256 du string de la phrase secrète originale connue du seul titulaire et serait incapable de déchiffre la moindre donnée du compte.
+>La phrase réduite est garantie unique afin d'empêcher de tomber par hasard (ou usage d'un robot) sur une phrase secrète enregistrée ouvrant un accès à un compte.  Ainsi il n'existe pas deux comptes ayant déclaré des phrases secrètes *trop proches*.  
+>En supposant que le logiciel du serveur ait été substitué par une version pirate indélicate qui enregistrerait les requêtes en clair, et donc `prB`, une session non officielle pourrait se faire reconnaître comme disposant d'un compte authentifié vis à vis du serveur sans disposer de la phrase secrète. Elle ne serait toutefois pas capable de décrypter la clé *mère* S obtenue depuis la phrase secrète originale connue du seul titulaire et serait incapable de déchiffre la moindre donnée du compte.
 
-*Pratique interdite* : la clé S pourrait être conservée en données persistantes dans le browser cryptée par un code PIN numérique de 4 caractères : un utilisateur tentant une connexion rapide a alors 3 essais sinon la clé S mémorisée est détruite (et la phrase secrète demandée). Un simple passage du browser en debug exhibe cette valeur cryptée permet de la copier puis de tester les 10000 clés AES possibles (ce qui va être court).
+>SHA-256 est considéré comme fragile à une attaque par force brute : c'est vrai pour un mot de passe de faible longueur alors qu'ici il s'agit des 31 caractères sortis d'un BCRYPT. Il est impossible de retrouver `prB` depuis `prBD` par attaque de force brute.  
+>L'attaque du BCRYPT sur un minimum de 20 caractères, sachant qu'en plus les mots correspondants sont préfixés d'un chiffre aléatoire vis à vis des dictionnaires, semble vouée à l'échec d'après la littérature spécialisée.
+
+*Pratique interdite* : la clé S et `prB` pourraient être conservés en données persistantes dans le browser cryptée par un code PIN numérique de 4 caractères : un utilisateur tentant une connexion rapide a alors 3 essais sinon la mémorisation est détruite. Un simple passage du browser en debug exhibe cette valeur cryptée permet de la copier puis de tester les 10000 clés AES possibles (ce qui va être court).
 
 ### Phrase secrète d'administration
-C'est une phrase secrète dont le SHA-256 de la `psB` est enregistré dans la configuration de l'instance. Même le piratage de cette `psB` par un serveur indélicat ne sert à rien : c'est la clé S, qui n'est jamais sortie de la session et directement issue du string de la phrase secrète qui permet de décrypter les informations.
+C'est une phrase secrète dont le `prBD` est enregistré dans la configuration de l'instance. Même le piratage de cette `prBD` (voire de `prB`) par un serveur indélicat ne sert à rien : c'est la clé S, qui n'est jamais sortie de la session et directement issue du string de la phrase secrète qui permet de décrypter les informations.
 
 ### Numéro long : forum
 Un vecteur de 15 octets tirés au hasard est codé en base 64 URL de 20 caractères.

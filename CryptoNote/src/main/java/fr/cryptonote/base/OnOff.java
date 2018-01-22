@@ -5,7 +5,7 @@ import java.util.HashMap;
 import fr.cryptonote.provider.DBProvider;
 
 public class OnOff {
-	public static final String NAMESPACE = "ns";
+	public static final String NAMESPACE = "admin";
 
 	private static Long nextReload = 0L;
 	private static HashMap<String,Integer> status = new HashMap<String,Integer>();
@@ -33,6 +33,16 @@ public class OnOff {
 				} catch (Exception e) {}
 				nextReload = now + (BConfig.NSSCANPERIODINSECONDS() * 1000);
 		}
+	}
+	
+	/*****************************************************************/
+	public static class Sudo extends Operation {
+		
+		@Override public Result work() throws AppException {
+			if (!isSudo())	throw new AppException("SADMINOP");
+			return Result.empty();
+		}
+		
 	}
 	
 	/*****************************************************************/
