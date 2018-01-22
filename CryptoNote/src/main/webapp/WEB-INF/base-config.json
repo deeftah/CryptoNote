@@ -85,10 +85,9 @@
 	},
 		
 	"shortcuts":{
-		"(empty)":"a/index.app",
-		"z":"z/index.app",
-		"a/p":"a/index.app",
-		"a/s":"a/index.ws"
+		"(empty)":"test/home2",
+		"th":"test/home1",
+		"ad":"admin/admin"
 	},
 	
 	"help": {

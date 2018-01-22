@@ -33,9 +33,17 @@ class AppHomes extends Polymer.Element {
   	
   	async setHome(home) {
   		this.home = home;
-  		this.bar = App.namespace + "-" + home + "-bar";
-  		this.setPage(App.namespace + "-" + home, {});
-  		App.topBar = this.$[App.namespace + "-" + home + "-bar"];
+  		let b = App.namespace + "-" + home + "-bar";
+  		App.topBar = this.$[b];
+  		if (!App.topBar) {
+  	  		b = "z-" + home + "-bar";
+  	  		App.topBar = this.$[b];
+  		}
+  		this.bar = b;
+  		let h = App.namespace + "-" + home;
+  		if (!this.$[h])
+  			h = "z-" + home;
+  		this.setPage(h, {});
   	}
   	
   	setLang(lang) { 

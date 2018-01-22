@@ -4,83 +4,186 @@
 Les sessions externes émettent des requêtes HTTPS qui peuvent être des GET ou des POST.
 
 ### Applications : `context-path`, ping, build
-Un serveur ou pool de serveurs accessible par une URL peut servir plusieurs applications d'objets différents. Le début de l'URL après le nom du serveur est le code de cette application :
+Le pool de serveurs peut servir plusieurs instances internes d'application, chacune relative à une organisation, l'URL étant différente selon qu'il y a ou un `context-path` `cp` :
 
-    https://site.org/theApp/xxx...
+    Sans context-path    : https://site.org/monOrg/xxx...
+    Avec context-path cp : https://site.org/cp/monOrg/xxx...
 
-Un serveur ou pool de serveurs qui ne sert qu'une unique application a une URL qui ignore `theApp` :  
+A la place de `monApp` on peut avoir `admin` afin d'adresser l'application d'administration  globale des instances (on/off, gestion des tâches différées).  
+Par la suite on ne considère les URLs qu'à partir de `monOrg/...`
 
-    https://site.otg/xxx...
+##### GET `ping`
 
-Le code `theApp` ci-dessus est nommé techniquement `context-path` et peut être "" ou contenir `"theApp"`.
+    (1) ping
+    (2) monOrg/ping
+    (3) admin/ping
 
-Quand il s'agit d'un pool de serveur, il y a en général :
-- une adresse pour le pool sans savoir à quel serveur physique on s'adresse :  `https://pool.site.org/... ` ou le cas échéant `https://site.org/...` C'est l'utilisation la plus fréquente.
-- une adresse indiquant précisément quel serveur physique est à joindre : `https://django.site.org/...` Cet adressage est réservé à des opérations techniques particulières, typiquement celles de commandes d'un *QueueManager* gérant les tâches différées des applications.
-
-Pour déterminer si l'application `theApp` est en ligne on peut utiliser les commandes :
-
-    1 - https://site.org/theApp/ping
-    2 - https://django.site.org/theApp/ping
-
-Dans le cas 1, un serveur du pool répond qu'il est prêt à recevoir des requêtes.  
-Dans le cas 2, le serveur spécifique adressé répond qu'il est prêt à recevoir des requêtes.
-
-Chaque application a une version du logiciel nommée `build` qui est un numéro toujours croissant au fil du temps : le ping retourne un texte de la forme `{t:171205184532456, b:132}`
-- `t` indique la date-heure courante du serveur en millisecondes UTC : le 5 décembre 2017 à 18:45:32 et 456 millisecondes.
-- `b` indique le numéro de build (la version de l'application).
-
-### Organisations : code stop
-Une application donnée peut être déployée pour le compte de plusieurs **organisations**, les données de chacune étant étanches de celles des autres mais :
-- toutes exécutent la même application sous la même version (build) du logiciel.
-- chaque organisation, indépendamment des autres, peut être mise on/off par un administrateur technique.
-    - quand l'application est **on** son code `off` vaut 0 (ou est absent).
-    - quand l'application est **off** son code `off` a deux chiffres :
-        - le premier indique la raison de l'arrêt, par exemple :
-            - 1-maintenance technique, 
-            - 2-suspension administrative temporaire, 
-            - 3-exportation vers un autre site, 
-            - 4-opération de sécurité,
-            - 9-clôture définitive.
-        - le second donne une idée du délai d'interruption estimé, par exemple :
-            - 0-totalement inconnu et non maîtrisé,
-            - 1-très courte durée (secondes),
-            - 2-courte durée, de l'ordre de dizaines de minutes à une heure ou deux,
-            - 3-plusieurs heures,
-            - 4-plusieurs jours,
-            - 5-plusieurs semaines ou mois.
-            - 9-pas de reprise envisagée.
-
-**Datastore / Base de données**
-Une organisation donnée a ses données permanentes gérées par un Datastore / Base de données, sachant que chaque base peut techniquement héberger les données de plusieurs organisations.
-- les données d'une organisation sont techniquement étanches de celles des autres même dans le même Datastore / Base de données.
-- elles peuvent être techniquement facilement exportées / purgées sans perturbation pour les autres organisations dont les données seraient co-hébergées (mais l'exportation peut être très longue).
-
-L'URL qui permet d'accéder à l'application d'une organisation a la forme suivante :
-
-    https://site.org/theApp/monOrg/...
-
-La commande `https://site.org/theApp/monOrg/ping` permet de connaître le statut de l'application pour cette organisation : 
-
-    {t:171205184532456, b:132, off:12, db:"PG-10.1 [cna]"}
-    
-Le code `off` est celui décrit ci-dessus et est absent quand l'application est on pour cette organisation.  
-Le code `db` donne le type de Datastore utilisé (Postgresql 10.1) et son identifiant local (cna).  
-Le texte du code derrière `db` peut être un code d'erreur si la base de données est indisponible pour une raison technique.
+Retourne un JSON avec :
+- `t` : la date-heure sous la forme estampille : `180124175849876`
+- `b `: le numéro de build : 264
+- pour les formes 2 et 3 :
+    - `off` : 0 ou 1 selon que l'instance est on ou off. L'opération `setOnOff` permet à l'administrateur de mettre on ou off une instance.
+    - `db` : le message d'information stocké dans la table `dbinfo` de la base de l'instance. Si `?` elle n'est pas joignable.
 
 **Queue Managers**
-Certains serveurs physiques sont chargé de gérer la file des tâches différées pour une ou plusieurs organisations : ces serveur ont un profil de Queue Manager.
+Certains hosts sont chargés de gérer la file des tâches différées pour une ou plusieurs instances : ils ont un code d'instance commençant par `qm` et le front end nginx se charge de router les quelques opérations spécifiques à un Queue Manager en détectant le nom d'instance.
 
-Un Queue Manageur a un code commençant par `qm`) : qm1 qm7 etc. Dans une URL visant exclusivement un serveur physique (pas l'adresse d'un pool) un administrateur technique peut adresser des requêtes au QueueManager :
+## Ressources Web 
+Les ressources web sont /var et /WEB-INF mais celle-ci n'étant pas accessible depuis un GET il ne reste que les ressources localisées sous `/var`.  
+Une page d'accueil (home) pour l'instance `monOrg` ressemble à ça et a été générée en utilisant le template /var/index.html
 
-    https://django.site.org/theApp/qm7/...
+    <!-- Partie générée sur le serveur en remplacement de la première ligne de index.html -->
+    <!DOCTYPE html><html><head><base href="/cp/monOrg/var281/">
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+    <script src='js/build.js'></script> <<<<<<<<<<<<<<<<(1)
+    <script src='js/root.js'></script>  <<<<<<<<<<<<<<<<(2)
+    
+    <!-- Ce texte est inséré par le serveur en fonction de l'instance et de sa configuration ->
+    <script type='text/javascript'>
+    App.modeMax = 0;
+    App.buildAtPageGeneration = 281;
+    App.zone = "Europe/Paris";
+    App.langs = ["fr","en"];
+    App.lang = "fr";
+    App.theme = "z";
+    App.themes = JSON.parse('["z","a","b","en","fr"]');
+    App.helpDic = JSON.parse('{"p12":{"p":"p11","t":"s1","refs":["p22"]},"p11":{"t":"s1","s":"p12","refs":["p22"]},"p22":{"p":"p21","t":"s1","refs":["p11","p12"]},"s1":{"t":"home","s":"s2","refs":["p11","p12"]},"p21":{"t":"s1","s":"p22","refs":[]},"home":{"refs":["s1","s2"]},"s2":{"p":"s1","t":"home","refs":["p21","p22"]}}');
+    App.zDics = {};
+    App.customThemes = {};
+    App.zres = {
+    };
+    </script>
+    <script src='js/fr/base-msg.js'></script>
+    <script src='js/fr/app-msg.js'></script>
+    <script src='js/fr/theme.js'></script>
+    <script src='js/en/app-msg.js'></script>
+    <script src='js/en/theme.js'></script>
+    <script src='js/theme-z.js'></script>
+    <script src='js/theme-a.js'></script>
+    <script src='js/theme-b.js'></script>
+    
+    <!-- Le texte qui suit est directement celui du template index.html. ->
+    <title>CN-test</title>
+    <link rel="shortcut icon" type="image/png" href="z/z/icon.png">
+    <script>App.setup();</script>                    <<<<<<<<<<<<<<<<<<<<<<<<(3)
+    <script src='js/encoding.js'></script>
+    <script src='js/pako.js'></script>
+    <script src='js/bcrypt.js'></script>
+    <script src='js/showdown.min.js'></script>
+    <script src='js/util.js'></script>
 
-Si ce serveur n'héberge pas de Queue Manager, ou pas celui de code qm7, la requête revient avec un code d'erreur 500.
+    <script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer-element.html">
+    <link rel="import" href="base.html">
+    <link rel="import" href="shared.html">
+    <link rel="stylesheet" type="text/css" href="fonts/roboto.css">
+    <link rel="stylesheet" type="text/css" href="fonts/roboto-mono.css">
+    <link rel="stylesheet" type="text/css" href="fonts/comfortaa.css">
+    <link rel="import" href="app_components/app-homes.html">
+    <script src='z/z/custom.js'></script>
+    </head>
+    <body>
+    <app-homes></app-homes>
+    </body>
+    </html>
 
-***Raccourcis d'URLs*** pour un GET  
-La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le *code de l'organisation*. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.
+Dans ce texte générée par le servlet `281` est le numéro de build. Sa présence permet de mettre hors jeu les ressources gardées en cache d'une build antérieure : dans le répertoire déployé il n'apparaît que `../var/...`
 
-    https://site.org/theApp/app -> https://site.org/theApp/monOrg/page-home.app
+#### Structure du /var
+
+    app_components/
+    bower_compoents/
+    fonts/
+    js/
+    z/
+    base.html
+    bower.json
+    bye.html
+    error.html
+    index.html
+    reload.html
+    reload2.html
+    reload3.html
+    shared.html
+
+**app_components/** : répertoire contenant les web components de l'application.
+
+**bower_components/** : répertoire contenant les web components externes (Polymer etc.).
+
+**fonts/** : répertoire contenant les fichiers `f1.css` des fontes f1 et `f1x.woff` référencés dans les `f1.css`.
+
+**js/** : 
+- un répertoire par langue contenant les fichiers **base-msg.js app-msg.js theme.js**
+- les fichiers **.js** de l'application (en particulier ceux des web components) et les fichiers spécifiques suivants :
+    - **build.js** : ce fichier est à changer à chaque build et son format est contraint.
+    `appbuild = 281;`
+    - **root.js** : premier script chargé, déclare la classe App et l'initialise, enregistre le service worker. Il est réellement exécuté à la ligne (3).
+    - **util.js** : contient les classes utilitaires requises.
+    - **sw.js** : template du script du service worker.
+    - service worker : déclare les mime types acceptés des ressources et spécifie ceux qui peuvent subir une compression. **Peut être customisé**.
+    - ***Scripts externes*** :
+        - **encoding.js** : pallie pour Edge au manque de la classe `TextEncoder`.
+        - **pako.js** : gzip en javascript.
+        - **showdown.min.js** : conversion MD en HTML.
+        - **bcrypt.js** : digest BCRYPT.
+    - ***Scripts des web components*** et autres scripts de l'application : quand on souhaite ne pas le laisser dans le .html où ils peuvent poser problèmes de debug dans d'autres browser que Chrome.
+    - ***Scripts de définition des thèmes*** : **theme-z.js theme-a.js theme-b.js**
+
+**z/** : 
+- un sous répertoire pour chaque instance contenant ses surcharges spécifiques des valeurs par défaut qui sont dans `z/z/`. Par principe toutes les ressources requises se trouvent dans `z/z/` mais s'il en existe une de même nom pour le sous-répertoire d'une instance c'est celle-ci qui est prise quand cette instance s'exécute dans un browser.
+- **custom.js** : classe dont la méthode `static ready()` est invoquée quand tout est chargé.
+
+**base.html** : c'est le `<custom-style>` applicable dans la page d'accueil et qui régit entre autres les dimensionnements des fontes selon la taille des pages afin que le reste de l'application s'exprime en rem.
+
+**shared.html** : il peut être inséré dans les web components qui en ont besoin, en particulier pour fixer les css des tags de bases.
+
+**bower.json** : pour mettre à jour les web components externes. Pas d'intérêt pour l'application mais il doit être là.
+
+**bye.html** : page d'adieu invoquée en sortie de l'application.
+
+**error.html** : page invoquée en cas d'erreur dans un script au chargement de la page d'accueil.
+
+**index.html** : template de la page d'accueil générique.
+
+**reload.html reload2.html reload3.html** : trois pages nécessaires pour arriver à faire recharger une nouvelle version dans le cas d'un service worker.
+
+**WEB-INF**  
+Il comporte les fichiers suivants :
+- **web.xml** : contient principalement le nom de la classe d'application de configuration et toutes les liens vers les ressources jdbc requises (en gros la liste des bases).
+- **appengine-web.xml queue.xml** : configuration pour GAE.
+- **logging.properties** : configuration du logger.
+- **base-config.json** : configuration de l'application et des instances.
+- **app-config.json** : configuration complète spécifique de l'application.
+
+## Pages d'accueil et URLs
+Chaque instance peut avoir une ou plusieurs pages d'accueil :
+- chaque page d'accueil a un nom home admin index ... et la configuration spécifie si la page peut être en mode sync ou avion.
+- la page générique d'accueil app-homes.html reprend toutes les pages d'accueil possibles pour toutes les instances, sachant que plusieurs instances peuvent avoir une même page d'accueil.
+- à chaque page d'accueil correspond une top bar qui ne changera pas alors que la navigation permet de passer à d'autres pages que celle d'accueil. Toutes les pages possibles figurent dans app-homes.
+
+### URLs d'une instance
+
+    monOrg/home2      >>> page d'accueil home2 de l'instance monOrg en incognito
+    monOrg/s/home2    >>> page d'accueil home2 de l'instance monOrg en mode sync
+    monOrg/s/home2.a  >>> page d'accueil home2 de l'instance monOrg en mode avion
+    
+    monOrg/var...     >>> ressources accessibles par GET en mode incognito
+    monOrg/s/var...   >>> ressources accessibles par GET en mode sync et avion
+    
+    monOrg/x.appcache >>> en attente de passage en service worker
+    
+    monOrg/s/sw.js    >>> script du service worker spécifique à cette instance
+    
+    monOrg/ping       >>> ping en GET et POST
+    monOrg/op/...     >>> appel d'une opération en POST 
+    monOrg/od/...     >>> appel d'une opération différée en POST
+    
+
+***Raccourcis d'URLs*** pour les pages d'accueil 
+La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages d'accueil : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le *code de l'organisation*. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.
+
+    https://site.org/cp/ -> https://site.org/cp/monOrg/home2
+    https://site.org/cp/ad -> https://site.org/cp/admin/admin
 
 **URLs possibles** (sans context-path pour simplifier)
 
@@ -97,6 +200,12 @@ La configuration permet de définir des URLs raccourcies correspondant aux charg
     /var/z/...        // ressource dynamique (custom.css custom.js ...)
     /_12_2/...        // ressource dynamique
 
+### TODO
+Recherche en /var  
+lang  
+theme  
+
+
 Une ressource dynamique `/var/z/xxx.yyy` est d'abord recherchée dans la base dans le namespace nommé `namespace` dans un document ayant pour docid le code `ns` du namespace qu'il customise.
 - ceci permet de définir des pages plus spécifiques par organisation et de les adapter en runtime et pas seulement sur une livraison de build.
 - si la ressource n'est pas trouvée customisée, c'est celle effectivement `/var/z/` correspondante qui est prise.
@@ -104,7 +213,7 @@ Une ressource dynamique `/var/z/xxx.yyy` est d'abord recherchée dans la base da
 - le namespace `namespace` ne supporte pas la customisation : en cas d'erreur de script par exemple l'application serait bloquée.
 
 ### Invocation d'opérations
-URLs : `cp/ns/op/p1/p2 ...`  ou `cp/ns/od/taskid`
+URLs : `cp/ns/op/p1/p2 ...`  ou `cp/ns/od/taskid/step`
 
 Les autres arguments sont passés soit en `application/x-www-form-urlencoded` (sur un GET) ou en `multipart/form-data` (sur un POST) :
 - `op/` :  obligatoire, signale un appel d'opération. Ce code est `od/` pour une opération différée *émise* par le Queue Manager.

@@ -8,9 +8,11 @@ class App {
 		this.isSW = navigator.serviceWorker ? true : false;
 		
 		this.origin = window.location.origin; 						// https://... :8443
-		this.path = window.location.pathname; 						// /cn/test/home2.ahtm?...
+		let path = window.location.pathname; 						// /cn/test/home2.ahtm?...
+		if (this.shortcut)
+			path = (this.contextpath ? "/" + this.contextpath + "/" : "/") + this.shortcut;
 		this.hash = window.location.hash;							// ?...
-		this.page = this.path.substring(0, this.path.length - this.hash.length); // /cn/test/home2.ahtm
+		this.page = path.substring(0, path.length - this.hash.length); // /cn/test/home2.ahtm
 		
 		let i = this.page.lastIndexOf("/");
 		let x = this.page.substring(i + 1); 						// home2.ahtm
@@ -31,11 +33,11 @@ class App {
 		i = x.lastIndexOf("/");
 		if (i == 0) {
 			// PAS de contextpath
-			this.contextpath = "";
 			this.namespace = x.substring(1);
+			this.opbase = this.origin + "/" + this.namespace + "/";
 		} else {
-			this.contextpath = x.substring(1, i);
 			this.namespace = x.substring(i + 1);
+			this.opbase = this.origin + "/" + this.contextpath + "/" + this.namespace + "/";
 		}
 		
 		if (wb) {

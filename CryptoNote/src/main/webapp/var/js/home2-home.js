@@ -108,8 +108,13 @@ class Home2Home extends Polymer.Element {
 	ping2() { this.ping(App.globalSpinner); }
 	ping3() { this.ping(App.defaultSpinner); }
 
-	checkSrvVersion() {
-		App.Util.checkSrvVersion();
+	async dbInfo() {
+		try {
+			const r = await new Req().setOp("dbInfo").setTimeOut(6000).go();
+			this.pingres = !r ? "json mal formé ?" : JSON.stringify(r);					
+		} catch(err) {
+			console.error(App.Util.error("DbInfo KO - " + err.message, 3000));
+		}
 	}
 	
 	async crypto() {

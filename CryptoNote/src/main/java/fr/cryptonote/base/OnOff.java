@@ -46,6 +46,18 @@ public class OnOff {
 	}
 	
 	/*****************************************************************/
+	public static class DbInfo extends Operation {
+		public static class DBI {
+			public String dbInfo;
+			DBI(String x) { dbInfo = x; }
+		}
+		@Override public Result work() throws AppException {
+			String x = execContext().dbProvider().dbInfo(null);
+			return Result.json(new DBI(x));
+		}
+	}
+	
+	/*****************************************************************/
 	public static class SetOnOff extends Operation {
 		public static class Param {
 			String ns;

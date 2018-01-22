@@ -612,7 +612,7 @@ class ReqErr {
 class Req {
 	constructor() {
 		this.TIME_OUT_MS = 300000;
-		this.url = new StringBuffer().append(App.base + "/");
+		this.url = new StringBuffer().append(App.opbase);
 		this.currentRetry = null;
 		this.hasArgs = false;
 		this.formData = new FormData();

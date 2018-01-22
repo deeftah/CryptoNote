@@ -185,6 +185,7 @@ public class Servlet extends HttpServlet {
 		ExecContext exec;
 		String origUri;
 		String uri;
+		String shortcut;
 		int build;
 		Nsqm nsqm;
 		boolean fini = false;
@@ -223,7 +224,7 @@ public class Servlet extends HttpServlet {
 				sendText(200, x, resp, "application/json");
 				fini = true;
 			}
-			String shortcut = BConfig.shortcut(origUri);
+			shortcut = BConfig.shortcut(origUri);
 			if (shortcut != null) origUri = shortcut;
 		}
 				
@@ -438,6 +439,9 @@ public class Servlet extends HttpServlet {
 			sb.append("<script src='js/root.js'></script>\n");
 
 			sb.append("\n<script type='text/javascript'>\n");
+			if (shortcut != null)
+				sb.append("App.shortcut = \"").append(shortcut).append("\";\n");
+			sb.append("App.contextpath = \"").append(contextPath).append("\";\n");
 			sb.append("App.modeMax = ").append(modeMax).append(";\n");
 			sb.append("App.buildAtPageGeneration = ").append(BConfig.build()).append(";\n");
 			sb.append("App.zone = \"").append(BConfig.zone()).append("\";\n");
@@ -616,8 +620,8 @@ public class Servlet extends HttpServlet {
 		if (r == null) r = Result.empty();
 		byte[] bytes = r.bytes();
 		resp.setContentLength(bytes.length);
-		resp.setContentType(r.mime);
-		resp.setCharacterEncoding(r.encoding);
+		resp.setContentType(r.mime());
+		resp.setCharacterEncoding(r.encoding());
 		try { Util.streamBytes(resp.getOutputStream(), bytes); } catch (IOException e) {	}
 	}
 

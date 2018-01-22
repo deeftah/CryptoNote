@@ -528,6 +528,7 @@ public class BConfig {
 			Operation.register(OnOff.GetOnOff.class);
 			Operation.register(OnOff.SetOnOff.class);
 			Operation.register(OnOff.Sudo.class);
+			Operation.register(OnOff.DbInfo.class);
 			Operation.register(Mailer.SendMail.class);
 			Operation.register(TraceTasks.class);
 			Operation.register(ErrTasks.class);
