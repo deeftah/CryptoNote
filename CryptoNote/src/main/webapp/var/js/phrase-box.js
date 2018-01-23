@@ -133,7 +133,7 @@ class PhraseBox extends Polymer.Element {
 		this.nl = nbl;
 		this.diag = App.format("pb_di", "" + this.nm, "" + this.nl);
 		this.er = (this.nm < this.nbmots) || (this.nl < this.nbletters);
-		this.diagcl = this.er ? "cpt red" : "cpt grey";
+		this.diagcl = this.er ? "cpt err" : "cpt ok";
 		if (nv != y)
 			this.typed = y;
 	}

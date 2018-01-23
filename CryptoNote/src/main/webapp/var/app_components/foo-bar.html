@@ -2,10 +2,10 @@
 
 <dom-module id="foo-bar">
 <template>
-	<style is="custom-style">
+	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles shared1-styles">
 	</style>
 	<style>
-		:host { font-family: var(--font-std); font-size:1rem;}
+		:host { @apply --std-reg}
 	</style>
 <div id="top">
 </div>

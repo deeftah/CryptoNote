@@ -1,11 +1,9 @@
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
-
 <dom-module id="wait-home">
 <template>
-	<style is="custom-style">
+	<style is="custom-style" include="shared2-styles">
 	</style>
 	<style>
-		:host { font-family: var(--font-cf); font-size:3rem; color: var(--paper-orange-300); padding:2rem; text-align:center;}
+		:host { @apply --wait-home; }
 	</style>
 <div>[[lib("wait_home",lang)]]</div>
 </template>

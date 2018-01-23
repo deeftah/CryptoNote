@@ -24,12 +24,10 @@
 
       	constructor() { super(); }
       	
-      	ready() {
-      		super.ready();
-		}
-      	cl(iv) {
-      		return iv ? "iv" : "nv";
+       	cl(iv) { 
+       		return iv ? "iv" : "nv";
       	}
+       	
       	gohelp() {
       		App.help(this.help);
       	}

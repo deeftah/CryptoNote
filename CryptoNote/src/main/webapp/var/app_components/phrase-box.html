@@ -9,44 +9,28 @@
 
 <dom-module id="phrase-box">
 <template>
-<style is="custom-style" include="iron-flex iron-flex-alignment">
-	paper-dialog.size-position { margin:0 !important; min-width:320px; max-width:500px; width:50%; overflow:hidden;}
-	paper-button.color-std { color : var(--btnstd-color); }
-	paper-button.color-std:hover { 	@apply --btnstd-hover; }
-	paper-button.color-def { color : var(--btndef-color); }
-	paper-button.color-def:hover { @apply --btndef-hover; }
+<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles">
+	paper-dialog.box1 { @apply --center-box1}
 	
-	paper-icon-button.ic1 {
-		color: var(--paper-grey-700);
-		width: var(--font-xlarge);
-		height: var(--font-xlarge);
-		padding: 0;
-	}
-    paper-icon-button.ic1:hover {
-		background-color: var(--paper-grey-700);
-		color: white;
-    }
-    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */
-   		color: var(--paper-grey-300);
-   	}
-    
+	paper-button.std { @apply --btnstd-n; }
+	paper-button.std:hover { @apply --btnstd-hover; }
+	paper-button.def { @apply --btndef-n; }
+	paper-button.def:hover { @apply --btndef-hover; }
+	    
     #inp {
-    	--paper-input-container-input: {
-			@apply --mono-reg;
-			color: var(--paper-blue-700);
-		}
+    	--paper-input-container-input: { @apply --mono-reg; color: var(--inp1-color); }
     }
 </style>
 <style>
 	:host { font-family: var(--font-std); }
-	:host .body { margin:0; padding:0.5rem;}
-	:host .title {font-family: var(--font-cf); font-size:var(--font-reg);}
-	:host .cpt, :host .avis {font-family: var(--font-std); font-size:var(--font-small); }
-	:host .red {color:var(--paper-red-700); font-weight:700;}
-	:host .grey {color:var(--paper-grey-700);}
-	:host .avis { font-style:italic; color:var(--paper-grey-700); }
+	:host .body { margin:0; padding:0.5rem; }
+	:host .title { @apply --cf-reg; }
+	:host .cpt, :host .avis { @apply --std-reg; font-size:var(--font-small); }
+	:host .err { color:var(--alert-color); font-weight:700;}
+	:host .ok { color:var(--avis-color);}
+	:host .avis { font-style:italic; color:var(--avis-color); }
 </style>
-<paper-dialog id="panel" class="size-position" modal entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+<paper-dialog id="panel" class="box1" modal entry-animation="fade-in-animation" exit-animation="fade-out-animation">
 	<div class="body layout vertical">
 		<div class="layout horizontal justified">
 			<div class="title">[[text]]</div>
@@ -64,8 +48,8 @@
 	</div>
 	
 	<div class="buttons">
-		<paper-button dialog-dismiss class="color-def">[[lib('pb_ko',lang)]]</paper-button>
-		<paper-button dialog-confirm raised class="color-std" disabled="[[er]]">[[lib('pb_ok',lang)]]</paper-button>
+		<paper-button dialog-dismiss class="def">[[lib('pb_ko',lang)]]</paper-button>
+		<paper-button dialog-confirm raised class="std" disabled="[[er]]">[[lib('pb_ok',lang)]]</paper-button>
 	</div>
 </paper-dialog>
 </template>

@@ -473,10 +473,10 @@ public class Servlet extends HttpServlet {
 				if (varx.contains(p + "app-msg.js"))
 					sb.append("<script src='js/" + lang + "/app-msg.js'></script>\n");
 				p = "/var/z/" + nsqm.code + "/" + lang + "/";
-				if (varx.contains(p + "app-msg.js"))
-					sb.append("<script src='z/z/" + lang + "/app-msg.js'></script>\n");
-				if (varx.contains(p + "base-msg.js"))
+				if (rns.containsValue(p + "base-msg.js"))
 					sb.append("<script src='z/z/" + lang + "/base-msg.js'></script>\n");
+				if (rns.containsValue(p + "app-msg.js"))
+					sb.append("<script src='z/z/" + lang + "/app-msg.js'></script>\n");
 				if (varx.contains("/var/js/" + lang + "/theme.js"));
 					sb.append("<script src='js/" + lang + "/theme.js'></script>\n");				
 			}

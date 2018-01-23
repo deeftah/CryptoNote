@@ -133,9 +133,9 @@ Dans ce texte générée par le servlet `281` est le numéro de build. Sa prése
 - un sous répertoire pour chaque instance contenant ses surcharges spécifiques des valeurs par défaut qui sont dans `z/z/`. Par principe toutes les ressources requises se trouvent dans `z/z/` mais s'il en existe une de même nom pour le sous-répertoire d'une instance c'est celle-ci qui est prise quand cette instance s'exécute dans un browser.
 - **custom.js** : classe dont la méthode `static ready()` est invoquée quand tout est chargé.
 
-**base.html** : c'est le `<custom-style>` applicable dans la page d'accueil et qui régit entre autres les dimensionnements des fontes selon la taille des pages afin que le reste de l'application s'exprime en rem.
+**base.html** : c'est le `<custom-style>` applicable dans la page d'accueil et qui régit les dimensionnements des fontes selon la taille des pages afin que le reste de l'application s'exprime en `rem`.
 
-**shared.html** : il peut être inséré dans les web components qui en ont besoin, en particulier pour fixer les css des tags de bases.
+**shared1.html shared2-styles** : ils peuvent être inclus dans le `custom-style` dans les web components qui en ont besoin. Normalement ces styles ne référencent pas d'attributs de présentation (couleur, taille, fonte) en dur mais uniquement des variables qu'on va trouver dans les thèmes.
 
 **bower.json** : pour mettre à jour les web components externes. Pas d'intérêt pour l'application mais il doit être là.
 
@@ -157,9 +157,9 @@ Il comporte les fichiers suivants :
 
 ## Pages d'accueil et URLs
 Chaque instance peut avoir une ou plusieurs pages d'accueil :
-- chaque page d'accueil a un nom home admin index ... et la configuration spécifie si la page peut être en mode sync ou avion.
-- la page générique d'accueil app-homes.html reprend toutes les pages d'accueil possibles pour toutes les instances, sachant que plusieurs instances peuvent avoir une même page d'accueil.
-- à chaque page d'accueil correspond une top bar qui ne changera pas alors que la navigation permet de passer à d'autres pages que celle d'accueil. Toutes les pages possibles figurent dans app-homes.
+- chaque page d'accueil a un nom `home admin index` ... et la configuration spécifie si la page peut être en mode `sync` ou `avion`.
+- la page générique d'accueil `app-homes.html` reprend toutes les pages (d'accueil  ou non) possibles pour toutes les instances, sachant que plusieurs instances peuvent avoir une même page d'accueil.
+- à chaque page d'accueil correspond une *top bar* qui ne changera pas alors que la navigation permet de passer à d'autres pages que celle d'accueil. Toutes les pages possibles figurent dans `app-homes`.
 
 ### URLs d'une instance
 
@@ -185,35 +185,46 @@ La configuration permet de définir des URLs raccourcies correspondant aux charg
     https://site.org/cp/ -> https://site.org/cp/monOrg/home2
     https://site.org/cp/ad -> https://site.org/cp/admin/admin
 
-**URLs possibles** (sans context-path pour simplifier)
+#### Ressources en /var/z
+Une ressource `/var/z/z/toto.png` demandée par l'instance `monOrg` est obtenue depuis :
+- `/var/z/monOrg/toto.png`,
+- si elle n'a pas été trouvée elle est recherchée en `/var/z/z/toto.png`
 
-    org -> ns
-    /ping
-    /ns/ping          // ping du namespace et de sa base
-    /ns/x.appcache    // ressource MANIFEST d'une appcache
-    /ns/x.swjs        // ressource sw.js de Service Worker
-    /ns/mapage.app    // page de l'application .app .cloud .local .sync
-    /ns/op/...        // opération standard
-    /ns/od/taskid     // opération différée (tâche)
-    /var/...          // ressource
-    /_12_2/...        // ressource versinnée pour éviter les problèmes de cache
-    /var/z/...        // ressource dynamique (custom.css custom.js ...)
-    /_12_2/...        // ressource dynamique
+Le répertoire `/var/z/z/...` contient toutes les ressources par défaut qui sont en priorité recherchées dans le répertoire spécifique de l'instance `monOrg` `/var/z/monOrg/...`
 
-### TODO
-Recherche en /var  
-lang  
-theme  
+#### Traduction des messages
+Un message a un **code** et un **texte** dans lequel les arguments `{0} {1} ...` sont remplacés par les paramètres positionnels passés lors de l'obtention du texte. Les simples `quotes` doivent être doublés, les `doubles quotes` précédés d'un `backslash`.  
+Un fichier de traduction est un script `.js` qui respecte cette syntaxe :
 
+    App.setAll("en", {
+    "ns_test":"Test : workgroups and associations",
+    "ns_admin":"Hosted Organizations Administration" 
+    });
 
-Une ressource dynamique `/var/z/xxx.yyy` est d'abord recherchée dans la base dans le namespace nommé `namespace` dans un document ayant pour docid le code `ns` du namespace qu'il customise.
-- ceci permet de définir des pages plus spécifiques par organisation et de les adapter en runtime et pas seulement sur une livraison de build.
-- si la ressource n'est pas trouvée customisée, c'est celle effectivement `/var/z/` correspondante qui est prise.
-- il n'est donc possible de customiser QUE des ressources existantes dans `/var/z`.
-- le namespace `namespace` ne supporte pas la customisation : en cas d'erreur de script par exemple l'application serait bloquée.
+Tout ce qui est entre le premier `{` et le dernier `}` (inclus) respecte strictement une syntaxe JSON.
 
-### Invocation d'opérations
-URLs : `cp/ns/op/p1/p2 ...`  ou `cp/ns/od/taskid/step`
+Les fichiers de traductions pour une langue donnée `fr` et une instance donnée `monOrg` sont chargés dans l'ordre suivant, le dernier trouvé étant retenu :
+
+    js/fr/base-msg.js js/fs/app-msg.js z/monOrg/fr/base-msg.js z/monOrg/fr/app-msg.js 
+
+#### Définition des thèmes graphiques
+Les thèmes graphiques sont nommés `a b ...` Le thème `z` est le thème virtuel contenant les valeurs par défaut.  
+- il existe de plus un correctif de thème par langue, pour les quelques données CSS pouvant dépendre de la langue (after / before et quelques images.
+- un thème est défini par une liste de variables CSS sous la syntaxe ci-dessous.
+- la liste des valeurs finalement applicables pour le thème `a` en langue `fr` résulte de l'application des scripts : `js/theme-z.js js/theme-a.js js/fr/theme.js`
+
+*Syntaxe d'un fichier thème :*
+
+    App.setTheme("z", {
+    "--font-mono" : "'Roboto Mono'",
+    "--font-std" : "'Roboto'",
+    "--font-cf" : "'Comfortaa'",
+    "--btnstd-color": "var(--paper-indigo-900)",
+    ...
+    });
+
+## Invocation d'opérations
+URLs : `/cp/monOrg/op/p1/p2 ...`  ou `cp/monOrg/od/taskid/step`
 
 Les autres arguments sont passés soit en `application/x-www-form-urlencoded` (sur un GET) ou en `multipart/form-data` (sur un POST) :
 - `op/` :  obligatoire, signale un appel d'opération. Ce code est `od/` pour une opération différée *émise* par le Queue Manager.

@@ -9,14 +9,15 @@
 
 <dom-module id="home2-home">
 <template>
-<style include="shared-styles"></style>
-<style>
-	  	:host { font-family: var(--font-std); }
-	  	:host .cf {@apply --cf-lite; font-size:1.2rem; color:var(--mybg-color);}
+	<style is="custom-style" include="shared2-styles">
+	</style>
+	<style>
+	  	:host { @apply --std-reg; }
+	  	:host .cf { @apply --cf-lite; color:var(--mybg-color); font-size:var(--font-xl);}
 	  	:host .cf::before { content: var(--bonjour-before);}
 	  	:host .ic1 {height:3rem; width:3rem; color:red; }
 	  	:host .logolang { @apply --flag-gen; width:3rem; height: 3rem; display:inline-block; background-image:var(--bg-imglg);}
-</style>
+	</style>
 <div class="cf">[[bonjour]] <b>[[owner]] [[build]]</b> [[lib('application',lang)]] [[lib('ns_test',lang)]]</div>
 <div>
 	<help-button help="p12"></help-button><help-button help="p13" iv="true"></help-button>

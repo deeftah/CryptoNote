@@ -2,11 +2,9 @@
 
 <dom-module id="home1-home">
   <template>
-  <style include="shared-styles"></style>
+  <style is="custom-style" include="shared2-styles"></style>
   <style>
-	  	:host { 
-	  		font-family: var(--font-mono);
-	  	}
+	  	:host { @apply --mono-reg; 	}
   </style>
   	<div>
   		<button on-tap="back">Back</button>&nbsp;
@@ -63,7 +61,7 @@
       }
       
       home2() {
-    	  App.appHomes.forward("test-home2", {texte:"Bonjour"});
+    	  App.appHomes.forward("z-home2", {texte:"Bonjour"});
       }
     }
   customElements.define(Home1Home.is, Home1Home);

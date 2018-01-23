@@ -37,6 +37,7 @@ class ScripterrPanel extends Polymer.Element {
 		this.cref = "0";
 		this.err = err;
 		const sv = severe ? 1 : 0;
+		this.svcl = "info cl" + sv;
 		
 		this.info = this.lib("er_bugs" + sv);
 		this.name = err.name;

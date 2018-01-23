@@ -1,0 +1,43 @@
+<dom-module id="shared2-styles">
+  <template>
+    <style>
+ 	:host {
+ 		--cf-lite: { font-family:var(--font-cf); font-weight:300; font-size:var(--font-m); }
+		--cf-reg: { font-family:var(--font-cf); font-weight:400; font-size:var(--font-m);}
+		--cf-bold: { font-family:var(--font-cf); font-weight:700; font-size:var(--font-m);}
+		--std-reg: { font-family:var(--font-std); font-weight:400; font-size:var(--font-m);}
+		--std-bold: { font-family:var(--font-std); font-weight:700; font-size:var(--font-m);}
+		--mono-reg: { font-family:var(--font-mono); font-weight:400; font-size:var(--font-m);}
+		--mono-bold: { font-family:var(--font-mono); font-weight:700; font-size:var(--font-m);}	
+ 	
+ 		--btnstd-n : {background-color: white; color:var(--btnstd-color);}
+		--btndef-n : {background-color: white; color:var(--btndef-color);}
+		--btnstd-hover : {background-color: var(--btnstd-color); color:var(--btnstd-colorhover);}
+		--btndef-hover : {background-color: var(--btndef-color); color:var(--btndef-colorhover);}
+		
+		--barbtn1-n : { color: var(--barbtn1-color); background-color: var(--barbtn1-bg); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
+	    --barbtn1-hover : { background-color: var(--barbtn1-color); color: var(--barbtn1-bg); }
+		--barbtn2-n : { color: var(--barbtn2-color); background-color: var(--barbtn2-bg); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
+	    --barbtn2-hover : { background-color: var(--barbtn2-color); color: var(--barbtn2-bg); }
+		--baradbtn-n : { color: var(--barad-color); background-color: var(--barad-bg); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
+	    --baradbtn-hover : { background-color: var(--barad-color); color: var(--barad-bg); }
+	    
+	    --bar-view : {background-color: var(--barbtn2-bg); color: var(--barbtn2-color); height:var(--font-xxl); overflow:hidden;}
+	    --barad-view : {background-color: var(--barad-bg); color: var(--barad-color); height:var(--font-xxl); overflow:hidden;}
+	    --bar2-view : {background-color: var(--bar2-bg); color: var(--bar2-color); height:var(--font-xxl); overflow:hidden;}
+	    
+		--bar-panel : { padding:0; margin:0; background-color:var(--barbtn1-bg); border-bottom: 2px solid var(--barbtn1-dis); }
+		--body-panel : { overflow-y:auto; @apply --std-reg; padding:0; margin:0; background-color:var(--body-panelbg); color:var(--body-panelcolor); }
+		--top-panel : { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; }
+		
+		--hl-n : {color: var(--hl-color); background-color: var(--hl-bg); text-decoration: underline; cursor:pointer; }
+		--hl-hover : {color: var(--hl-bg); background-color: var(--hl-color); }
+		
+		--wait-home : { font-family:var(--font-cf); font-size:var(--font-xxl); color:var(--wait-homecolor); padding:var(--font-xxl); text-align:center; }
+		
+		--left-panel : { margin:0 !important; position:fixed; top:0; left:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
+		--center-box1 : { margin:0 !important; min-width:320px; max-width:500px; width:50%; overflow:hidden;}
+ 	}
+    </style>
+  </template>
+</dom-module>

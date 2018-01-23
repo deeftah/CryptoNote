@@ -9,36 +9,25 @@
 
 <dom-module id="help-panel">
 <template>
-	<style is="custom-style" include="iron-flex iron-flex-alignment">
-		paper-dialog.size-position-left-panel { margin:0 !important;
-			position:fixed; top:0; left:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
-		paper-icon-button.ic1 {
-			color: var(--paper-grey-700);
-			width: var(--font-xlarge);
-			height: var(--font-xlarge);
-			padding: 0;
-		}
-	    paper-icon-button.ic1:hover {
-			background-color: var(--paper-grey-700);
-			color: white;
-	    }
-	    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */
-    		color: var(--paper-grey-300);
-    	}
-	    
+	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles shared1-styles">
+		paper-dialog.left-panel { @apply --left-panel;}
+		
+		paper-icon-button.ic1 { @apply --barbtn1-n;	}
+	    paper-icon-button.ic1:hover { @apply --barbtn1-hover }
+	    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */ color: var(--barbtn1-dis); }
 	</style>
     <style>
-	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; background-color:white;}
-	  	:host .bar { padding:0; margin:0; background-color:white; border-bottom: 2px solid var(--paper-grey-100); } 
+	  	:host .top { @apply --top-panel; }
+	  	:host .bar { @apply --bar-panel; } 
+	  	:host .body { @apply --body-panel; }
+
 	  	:host .btnm {padding:0; margin:0;}
-	  	:host .body { overflow-y:auto; @apply --std-reg; padding:0; margin:0; background-color:white; font-size:var(--font-reg);}
-	  	:host .ref { padding: 0 0.5rem; cursor:pointer; color:var(--paper-indigo-700); text-decoration: underline;}
-	  	:host .ref:hover { color:white; background-color:var(--paper-grey-700);}
-	  	:host #content { border-top: 2px solid var(--paper-grey-100); padding: 0.5rem;}
+	  	:host .ref { padding: 0 0.5rem; @apply --hl-n; }
+	  	:host .ref:hover { @apply --hl-hover;}
+	  	:host #content { border-top: 2px solid var(--tbbtn1-dis); padding: 0.5rem;}
 	</style>
-	<style include="shared-styles"></style>
 	
-	<paper-dialog id="panel" class="size-position-left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
+	<paper-dialog id="panel" class="left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
 	
 	<div class="top layout vertical flex-start">
 		<div class="bar layout horizontal justified">

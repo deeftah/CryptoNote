@@ -7,57 +7,67 @@
 
 <dom-module id="scripterr-panel">
 <template>
-	<style is="custom-style" include="iron-flex iron-flex-alignment">
-		paper-dialog.size-position-left-panel { margin:0 !important;
-			position:fixed; top:0; left:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
-		paper-button.custom { }
-		paper-button.custom:hover { background-color: var(--pb-hover); }
-		paper-button.pbok { @apply --std-bold; font-size:var(--font-medium); margin-bottom:0.5rem;
+	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles">
+		paper-dialog.left-panel { @apply --left-panel;}
+		
+		paper-button.pbok { 
+			@apply --std-bold; 
+			font-size: var(--font-l); 
+			margin-bottom: 0.5rem;
 	 		background-color: var(--pbok-bg); 
 	 		color: var(--pbok-color);
-		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: white !important; };
+		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: var(--pbok-bg) !important; };
 		}
-		paper-button.pbok:hover {color:var(--pbok-bg); }
-	 	paper-button.pbko { @apply --std-bold; font-size:var(--font-medium) !important;  margin-bottom:0.5rem;
+		paper-button.pbok:hover {color:var(--pbok-bg); background-color: var(--pbok-color);}
+		
+	 	paper-button.pbko { 
+	 		@apply --std-bold; 
+	 		font-size: var(--font-l) !important;  
+	 		margin-bottom: 0.5rem;
 	 		background-color: var(--pbko-bg); 
 	 		color: var(--pbko-color);
-		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: white !important; };
+		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: var(--pbko-bg) !important; };
 		}
-		paper-button.pbko:hover {color:var(--pbko-bg); }
-	 	paper-button.lite { @apply --std-reg; font-size:var(--font-small) !important;
+		paper-button.pbko:hover {color:var(--pbko-bg); background-color: var(--pbko-color);}
+		
+	 	paper-button.lite { 
+	 		@apply --std-reg; 
+	 		font-size: var(--font-s) !important;
 	 		background-color: var(--pblite-bg); 
 	 		color: var(--pblite-color);
-		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: white !important; };
+		    --paper-button-raised-keyboard-focus: { background-color: var(--pb-hover) !important; color: var(--pbko-bg) !important; };
 		}
+		paper-button.lite:hover { background-color: var(--pb-hover); }
 		
 		#ta {
 			--iron-autogrow-textarea: {
 				padding:0;
-				color: black;
 				@apply --mono-reg;
-				font-size:var(--font-small);
+				font-size:var(--font-s);
+				color : var(--pb-color) !important;
 			}
 			--paper-input-container: {
 				padding:0; 
 				margin:0;
-				/* border:2px solid var(--paper-grey-100); */
 			}
-			--paper-input-container-color : white !important; 
-			--paper-input-container-focus-color : white;
+			--paper-input-container-color : var(--pb-color) !important; 
+			--paper-input-container-focus-color : var(--pb-bg);
         }
 				
 	</style>
     <style>
-	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; background-color:white;}
-	  	:host .bar { padding:0.5rem; margin:0; background-color:white; border-bottom: 2px solid var(--paper-grey-100); }
-	  	:host .body { overflow-y:auto; @apply --std-reg; padding:0.5rem; margin:0; background-color:white; font-size:var(--font-reg);}
-	  	:host .info { margin-bottom:1rem; @apply --cf-reg; font-size:var(--font-medium); color:var(--pbok-bg);}
-	  	:host .more { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-reg);}
-	  	:host .code { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-small);}
-	  	:host .detail { @apply --mono-bold; font-size:var(--font-reg); }
+	  	:host .top { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; background-color:var(--pb-bg); color:var(--pb-color);}
+	  	:host .bar { padding:0.5rem; margin:0; border-bottom: 2px solid var(--barbtn1-dis); }
+	  	:host .body { overflow-y:auto; @apply --std-reg; padding:0.5rem; margin:0; }
+	  	:host .info { margin-bottom:1rem; @apply --cf-reg; font-size:var(--font-l); }
+	  	:host .cl0 { color:var(--pbok-bg);}
+	  	:host .cl1 { color:var(--pbko-bg);}
+	  	:host .more { margin-bottom:1rem; @apply --std-reg; }
+	  	:host .code { margin-bottom:1rem; @apply --std-reg; font-size:var(--font-s);}
+	  	:host .detail { @apply --mono-bold; font-size:var(--font-m); }
 	  	:host .pci { margin:0; padding:0 0.2rem; }
 	</style>
-	<paper-dialog id="panel" class="size-position-left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
+	<paper-dialog id="panel" class="left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
 	
 	<div class="top layout vertical flex-start">
 		<div class="bar layout vertical">
@@ -70,7 +80,7 @@
 		</div>
 		</div>
 		<div class="body flex layout vertical">
-			<div class="info">[[info]]</div>
+			<div class$="[[svcl]]">[[info]]</div>
 			<div class="more" hidden$="[[!message]]">[[message]]</div>
 			
 			<collapsable-block class="pci" title="[[lib('er_resumeq',lang)]]" ref="4" openref="{{cref}}" maxheight="200px">

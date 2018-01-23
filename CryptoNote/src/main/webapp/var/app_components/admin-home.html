@@ -3,12 +3,12 @@
 
 <dom-module id="admin-home">
 <template>
-<style is="custom-style" include="iron-flex iron-flex-alignment">
-	paper-button.color-std { color : var(--btnstd-color); }
-	paper-button.color-std:hover { 	@apply --btnstd-hover; }
-</style>
+	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles">
+		paper-button.color-std { @apply --btnstd-n; }
+		paper-button.color-std:hover { @apply --btnstd-hover; }
+	</style>
 	<style>
-		:host { font-family: var(--font-std); font-size:1rem;}
+		:host { @apply --std-reg; }
 	</style>
 <div id="top">
 	<div class="auth" hidden$="[[sudo]]">

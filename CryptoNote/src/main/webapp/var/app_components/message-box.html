@@ -2,13 +2,15 @@
 
 <dom-module id="message-box">
 <template>
-	<style>
-		:host { font-family: var(--font-std); font-size:1rem;}
-		:host #message {max-height:500px !important; }
-		:host .err { background-color: var(--msg-errbg) !important; color: var(--msg-errcolor) !important;}
-		:host .std { background-color: var(--msg-stdbg) !important; color: var(--msg-stdcolor) !important;}
+	<style is="custom-style" include="shared2-styles">
 	</style>
-	<paper-toast id="message" class$="[[cl]]" text="[[text]]" duration="[[duration]]"></paper-toast>
+	<style>
+		:host { }
+		:host #message { max-height:500px !important; @apply --std-reg; }
+		:host .std { background-color: var(--msg-okbg) !important; color: var(--msg-okcolor) !important;}
+		:host .err { background-color: var(--msg-kobg) !important; color: var(--msg-kocolor) !important;}
+	</style>
+	<paper-toast id="message" on-tap="onClose" class$="[[cl]]" text="[[text]]" duration="[[duration]]"></paper-toast>
 </div>
 </template>
 <script>
@@ -31,6 +33,9 @@
     		this.$.message.show();
     	}
 
+    	onClose() {
+    		this.$.message.close();
+    	}
 	}
 customElements.define(MessageBox.is, MessageBox);
 </script>

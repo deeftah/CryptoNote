@@ -1,12 +1,12 @@
 <dom-module id="home1-bar">
 <template>
-	<style is="custom-style">
+	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles">
 	</style>
 	<style>
-		:host { font-family: var(--font-cf); font-size:1.2rem;}
-		:host .top { background-color:var(--paper-teal-800); color:white; height:3rem; overflow:hidden;}
+		:host { @apply --cf-bold; font-size:var(--font-l);}
+		:host .top { @apply --bar2-view; }
 	</style>
-<div class="top">Ma belle top bar 1
+<div class="top layout horizontal center start">Ma belle top bar 1
 </div>
 </template>
 <script>
