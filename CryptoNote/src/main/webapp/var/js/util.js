@@ -401,6 +401,19 @@ class B64 {
 		return "data:" + image.contentType + ";base64," + this.encode(image.uint8);
 	}
 	
+	static dataUrl2uint8(url) {
+		if (!url || typeof url != "string") return null;
+		let i = url.indexOf(":");
+		if (i == -1) return null;
+		let j = url.indexOf(";", i)
+		if (j == -1) return null;
+		let type = url.substring(i + 1, j);
+		i = url.indexOf(",", j);
+		if (i == -1) return null;
+		const uint8 = this.decode(url.substring(i + 1));
+		return {uint8:uint8, type:type};
+	}
+	
 }
 
 /*****************************************************/

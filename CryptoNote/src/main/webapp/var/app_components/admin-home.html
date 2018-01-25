@@ -24,6 +24,8 @@
 		static get properties() { return { 
 			lang : {type:String, value:"xx"},
 			sudo : {type:String, value:null},
+			inc : {type:String, value:null},
+			sup : {type:String, value:null},
 			}
 		}
 
@@ -38,6 +40,12 @@
       		App.setMsg("fr", "admin_lu", "Lu");
       	}
       	
+      	ready() {
+      		super.ready();
+      		this.inc = App.incognito;
+      		this.sup = App.superman;
+      	}
+      	
       	show(arg, prevPage) {
       		this.sudo = App.sudo;
       	} 
@@ -46,20 +54,20 @@
       		let typed = await this.$.phrase.show("Phrase d'habilitation à l'administration :", 4, 20);
       		if (typed) {
       			console.log("prB: " + typed.prB + "\nprBD : " + typed.prBD);
-      			App.sudo = typed.prB;
+      			App.setSudo(typed.prB);
       			try {
       				const ret = await new App.Req().setOp("sudo").setCred(2).setNoCatch("SADMINOP").go();
       				App.messageBox.show(App.lib("admin_authok"), 3000);
       				this.sudo = App.sudo;
       			} catch (err) {
       				if (err.code == "SADMINOP") {
-      					App.sudo = null;
+      					App.setSudo(null);
       					this.sudo = null;
       					await App.confirmBox.show(App.lib("admin_authko"), App.lib("admin_lu"));
       				}
       			}
       		} else {
-				App.sudo = null;
+				App.setSudo(null);
   				this.sudo = null;
   				App.messageBox.show(App.lib("admin_authab"), 3000, true);
       		}

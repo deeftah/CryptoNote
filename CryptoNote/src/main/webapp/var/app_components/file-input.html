@@ -1,0 +1,150 @@
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+
+<dom-module id="file-input">
+<template>
+<style include="iron-flex iron-flex-alignment shared2-styles"></style>
+
+<style>
+	:host { }
+	:host .top { background-color:var(--fi-bg); padding:0.2rem;}
+	:host .top:hover { background-color:var(--fi-hover);}
+	:host .rw { cursor:pointer; }
+	:host .msg { @apply --std-reg; color: var(--hl-color); text-decoration: underline; font-size:var(--font-s); text-align:center;}
+	:host .msg2 { @apply --std-reg; color: var(--msg-kocolor); font-size:var(--font-s);  text-align:center;}
+	:host #canvas, :host #icon {border: 2px solid var(--fi-hover); }
+	:host input[type="file"]#fileElem, :host #form1 { visibility: hidden;  width:0;  height:0; }
+	
+</style>
+	<div class$="[[cl(rw)]]" on-tap="btnClick">
+		<canvas id="canvas" hidden$="[[!image]]"></canvas>
+		<div id="icon" hidden$="[[image]]">
+			<iron-icon class="rw" icon="[[photoIcon]]" style$="[[sty(w,h)]]"></iron-icon>
+		</div>
+		<div class="msg" hidden$="[[!rw]]">[[lib("ph_cl",lang)]]</div>
+		<div class="msg2" hidden$="[[!rw]]">[[fileinfo(file)]]</div>
+		<form id="form1"><input type="file" id="fileElem" on-change="onFEC"></form>
+	</div>
+</template>
+<script>
+class FileInput extends Polymer.Element {
+	static get is() { return "file-input"; }
+	static get properties() { return { 
+		lang: {type:String, value:"xx"},
+		photoIcon: {type:String, value:"social:person"},
+		image: {type:Object, value:null},
+		file: {type:Object, value:null},
+		rw: {type:Boolean, value:false},
+		radius: {type:Number, value:10},
+		w: {type:Number, value:0},
+		h: {type:Number, value:0}
+		}
+	}
+
+  	constructor() { 
+  		super(); 
+  		App.setMsg("fr", "ph_cl", "Cliquer pour choisir un fichier");
+  		App.setMsg("fr", "ph_er", "Fichier illisible");
+  		App.setMsg("fr", "ph_lu", "Lu");
+   	}
+  
+	ready() { 
+		super.ready();
+		const canvas = this.$.canvas;
+		this.br(canvas);
+		this.br(this.$.canvas);
+		this.br(this.$.icon);
+	}
+
+	lib(code, lang) { return App.lib(code);}
+
+	cl(rw) { return rw ? "top layout vertical center rw" : "top layout vertical center"; }
+
+	sty(w,h) {
+		return "width:" + w + "px;height:" + h + "px;"
+	}
+
+	br(e){
+		e.style.width = "" + this.w + "px";
+		e.style.height = "" + this.h + "px";
+		e.style.borderRadius = "" + this.radius + "px";
+		e.style.WebkitBorderRadius = "" + this.radius + "px";
+	}
+	
+	fileinfo(file) {
+		return file ? file.name + " - " + App.Util.editVol(file.size) : "?";
+	}
+	
+	show(img){
+		if (img) {
+			this.image = new Image();
+		    this.image.onload = () => {
+		        this.drawimg(this.image);
+		    };
+			this.image.src = img;
+	   }
+	}
+
+	drawimg(image) {
+		const canvas = this.$.canvas;
+		const ctx = canvas.getContext('2d');
+		const p = this.w / this.h;
+		const pi = image.width / image.height;
+		let sx = 0, sy = 0, sw = 0, sh = 0;
+		if (pi < p) { // trop haute
+			sh = image.width / p;
+			sy = (image.height - sh) / 2;
+			sx = 0;
+			sw = image.width;
+		} else { // trop large
+			sw = image.height * p;
+			sx = (image.width - sw) / 2;
+			sy = 0;
+			sh = image.height;
+		}
+		ctx.clearRect(0, 0, this.w, this.h);
+		canvas.width = this.w;
+		canvas.height = this.h;
+		ctx.drawImage(image, sx, sy, sw, sh, 0, 0, this.w, this.h);
+	}
+
+	onFEC(e) {
+	    this.file = e.currentTarget.files[0];
+	    const isImg = this.file && this.file.type.startsWith("image/");
+		const reader = new FileReader();
+		reader.onload = () => {
+			const res = reader.result;
+			if (isImg) {
+				this.image = new Image();
+				this.image.onload = (e) => {
+					this.drawimg(this.image);
+					this.dispatchEvent(new CustomEvent('file-loaded', {detail: 
+						{type:this.file.type, name:this.file.name, size:this.file.size, url:res, resized:this.$.canvas.toDataURL(this.file.type)}}));
+				};
+				this.image.src = res;
+			} else {
+				this.image = null;
+				this.dispatchEvent(new CustomEvent('file-loaded', {detail: {type:this.file.type, name:this.file.name, size:this.file.size, url:res}}));
+			}
+		};
+		reader.onerror = function(event) { this.error(); };
+		reader.readAsDataURL(this.file);
+	}
+	
+	error() {
+		App.confirmBox.show(this.lib("ph_er"), this.lib("ph_lu"));
+	}
+		
+	btnClick(){
+		if (this.rw) {
+			this.image = null;
+			this.file = null;
+			this.$.form1.reset();
+			this.$.canvas.getContext('2d').clearRect(0, 0, this.w, this.h);
+			this.$.fileElem.click();
+		}
+	}
+
+}
+customElements.define(FileInput.is, FileInput);
+</script>
+</dom-module>

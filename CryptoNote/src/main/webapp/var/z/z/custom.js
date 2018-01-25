@@ -5,3 +5,5 @@ class Custom {
 	}
 }
 App.Custom = Custom;
+// App.incognito = "data:image/png;base64,iVBO ...";
+// App.superman = "data:image/png;base64,iVBO ...";

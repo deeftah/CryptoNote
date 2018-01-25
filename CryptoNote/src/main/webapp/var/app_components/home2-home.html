@@ -6,70 +6,77 @@
 
 <link rel="import"  href="spinner-box.html">
 <link rel="import"  href="help-button.html">
+<link rel="import"  href="file-input.html">
 
 <dom-module id="home2-home">
 <template>
 	<style is="custom-style" include="shared2-styles">
 	</style>
 	<style>
-	  	:host { @apply --std-reg; }
+		:host {}
+	  	:host .top { @apply --std-reg; overflow-x:auto; height:100%; }
 	  	:host .cf { @apply --cf-lite; color:var(--mybg-color); font-size:var(--font-xl);}
 	  	:host .cf::before { content: var(--bonjour-before);}
 	  	:host .ic1 {height:3rem; width:3rem; color:red; }
 	  	:host .logolang { @apply --flag-gen; width:3rem; height: 3rem; display:inline-block; background-image:var(--bg-imglg);}
+	  	:host #photo { display:inline-block; width:12rem; margin:0; }
 	</style>
-<div class="cf">[[bonjour]] <b>[[owner]] [[build]]</b> [[lib('application',lang)]] [[lib('ns_test',lang)]]</div>
-<div>
-	<help-button help="p12"></help-button><help-button help="p13" iv="true"></help-button>
-</div>
- <div>
- 	<paper-input always-float-label label="My floating label" value="{{owner}}">
-		<iron-icon class="ic1" icon="mail" slot="prefix"></iron-icon>
-		<div slot="suffix">@email.com</div>
-		<paper-icon-button slot="suffix" onclick="clearInput()" icon="clear" alt="clear" title="clear"></paper-icon-button>
-	</paper-input>
-</div>
-<div style="display:inline-block;position:relative;">
-	<spinner-box id="spin"></spinner-box>
-	<div>
-	  	<div>
-	  		<button on-tap="back">Back</button>&nbsp;
-	  	  	<button on-tap="home1">Home1</button>
-	  	  	<button on-tap="home1b">Set Home1</button>
-	  	</div>
 	
-		<div class="logolang"></div>
-		<iron-icon icon="mail"></iron-icon>
-	  	<button on-tap="ping1">Ping (spin local)</button>&nbsp;
-	  	<button on-tap="ping2">Ping (spin global)</button>&nbsp;
-	  	<button on-tap="ping3">Ping (no spin)</button>&nbsp;
-	  	<button on-tap="confirm1">confirm 1</button>&nbsp;
-	  	<button on-tap="confirm2">confirm 2</button>&nbsp;<br>
-	    <button on-tap="changeThemeA">Theme A</button>
-	    <button on-tap="changeThemeB">Theme B</button>
-	    <button on-tap="changeLangFR">Lang FR</button>
-	    <button on-tap="changeLangEN">Lang EN</button><br>
-	   	<button on-tap="crypto">crypto</button><br>
-	  	<button on-tap="bower">bower.json (fetch)</button><span>[[pingres]]</span>&nbsp;
-	  	<button on-tap="dbInfo">DbInfo</button>
+	<div class="top">
+		<div class="cf">[[bonjour]] <b>[[owner]] [[build]]</b> [[lib('application',lang)]] [[lib('ns_test',lang)]]</div>
+		<div>
+			<help-button help="p12"></help-button><help-button help="p13" iv="true"></help-button>
+		</div>
+		 <div>
+		 	<paper-input always-float-label label="My floating label" value="{{owner}}">
+				<iron-icon class="ic1" icon="mail" slot="prefix"></iron-icon>
+				<div slot="suffix">@email.com</div>
+				<paper-icon-button slot="suffix" onclick="clearInput()" icon="clear" alt="clear" title="clear"></paper-icon-button>
+			</paper-input>
+		</div>
+		<div style="display:inline-block;position:relative;">
+			<spinner-box id="spin"></spinner-box>
+			<div>
+			  	<div>
+			  		<button on-tap="back">Back</button>&nbsp;
+			  	  	<button on-tap="home1">Home1</button>
+			  	  	<button on-tap="home1b">Set Home1</button>
+			  	</div>
+			
+				<div class="logolang"></div>
+				<iron-icon icon="mail"></iron-icon>
+			  	<button on-tap="ping1">Ping (spin local)</button>&nbsp;
+			  	<button on-tap="ping2">Ping (spin global)</button>&nbsp;
+			  	<button on-tap="ping3">Ping (no spin)</button>&nbsp;
+			  	<button on-tap="confirm1">confirm 1</button>&nbsp;
+			  	<button on-tap="confirm2">confirm 2</button>&nbsp;<br>
+			    <button on-tap="changeThemeA">Theme A</button>
+			    <button on-tap="changeThemeB">Theme B</button>
+			    <button on-tap="changeLangFR">Lang FR</button>
+			    <button on-tap="changeLangEN">Lang EN</button><br>
+			   	<button on-tap="crypto">crypto</button><br>
+			  	<button on-tap="bower">bower.json (fetch)</button><span>[[pingres]]</span>&nbsp;
+			  	<button on-tap="dbInfo">DbInfo</button>
+			</div>
+			<a href="bower.json" target="_blank">Lien _blank (relatif) vers bower.json!</a><br>
+			<a href="[[lkbower]]" target="_blank">Lien _blank (absolu) vers bower.json!</a><br>
+			<div>
+			<button on-tap="erA">A</button>&nbsp;
+			<button on-tap="erB">B</button>&nbsp;
+			<button on-tap="erX">X</button>&nbsp;
+			<button on-tap="erD">D</button>&nbsp;
+			<button on-tap="erC">C</button>&nbsp;
+			<button on-tap="erO">O</button>&nbsp;
+			<button on-tap="erS">S</button>&nbsp;
+			<button on-tap="erT">T</button>&nbsp;
+			<button on-tap="erI">I</button>&nbsp;
+			<button on-tap="erL">L</button>&nbsp;
+			<button on-tap="erS0">script</button>&nbsp;
+			<button on-tap="erS1">script sévère</button>&nbsp;
+			</div>
+		</div>
+		<file-input id="photo" w="32" h="32" radius="16" rw="true" lang="[[lang]]" photo-icon="social:person" on-file-loaded="onFileLoaded"></file-input>
 	</div>
-	<a href="bower.json" target="_blank">Lien _blank (relatif) vers bower.json!</a><br>
-	<a href="[[lkbower]]" target="_blank">Lien _blank (absolu) vers bower.json!</a><br>
-	<div>
-	<button on-tap="erA">A</button>&nbsp;
-	<button on-tap="erB">B</button>&nbsp;
-	<button on-tap="erX">X</button>&nbsp;
-	<button on-tap="erD">D</button>&nbsp;
-	<button on-tap="erC">C</button>&nbsp;
-	<button on-tap="erO">O</button>&nbsp;
-	<button on-tap="erS">S</button>&nbsp;
-	<button on-tap="erT">T</button>&nbsp;
-	<button on-tap="erI">I</button>&nbsp;
-	<button on-tap="erL">L</button>&nbsp;
-	<button on-tap="erS0">script</button>&nbsp;
-	<button on-tap="erS1">script sévère</button>&nbsp;
-	</div>
-</div>
 </template>
 <script src="../js/home2-home.js"></script>
 </dom-module>

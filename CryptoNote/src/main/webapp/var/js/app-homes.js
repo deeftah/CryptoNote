@@ -2,6 +2,7 @@ class AppHomes extends Polymer.Element {
 	static get is() { return "app-homes"; }
 	
 	static get properties() { return { 
+		isSudo : {type:Boolean, value:false},
 		anpage: {type:String, value:"z-wait"}, 
 		bar: {type:String, value:"z-wait-bar"}, 
 		lang:{type:String, value:App.lang},
@@ -29,6 +30,14 @@ class AppHomes extends Polymer.Element {
 		if (App.Custom && App.Custom.ready)
 			await App.Custom.ready();
 		this.setHome(App.home);
+  	}
+  	
+  	setSudo(b) {
+  		this.isSudo = b;
+  	}
+  	
+  	resetSync() {
+  		if (App.topBar && App.topBar.refreshSync) App.topBar.resetSync();
   	}
   	
   	async setHome(home) {

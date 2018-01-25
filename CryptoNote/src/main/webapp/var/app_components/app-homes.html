@@ -16,8 +16,7 @@
 <link rel="import" href="home2-home.html">
 <link rel="import" href="wait-home.html">
 <link rel="import" href="home1-bar.html">
-<link rel="import" href="home2-bar.html">
-<link rel="import" href="admin-bar.html">
+<link rel="import" href="top-bar.html">
 <link rel="import" href="admin-home.html">
 
 <dom-module id="app-homes">
@@ -40,9 +39,9 @@
 		<help-panel id="help" lang="[[lang]]"></help-panel>
 		<div class="top layout vertical flex-start">
 			<iron-pages class="bar" attr-for-selected="id" selected="[[bar]]">
-				<home1-bar id="test-home1-bar" lang="[[lang]]" owner="Scott"></home1-bar>
-				<home2-bar id="test-home2-bar" lang="[[lang]]"></home2-bar>
-				<admin-bar id="admin-admin-bar" lang="[[lang]]"></admin-bar>
+				<home1-bar id="test-home1-bar" lang="[[lang]]" is-sudo="[[isSudo]]" owner="Scott"></home1-bar>
+				<top-bar id="test-home2-bar" lang="[[lang]]" is-sudo="[[isSudo]]"></top-bar>
+				<top-bar id="admin-admin-bar" lang="[[lang]]" is-sudo="[[isSudo]]"></top-bar>
 				<div id="z-wait-bar" class="wb"></div>
 			</iron-pages>
 			<neon-animated-pages  class="main flex" attr-for-selected="id" selected="[[anpage]]" entry-animation="[[enan]]" exit-animation="[[exan]]">		

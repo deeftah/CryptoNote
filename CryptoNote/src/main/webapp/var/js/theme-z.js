@@ -4,6 +4,7 @@ App.setTheme("z", {
 "--font-cf" : "'Comfortaa'",
 
 "--font-xxl" : "2.2rem",
+"--font-xxl2" : "1.1rem",
 "--font-xl" : "1.7rem",
 "--font-l" : "1.3rem",
 "--font-m" : "1rem",
@@ -42,6 +43,10 @@ App.setTheme("z", {
 
 "--wait-homecolor": "var(--paper-orange-300)",
 
+"--tb-bg0": "var(--paper-grey-800)",
+"--tb-bg1": "var(--paper-indigo-800)",
+"--tb-bg2": "var(--paper-teal-800)",
+
 "--hl-color": "var(--paper-blue-600)",
 "--hl-bg": "white",
 "--hl-dis": "var(--paper-blue-200)",
@@ -67,6 +72,9 @@ App.setTheme("z", {
 "--pbko-color": "var(--paper-orange-50)",
 "--pblite-bg": "var(--paper-grey-50)",
 "--pblite-color": "var(--paper-grey-700)",
+
+"--fi-bg":"var(--paper-grey-50)",
+"--fi-hover":"var(--paper-grey-300)",
 /*
 "--paper-toast-background-color" : "var(--paper-grey-700)",
 "--paper-toast-color" : "var(--paper-grey-50)",

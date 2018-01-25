@@ -21,10 +21,11 @@ class Home2Home extends Polymer.Element {
     show(arg, previousPage) {
   	  this.arg = arg;
   	  this.previousPage = previousPage;
+  	  this.$.photo.show(App.incognito);
     }
     
     title() {
-    	return "La belle page Home2";
+    	return "La belle page Home2, La belle page Home2, La belle page Home2";
     }
     
     async mayHide() {
@@ -65,6 +66,13 @@ class Home2Home extends Polymer.Element {
     changeThemeB() { App.appHomes.setTheme("b"); }
 	changeLangFR() { App.appHomes.setLang("fr"); }
     changeLangEN() { App.appHomes.setLang("en"); }
+
+	onFileLoaded(e){
+		console.log(e.detail.url);
+		console.log(e.detail.url.length);
+		if (e.detail.resized)
+			console.log(e.detail.resized.length);
+	}
 
     async bower() {
 		const spin = this.$.spin;
