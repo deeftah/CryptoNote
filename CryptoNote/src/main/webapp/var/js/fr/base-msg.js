@@ -32,7 +32,8 @@ App.setAll("fr", {
 "wait_home": "Chargement en cours ...",
 "xping_1": "Le serveur n''est pas joignable (vérifier la connexion Internet).\nAprès appui sur OK un rechargement sera tenté.",
 "xping_2": "Le serveur n''est pas joignable (vérifier la connexion Internet).\nOK : pour tenter un rechargement.\nAnnuler : pour passer en mode avion.",
-
+"theme_a":"Couleur",
+"theme_b":"Sobre",
 
 "500URLMF1":"URL [{0}] mal formée : https://site.com/org/... attendue",
 "500URLMF1cp":"URL [{0}] mal formée : https://site.com/app/org/... attendue",

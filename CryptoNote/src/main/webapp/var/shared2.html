@@ -15,29 +15,42 @@
 		--btnstd-hover : {background-color: var(--btnstd-color); color:var(--btnstd-colorhover);}
 		--btndef-hover : {background-color: var(--btndef-color); color:var(--btndef-colorhover);}
 		
-		--barbtn1-n : { color: var(--barbtn1-color); background-color: var(--barbtn1-bg); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
-	    --barbtn1-hover : { background-color: var(--barbtn1-color); color: var(--barbtn1-bg); }
-		--barbtn2-n : { color: var(--barbtn2-color); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
-	    --barbtn2-hover : { background-color: var(--barbtn2-color); color: var(--barbtn2-bg); }
+		--bar-panel : { background-color:var(--bar-panel-bg);  overflow:hidden; margin:0; padding:var(--bar-panel-padding);}
+		--bar-panelbtn1-n : { color: var(--bar-panelbtn1-color); background-color: var(--bar-panelbtn1-bg); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
+	    --bar-panelbtn1-h : { color: var(--bar-panelbtn1-colorhover); background-color: var(--bar-panelbtn1-bghover); }
+		--bar-panelsep : { margin:var(--bar-panelsep-margin); background-color:var(--bar-panelsep-color); height:var(--bar-panelsep-h); }
+		--body-panel : { overflow-y:auto; @apply --std-reg; padding:0; margin:0; background-color:var(--body-panel-bg); color:var(--body-panel-color); }
+
+
+	    --bar-view0 : {background-color: var(--bar-view0-bg); color: var(--bar-view0-color); margin:0; padding:var(--bar-view-padding);}
+	    --bar-view1 : {background-color: var(--bar-view1-bg); color: var(--bar-view1-color); margin:0; padding:var(--bar-view-padding);}
+	    --bar-view2 : {background-color: var(--bar-view2-bg); color: var(--bar-view2-color); margin:0; padding:var(--bar-view-padding);}
+		--bar-view0btn1-n : { background-color: var(--bar-view0btn1-bg); color: var(--bar-view0btn1-color); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
+	    --bar-view0btn1-h : { background-color: var(--bar-view0btn1-bghover); color: var(--bar-view0btn1-colorhover); }
+		--bar-view1btn1-n : { background-color: var(--bar-view1btn1-bg); color: var(--bar-view1btn1-color); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
+	    --bar-view1btn1-h : { background-color: var(--bar-view1btn1-bghover); color: var(--bar-view1btn1-colorhover); }
+		--bar-view2btn1-n : { background-color: var(--bar-view2btn1-bg); color: var(--bar-view2btn1-color); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
+	    --bar-view2btn1-h : { background-color: var(--bar-view2btn1-bghover); color: var(--bar-view2btn1-colorhover); }
+		--bar-view0sep : { margin:var(--bar-viewsep-margin); background-color:var(--bar-view0sep-color); height:var(--bar-viewsep-h); }
+		--bar-view1sep : { margin:var(--bar-viewsep-margin); background-color:var(--bar-view1sep-color); height:var(--bar-viewsep-h); }
+		--bar-view2sep : { margin:var(--bar-viewsep-margin); background-color:var(--bar-view2sep-color); height:var(--bar-viewsep-h); }
+	    
 		--baradbtn-n : { color: var(--barad-color); background-color: var(--barad-bg); width: var(--font-xxl); height: var(--font-xxl); padding: 0; }
 	    --baradbtn-hover : { background-color: var(--barad-color); color: var(--barad-bg); }
 	    
-	    --bar-view : {background-color: var(--barbtn2-bg); color: var(--barbtn2-color); height:var(--font-xxl); overflow:hidden; padding:0.1rem;}
 	    --barad-view : {background-color: var(--barad-bg); color: var(--barad-color); height:var(--font-xxl); overflow:hidden;}
 	    --bar2-view : {background-color: var(--bar2-bg); color: var(--bar2-color); height:var(--font-xxl); overflow:hidden;}
 	    
-		--bar-panel : { padding:0; margin:0; background-color:var(--barbtn1-bg); border-bottom: 2px solid var(--barbtn1-dis); }
-		--body-panel : { overflow-y:auto; @apply --std-reg; padding:0; margin:0; background-color:var(--body-panelbg); color:var(--body-panelcolor); }
 		--top-panel : { height:100vh; overflow:hidden; margin:0 !important; padding:0 !important; }
 		
-		--hl-n : {color: var(--hl-color); background-color: var(--hl-bg); text-decoration: underline; cursor:pointer; }
-		--hl-hover : {color: var(--hl-bg); background-color: var(--hl-color); }
+		--hl-n : {color: var(--hl-color); text-decoration: underline; cursor:pointer; }
+		--hl-hover : {color: var(--hl-colorhover); }
 		
 		--wait-home : { font-family:var(--font-cf); font-size:var(--font-xxl); color:var(--wait-homecolor); padding:var(--font-xxl); text-align:center; }
 		
 		--left-panel : { margin:0 !important; position:fixed; top:0; left:0; height:100vh; width:40%; min-width:300px; overflow:hidden;}
-		--right-menu : { margin:0 !important; position:fixed; top:var(--font-xxl); right:0; max-width:340px; overflow:hidden;}
-		--center-box1 : { margin:0 !important; min-width:320px; max-width:500px; width:50%; overflow:hidden;}
+		--right-menu : { margin:3px !important; position:fixed; top:var(--font-xxl); right:0; max-width:24rem; overflow:hidden;}
+		--center-box1 : { margin:0 !important; min-width:32rem; max-width:50rem; width:50%; overflow:hidden;}
  	}
     </style>
   </template>

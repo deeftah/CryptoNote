@@ -3,15 +3,17 @@
 
 <dom-module id="help-button">
 <template>
+	<style is="custom-style">
+		.nv { --iron-icon-fill-color: var(--btnhlp-color); }
+		.nv:hover { --iron-icon-fill-color: var(--btnhlp-colorhover); }
+		.iv { --iron-icon-fill-color: var(--btnhlp-ivcolor); }
+		.iv:hover { --iron-icon-fill-color: var(--btnhlp-ivcolorhover); }
+	</style>
 	<style>
 		:host { margin:0; padding:0; display:inline-block; cursor:pointer; }
 		:host iron-icon {width:var(--btnhlp-size); height:var(--btnhlp-size); }
-		:host .nv { color: var(--btnhlp-color); }
-		:host .nv:hover { color: var(--btnhlp-colorhover); }
-		:host .iv { color: var(--btnhlp-colorhover); }
-		:host .iv:hover { color: var(--btnhlp-color);  }
 	</style>
-  	<div class$="[[cl(iv)]]" on-tap="gohelp"><iron-icon icon="icons:help"></iron-icon></div>
+  	<iron-icon class$="[[cl(iv)]]" icon="icons:help-outline" on-tap="gohelp"></iron-icon>
 </template>
 <script>
     class HelpButton extends Polymer.Element {
@@ -22,15 +24,9 @@
 			}
 		}
 
-      	constructor() { super(); }
-      	
-       	cl(iv) { 
-       		return iv ? "iv" : "nv";
-      	}
+       	cl(iv) { return iv ? "iv" : "nv"; }
        	
-      	gohelp() {
-      		App.help(this.help);
-      	}
+      	gohelp() { App.help(this.help); }
       	
 	}
 customElements.define(HelpButton.is, HelpButton);

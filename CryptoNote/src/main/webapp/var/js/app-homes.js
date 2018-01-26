@@ -6,6 +6,7 @@ class AppHomes extends Polymer.Element {
 		anpage: {type:String, value:"z-wait"}, 
 		bar: {type:String, value:"z-wait-bar"}, 
 		lang:{type:String, value:App.lang},
+		theme:{type:String, value:App.theme},
 		history: {type:Array, value:[]}
 		};
 	}
@@ -71,6 +72,7 @@ class AppHomes extends Polymer.Element {
   		if (t) for(let k in t) sty[k] = t[k];
   		Polymer.updateStyles(sty);
   		this.lang = App.lang;
+  		this.theme = App.theme;
   	}
   	
   	async mayHideCurrent() {

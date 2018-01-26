@@ -12,33 +12,38 @@
 	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles shared1-styles">
 		paper-dialog.left-panel { @apply --left-panel;}
 		
-		paper-icon-button.ic1 { @apply --barbtn1-n;	}
-	    paper-icon-button.ic1:hover { @apply --barbtn1-hover }
-	    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */ color: var(--barbtn1-dis); }
+		paper-icon-button.ic1 { @apply --bar-panelbtn1-n;	}
+	    paper-icon-button.ic1:hover { @apply --bar-panelbtn1-h }
+	    paper-icon-button.ic1[disabled] { /* le mixin prévu ne marche pas */ color: var(--bar-panelbtn1-colordis); }
 	</style>
     <style>
 	  	:host .top { @apply --top-panel; }
 	  	:host .bar { @apply --bar-panel; } 
+	  	:host .sep { @apply --bar-panelsep; } 
+	  	:host .btnm {padding:0; margin:0;}
+
 	  	:host .body { @apply --body-panel; }
 
-	  	:host .btnm {padding:0; margin:0;}
 	  	:host .ref { padding: 0 0.5rem; @apply --hl-n; }
 	  	:host .ref:hover { @apply --hl-hover;}
-	  	:host #content { border-top: 2px solid var(--tbbtn1-dis); padding: 0.5rem;}
+	  	:host #content { border-top: 2px solid var(--bar-panelsep-color); padding: 0.5rem;}
 	</style>
 	
 	<paper-dialog id="panel" class="left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
 	
 	<div class="top layout vertical flex-start">
-		<div class="bar layout horizontal justified">
-			<paper-icon-button class="ic1" disabled="[[db(hist.length)]]" on-tap="back" title="[[lib('help__back',lang)]]" icon="icons:arrow-back"></paper-icon-button>
-			<div class="btnm">
-				<paper-icon-button class="ic1" disabled="[[isHome(page)]]" on-tap="home" title="[[lib('help__home',lang)]]" icon="icons:home"></paper-icon-button>
-				<paper-icon-button class="ic1" disabled="[[dp(page)]]" on-tap="previous" title="[[lib('help__previous',lang)]]" icon="icons:chevron-left"></paper-icon-button>
-				<paper-icon-button class="ic1" disabled="[[dt(page)]]" on-tap="top" title="[[lib('help__top',lang)]]" icon="icons:expand-less"></paper-icon-button>
-				<paper-icon-button class="ic1" disabled="[[dn(page)]]" on-tap="next" title="[[lib('help__next',lang)]]" icon="icons:chevron-right"></paper-icon-button>
+		<div class="bar layout vertical">
+			<div class="layout horizontal justified">
+				<paper-icon-button class="ic1" disabled="[[db(hist.length)]]" on-tap="back" title="[[lib('help__back',lang)]]" icon="icons:arrow-back"></paper-icon-button>
+				<div class="btnm">
+					<paper-icon-button class="ic1" disabled="[[isHome(page)]]" on-tap="home" title="[[lib('help__home',lang)]]" icon="icons:home"></paper-icon-button>
+					<paper-icon-button class="ic1" disabled="[[dp(page)]]" on-tap="previous" title="[[lib('help__previous',lang)]]" icon="icons:chevron-left"></paper-icon-button>
+					<paper-icon-button class="ic1" disabled="[[dt(page)]]" on-tap="top" title="[[lib('help__top',lang)]]" icon="icons:expand-less"></paper-icon-button>
+					<paper-icon-button class="ic1" disabled="[[dn(page)]]" on-tap="next" title="[[lib('help__next',lang)]]" icon="icons:chevron-right"></paper-icon-button>
+				</div>
+				<paper-icon-button class="ic1" title="[[lib('help__close',lang)]]" on-tap="close" icon="icons:close"></paper-icon-button>
 			</div>
-			<paper-icon-button class="ic1" title="[[lib('help__close',lang)]]" on-tap="close" icon="icons:close"></paper-icon-button>
+			<div class="sep"></div>
 		</div>
 		<div class="body flex layout vertical">
 			<div class="ref" on-tap="home" hidden="[[isHome(page)]]"><i>[[lib('help__home',lang)]]</i> : [[lib('help_home',lang)]]</div>

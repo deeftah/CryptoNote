@@ -10,77 +10,172 @@
 <template>
 	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles">
 		paper-dialog.right-menu { @apply --right-menu;}
+
+	    paper-icon-button.ic0 { @apply --bar-view0btn1-n;	}
+	    paper-icon-button.ic0:hover { @apply --bar-view0btn1-h }
+	    paper-icon-button.ic0[disabled] { /* le mixin prévu ne marche pas */ color: var(--bar-view0btn1-colordis); }
+
+	    paper-icon-button.ic1 { @apply --bar-view1btn1-n;	}
+	    paper-icon-button.ic1:hover { @apply --bar-view1btn1-h }
+	    paper-icon-button.ic1[disabled] { /* le mixin prévu ne marche pas */ color: var(--bar-view1btn1-colordis); }
 	
-		paper-icon-button.ic2 { @apply --barbtn2-n;	}
-	    paper-icon-button.ic2:hover { @apply --barbtn2-hover; }
-	    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */ color: var(--barbtn2-dis); }
-	    
-	    paper-icon-button.ic1 { @apply --barbtn1-n;	}
-	    paper-icon-button.ic1:hover { @apply --barbtn1-hover }
-	    paper-icon-button[disabled] { /* le mixin prévu ne marche pas */ color: var(--barbtn1-dis); }
-	    
-	    .icm {
-		    --iron-icon-stroke-color: var(--barbtn2-bg);
-		    --iron-icon-fill-color: var(--barbtn2-bg);
+		paper-icon-button.ic2 { @apply --barview2btn1-n;	}
+	    paper-icon-button.ic2:hover { @apply --bar-view2btn1-h; }
+	    paper-icon-button.ic2[disabled] { /* le mixin prévu ne marche pas */ color: var(--bar-view2btn1-colordis); }
+	    	    
+	    paper-icon-button.ic3 { @apply --bar-panelbtn1-n;	}
+	    paper-icon-button.ic3:hover { @apply --bar-panelbtn1-h }
+	    paper-icon-button.ic3[disabled] { /* le mixin prévu ne marche pas */ color: var(--bar-panelbtn1-colordis); }
+	    	    
+	    .icm0 {
+	    	background-color: var(--bar-view0btn1-bgiv);
+	    	--iron-icon-width: var(--font-xl) !important;
+	    	--iron-icon-height: var(--font-xl) !important;
+		    --iron-icon-stroke-color: var(--bar-view0btn1-coloriv);
+		    --iron-icon-fill-color: var(--bar-view0btn1-coloriv);
+		}
+	    .icm1 {
+	    	background-color: var(--bar-view1btn1-bg);
+	    	--iron-icon-width: var(--font-xxl);
+	    	--iron-icon-height: var(--font-xxl);
+		    --iron-icon-stroke-color: var(--bar-view1btn1-color);
+		    --iron-icon-fill-color: var(--bar-view1btn1-color);
+		}
+	    .icm2 {
+	    	background-color: var(--bar-view2btn1-bg);
+	    	--iron-icon-width: var(--font-xxl);
+	    	--iron-icon-height: var(--font-xxl);
+		    --iron-icon-stroke-color: var(--bar-view2btn1-color);
+		    --iron-icon-fill-color: var(--bar-view2btn1-color);
+		}
+	    .icm0:hover {
+	    	background-color: var(--bar-view0btn1-bghover);
+		}
+	    .icm1:hover {
+	    	background-color: var(--bar-view1btn1-bghover);
+		}
+	    .icm2:hover {
+	    	background-color: var(--bar-view2btn1-bghover);
 		}
 	</style>
 	<style>
 		:host { }
-		:host .top { @apply --bar-view;}
-		:host .back { cursor: pointer; }
-		:host .backn { cursor: auto; }
-		:host .back:hover { background-color: var(--barbtn2-dis); color: var(--barbtn2-bg); }
-		:host .backt { font-family: var(--font-cf); font-size:var(--font-l); height:var(--font-xl); margin-right:5rem; overflow:hidden; }
-		:host .sm { height: var(--font-xxl); width: var(--font-xxl); margin:0 0.2rem; }
-		:host .icm { height: var(--font-xxl); width: var(--font-xxl); margin:0 0.2rem; 
-			border-radius:var(--font-xxl2); webkit-border-radius:var(--font-xxl2); cursor:pointer; background-color: var(--barbtn2-color);}
-		:host .icm:hover { background-color: var(--barbtn2-dis); }
-		:host .sync { @apply --mono-reg; font-size:var(--font-s); color:var(--barbtn2-color); margin:0 0 0 0.3rem; }
+		:host .top0 { @apply --bar-view0;}
+		:host .top1 { @apply --bar-view1;}
+		:host .top2 { @apply --bar-view2;}
+
+	  	:host .sep0 { @apply --bar-view0sep; } 
+	  	:host .sep1 { @apply --bar-view1sep; } 
+	  	:host .sep2 { @apply --bar-view2sep; } 
 		
-		:host .menuMode { margin:0; padding:0; }
-		:host .actuel, :host .futur0, :host .futur1, :host .futur2 { padding:0.5rem; text-align:center; @apply --cf-reg;}
-		:host .futur0, :host .futur1, :host .futur2 { padding:0.5rem; text-align:center; @apply --cf-reg; cursor:pointer; color:var(--barbtn2-color);}
-		:host .futur0 { background-color:var(--tb-bg0);}
-		:host .futur1 { background-color:var(--tb-bg1);}
-		:host .futur2 { background-color:var(--tb-bg2);}
-		:host .actuel { padding:0.5rem; text-align:center; @apply --cf-reg;}
+		:host .back0 { cursor: pointer; color: var(--bar-view0btn1-color); background-color: var(--bar-view0btn1-bg);}
+		:host .back1 { cursor: pointer; color: var(--bar-view1btn1-color); background-color: var(--bar-view1btn1-bg);}
+		:host .back2 { cursor: pointer; color: var(--bar-view2btn1-color); background-color: var(--bar-view2btn1-bg);}
+		:host .backn { cursor: auto; }
+		:host .back0:hover { color: var(--bar-view0btn1-colorhover); background-color: var(--bar-view0btn1-bghover);}
+		:host .back1:hover { color: var(--bar-view1btn1-colorhover); background-color: var(--bar-view1btn1-bghover);}
+		:host .back2:hover { color: var(--bar-view2btn1-colorhover); background-color: var(--bar-view2btn1-bghover);}
+		
+		:host .backt { font-family: var(--font-cf); font-size:var(--font-l); height:var(--font-xl); margin-right:5rem; overflow:hidden; }
+		
+		:host .sm { height: var(--font-xxl); width: var(--font-xxl); margin:0 0.2rem; }
+		:host .icm { margin:0 0.2rem; border-radius:var(--font-xxl2); webkit-border-radius:var(--font-xxl2); cursor:pointer; }
+		
+		:host .sync { @apply --mono-reg; font-size:var(--font-s); margin:0 0 0 0.3rem; }
+		:host .sync0 { color:var(--bar-view0btn1-color); }
+		:host .sync1 { color:var(--bar-view1btn1-color); }
+		:host .sync2 { color:var(--bar-view2btn1-color); }
+		
+		:host .menu { margin:0; padding:0; background-color: var(--bar-view-menubg); color: var(--bar-view-menucolor);}
+		:host .futur0 { background-color:var(--bar-view0btn1-bg); color:var(--bar-view0btn1-color); cursor:pointer;}
+		:host .futur1 { background-color:var(--bar-view1btn1-bg); color:var(--bar-view1btn1-color); cursor:pointer;}
+		:host .futur2 { background-color:var(--bar-view2btn1-bg); color:var(--bar-view2btn1-color); cursor:pointer;}
+		:host .futur0:hover { background-color:var(--bar-view0btn1-bghover); color:var(--bar-view0btn1-colorhover);}
+		:host .futur1:hover { background-color:var(--bar-view1btn1-bghover); color:var(--bar-view1btn1-colorhover);}
+		:host .futur2:hover { background-color:var(--bar-view2btn1-bghover); color:var(--bar-view2btn1-colorhover);}
+		:host .actuel, :host .mitem { padding:0.1rem 0.2rem; text-align:center; @apply --cf-reg; align-self:center; }
+		:host .mitem { border-top: 1px solid var(--bar-view-mitemsep);}
+		:host .mitemp { cursor:pointer;}
+		:host .lang { padding:0 0.3rem;}
+		:host .langp, :host .themep { padding:0 0.3rem; cursor:pointer; font-weight:bold;}
+		:host .langp:hover, :host .themep:hover, :host .mitemp:hover {background-color:var(--bar-view-hover);}
+		:host .flag { width:2rem; height:2rem; padding:0 0 0.1rem 0;}
+		:host .theme { padding:0.2rem 0.3rem; color:var(--bar-view-colordis);}
+		:host .themes { padding:0.2rem 0.3rem; font-style:italic;}
 	</style>
-<div class="top layout horizontal justified" on-tap="back" style$="[[tbStyle(mode)]]">
-	<div class$="[[backCl(previousPage)]]">
-		<div class="flex layout horizontal start center">
-			<paper-icon-button class="ic2" disabled="[[!previousPage]]" title="[[libPreviousPage]]" icon="icons:arrow-back"></paper-icon-button>
-			<div class="backt" hidden$="[[!previousPage]]">[[libPreviousPage]]</div>
+<div class$="[[clTop(mode)]]">
+	<div class="layout horizontal justified">
+		<div class$="[[clBack(mode,previousPage)]]" on-tap="back">
+			<div class="flex layout horizontal start center">
+				<paper-icon-button class$="[[clBtn(mode)]]" disabled="[[!previousPage]]" title="[[libPreviousPage]]" icon="icons:arrow-back"></paper-icon-button>
+				<div class="backt" hidden$="[[!previousPage]]">[[libPreviousPage]]</div>
+			</div>
+		</div>
+		<div class="layout horizontal center">
+			<div hidden$="[[isMode(mode,2)]]"  class$="[[clSync(mode)]]">[[lapse]]</div>
+			<paper-icon-button hidden$="[[isMode(mode,2)]]" class$="[[clBtn(mode)]]" on-tap="tapSync" title="[[lib('tb_resync',lang)]]" icon="icons:refresh" ></paper-icon-button>
+			<iron-icon hidden$="[[!isMode(mode,0)]]" class="icm icm0" src$="[[inc]]" on-tap="showMenuMode"></iron-icon>
+			<iron-icon hidden$="[[!isMode(mode,1)]]" class="icm icm1" icon="icons:swap-horiz" on-tap="showMenuMode"></iron-icon>
+			<iron-icon hidden$="[[!isMode(mode,2)]]" class="icm icm2" icon="device:airplanemode-active" on-tap="showMenuMode"></iron-icon>
+			<img class="sm" src$="[[sm]]" hidden$="[[!isSudo]]"></img>
+			<paper-icon-button class$="[[clBtn(mode)]]" on-tap="showMenuGen" title="[[lib('tb_menu',lang)]]" icon="icons:menu"></paper-icon-button>
 		</div>
 	</div>
-	<div class="layout horizontal center">
-		<div hidden$="[[isMode(mode,2)]]" class="sync">[[lapse]]</div>
-		<paper-icon-button hidden$="[[isMode(mode,2)]]" class="ic2" on-tap="tapSync" title="[[lib('tb_resync',lang)]]" icon="icons:refresh" ></paper-icon-button>
-		<iron-icon hidden$="[[!isMode(mode,0)]]" class="icm" src$="[[inc]]" on-tap="clickMode"></iron-icon>
-		<iron-icon hidden$="[[!isMode(mode,1)]]" class="icm" icon="icons:swap-horiz" on-tap="clickMode"></iron-icon>
-		<iron-icon hidden$="[[!isMode(mode,2)]]" class="icm" icon="device:airplanemode-active" on-tap="clickMode"></iron-icon>
-		<img class="sm" src$="[[sm]]" hidden$="[[!isSudo]]"></img>
-		<paper-icon-button class="ic2" on-tap="showMenu" title="[[lib('tb_menu',lang)]]" icon="icons:menu"></paper-icon-button>
-	</div>
+	<div class$="[[clSep(mode)]]"></div>
 </div>
 
-<paper-dialog id="menuMode" class="right-menu" modal entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
-	<div class="menuMode">
+<paper-dialog id="menuMode" class="right-menu" entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
+	<div class="menu">
 		<div class="bar layout horizontal justified">
-			<paper-icon-button class="ic1" on-tap="closeMenuMode" icon="icons:close"></paper-icon-button>
+			<paper-icon-button class="ic3" on-tap="closeMenuGen" icon="icons:close"></paper-icon-button>
 			<div class="actuel" hidden$="[[!isMode(mode,0)]]">[[lib("tb_ac0",lang)]]</div>
 			<div class="actuel" hidden$="[[!isMode(mode,1)]]">[[lib("tb_ac1",lang)]]</div>
 			<div class="actuel" hidden$="[[!isMode(mode,2)]]">[[lib("tb_ac2",lang)]]</div>
 			<help-button help="p12"></help-button>
 		</div>
-		<div class="futur0" on-tap="reloadMode0" hidden$="[[futurMode(mode,0)]]">[[lib("tb_futur0",lang)]]
-			<iron-icon class="icm" src$="[[inc]]"></iron-icon>
+		<div class="futur0 mitem" on-tap="reloadMode0" hidden$="[[futurMode(mode,0)]]">[[lib("tb_futur0",lang)]]
+			<iron-icon class="icm icm0" src$="[[inc]]"></iron-icon>
 		</div>
-		<div class="futur1" on-tap="reloadMode1" hidden$="[[futurMode(mode,1)]]">[[lib("tb_futur1",lang)]]
-				<iron-icon class="icm" icon="icons:swap-horiz"></iron-icon>
+		<div class="futur1 mitem" on-tap="reloadMode1" hidden$="[[futurMode(mode,1)]]">[[lib("tb_futur1",lang)]]
+				<iron-icon class="icm icm1" icon="icons:swap-horiz"></iron-icon>
 		</div>
-		<div class="futur2" on-tap="reloadMode2" hidden$="[[futurMode(mode,2)]]">[[lib("tb_futur2",lang)]]
-			<iron-icon class="icm" icon="device:airplanemode-active"></iron-icon>		
+		<div class="futur2 mitem" on-tap="reloadMode2" hidden$="[[futurMode(mode,2)]]">[[lib("tb_futur2",lang)]]
+			<iron-icon class="icm icm2" icon="device:airplanemode-active"></iron-icon>		
 		</div>
+	</div>
+</paper-dialog>
+    <template is="dom-repeat" items="{{employees}}">
+        <div>First name: <span>{{item.first}}</span></div>
+        <div class="ln">Last name: <span>{{item.last}}</span></div>
+        <p></p>
+    </template>
+
+<paper-dialog id="menuGen" class="right-menu" entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
+	<div class="menu">
+		<div class="bar layout horizontal center-aligned justified">
+			<paper-icon-button class="ic3" on-tap="closeMenuMode" icon="icons:close"></paper-icon-button>
+			<div class="mitem mitemp" on-tap="goHelp"><b>[[lib("tb_aidegen",lang)]]</b>
+			<help-button help="home"></help-button></div>
+		</div>
+		<div class="mitem layout horizontal center-center">
+		    <template is="dom-repeat" items="[[langs]]">
+		    	<div class$="[[clLang(item,lang)]]" on-tap="changeLang">
+		        	<img class="flag" src$="[[flag(item)]]"></img>
+		        	<div>[[item]]</div>
+		        </div>
+		    </template>
+		</div>
+		<div class="mitem layout horizontal center-center">
+			<div class="themes">[[lib("tb_themes",lang)]]</div>
+		    <template is="dom-repeat" items="[[themes]]">
+		    	<div class$="[[clTheme(item,theme)]]" on-tap="changeTheme">[[lblTheme(item,lang)]]</div>
+		    </template>
+		</div>
+		<div class="mitem">[[libBuild]]</div>
+		<div on-tap="reloadApp" class="mitem mitemp">[[lib("tb_reload",lang)]]
+		<iron-icon class="ic3" icon="icons:autorenew"></iron-icon></div>
+		<div on-tap="quitApp" class="mitem mitemp">[[lib("tb_quit",lang)]]
+		<iron-icon class="ic3" icon="icons:exit-to-app"></iron-icon></div>
 	</div>
 </paper-dialog>
 </template>

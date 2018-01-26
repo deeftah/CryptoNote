@@ -29,5 +29,5 @@ Network target : localhost:9000
 Test crypto à faire sha256 OK.
 reqerr-panel à compléter / tester
 
-Doc serveur à ajuster
-Test / exemple
+Button top-bar user / auth ...
+Méthodes reload / quit dans top-bar
