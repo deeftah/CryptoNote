@@ -340,17 +340,20 @@ public class BConfig {
 	
 	public static Nsqm namespace(String ns, boolean fresh) { 
 		Nsqm x = g.namespaces.get(ns);
-		if (fresh) x.onoff = OnOff.status(ns, false);
+		if (fresh && x != null) x.onoff = OnOff.status(ns, false);
 		return x;
 	}
 	public static Nsqm queueManager(String ns, boolean fresh) { 
 		Nsqm x = g.queueManagers == null ? null : g.queueManagers.get(ns); 
-		if (fresh) x.onoff = OnOff.status(ns, false);
+		if (fresh && x != null) x.onoff = OnOff.status(ns, false);
 		return x;
 	}
 	public static Nsqm nsqm(String nsqm, boolean fresh) { 
 		Nsqm x = namespace(nsqm, fresh); 
-		return x != null ? x : queueManager(nsqm, fresh);
+		if (x == null) return null;
+		if (fresh)
+			x.onoff = OnOff.status(nsqm, false);
+		return x;
 	}
 	
 	/***************************************************************************************/

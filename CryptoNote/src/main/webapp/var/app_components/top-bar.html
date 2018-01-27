@@ -4,7 +4,9 @@
 <link rel="import" href="../bower_components/neon-animation/animations/slide-right-animation.html">
 <link rel="import" 	href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" 	href="../bower_components/iron-icons/device-icons.html">
+<link rel="import" 	href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" 	href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" 	href="../app_components/app-icons.html">
 
 <dom-module id="top-bar">
 <template>
@@ -28,23 +30,17 @@
 	    paper-icon-button.ic3[disabled] { /* le mixin prévu ne marche pas */ color: var(--bar-panelbtn1-colordis); }
 	    	    
 	    .icm0 {
-	    	background-color: var(--bar-view0btn1-bgiv);
-	    	--iron-icon-width: var(--font-xl) !important;
-	    	--iron-icon-height: var(--font-xl) !important;
-		    --iron-icon-stroke-color: var(--bar-view0btn1-coloriv);
-		    --iron-icon-fill-color: var(--bar-view0btn1-coloriv);
+	    	background-color: var(--bar-view0btn1-bg);
+		    --iron-icon-stroke-color: var(--bar-view0btn1-color);
+		    --iron-icon-fill-color: var(--bar-view0btn1-color);
 		}
 	    .icm1 {
 	    	background-color: var(--bar-view1btn1-bg);
-	    	--iron-icon-width: var(--font-xxl);
-	    	--iron-icon-height: var(--font-xxl);
 		    --iron-icon-stroke-color: var(--bar-view1btn1-color);
 		    --iron-icon-fill-color: var(--bar-view1btn1-color);
 		}
 	    .icm2 {
 	    	background-color: var(--bar-view2btn1-bg);
-	    	--iron-icon-width: var(--font-xxl);
-	    	--iron-icon-height: var(--font-xxl);
 		    --iron-icon-stroke-color: var(--bar-view2btn1-color);
 		    --iron-icon-fill-color: var(--bar-view2btn1-color);
 		}
@@ -78,8 +74,10 @@
 		
 		:host .backt { font-family: var(--font-cf); font-size:var(--font-l); height:var(--font-xl); margin-right:5rem; overflow:hidden; }
 		
-		:host .sm { height: var(--font-xxl); width: var(--font-xxl); margin:0 0.2rem; }
-		:host .icm { margin:0 0.2rem; border-radius:var(--font-xxl2); webkit-border-radius:var(--font-xxl2); cursor:pointer; }
+		:host .icr, :host .icr4 { margin:0 0.2rem; padding: 0.1rem 0; cursor:pointer; }
+		:host .icr { height: var(--bar-view-phsize); width: var(--bar-view-phsize); }
+		:host .icr:hover, :host .icr4:hover { background-color: var(--bar-view-hover); }
+		:host .icr2 { height: var(--bar-view-phsize); width: var(--bar-view-phsize); border-radius: var(--bar-view-phradius); -webkit-border-radius: var(--bar-view-phradius); }
 		
 		:host .sync { @apply --mono-reg; font-size:var(--font-s); margin:0 0 0 0.3rem; }
 		:host .sync0 { color:var(--bar-view0btn1-color); }
@@ -114,10 +112,16 @@
 		<div class="layout horizontal center">
 			<div hidden$="[[isMode(mode,2)]]"  class$="[[clSync(mode)]]">[[lapse]]</div>
 			<paper-icon-button hidden$="[[isMode(mode,2)]]" class$="[[clBtn(mode)]]" on-tap="tapSync" title="[[lib('tb_resync',lang)]]" icon="icons:refresh" ></paper-icon-button>
-			<iron-icon hidden$="[[!isMode(mode,0)]]" class="icm icm0" src$="[[inc]]" on-tap="showMenuMode"></iron-icon>
-			<iron-icon hidden$="[[!isMode(mode,1)]]" class="icm icm1" icon="icons:swap-horiz" on-tap="showMenuMode"></iron-icon>
-			<iron-icon hidden$="[[!isMode(mode,2)]]" class="icm icm2" icon="device:airplanemode-active" on-tap="showMenuMode"></iron-icon>
-			<img class="sm" src$="[[sm]]" hidden$="[[!isSudo]]"></img>
+			<iron-icon hidden$="[[!isMode(mode,0)]]" class="icr icm0" icon="app:incognito" on-tap="showMenuMode"></iron-icon>
+			<iron-icon hidden$="[[!isMode(mode,1)]]" class="icr icm1" icon="icons:swap-horiz" on-tap="showMenuMode"></iron-icon>
+			<iron-icon hidden$="[[!isMode(mode,2)]]" class="icr icm2" icon="device:airplanemode-active" on-tap="showMenuMode"></iron-icon>
+			<div class="icr4">
+				<span hidden$="[[!userName]]" on-tap="showProfile">
+					<img class="icr2" src$="[[userPhoto]]" hidden$="[[!userPhoto]]"></img>
+					<iron-icon hidden$="[[userPhoto]]" class$="[[clBtn(mode,true)]]" icon="social:person"></iron-icon>
+				</span>
+				<img class="icr2" src$="[[sm]]" hidden$="[[!isSudo]]"></img>
+			</div>
 			<paper-icon-button class$="[[clBtn(mode)]]" on-tap="showMenuGen" title="[[lib('tb_menu',lang)]]" icon="icons:menu"></paper-icon-button>
 		</div>
 	</div>
@@ -134,13 +138,13 @@
 			<help-button help="p12"></help-button>
 		</div>
 		<div class="futur0 mitem" on-tap="reloadMode0" hidden$="[[futurMode(mode,0)]]">[[lib("tb_futur0",lang)]]
-			<iron-icon class="icm icm0" src$="[[inc]]"></iron-icon>
+			<iron-icon class="icr icr2 icm0" icon="app:incognito"></iron-icon>
 		</div>
 		<div class="futur1 mitem" on-tap="reloadMode1" hidden$="[[futurMode(mode,1)]]">[[lib("tb_futur1",lang)]]
-				<iron-icon class="icm icm1" icon="icons:swap-horiz"></iron-icon>
+				<iron-icon class="icr icr2 icm1" icon="icons:swap-horiz"></iron-icon>
 		</div>
 		<div class="futur2 mitem" on-tap="reloadMode2" hidden$="[[futurMode(mode,2)]]">[[lib("tb_futur2",lang)]]
-			<iron-icon class="icm icm2" icon="device:airplanemode-active"></iron-icon>		
+			<iron-icon class="icr icr2 icm2" icon="device:airplanemode-active"></iron-icon>		
 		</div>
 	</div>
 </paper-dialog>

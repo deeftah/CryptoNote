@@ -26,8 +26,7 @@ Dans Chrome : chrome://inspect/#devices
 Network target : localhost:9000
 ça devrait apparaître en dessous
 
-Test crypto à faire sha256 OK.
-reqerr-panel à compléter / tester
-
-Button top-bar user / auth ...
-Méthodes reload / quit dans top-bar
+TaskQueue - opérations
+- création task
+- modif toStartAt / cron ...
+- revisiter cron avec distinction date-heure réelle et date-heure fonctionnelle

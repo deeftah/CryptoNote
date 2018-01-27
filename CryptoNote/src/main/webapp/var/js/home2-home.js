@@ -21,7 +21,7 @@ class Home2Home extends Polymer.Element {
     show(arg, previousPage) {
   	  this.arg = arg;
   	  this.previousPage = previousPage;
-  	  this.$.photo.show(App.incognito);
+  	  this.$.photo.show(App.superman);
     }
     
     title() {
@@ -53,13 +53,11 @@ class Home2Home extends Polymer.Element {
 		})
 	}
 	
-	confirm1() {
-		App.confirmBox.show("Ceci est un TRES beau message.", "Lu")
-		.then(() => {
+	async confirm1() {
+		if (await App.confirmBox.show("Ceci est un TRES beau message.", App.lib("lu")))
 			console.log("Confirm Lu");
-		}).catch(() => {
-			console.log("Confirm KO2");    		  
-		})
+		else
+			console.log("Confirm KO2");
 	}
 	
 	changeThemeA() { App.appHomes.setTheme("a"); }

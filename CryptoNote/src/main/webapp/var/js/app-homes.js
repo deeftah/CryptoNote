@@ -3,10 +3,13 @@ class AppHomes extends Polymer.Element {
 	
 	static get properties() { return { 
 		isSudo : {type:Boolean, value:false},
-		anpage: {type:String, value:"z-wait"}, 
-		bar: {type:String, value:"z-wait-bar"}, 
+		userName: {type:String, value:null}, 
+		userPhoto: {type:String, value:null}, 
 		lang:{type:String, value:App.lang},
 		theme:{type:String, value:App.theme},
+
+		anpage: {type:String, value:"z-wait"}, 
+		bar: {type:String, value:"z-wait-bar"}, 
 		history: {type:Array, value:[]}
 		};
 	}
@@ -21,6 +24,7 @@ class AppHomes extends Polymer.Element {
   		App.globalReqErr = this.$.reqerr;
   		App.scriptErrPanel = this.$.scripterr;
   		App.helpPanel = this.$.help;
+  		App.profile = this.$.profile;
   		App.appHomes = this;
   		if (App.rootcomplete)
   			this.starting();
@@ -33,8 +37,14 @@ class AppHomes extends Polymer.Element {
 		this.setHome(App.home);
   	}
   	
+  	/* Méthodes pouvant / devant être invoquées par l'application */
   	setSudo(b) {
   		this.isSudo = b;
+  	}
+  	
+  	setUser(userName, userPhoto) {
+  		this.userName = userName;
+  		this.userPhoto = userPhoto;
   	}
   	
   	resetSync() {
@@ -54,6 +64,51 @@ class AppHomes extends Polymer.Element {
   		if (!this.$[h])
   			h = "z-" + home;
   		this.setPage(h, {});
+  	}
+  	  	
+  	async setPage(page, arg) {
+  		const may = await this.mayHideCurrent();
+  		if (!may) return;
+  		this.history = [{page:page, arg:arg}];
+  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(null);
+  		this.anim(0);
+  		this.page = page;
+  		this.anpage = this.page + "-page";
+  		if (this.$[this.page].show)
+  			this.$[this.page].show(arg, null);
+  	}
+  	
+  	async forward(page, arg) {
+  		const may = await this.mayHideCurrent();
+  		if (!may) return;
+  		const pb = this.history[this.history.length - 1].page;
+  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(this.$[pb]);
+  		this.history.push({page:page, arg:arg});
+  		this.anim(1);
+  		this.page = page;
+  		this.anpage = this.page + "-page";
+  		if (this.$[this.page].show)
+  			this.$[this.page].show(arg, pb);
+  	}
+
+  	async back() {
+  		if (this.history.length < 2) return;
+  		const may = await this.mayHideCurrent();
+  		if (!may) return;
+  		this.history.pop();
+  		const pb = this.history.length >= 2 ? this.history[this.history.length - 2].page : null;
+  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(pb ? this.$[pb] : null);
+  		const top = this.history[this.history.length - 1];
+  		this.anim(2);
+  		this.page = top.page;
+  		this.anpage = this.page + "-page";
+  		if (this.$[this.page].show)
+  			this.$[this.page].show(top.arg, pb);
+  	}
+
+  	/* Méthodes internes ***********************************/
+  	showProfile() {
+  		if (App.profile) App.profile.show();
   	}
   	
   	setLang(lang) { 
@@ -94,46 +149,6 @@ class AppHomes extends Polymer.Element {
 			this.exan = "fade-out-animation";		  			
   		}
 
-  	}
-  	
-  	async setPage(page, arg) {
-  		const may = await this.mayHideCurrent();
-  		if (!may) return;
-  		this.history = [{page:page, arg:arg}];
-  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(null);
-  		this.anim(0);
-  		this.page = page;
-  		this.anpage = this.page + "-page";
-  		if (this.$[this.page].show)
-  			this.$[this.page].show(arg, null);
-  	}
-  	
-  	async forward(page, arg) {
-  		const may = await this.mayHideCurrent();
-  		if (!may) return;
-  		const pb = this.history[this.history.length - 1].page;
-  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(this.$[pb]);
-  		this.history.push({page:page, arg:arg});
-  		this.anim(1);
-  		this.page = page;
-  		this.anpage = this.page + "-page";
-  		if (this.$[this.page].show)
-  			this.$[this.page].show(arg, pb);
-  	}
-
-  	async back() {
-  		if (this.history.length < 2) return;
-  		const may = await this.mayHideCurrent();
-  		if (!may) return;
-  		this.history.pop();
-  		const pb = this.history.length >= 2 ? this.history[this.history.length - 2].page : null;
-  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(pb ? this.$[pb] : null);
-  		const top = this.history[this.history.length - 1];
-  		this.anim(2);
-  		this.page = top.page;
-  		this.anpage = this.page + "-page";
-  		if (this.$[this.page].show)
-  			this.$[this.page].show(top.arg, pb);
   	}
 
 }

@@ -24,8 +24,6 @@
 		static get properties() { return { 
 			lang : {type:String, value:"xx"},
 			sudo : {type:String, value:null},
-			inc : {type:String, value:null},
-			sup : {type:String, value:null},
 			}
 		}
 
@@ -37,38 +35,34 @@
       		App.setMsg("fr", "admin_authok", "Authentification reconnue");
       		App.setMsg("fr", "admin_authab", "Authentification abandonnée");
       		App.setMsg("fr", "admin_authko", "Authentification non reconnue");
-      		App.setMsg("fr", "admin_lu", "Lu");
       	}
       	
       	ready() {
       		super.ready();
-      		this.inc = App.incognito;
-      		this.sup = App.superman;
       	}
       	
       	show(arg, prevPage) {
-      		this.sudo = App.sudo;
+      		this.sudo = App.Custom.sudo;
       	} 
       	
       	async getPhrase() {
       		let typed = await this.$.phrase.show("Phrase d'habilitation à l'administration :", 4, 20);
       		if (typed) {
       			console.log("prB: " + typed.prB + "\nprBD : " + typed.prBD);
-      			App.setSudo(typed.prB);
+      			App.Custom.declareSudo(typed.prB);
       			try {
-      				const ret = await new App.Req().setOp("sudo").setCred(2).setNoCatch("SADMINOP").go();
+      				const ret = await new App.Req().setOp("sudo").setNoCatch("SADMINOP").go();
       				App.messageBox.show(App.lib("admin_authok"), 3000);
-      				this.sudo = App.sudo;
+      				this.sudo = App.Custom.sudo;
       			} catch (err) {
-      				if (err.code == "SADMINOP") {
-      					App.setSudo(null);
-      					this.sudo = null;
-      					await App.confirmBox.show(App.lib("admin_authko"), App.lib("admin_lu"));
-      				}
+  					App.Custom.declareSudo(null);
+  					this.sudo = null;
+      				if (err.code == "SADMINOP")
+      					await App.confirmBox.show(App.lib("admin_authko"), App.lib("lu"));
       			}
       		} else {
-				App.setSudo(null);
-  				this.sudo = null;
+      			App.Custom.declareSudo(null);
+      			this.sudo = null;
   				App.messageBox.show(App.lib("admin_authab"), 3000, true);
       		}
       	}

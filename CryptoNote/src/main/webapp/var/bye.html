@@ -3,7 +3,8 @@
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="fonts/comfortaa.css">
 <style>
-#p { font-family:'Comfortaa'; font-size:14px; margin:10px;}
+#p { font-family:'Comfortaa'; font-size:14px; padding:10px; margin:40px auto 0 auto; min-width:300px; max-width:500px; width:70%; 
+	box-shadow: 12px 12px 2px 1px rgba(140, 140, 140, .2); text-align:center; border:2px solid rgb(200,200,200); line-height:1.5;}
 .ici {font-size:18px; text-decoration: underline; font-weight:bold; color:blue; cursor:pointer; }
 .app {font-size:18px; font-weight:bold; }
 .red {font-size:16px; font-weight:bold; color:red;}
@@ -13,7 +14,7 @@
 <div id="p"></div>
 <script>
 var lib = {
-	fr:"Vous quittez l'application <span class='app'>{0}</span> pour l'organisation <span class='app'>{1}</span><br>."
+	fr:"Vous quittez l'application <span class='app'>{0}</span> pour l'organisation <span class='app'>{1}</span>.<br>"
 	+ "Fermer, s'il y en a, les onglets ou pages ouvertes sur cette application dans ce navigateur (ceci ne peut pas être fait automatiquement).<br>"
 	+ "Pour y retourner cliquer <a class='ici' href='{3}'>ici</a> ({2}).",
 	en:""
@@ -36,7 +37,7 @@ var s = window.location.search.substring(1);
 x = JSON.parse(decodeURI(s));
 var p = document.getElementById("p");
 // 	const x = {lang:App.lang, nslabel:App.nslabel(), applabel:App.applabel(), home:App.homeUrl()}
-var m = format(x.lang, x.applabel, x.nslabel, x.home, window.location.origin + "/" + x.home);
+var m = format(x.lang, x.applabel, x.nslabel, x.home, window.location.origin + x.home);
 p.innerHTML = m;
 </script>
 </body>

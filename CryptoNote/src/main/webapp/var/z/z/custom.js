@@ -1,9 +1,40 @@
 // Appel en fin de <head>
 class Custom {
-	static async ready() { // appel quand AppHomes est ready()
+	
+	// appel quand AppHomes est ready()
+	static async ready() { 
+		Custom.declareNom("Daniel Sportès");
 		console.log(App.Util.log(App.lib("start_mode" + App.mode), 3000));
 	}
+	
+	// appel par l'appui du bouton refresh
+	static syncRequested() {
+		// todo
+		App.appHomes.resetSync();
+	}
+	
+	// retourne le credential courant
+	static credential() {
+		const c = {account:this.account, key:this.key}
+		if (this.sudo) c.sudo = this.sudo;
+		return c;
+	}
+	
+	static declarePhoto(photo) {
+		this.userPhoto = photo;
+		App.appHomes.setUser(this.userName, this.userPhoto);
+	}
+
+	static declareNom(nom) {
+		this.userName = nom;
+		App.appHomes.setUser(this.userName, this.userPhoto);
+	}
+
+	static declareSudo(sudo) {
+		this.sudo = sudo; //App.sudo
+		App.appHomes.setSudo(this.sudo);
+	}
+
 }
 App.Custom = Custom;
-// App.incognito = "data:image/png;base64,iVBO ...";
 // App.superman = "data:image/png;base64,iVBO ...";

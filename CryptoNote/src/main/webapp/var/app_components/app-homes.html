@@ -12,6 +12,7 @@
 <link rel="import" href="reqerr-panel.html">
 <link rel="import" href="scripterr-panel.html">
 <link rel="import" href="help-panel.html">
+<link rel="import" href="profile-panel.html">
 <link rel="import" href="home1-home.html">
 <link rel="import" href="home2-home.html">
 <link rel="import" href="wait-home.html">
@@ -37,11 +38,12 @@
 		<reqerr-panel id="reqerr" lang="[[lang]]"></reqerr-panel>
 		<scripterr-panel id="scripterr" lang="[[lang]]"></scripterr-panel>
 		<help-panel id="help" lang="[[lang]]"></help-panel>
+		<profile-panel id="profile" lang="[[lang]]" is-sudo="[[isSudo]]" user-name="[[userName]]" user-photo="[[userPhoto]]"></profile-panel>
 		<div class="top layout vertical flex-start">
 			<iron-pages class="bar" attr-for-selected="id" selected="[[bar]]">
 				<home1-bar id="test-home1-bar" lang="[[lang]]" is-sudo="[[isSudo]]" owner="Scott"></home1-bar>
-				<top-bar id="test-home2-bar" lang="[[lang]]" theme="[[theme]]" is-sudo="[[isSudo]]"></top-bar>
-				<top-bar id="admin-admin-bar" lang="[[lang]]" theme="[[theme]]" is-sudo="[[isSudo]]"></top-bar>
+				<top-bar id="test-home2-bar" lang="[[lang]]" theme="[[theme]]" is-sudo="[[isSudo]]" user-name="[[userName]]" user-photo="[[userPhoto]]"></top-bar>
+				<top-bar id="admin-admin-bar" lang="[[lang]]" theme="[[theme]]" is-sudo="[[isSudo]]" user-name="[[userName]]" user-photo="[[userPhoto]]"></top-bar>
 				<div id="z-wait-bar" class="wb"></div>
 			</iron-pages>
 			<neon-animated-pages  class="main flex" attr-for-selected="id" selected="[[anpage]]" entry-animation="[[enan]]" exit-animation="[[exan]]">		

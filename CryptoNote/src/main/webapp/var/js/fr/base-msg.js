@@ -16,6 +16,8 @@ App.setAll("fr", {
 "srvok":"Serveur joignable : {0}",
 "reqStarted":"Envoi au serveur",
 "reqRec":"{0} reçus de {1}",
+"lu":"Lu",
+"fermer":"Fermer",
 "sb_npa": "Ne plus attendre",
 "sb_texte": "Interrompre correspond à renoncer à l'action engagée qui sera traitée comme un échec. L'autre option est d'avoir plus de patience.",
 "sb_att": "Attendre encore",

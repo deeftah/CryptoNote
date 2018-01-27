@@ -32,7 +32,7 @@ public class OnOff {
 					status = provider.getOnOff();
 				} catch (Exception e) {}
 				nextReload = now + (BConfig.NSSCANPERIODINSECONDS() * 1000);
-		}
+			}
 	}
 	
 	/*****************************************************************/

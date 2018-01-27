@@ -623,13 +623,11 @@ class ReqErr {
 
 /*****************************************************/
 class Req {
-	constructor() {
+	constructor(formData) {
 		this.TIME_OUT_MS = 300000;
 		this.url = new StringBuffer().append(App.opbase);
 		this.currentRetry = null;
-		this.hasArgs = false;
-		this.formData = new FormData();
-		this.cred = 0;
+		this.formData = formData ? formData : new FormData();
 		this.reqErr = App.globalReqErr;
 		this.spinner = App.globalSpinner;
 	}
@@ -648,8 +646,6 @@ class Req {
 
 	setTimeOut(timeOut) { this.TIME_OUT_MS = timeOut; return this; }
 
-	setFormData() { this.formData = formData; return this; } // à citer AVANT ceux qui suivent
-
 	setSyncs(syncs) { if (syncs) this.formData.append("syncs", JSON.stringify(syncs)); return this;}
 	
 	setOp(op, param, url) { 
@@ -657,45 +653,20 @@ class Req {
 		if (op.endsWith("ping")) { // "ping" ou "../ping"
 			this.url.append(op);
 		} else {
-			this.param = param ? JSON.stringify(param) : "{}"; 
 			this.url.append("op/").append(url ? url : "");
 			this.formData.append("op", this.op);
-			this.hasArgs = true;
+			this.formData.append("param", param ? JSON.stringify(param) : "{}");
 		}
 		return this;
 	}
 	
 	setArgs(args) {
-		if (!args) return;
-		for(let a in args) {
-			let v = args[a];
-			if (this.isGet)
-				this.url.append(this.hasArgs ? "?" : "&").append(a + "=").append(encodeURI(v));
-			else
-				this.formData.append(a,v);
-			this.hasArgs = true;
-		}
+		if (args)
+			for(let a in args)
+				this.formData.append(a,args[a]);
 		return this;
 	}
-	
-	/*
-	 * !cred : pas de crédential
-	 * cred = 1 crédential standard simple (propriétés account / key de App)
-	 * cred = 2 crédential privilégié (account / key / sudo de App)
-	 * cred = {c1:... c2:... } crédential spécifique
-	 */
-	setCred(cred) { 
-		if (cred) {
-			if (cred == 1)
-				this.cred = {account:App.account, key:App.key}
-			else if (cred == 2)
-				this.cred = {account:App.account, key:App.key, sudo:App.sudo}
-			else
-				this.cred = cred;
-		}
-		return this;
-	}
-	
+		
 	setNoCatch(noCatch) { this.noCatch = noCatch + " "; return this; }
 	
 	setStartMsg(startMsg) {
@@ -707,17 +678,15 @@ class Req {
 	async go(){
 		return new Promise((resolve, reject) => {
 			try{
-			if (this.cred) {
-				for(let a in this.cred) {
-					this.formData.append(a, this.cred[a]);
-					this.hasArgs = true;
-				}
-			}
-			this.url = this.url.toString();
-			this.resolve = resolve;
-			this.reject = reject;
-			this.currentRetry = new Retry();
-			this.currentRetry.req = this;
+				const cred = App.Custom && App.Custom.credential ? App.Custom.credential() : null;
+				if (cred)
+					for(let a in cred) 
+						this.formData.append(a, cred[a]);
+				this.url = this.url.toString();
+				this.resolve = resolve;
+				this.reject = reject;
+				this.currentRetry = new Retry();
+				this.currentRetry.req = this;
 			} catch(err) { App.errscript(err);}
 			this.currentRetry.send();
 		});

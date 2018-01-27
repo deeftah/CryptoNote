@@ -4,7 +4,6 @@ App.setTheme("z", {
 "--font-cf" : "'Comfortaa'",
 
 "--font-xxl" : "2.2rem",
-"--font-xxl2" : "1.1rem",
 "--font-xl" : "1.7rem",
 "--font-l" : "1.3rem",
 "--font-m" : "1rem",
@@ -57,6 +56,8 @@ App.setTheme("z", {
 "--bar-view-hover":"var(--paper-grey-300)",
 "--bar-view-colordis":"var(--paper-grey-300)",
 "--bar-view-padding": "0",
+"--bar-view-phsize": "2rem",
+"--bar-view-phradius": "1rem",
 "--bar-view0sep-color": "var(--paper-grey-400)",
 "--bar-view1sep-color": "var(--paper-indigo-400)",
 "--bar-view2sep-color": "var(--paper-teal-400)",
@@ -68,10 +69,8 @@ App.setTheme("z", {
 "--bar-view-menucolor":"var(--paper-grey-700)",
 
 "--bar-view0btn1-color": "white",
-"--bar-view0btn1-coloriv": "var(--paper-grey-800)",
 "--bar-view0btn1-colorhover": "white",
 "--bar-view0btn1-bg": "var(--paper-grey-800)",
-"--bar-view0btn1-bgiv": "white",
 "--bar-view0btn1-bghover": "var(--bar-view-hover)",
 "--bar-view0btn1-colordis": "var(--paper-grey-200)",
 
@@ -111,11 +110,6 @@ App.setTheme("z", {
 
 "--wait-homecolor": "var(--paper-orange-300)",
 
-"--tb-bg0": "var(--paper-grey-800)",
-"--tb-bg1": "var(--paper-indigo-800)",
-"--tb-bg2": "var(--paper-teal-800)",
-
-
 "--msg-okcolor": "white",
 "--msg-kocolor": "var(--paper-red-400)",
 "--msg-okbg": "var(--paper-grey-800)",
@@ -139,8 +133,6 @@ App.setTheme("z", {
 */
 "--mybg-color" : "lightgrey",
 "--bg-imglg" : "url('../z/z/icon.png')",
-"--c1-gen": "{ color: var(--mybg-color); font-size: var(--font-l); }",
-"--flag-gen": "{ background-repeat:no-repeat; background-position:center; background-size: 2rem 2rem;}",
 
 "truc":"rien"
 });

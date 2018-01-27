@@ -1,8 +1,12 @@
 class TopBar extends Polymer.Element {
 	static get is() { return "top-bar"; }
 	static get properties() { return { 
+		isSudo : {type:Boolean, value:false},
+		userName: {type:String, value:null}, 
+		userPhoto: {type:String, value:null}, 
 		lang : {type:String, value:App.lang},
 		theme : {type:String, value:App.theme},
+
 		themes : {type:Array, value:[]},
 		isSudo : {type:Boolean, value:false},
 		previousPage : {type:Object, value:null},
@@ -30,10 +34,10 @@ class TopBar extends Polymer.Element {
 		App.setMsg("fr", "tb_aidegen", "Accueil Aide");
 		App.setMsg("fr", "tb_reload", "Recharger l''aplication");
 		App.setMsg("fr", "tb_quit", "Quitter l''application");
+		App.setMsg("fr", "tb_ano", "Session anonyme (non authentifiée) pour l'instant");
 		this.mode = App.mode;
 		this.modeMax = App.modeMax;
 		this.sm = App.superman;
-		this.inc = App.incognito;
 		this.libBuild = App.format("tb_build", App.build);
 		this.langs = App.langs;
 		this.themes = [];
@@ -46,12 +50,42 @@ class TopBar extends Polymer.Element {
 		this.resetSync(true);
 	}
 	
+	/* Méthodes de notification invoquée par app-homes lors a) du changement de view, b) de la synchronisation */
 	setPreviousPage(p) { 
 		this.previousPage = p;
 		this.libPreviousPage = p && p.title ? p.title() : "";
 	}
 
-	clBtn(mode) { return "ic" + mode; }
+	resetSync(b) {
+		if (this.timer) {
+			clearTimeout(this.timer);
+			this.timer = null;
+		}
+		let age = "0s";
+		const t = new Date().getTime();
+		if (!b){
+			this.lastsync = t;
+		} else {
+			if (!this.lastsync)
+				this.lastsync = t;
+			else {
+				let s = Math.floor((t - this.lastsync) / 1000);
+				if (s < 60){
+					age = "" + s + "s";
+				} else {
+					const m = Math.floor(s / 60);
+					s = Math.floor(s % 60);
+					age = "" + m + (s < 10 ? "m0" : "m") + s ;
+				}
+			}
+		}
+		this.lapse = age;
+		this.timer = setTimeout(() => {this.resetSync(true);}, 5000);
+	}
+
+	/* Méthodes internes *****************************/
+	
+	clBtn(mode,r) { return (r ? "icr ic" : "ic") + mode; }
 
 	clSep(mode) { return "sep" + mode; }
 
@@ -97,58 +131,38 @@ class TopBar extends Polymer.Element {
 
 	goHelp() { App.help("home"); }
 	
+	back() { App.appHomes.back(); }
+
+	tapSync() {
+		if (App.Custom && App.Custom.syncRequested) App.Custom.syncRequested();
+	}
+
+	showProfile() {
+		if (this.userName) {
+			if (App.appHomes.showProfile) App.appHomes.showProfile();
+		} else 
+			App.confirmBox(this.lib("tb_ano"), this.lib("lu"));
+	}
+	
 	reloadMode0() {
-		
+		App.reloadInc();
 	}
 
 	reloadMode1() {
-		
+		App.reloadSync();
 	}
 
 	reloadMode2() {
-		
+		App.reloadAvion();
 	}
-	
-	back() { App.appHomes.back(); }
-	
-	quitApp() {
 		
+	quitApp() {
+		App.bye();
 	}
 	
 	reloadApp() {
+		App.reload();
+	}
 		
-	}
-	
-	tapSync() {
-		this.resetSync();
-	}
-	
-	resetSync(b) {
-		if (this.timer) {
-			clearTimeout(this.timer);
-			this.timer = null;
-		}
-		let age = "0s";
-		const t = new Date().getTime();
-		if (!b){
-			this.lastsync = t;
-		} else {
-			if (!this.lastsync)
-				this.lastsync = t;
-			else {
-				let s = Math.floor((t - this.lastsync) / 1000);
-				if (s < 60){
-					age = "" + s + "s";
-				} else {
-					const m = Math.floor(s / 60);
-					s = Math.floor(s % 60);
-					age = "" + m + (s < 10 ? "m0" : "m") + s ;
-				}
-			}
-		}
-		this.lapse = age;
-		this.timer = setTimeout(() => {this.resetSync(true);}, 5000);
-	}
-
 }
 customElements.define(TopBar.is, TopBar);

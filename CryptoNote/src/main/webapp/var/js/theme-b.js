@@ -47,6 +47,8 @@ App.setTheme("b", {
 "--bar-view-hover":"var(--paper-grey-400)",
 "--bar-view-colordis":"var(--paper-grey-300)",
 "--bar-view-padding": "0.1rem 0.3rem",
+"--bar-view-phsize": "2rem",
+"--bar-view-phradius": "1rem",
 "--bar-view0sep-color": "var(--paper-grey-400)",
 "--bar-view1sep-color": "var(--paper-indigo-400)",
 "--bar-view2sep-color": "var(--paper-teal-400)",
@@ -58,10 +60,8 @@ App.setTheme("b", {
 "--bar-view-menucolor":"var(--paper-grey-700)",
 
 "--bar-view0btn1-color": "var(--paper-grey-800)",
-"--bar-view0btn1-coloriv": "var(--paper-grey-800)",
 "--bar-view0btn1-colorhover": "var(--paper-grey-800)",
 "--bar-view0btn1-bg": "white",
-"--bar-view0btn1-bgiv": "white",
 "--bar-view0btn1-bghover": "var(--bar-view-hover)",
 "--bar-view0btn1-colordis": "var(--paper-grey-300)",
 

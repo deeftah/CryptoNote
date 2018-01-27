@@ -44,7 +44,6 @@ class FileInput extends Polymer.Element {
   		super(); 
   		App.setMsg("fr", "ph_cl", "Cliquer pour choisir un fichier");
   		App.setMsg("fr", "ph_er", "Fichier illisible");
-  		App.setMsg("fr", "ph_lu", "Lu");
    	}
   
 	ready() { 
@@ -81,7 +80,8 @@ class FileInput extends Polymer.Element {
 		        this.drawimg(this.image);
 		    };
 			this.image.src = img;
-	   }
+	   } else
+		   this.image = null;
 	}
 
 	drawimg(image) {
@@ -131,7 +131,7 @@ class FileInput extends Polymer.Element {
 	}
 	
 	error() {
-		App.confirmBox.show(this.lib("ph_er"), this.lib("ph_lu"));
+		App.confirmBox.show(this.lib("ph_er"), this.lib("lu"));
 	}
 		
 	btnClick(){

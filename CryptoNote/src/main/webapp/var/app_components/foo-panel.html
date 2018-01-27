@@ -1,0 +1,44 @@
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-from-left-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-left-animation.html">
+<link rel="import" 	href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../app_components/collapsable-block.html">
+
+<dom-module id="foo-panel">
+<template>
+	<style is="custom-style" include="iron-flex iron-flex-alignment shared2-styles">
+		paper-dialog.left-panel { @apply --left-panel;}
+		
+		paper-icon-button.ic1 { @apply --bar-panelbtn1-n;	}
+	    paper-icon-button.ic1:hover { @apply --bar-panelbtn1-h }
+	    paper-icon-button.ic1[disabled] { /* le mixin prévu ne marche pas */ color: var(--bar-panelbtn1-colordis); }
+	</style>
+    <style>
+	  	:host .top { @apply --top-panel; }
+	  	:host .bar { @apply --bar-panel; } 
+	  	:host .sep { @apply --bar-panelsep; } 
+	  	:host .btnm {padding:0; margin:0;}
+	  	:host .body { @apply --body-panel; padding: 0.5rem; }
+	</style>
+	
+	<paper-dialog id="panel" class="left-panel" modal entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
+	
+	<div class="top layout vertical flex-start">
+		<div class="bar layout vertical">
+			<div class="layout horizontal justified">
+				<div class="btnm">
+				</div>
+				<paper-icon-button class="ic1" title="[[lib('fermer',lang)]]" on-tap="close" icon="icons:close"></paper-icon-button>
+			</div>
+			<div class="sep"></div>
+		</div>
+		<div class="body flex layout vertical">
+     	</div>
+	</div>
+	</paper-dialog>
+</template>
+<script src="../js/foo-panel.js"></script>
+</dom-module>
