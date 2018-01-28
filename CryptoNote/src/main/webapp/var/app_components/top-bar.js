@@ -91,6 +91,10 @@ class TopBar extends Polymer.Element {
 
 	/* Méthodes internes *****************************/
 	
+	libUsr(userName) {
+		return userName ? userName : this.lib("tb_ano");
+	}
+	
 	clBtn(mode,r) { return (r ? "icr ic" : "ic") + mode; }
 
 	clSep(mode) { return "sep" + mode; }

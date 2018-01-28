@@ -1,9 +1,8 @@
 // Appel en fin de <head>
-class Custom {
+class CustomTemplate {
 	
 	// appel quand AppHomes est ready()
 	static async ready() { 
-		Custom.declareNom("Daniel Sportès");
 		console.log(App.Util.log(App.lib("start_mode" + App.mode), 3000));
 	}
 	
@@ -36,5 +35,5 @@ class Custom {
 	}
 
 }
-App.Custom = Custom;
+App.CustomTemplate = CustomTemplate;
 // App.superman = "data:image/png;base64,iVBO ...";

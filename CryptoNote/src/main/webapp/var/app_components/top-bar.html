@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../bower_components/neon-animation/web-animations.html">
 <link rel="import" href="../bower_components/neon-animation/animations/slide-from-right-animation.html">
 <link rel="import" href="../bower_components/neon-animation/animations/slide-right-animation.html">
@@ -117,13 +118,14 @@
 			<iron-icon hidden$="[[!isMode(mode,0)]]" class="icr icm0" icon="app:incognito" on-tap="showMenuMode"></iron-icon>
 			<iron-icon hidden$="[[!isMode(mode,1)]]" class="icr icm1" icon="icons:swap-horiz" on-tap="showMenuMode"></iron-icon>
 			<iron-icon hidden$="[[!isMode(mode,2)]]" class="icr icm2" icon="device:airplanemode-active" on-tap="showMenuMode"></iron-icon>
-			<div class="icr4">
+			<div id="user" class="icr4">
 				<span hidden$="[[!userName]]" on-tap="showProfile">
 					<img class="icr2" src$="[[userPhoto]]" hidden$="[[!userPhoto]]"></img>
 					<iron-icon hidden$="[[userPhoto]]" class$="[[clBtn(mode,true)]]" icon="social:person"></iron-icon>
 				</span>
 				<img class="icr2" src$="[[sm]]" hidden$="[[!isSudo]]"></img>
 			</div>
+			<paper-tooltip for="user" position="bottom">[[libUsr(userName)]]</paper-tooltip>
 			<paper-icon-button class$="[[clBtn(mode)]]" on-tap="showMenuGen" title="[[lib('tb_menu',lang)]]" icon="icons:menu"></paper-icon-button>
 		</div>
 	</div>
@@ -133,7 +135,7 @@
 <paper-dialog id="menuMode" class="right-menu" entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
 	<div class="menu">
 		<div class="bar layout horizontal justified">
-			<paper-icon-button class="ic3" on-tap="closeMenuGen" icon="icons:close"></paper-icon-button>
+			<paper-icon-button class="ic3" on-tap="closeMenuMode" icon="icons:close"></paper-icon-button>
 			<div class="actuel" hidden$="[[!isMode(mode,0)]]">[[lib("tb_ac0",lang)]]</div>
 			<div class="actuel" hidden$="[[!isMode(mode,1)]]">[[lib("tb_ac1",lang)]]</div>
 			<div class="actuel" hidden$="[[!isMode(mode,2)]]">[[lib("tb_ac2",lang)]]</div>
@@ -154,7 +156,7 @@
 <paper-dialog id="menuGen" class="right-menu" entry-animation="slide-from-right-animation" exit-animation="slide-right-animation">
 	<div class="menu">
 		<div class="bar layout horizontal center-aligned justified">
-			<paper-icon-button class="ic3" on-tap="closeMenuMode" icon="icons:close"></paper-icon-button>
+			<paper-icon-button class="ic3" on-tap="closeMenuGen" icon="icons:close"></paper-icon-button>
 			<div class="mitem mitemp" on-tap="goHelp"><b>[[lib("tb_aidegen",lang)]]</b>
 			<help-button help="home"></help-button></div>
 		</div>

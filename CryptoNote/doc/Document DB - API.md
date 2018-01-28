@@ -75,11 +75,14 @@ Une page d'accueil (home) pour l'instance `monOrg` ressemble à ça et a été g
     <script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
     <link rel="import" href="bower_components/polymer/polymer-element.html">
     <link rel="import" href="base.html">
-    <link rel="import" href="shared.html">
+    <link rel="import" href="shared1.html">
+    <link rel="import" href="shared2.html">
+    <link rel="import" href="shared3.html">
     <link rel="stylesheet" type="text/css" href="fonts/roboto.css">
     <link rel="stylesheet" type="text/css" href="fonts/roboto-mono.css">
     <link rel="stylesheet" type="text/css" href="fonts/comfortaa.css">
     <link rel="import" href="app_components/app-homes.html">
+    <script src='js/custom.js'></script>
     <script src='z/z/custom.js'></script>
     </head>
     <body>
@@ -99,14 +102,13 @@ Dans ce texte générée par le servlet `281` est le numéro de build. Sa prése
     base.html
     bower.json
     bye.html
-    error.html
     index.html
     reload.html
     reload2.html
     reload3.html
     shared.html
 
-**app_components/** : répertoire contenant les web components de l'application.
+**app_components/** : répertoire contenant les web components de l'application. Quand on souhaite ne pas laisser les scripts (sauf les très simples) dans le `.html` où ils peuvent poser problèmes de debug dans d'autres browser que Chrome, on les retrouve ici avec `.js`.
 
 **bower_components/** : répertoire contenant les web components externes (Polymer etc.).
 
@@ -126,22 +128,18 @@ Dans ce texte générée par le servlet `281` est le numéro de build. Sa prése
         - **pako.js** : gzip en javascript.
         - **showdown.min.js** : conversion MD en HTML.
         - **bcrypt.js** : digest BCRYPT.
-    - ***Scripts des web components*** et autres scripts de l'application : quand on souhaite ne pas le laisser dans le .html où ils peuvent poser problèmes de debug dans d'autres browser que Chrome.
     - ***Scripts de définition des thèmes*** : **theme-z.js theme-a.js theme-b.js**
 
 **z/** : 
 - un sous répertoire pour chaque instance contenant ses surcharges spécifiques des valeurs par défaut qui sont dans `z/z/`. Par principe toutes les ressources requises se trouvent dans `z/z/` mais s'il en existe une de même nom pour le sous-répertoire d'une instance c'est celle-ci qui est prise quand cette instance s'exécute dans un browser.
-- **custom.js** : classe dont la méthode `static ready()` est invoquée quand tout est chargé.
+- **custom.js** : classe d'interface entre la couche de base et l'application. La méthode `static ready()` est invoquée quand tout est chargé. Elle peut être différente d'une application à l'autre. Elle étend / surcharge `CustomTemplate` de `js/custom.js`.
+- **shared1.html shared2-styles** : ils peuvent être inclus dans le `custom-style` dans les web components qui en ont besoin. Ces styles ne référencent pas d'attributs de présentation (couleur, taille, fonte) en dur mais uniquement des variables qu'on va trouver dans les thèmes.
 
 **base.html** : c'est le `<custom-style>` applicable dans la page d'accueil et qui régit les dimensionnements des fontes selon la taille des pages afin que le reste de l'application s'exprime en `rem`.
-
-**shared1.html shared2-styles** : ils peuvent être inclus dans le `custom-style` dans les web components qui en ont besoin. Normalement ces styles ne référencent pas d'attributs de présentation (couleur, taille, fonte) en dur mais uniquement des variables qu'on va trouver dans les thèmes.
 
 **bower.json** : pour mettre à jour les web components externes. Pas d'intérêt pour l'application mais il doit être là.
 
 **bye.html** : page d'adieu invoquée en sortie de l'application.
-
-**error.html** : page invoquée en cas d'erreur dans un script au chargement de la page d'accueil.
 
 **index.html** : template de la page d'accueil générique.
 
@@ -209,7 +207,7 @@ Les fichiers de traductions pour une langue donnée `fr` et une instance donnée
 
 #### Définition des thèmes graphiques
 Les thèmes graphiques sont nommés `a b ...` Le thème `z` est le thème virtuel contenant les valeurs par défaut.  
-- il existe de plus un correctif de thème par langue, pour les quelques données CSS pouvant dépendre de la langue (after / before et quelques images.
+- il existe de plus un correctif de thème par langue, pour les quelques données CSS pouvant dépendre de la langue (`after` / `before` et quelques images.
 - un thème est défini par une liste de variables CSS sous la syntaxe ci-dessous.
 - la liste des valeurs finalement applicables pour le thème `a` en langue `fr` résulte de l'application des scripts : `js/theme-z.js js/theme-a.js js/fr/theme.js`
 
