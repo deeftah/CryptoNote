@@ -20,7 +20,7 @@ import fr.cryptonote.provider.DBProvider;
 public class BConfig {
 	
 	private static final String[] defaultLangs = {"fr", "en"};
-	private static final String DVARQM = "fr.cryptonote.QM";
+	private static final String DVARQM = "queuemanager";
 	private static final String BASECONFIG = "/WEB-INF/base-config.json";
 	private static final String APPCONFIG = "/WEB-INF/app-config.json";
 	private static final String PASSWORDS = "/WEB-INF/passwords.json";

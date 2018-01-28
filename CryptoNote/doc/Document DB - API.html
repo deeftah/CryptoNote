@@ -1284,111 +1284,221 @@
 <h1>Requêtes HTTP et Contextes d'exécution</h1>
 <p>Les sessions externes émettent des requêtes HTTPS qui peuvent être des GET ou des POST.</p>
 <h3>Applications : <code>context-path</code>, ping, build</h3>
-<p>Un serveur ou pool de serveurs accessible par une URL peut servir plusieurs applications d'objets différents. Le début de l'URL après le nom du serveur est le code de cette application :</p>
-<pre><code>https://site.org/theApp/xxx...
+<p>Le pool de serveurs peut servir plusieurs instances internes d'application, chacune relative à une organisation, l'URL étant différente selon qu'il y a ou un <code>context-path</code> <code>cp</code> :</p>
+<pre><code>Sans context-path    : https://site.org/monOrg/xxx...
+Avec context-path cp : https://site.org/cp/monOrg/xxx...
 </code></pre>
-<p>Un serveur ou pool de serveurs qui ne sert qu'une unique application a une URL qui ignore <code>theApp</code> :</p>
-<pre><code>https://site.otg/xxx...
+<p>A la place de <code>monApp</code> on peut avoir <code>admin</code> afin d'adresser l'application d'administration  globale des instances (on/off, gestion des tâches différées).<br>
+Par la suite on ne considère les URLs qu'à partir de <code>monOrg/...</code></p>
+<h5>GET <code>ping</code></h5>
+<pre><code>(1) ping
+(2) monOrg/ping
+(3) admin/ping
 </code></pre>
-<p>Le code <code>theApp</code> ci-dessus est nommé techniquement <code>context-path</code> et peut être &quot;&quot; ou contenir <code>&quot;theApp&quot;</code>.</p>
-<p>Quand il s'agit d'un pool de serveur, il y a en général :</p>
+<p>Retourne un JSON avec :</p>
 <ul>
-<li>une adresse pour le pool sans savoir à quel serveur physique on s'adresse :  <code>https://pool.site.org/...</code> ou le cas échéant <code>https://site.org/...</code> C'est l'utilisation la plus fréquente.</li>
-<li>une adresse indiquant précisément quel serveur physique est à joindre : <code>https://django.site.org/...</code> Cet adressage est réservé à des opérations techniques particulières, typiquement celles de commandes d'un <em>QueueManager</em> gérant les tâches différées des applications.</li>
-</ul>
-<p>Pour déterminer si l'application <code>theApp</code> est en ligne on peut utiliser les commandes :</p>
-<pre><code>1 - https://site.org/theApp/ping
-2 - https://django.site.org/theApp/ping
-</code></pre>
-<p>Dans le cas 1, un serveur du pool répond qu'il est prêt à recevoir des requêtes.<br>
-Dans le cas 2, le serveur spécifique adressé répond qu'il est prêt à recevoir des requêtes.</p>
-<p>Chaque application a une version du logiciel nommée <code>build</code> qui est un numéro toujours croissant au fil du temps : le ping retourne un texte de la forme <code>{t:171205184532456, b:132}</code></p>
+<li><code>t</code> : la date-heure sous la forme estampille : <code>180124175849876</code></li>
+<li><code>b</code>: le numéro de build : 264</li>
+<li>pour les formes 2 et 3 :
 <ul>
-<li><code>t</code> indique la date-heure courante du serveur en millisecondes UTC : le 5 décembre 2017 à 18:45:32 et 456 millisecondes.</li>
-<li><code>b</code> indique le numéro de build (la version de l'application).</li>
-</ul>
-<h3>Organisations : code stop</h3>
-<p>Une application donnée peut être déployée pour le compte de plusieurs <strong>organisations</strong>, les données de chacune étant étanches de celles des autres mais :</p>
-<ul>
-<li>toutes exécutent la même application sous la même version (build) du logiciel.</li>
-<li>chaque organisation, indépendamment des autres, peut être mise on/off par un administrateur technique.
-<ul>
-<li>quand l'application est <strong>on</strong> son code <code>off</code> vaut 0 (ou est absent).</li>
-<li>quand l'application est <strong>off</strong> son code <code>off</code> a deux chiffres :
-<ul>
-<li>le premier indique la raison de l'arrêt, par exemple :
-<ul>
-<li>1-maintenance technique,</li>
-<li>2-suspension administrative temporaire,</li>
-<li>3-exportation vers un autre site,</li>
-<li>4-opération de sécurité,</li>
-<li>9-clôture définitive.</li>
-</ul>
-</li>
-<li>le second donne une idée du délai d'interruption estimé, par exemple :
-<ul>
-<li>0-totalement inconnu et non maîtrisé,</li>
-<li>1-très courte durée (secondes),</li>
-<li>2-courte durée, de l'ordre de dizaines de minutes à une heure ou deux,</li>
-<li>3-plusieurs heures,</li>
-<li>4-plusieurs jours,</li>
-<li>5-plusieurs semaines ou mois.</li>
-<li>9-pas de reprise envisagée.</li>
+<li><code>off</code> : 0 ou 1 selon que l'instance est on ou off. L'opération <code>setOnOff</code> permet à l'administrateur de mettre on ou off une instance.</li>
+<li><code>db</code> : le message d'information stocké dans la table <code>dbinfo</code> de la base de l'instance. Si <code>?</code> elle n'est pas joignable.</li>
 </ul>
 </li>
 </ul>
-</li>
-</ul>
-</li>
-</ul>
-<p><strong>Datastore / Base de données</strong>
-Une organisation donnée a ses données permanentes gérées par un Datastore / Base de données, sachant que chaque base peut techniquement héberger les données de plusieurs organisations.</p>
-<ul>
-<li>les données d'une organisation sont techniquement étanches de celles des autres même dans le même Datastore / Base de données.</li>
-<li>elles peuvent être techniquement facilement exportées / purgées sans perturbation pour les autres organisations dont les données seraient co-hébergées (mais l'exportation peut être très longue).</li>
-</ul>
-<p>L'URL qui permet d'accéder à l'application d'une organisation a la forme suivante :</p>
-<pre><code>https://site.org/theApp/monOrg/...
-</code></pre>
-<p>La commande <code>https://site.org/theApp/monOrg/ping</code> permet de connaître le statut de l'application pour cette organisation :</p>
-<pre><code>{t:171205184532456, b:132, off:12, db:&quot;PG-10.1 [cna]&quot;}
-</code></pre>
-<p>Le code <code>off</code> est celui décrit ci-dessus et est absent quand l'application est on pour cette organisation.<br>
-Le code <code>db</code> donne le type de Datastore utilisé (Postgresql 10.1) et son identifiant local (cna).<br>
-Le texte du code derrière <code>db</code> peut être un code d'erreur si la base de données est indisponible pour une raison technique.</p>
 <p><strong>Queue Managers</strong>
-Certains serveurs physiques sont chargé de gérer la file des tâches différées pour une ou plusieurs organisations : ces serveur ont un profil de Queue Manager.</p>
-<p>Un Queue Manageur a un code commençant par <code>qm</code>) : qm1 qm7 etc. Dans une URL visant exclusivement un serveur physique (pas l'adresse d'un pool) un administrateur technique peut adresser des requêtes au QueueManager :</p>
-<pre><code>https://django.site.org/theApp/qm7/...
+Certains hosts sont chargés de gérer la file des tâches différées pour une ou plusieurs instances : ils ont un code d'instance commençant par <code>qm</code> et le front end nginx se charge de router les quelques opérations spécifiques à un Queue Manager en détectant le nom d'instance.</p>
+<blockquote>
+<p>Pour chaque host il est nécessaire de savoir quel Queue Manager il exécute. Ceci est indiqué dans la variable système <strong>-Dqueuemanager=qm1</strong> de la ligne de commande qui lance le serveur.</p>
+</blockquote>
+<h2>Ressources Web</h2>
+<p>Les ressources web sont /var et /WEB-INF mais celle-ci n'étant pas accessible depuis un GET il ne reste que les ressources localisées sous <code>/var</code>.<br>
+Une page d'accueil (home) pour l'instance <code>monOrg</code> ressemble à ça et a été générée en utilisant le template /var/index.html</p>
+<pre><code>&lt;!-- Partie générée sur le serveur en remplacement de la première ligne de index.html --&gt;
+&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;base href=&quot;/cp/monOrg/var281/&quot;&gt;
+&lt;meta http-equiv='Content-Type' content='text/html; charset=utf-8'&gt;
+&lt;script src='js/build.js'&gt;&lt;/script&gt; &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;(1)
+&lt;script src='js/root.js'&gt;&lt;/script&gt;  &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;(2)
+
+&lt;!-- Ce texte est inséré par le serveur en fonction de l'instance et de sa configuration -&gt;
+&lt;script type='text/javascript'&gt;
+App.modeMax = 0;
+App.buildAtPageGeneration = 281;
+App.zone = &quot;Europe/Paris&quot;;
+App.langs = [&quot;fr&quot;,&quot;en&quot;];
+App.lang = &quot;fr&quot;;
+App.theme = &quot;z&quot;;
+App.themes = JSON.parse('[&quot;z&quot;,&quot;a&quot;,&quot;b&quot;,&quot;en&quot;,&quot;fr&quot;]');
+App.helpDic = JSON.parse('{&quot;p12&quot;:{&quot;p&quot;:&quot;p11&quot;,&quot;t&quot;:&quot;s1&quot;,&quot;refs&quot;:[&quot;p22&quot;]},&quot;p11&quot;:{&quot;t&quot;:&quot;s1&quot;,&quot;s&quot;:&quot;p12&quot;,&quot;refs&quot;:[&quot;p22&quot;]},&quot;p22&quot;:{&quot;p&quot;:&quot;p21&quot;,&quot;t&quot;:&quot;s1&quot;,&quot;refs&quot;:[&quot;p11&quot;,&quot;p12&quot;]},&quot;s1&quot;:{&quot;t&quot;:&quot;home&quot;,&quot;s&quot;:&quot;s2&quot;,&quot;refs&quot;:[&quot;p11&quot;,&quot;p12&quot;]},&quot;p21&quot;:{&quot;t&quot;:&quot;s1&quot;,&quot;s&quot;:&quot;p22&quot;,&quot;refs&quot;:[]},&quot;home&quot;:{&quot;refs&quot;:[&quot;s1&quot;,&quot;s2&quot;]},&quot;s2&quot;:{&quot;p&quot;:&quot;s1&quot;,&quot;t&quot;:&quot;home&quot;,&quot;refs&quot;:[&quot;p21&quot;,&quot;p22&quot;]}}');
+App.zDics = {};
+App.customThemes = {};
+App.zres = {
+};
+&lt;/script&gt;
+&lt;script src='js/fr/base-msg.js'&gt;&lt;/script&gt;
+&lt;script src='js/fr/app-msg.js'&gt;&lt;/script&gt;
+&lt;script src='js/fr/theme.js'&gt;&lt;/script&gt;
+&lt;script src='js/en/app-msg.js'&gt;&lt;/script&gt;
+&lt;script src='js/en/theme.js'&gt;&lt;/script&gt;
+&lt;script src='js/theme-z.js'&gt;&lt;/script&gt;
+&lt;script src='js/theme-a.js'&gt;&lt;/script&gt;
+&lt;script src='js/theme-b.js'&gt;&lt;/script&gt;
+
+&lt;!-- Le texte qui suit est directement celui du template index.html. -&gt;
+&lt;title&gt;CN-test&lt;/title&gt;
+&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/png&quot; href=&quot;z/z/icon.png&quot;&gt;
+&lt;script&gt;App.setup();&lt;/script&gt;                    &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;(3)
+&lt;script src='js/encoding.js'&gt;&lt;/script&gt;
+&lt;script src='js/pako.js'&gt;&lt;/script&gt;
+&lt;script src='js/bcrypt.js'&gt;&lt;/script&gt;
+&lt;script src='js/showdown.min.js'&gt;&lt;/script&gt;
+&lt;script src='js/util.js'&gt;&lt;/script&gt;
+
+&lt;script src=&quot;bower_components/webcomponentsjs/webcomponents-loader.js&quot;&gt;&lt;/script&gt;
+&lt;link rel=&quot;import&quot; href=&quot;bower_components/polymer/polymer-element.html&quot;&gt;
+&lt;link rel=&quot;import&quot; href=&quot;base.html&quot;&gt;
+&lt;link rel=&quot;import&quot; href=&quot;shared1.html&quot;&gt;
+&lt;link rel=&quot;import&quot; href=&quot;shared2.html&quot;&gt;
+&lt;link rel=&quot;import&quot; href=&quot;shared3.html&quot;&gt;
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;fonts/roboto.css&quot;&gt;
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;fonts/roboto-mono.css&quot;&gt;
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;fonts/comfortaa.css&quot;&gt;
+&lt;link rel=&quot;import&quot; href=&quot;app_components/app-homes.html&quot;&gt;
+&lt;script src='js/custom.js'&gt;&lt;/script&gt;
+&lt;script src='z/z/custom.js'&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;app-homes&gt;&lt;/app-homes&gt;
+&lt;/body&gt;
+&lt;/html&gt;
 </code></pre>
-<p>Si ce serveur n'héberge pas de Queue Manager, ou pas celui de code qm7, la requête revient avec un code d'erreur 500.</p>
-<p><strong><em>Raccourcis d'URLs</em></strong> pour un GET<br>
-La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le <em>code de l'organisation</em>. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.</p>
-<pre><code>https://site.org/theApp/app -&gt; https://site.org/theApp/monOrg/page-home.app
+<p>Dans ce texte générée par le servlet <code>281</code> est le numéro de build. Sa présence permet de mettre hors jeu les ressources gardées en cache d'une build antérieure : dans le répertoire déployé il n'apparaît que <code>../var/...</code></p>
+<h4>Structure du /var</h4>
+<pre><code>app_components/
+bower_compoents/
+fonts/
+js/
+z/
+base.html
+bower.json
+bye.html
+index.html
+reload.html
+reload2.html
+reload3.html
+shared.html
 </code></pre>
-<p><strong>URLs possibles</strong> (sans context-path pour simplifier)</p>
-<pre><code>org -&gt; ns
-/ping
-/ns/ping          // ping du namespace et de sa base
-/ns/x.appcache    // ressource MANIFEST d'une appcache
-/ns/x.swjs        // ressource sw.js de Service Worker
-/ns/mapage.app    // page de l'application .app .cloud .local .sync
-/ns/op/...        // opération standard
-/ns/od/taskid     // opération différée (tâche)
-/var/...          // ressource
-/_12_2/...        // ressource versinnée pour éviter les problèmes de cache
-/var/z/...        // ressource dynamique (custom.css custom.js ...)
-/_12_2/...        // ressource dynamique
-</code></pre>
-<p>Une ressource dynamique <code>/var/z/xxx.yyy</code> est d'abord recherchée dans la base dans le namespace nommé <code>namespace</code> dans un document ayant pour docid le code <code>ns</code> du namespace qu'il customise.</p>
+<p><strong>app_components/</strong> : répertoire contenant les web components de l'application. Quand on souhaite ne pas laisser les scripts (sauf les très simples) dans le <code>.html</code> où ils peuvent poser problèmes de debug dans d'autres browser que Chrome, on les retrouve ici avec <code>.js</code>.</p>
+<p><strong>bower_components/</strong> : répertoire contenant les web components externes (Polymer etc.).</p>
+<p><strong>fonts/</strong> : répertoire contenant les fichiers <code>f1.css</code> des fontes f1 et <code>f1x.woff</code> référencés dans les <code>f1.css</code>.</p>
+<p><strong>js/</strong> :</p>
 <ul>
-<li>ceci permet de définir des pages plus spécifiques par organisation et de les adapter en runtime et pas seulement sur une livraison de build.</li>
-<li>si la ressource n'est pas trouvée customisée, c'est celle effectivement <code>/var/z/</code> correspondante qui est prise.</li>
-<li>il n'est donc possible de customiser QUE des ressources existantes dans <code>/var/z</code>.</li>
-<li>le namespace <code>namespace</code> ne supporte pas la customisation : en cas d'erreur de script par exemple l'application serait bloquée.</li>
+<li>un répertoire par langue contenant les fichiers <strong>base-msg.js app-msg.js theme.js</strong></li>
+<li>les fichiers <strong>.js</strong> de l'application (en particulier ceux des web components) et les fichiers spécifiques suivants :
+<ul>
+<li><strong>build.js</strong> : ce fichier est à changer à chaque build et son format est contraint.
+<code>appbuild = 281;</code></li>
+<li><strong>root.js</strong> : premier script chargé, déclare la classe App et l'initialise, enregistre le service worker. Il est réellement exécuté à la ligne (3).</li>
+<li><strong>util.js</strong> : contient les classes utilitaires requises.</li>
+<li><strong>sw.js</strong> : template du script du service worker.</li>
+<li>service worker : déclare les mime types acceptés des ressources et spécifie ceux qui peuvent subir une compression. <strong>Peut être customisé</strong>.</li>
+<li><strong><em>Scripts externes</em></strong> :
+<ul>
+<li><strong>encoding.js</strong> : pallie pour Edge au manque de la classe <code>TextEncoder</code>.</li>
+<li><strong>pako.js</strong> : gzip en javascript.</li>
+<li><strong>showdown.min.js</strong> : conversion MD en HTML.</li>
+<li><strong>bcrypt.js</strong> : digest BCRYPT.</li>
 </ul>
-<h3>Invocation d'opérations</h3>
-<p>URLs : <code>cp/ns/op/p1/p2 ...</code>  ou <code>cp/ns/od/taskid</code></p>
+</li>
+<li><strong><em>Scripts de définition des thèmes</em></strong> : <strong>theme-z.js theme-a.js theme-b.js</strong></li>
+</ul>
+</li>
+</ul>
+<p><strong>z/</strong> :</p>
+<ul>
+<li>un sous répertoire pour chaque instance contenant ses surcharges spécifiques des valeurs par défaut qui sont dans <code>z/z/</code>. Par principe toutes les ressources requises se trouvent dans <code>z/z/</code> mais s'il en existe une de même nom pour le sous-répertoire d'une instance c'est celle-ci qui est prise quand cette instance s'exécute dans un browser.</li>
+<li><strong>custom.js</strong> : classe d'interface entre la couche de base et l'application. La méthode <code>static ready()</code> est invoquée quand tout est chargé. Elle peut être différente d'une application à l'autre. Elle étend / surcharge <code>CustomTemplate</code> de <code>js/custom.js</code>.</li>
+<li><strong>shared1.html shared2-styles</strong> : ils peuvent être inclus dans le <code>custom-style</code> dans les web components qui en ont besoin. Ces styles ne référencent pas d'attributs de présentation (couleur, taille, fonte) en dur mais uniquement des variables qu'on va trouver dans les thèmes.</li>
+</ul>
+<p><strong>base.html</strong> : c'est le <code>&lt;custom-style&gt;</code> applicable dans la page d'accueil et qui régit les dimensionnements des fontes selon la taille des pages afin que le reste de l'application s'exprime en <code>rem</code>.</p>
+<p><strong>bower.json</strong> : pour mettre à jour les web components externes. Pas d'intérêt pour l'application mais il doit être là.</p>
+<p><strong>bye.html</strong> : page d'adieu invoquée en sortie de l'application.</p>
+<p><strong>index.html</strong> : template de la page d'accueil générique.</p>
+<p><strong>reload.html reload2.html reload3.html</strong> : trois pages nécessaires pour arriver à faire recharger une nouvelle version dans le cas d'un service worker.</p>
+<p><strong>WEB-INF</strong><br>
+Il comporte les fichiers suivants :</p>
+<ul>
+<li><strong>web.xml</strong> : contient principalement le nom de la classe d'application de configuration et toutes les liens vers les ressources jdbc requises (en gros la liste des bases).</li>
+<li><strong>appengine-web.xml queue.xml</strong> : configuration pour GAE.</li>
+<li><strong>logging.properties</strong> : configuration du logger.</li>
+<li><strong>base-config.json</strong> : configuration de l'application et des instances.</li>
+<li><strong>app-config.json</strong> : configuration complète spécifique de l'application.</li>
+</ul>
+<h2>Pages d'accueil et URLs</h2>
+<p>Chaque instance peut avoir une ou plusieurs pages d'accueil :</p>
+<ul>
+<li>chaque page d'accueil a un nom <code>home admin index</code> ... et la configuration spécifie si la page peut être en mode <code>sync</code> ou <code>avion</code>.</li>
+<li>la page générique d'accueil <code>app-homes.html</code> reprend toutes les pages (d'accueil  ou non) possibles pour toutes les instances, sachant que plusieurs instances peuvent avoir une même page d'accueil.</li>
+<li>à chaque page d'accueil correspond une <em>top bar</em> qui ne changera pas alors que la navigation permet de passer à d'autres pages que celle d'accueil. Toutes les pages possibles figurent dans <code>app-homes</code>.</li>
+</ul>
+<h3>URLs d'une instance</h3>
+<pre><code>monOrg/home2      &gt;&gt;&gt; page d'accueil home2 de l'instance monOrg en incognito
+monOrg/s/home2    &gt;&gt;&gt; page d'accueil home2 de l'instance monOrg en mode sync
+monOrg/s/home2.a  &gt;&gt;&gt; page d'accueil home2 de l'instance monOrg en mode avion
+
+monOrg/var...     &gt;&gt;&gt; ressources accessibles par GET en mode incognito
+monOrg/s/var...   &gt;&gt;&gt; ressources accessibles par GET en mode sync et avion
+
+monOrg/x.appcache &gt;&gt;&gt; en attente de passage en service worker
+
+monOrg/s/sw.js    &gt;&gt;&gt; script du service worker spécifique à cette instance
+
+monOrg/ping       &gt;&gt;&gt; ping en GET et POST
+monOrg/op/...     &gt;&gt;&gt; appel d'une opération en POST 
+monOrg/od/...     &gt;&gt;&gt; appel d'une opération différée en POST
+</code></pre>
+<p><strong><em>Raccourcis d'URLs</em></strong> pour les pages d'accueil
+La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages d'accueil : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le <em>code de l'organisation</em>. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.</p>
+<pre><code>https://site.org/cp/ -&gt; https://site.org/cp/monOrg/home2
+https://site.org/cp/ad -&gt; https://site.org/cp/admin/admin
+</code></pre>
+<h4>Ressources en /var/z</h4>
+<p>Une ressource <code>/var/z/z/toto.png</code> demandée par l'instance <code>monOrg</code> est obtenue depuis :</p>
+<ul>
+<li><code>/var/z/monOrg/toto.png</code>,</li>
+<li>si elle n'a pas été trouvée elle est recherchée en <code>/var/z/z/toto.png</code></li>
+</ul>
+<p>Le répertoire <code>/var/z/z/...</code> contient toutes les ressources par défaut qui sont en priorité recherchées dans le répertoire spécifique de l'instance <code>monOrg</code> <code>/var/z/monOrg/...</code></p>
+<h4>Traduction des messages</h4>
+<p>Un message a un <strong>code</strong> et un <strong>texte</strong> dans lequel les arguments <code>{0} {1} ...</code> sont remplacés par les paramètres positionnels passés lors de l'obtention du texte. Les simples <code>quotes</code> doivent être doublés, les <code>doubles quotes</code> précédés d'un <code>backslash</code>.<br>
+Un fichier de traduction est un script <code>.js</code> qui respecte cette syntaxe :</p>
+<pre><code>App.setAll(&quot;en&quot;, {
+&quot;ns_test&quot;:&quot;Test : workgroups and associations&quot;,
+&quot;ns_admin&quot;:&quot;Hosted Organizations Administration&quot; 
+});
+</code></pre>
+<p>Tout ce qui est entre le premier <code>{</code> et le dernier <code>}</code> (inclus) respecte strictement une syntaxe JSON.</p>
+<p>Les fichiers de traductions pour une langue donnée <code>fr</code> et une instance donnée <code>monOrg</code> sont chargés dans l'ordre suivant, le dernier trouvé étant retenu :</p>
+<pre><code>js/fr/base-msg.js js/fs/app-msg.js z/monOrg/fr/base-msg.js z/monOrg/fr/app-msg.js 
+</code></pre>
+<h4>Définition des thèmes graphiques</h4>
+<p>Les thèmes graphiques sont nommés <code>a b ...</code> Le thème <code>z</code> est le thème virtuel contenant les valeurs par défaut.</p>
+<ul>
+<li>il existe de plus un correctif de thème par langue, pour les quelques données CSS pouvant dépendre de la langue (<code>after</code> / <code>before</code> et quelques images.</li>
+<li>un thème est défini par une liste de variables CSS sous la syntaxe ci-dessous.</li>
+<li>la liste des valeurs finalement applicables pour le thème <code>a</code> en langue <code>fr</code> résulte de l'application des scripts : <code>js/theme-z.js js/theme-a.js js/fr/theme.js</code></li>
+</ul>
+<p><em>Syntaxe d'un fichier thème :</em></p>
+<pre><code>App.setTheme(&quot;z&quot;, {
+&quot;--font-mono&quot; : &quot;'Roboto Mono'&quot;,
+&quot;--font-std&quot; : &quot;'Roboto'&quot;,
+&quot;--font-cf&quot; : &quot;'Comfortaa'&quot;,
+&quot;--btnstd-color&quot;: &quot;var(--paper-indigo-900)&quot;,
+...
+});
+</code></pre>
+<h2>Invocation d'opérations</h2>
+<p>URLs : <code>/cp/monOrg/op/p1/p2 ...</code>  ou <code>cp/monOrg/od/taskid/step</code></p>
 <p>Les autres arguments sont passés soit en <code>application/x-www-form-urlencoded</code> (sur un GET) ou en <code>multipart/form-data</code> (sur un POST) :</p>
 <ul>
 <li><code>op/</code> :  obligatoire, signale un appel d'opération. Ce code est <code>od/</code> pour une opération différée <em>émise</em> par le Queue Manager.</li>

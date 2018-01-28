@@ -41,7 +41,7 @@ Les autres arguments sont les suivants :
 - les autres arguments sont des pièces jointes (toujours en POST `multipart/form-data`). Chaque pièce est stocké dans un objet de classe `Attachment` (`name, filename, contentType, bytes`) accessible dans le traitement d'une opération par sa clé `name` par `inputData().attachments().get(name)`.
 
 Les retours peuvent être :
-- habituellement un objet JSON  ayant deux membres :
+- habituellement un objet JSON  ayant deux propriétés :
   - `syncs` :  l'objet décrivant la synchronisation des documents ;
   - `out` : l'objet résultat transmis à l'application cliente ;
 - sinon n'importe quel document (en binaire) de n'importe quel content type : le `content-type` et le `charset` sont récupérés depuis les propriétés de la requête.

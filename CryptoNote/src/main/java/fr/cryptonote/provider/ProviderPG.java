@@ -1029,6 +1029,7 @@ public class ProviderPG implements DBProvider {
 			preparedStatement = conn().prepareStatement(sql);
 			int j = 1;
 			preparedStatement.setLong(j++, toStartAt);
+			preparedStatement.setLong(j++, minStartTime);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 			commitTransaction();
@@ -1232,7 +1233,7 @@ public class ProviderPG implements DBProvider {
 	//	public long 	startAt;
 	//	public int		qn;
 	
-	private static final String SELTI2 = "select ns, taskid, step, startat, qn from taskqueue where startat is not null and startat <= ?";
+	private static final String SELTI2 = "select ns, taskid, step, tostartat, qn from taskqueue where tostartat is not null and tostartat <= ?";
 	
 	@Override
 	public Collection<TaskMin> candidateTasks(String ns, long before) throws AppException {

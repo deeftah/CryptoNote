@@ -45,7 +45,6 @@
 	
 	"queueManagers":{
 		"qm1":{
-			"url": "http://192.168.0.10:8090/cn",
 			"base":"cna",
 			"pwd":"qm",
 			"threads": [2,1],

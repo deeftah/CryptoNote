@@ -252,6 +252,7 @@ public class QueueManager implements Runnable {
 	}
 
 	public void run() {
+		new ExecContext();
 		while (running) {
 			try {
 				qmQueue.poll(myNsqm.scanlapseinseconds, TimeUnit.SECONDS);
@@ -345,6 +346,7 @@ public class QueueManager implements Runnable {
 		private Worker(int queue, int index) { this.queue = queue; this.index = index; }
 		
 		public void run() {
+			new ExecContext();
 			while (running) {
 				try {
 					if (suspended) {

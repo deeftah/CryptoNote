@@ -20,6 +20,8 @@ Debug IOS/Safari
 Installation de remotedebug :
 https://github.com/RemoteDebug/remotedebug-ios-webkit-adapter
 
+Debug service workers sous Firefox about:debugging
+
 Dans un terminal : remotedebug_ios_webkit_adapter --port=9000
 Autoriser le web inspector dans Safari
 Dans Chrome : chrome://inspect/#devices
@@ -30,3 +32,5 @@ TaskQueue - opérations
 - création task
 - modif toStartAt / cron ...
 - revisiter cron avec distinction date-heure réelle et date-heure fonctionnelle
+
+Document DB - API : à revoir à partir de ExecContext

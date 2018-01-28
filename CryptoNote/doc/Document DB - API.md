@@ -28,6 +28,8 @@ Retourne un JSON avec :
 **Queue Managers**
 Certains hosts sont chargés de gérer la file des tâches différées pour une ou plusieurs instances : ils ont un code d'instance commençant par `qm` et le front end nginx se charge de router les quelques opérations spécifiques à un Queue Manager en détectant le nom d'instance.
 
+>Pour chaque host il est nécessaire de savoir quel Queue Manager il exécute. Ceci est indiqué dans la variable système **-Dqueuemanager=qm1** de la ligne de commande qui lance le serveur.
+
 ## Ressources Web 
 Les ressources web sont /var et /WEB-INF mais celle-ci n'étant pas accessible depuis un GET il ne reste que les ressources localisées sous `/var`.  
 Une page d'accueil (home) pour l'instance `monOrg` ressemble à ça et a été générée en utilisant le template /var/index.html
