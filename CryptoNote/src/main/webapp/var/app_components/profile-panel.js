@@ -6,7 +6,7 @@ class ProfilePanel extends Polymer.Element {
     	  isSudo : {type:Boolean, value:false},
     	  userName: {type:String, value:null}, 
     	  userPhoto: {type:String, value:null}, 
-    	  typed: {type:String, value:"", notify:true, observer:"onTyped"},
+    	  typed: {type:String, value:""},
     	  target: { type: Object },
       };
 	}

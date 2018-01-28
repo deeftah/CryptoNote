@@ -48,7 +48,7 @@ class AppHomes extends Polymer.Element {
   	}
   	
   	resetSync() {
-  		if (App.topBar && App.topBar.refreshSync) App.topBar.resetSync();
+  		if (App.topBar && App.topBar.resetSync) App.topBar.resetSync();
   	}
   	
   	async setHome(home) {
@@ -70,9 +70,9 @@ class AppHomes extends Polymer.Element {
   		const may = await this.mayHideCurrent();
   		if (!may) return;
   		this.history = [{page:page, arg:arg}];
-  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(null);
   		this.anim(0);
   		this.page = page;
+  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(this.page, null);
   		this.anpage = this.page + "-page";
   		if (this.$[this.page].show)
   			this.$[this.page].show(arg, null);
@@ -82,10 +82,10 @@ class AppHomes extends Polymer.Element {
   		const may = await this.mayHideCurrent();
   		if (!may) return;
   		const pb = this.history[this.history.length - 1].page;
-  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(this.$[pb]);
   		this.history.push({page:page, arg:arg});
   		this.anim(1);
   		this.page = page;
+  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(this.page, this.$[pb]);
   		this.anpage = this.page + "-page";
   		if (this.$[this.page].show)
   			this.$[this.page].show(arg, pb);
@@ -97,10 +97,10 @@ class AppHomes extends Polymer.Element {
   		if (!may) return;
   		this.history.pop();
   		const pb = this.history.length >= 2 ? this.history[this.history.length - 2].page : null;
-  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(pb ? this.$[pb] : null);
   		const top = this.history[this.history.length - 1];
   		this.anim(2);
   		this.page = top.page;
+  		if (App.topBar.setPreviousPage) App.topBar.setPreviousPage(this.page, pb ? this.$[pb] : null);
   		this.anpage = this.page + "-page";
   		if (this.$[this.page].show)
   			this.$[this.page].show(top.arg, pb);

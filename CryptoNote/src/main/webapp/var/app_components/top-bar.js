@@ -9,6 +9,8 @@ class TopBar extends Polymer.Element {
 
 		themes : {type:Array, value:[]},
 		isSudo : {type:Boolean, value:false},
+		isHomePage : {type:Boolean, value:true},
+		currentPage : {type:Object, value:null},
 		previousPage : {type:Object, value:null},
 		libPreviousPage : {type:String, value:""},
 		mode : {type:Number, value:0},
@@ -31,9 +33,11 @@ class TopBar extends Polymer.Element {
 		App.setMsg("fr", "tb_futur2", "Recharger l'application en mode avion");
 		App.setMsg("fr", "tb_build", "Build : {0}");
 		App.setMsg("fr", "tb_themes", "Thèmes : ");
-		App.setMsg("fr", "tb_aidegen", "Accueil Aide");
+		App.setMsg("fr", "tb_aidegen", "Accueil de l''aide");
 		App.setMsg("fr", "tb_reload", "Recharger l''aplication");
 		App.setMsg("fr", "tb_quit", "Quitter l''application");
+		App.setMsg("fr", "tb_about", "A propos");
+		App.setMsg("fr", "tb_home", "Retour à l''accueil");
 		App.setMsg("fr", "tb_ano", "Session anonyme (non authentifiée) pour l'instant");
 		this.mode = App.mode;
 		this.modeMax = App.modeMax;
@@ -51,9 +55,11 @@ class TopBar extends Polymer.Element {
 	}
 	
 	/* Méthodes de notification invoquée par app-homes lors a) du changement de view, b) de la synchronisation */
-	setPreviousPage(p) { 
-		this.previousPage = p;
-		this.libPreviousPage = p && p.title ? p.title() : "";
+	setPreviousPage(cp, pp) { 
+		this.currentPage = cp;
+		this.previousPage = pp;
+		this.libPreviousPage = pp && pp.title ? pp.title() : "";
+		this.isHomePage = this.currentPage == App.home || this.currentPage == "z-" + App.home;
 	}
 
 	resetSync(b) {
@@ -129,10 +135,14 @@ class TopBar extends Polymer.Element {
 	
 	closeMenuMode() { this.$.menuMode.close(); }
 
-	goHelp() { App.help("home"); }
-	
+	goHelp() { this.closeMenuGen(); App.help("home"); }
+
+	goAbout() { this.closeMenuGen(); App.help("about"); }
+
 	back() { App.appHomes.back(); }
 
+	goHome() { this.closeMenuGen(); App.appHomes.setHome(App.home); }
+	
 	tapSync() {
 		if (App.Custom && App.Custom.syncRequested) App.Custom.syncRequested();
 	}
