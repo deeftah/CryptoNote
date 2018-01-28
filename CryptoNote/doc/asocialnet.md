@@ -241,18 +241,19 @@ Ainsi une instance peut avoir une gouvernance qui peut osciller entre :
 L'espace de stockage global est constitué d'un ensemble de  **disques virtuels** chacun ayant :
 - un code court qui est son identifiant immuable.
 - un quota d'espace distingué en q1 / q2.
-- une clé de cryptage spécifique mémorisée cryptée par la clé d'administration. Cette clé ne crypte que son libellé, pas les contenus qu y sont inscrits.
-- un libellé crypté par cette clé.
-- une restriction d'accès :
+- le volume effectivement occupé v1 / v2.
+- une clé de cryptage spécifique au disque générée à sa création et qui crypte le mémo pour les comptes contrôleurs?
+- un libellé / mémo crypté par la clé ci-dessus.- une restriction d'accès :
     - *aucune restriction, lecture seule, accès interdit*.
     - *un code d'alerte* : quelques codes sont prédéfinis par instance et qualifie à la fois le reproche fait aux utilisateurs du disque et un niveau de menace sur leurs comptes.
 - un ou quelques **comptes contrôleurs**.
 
-Un compte connaissant la phrase secrète d'administration peut :
+Un compte connaissant la phrase secrète d'administration de l'instance peut :
 - accéder à la liste des disques virtuels, en ajouter et sous certaines conditions en supprimer.
-- modifier leurs quotas q1 / q2.
-- changer leurs comptes contrôleurs des disque virtuel.
-- en cas de changement de la phrase secrète d'administration mettre à jour le cryptage des clés des disques par la clé d'administration en fournissant l'ancienne et la nouvelle clé d'administration.
+- modifier leurs quotas q1 / q2 et mémos.
+- changer leurs comptes contrôleurs.
+- ajuster la restriction d'accès.
+- en cas de changement de la phrase secrète d'administration ré-encrypter les clés de cryptage des disques en fournissant l'ancienne et la nouvelle clé d'administration.
 
 #### Contrôle de l'espace global
 Globalement chaque disque virtuel doit respecter son quota.  
@@ -260,8 +261,8 @@ L'administration de l'instance peut, par un compte connaissant la phrase secrèt
 
 #### Contrôle de l'espace sur un disque virtuel
 Son ou ses comptes contrôleurs gèrent les attributions de quotas aux comptes utilisant ce disque. Ils peuvent aussi contraindre ceux-ci au respect de leurs obligations en usant à leur égard d'une possible restriction d'accès puis de blocage et in fine le cas échéant de la destruction d'un compte. Ils sont en particulier capables :
-    - de révoquer les comptes obsolètes utilisant des quotas qui seraient utiles à d'autres.
-    - de restreindre l'accès voire supprimer des comptes suite à décision de modération.
+- de révoquer les comptes obsolètes utilisant des quotas qui seraient utiles à d'autres.
+- de restreindre l'accès voire supprimer des comptes suite à décision de modération.
 
 #### Quota initial d'un compte A
 A la validation de sa création, lorsqu'un compte certificateur C a accepté de certifier l'identité de A, A reçoit de C un quota minimal du disque virtuel auquel C est associé.  

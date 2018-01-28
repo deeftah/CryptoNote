@@ -2,78 +2,34 @@
 
 L'API est de type REST : chaque requête est indépendante des précédentes et peut être traitée par n'importe quel serveur du pool. 
 
-> Le serveur Web frontal peut diriger certaines d'entre elles en fonction du début de l'URL : par exemple concernant les requêtes à destination des Queue Managers sont adressées au serveur spécifique du pool qui les gère : `/cp/z/qmXX/` permet de router les requêtes de gestion `qm` correspondant au Queue Manager gérant le code `XX`.
-
-#### `cp` : context path
-Le context path peut être vide, les URLs suivantes s'écrivent dans ce cas `/ns/...` ou peut avoir une valeur `cp` dépendante du déploiement (URLs `/cp/ns/...`).
-
-#### GET ou POST `/cp/build`
-La requête GET ou POST `/cp/build` retourne l'identification de la build de l'application serveur (par exemple `0.032`). La même information est présente dans le header `build` de la réponse.
-
-#### `ns` : namespace
-Le namespace est un code très court, toujours présent sauf dans le cas de la requête `/cp/build`, et qui indique l'espace de données concerné afin de permettre l'hébergement par un même serveur de plusieurs espaces de données disjoints (ayant chacun leur base de données ou espace de Datastore).
-
-#### GET `/cp/ns/var/...` ou `/cp/ns/_b_v/...` 
-Les requêtes GET de la forme `/cp/ns/var/...` ou `/cp/ns/_b_v/...` retournent les ressources de l'application figurant dans la distribution sous `/var/...` Le fait de faire figurer la build de l'application dans l'URL évite que les browsers ne délivrent une vieille version conservée en cache.
-
-#### GET `/cp/ns/var/z/...` ou `/cp/ns/_b_v/z/...`
-Les requêtes GET de la forme `/cp/ns/var/z/...` ou `/cp/ns/_b_v/z/...` délivrent des ressources spécifiques du namespace `ns` stockées en espace de données (et non dans la distribution logicielle) afin de permettre une personnalisation spécifique à chaque namespace modifiable sans redéploiement de l'application.
-Chacune de ces ressources doit avoir une valeur par défaut figurant dans la distribution dans `/var/z/...` , valeur retournée si aucune personnalisation correspondante pour le namespace a été trouvée en base de données / Datastore.
-
-#### GET ou POST `/cp/ns/build`
-La requête GET ou POST `/cp/ns/build` retourne `b_v` où `b` est l'identification de la build de l'application serveur et `v` le numéro de version de l'espace `ns` (par exemple `0.032_6`). La même information est présente dans le header `build` de la réponse.
-
-#### POST (ou GET) `/cp/ns/op/  /cp/ns/od/  /cp/ns/qmXX/` 
-Ces URLs sont des invocations d'opérations :
-- `op/` : opérations standards émises par les sessions clientes (typiquement les browsers) ;
-- `od/` : opération différées émises par le Queue Manager ;
-- `qmXX/` : opérations de gestion du Queue Manager : `XX` est le code du QM, ce qui permet de le router vers l'instance du serveur qui gère ce code (une même instance peut gérer plusieurs codes). La valeur de `XX` n'est pas exploitable par la logique du QM, il sert juste de routage. 
-
-Les requêtes sont habituellement des POST HTTPS habituellement en *multipart/form-data* afin d'éviter que les arguments apparaissent dans l'URL et ne soient tracés dans les historiques des browsers. Toutefois lorsque les requêtes sont émises depuis l'intérieur du pool de serveurs par le Queue Manager elles peuvent être émises par un GET en `application/x-www-form-urlencoded` (c'est aussi le cas pour faciliter certains tests).
-
-Les arguments d'authentification ne sont pas requis pour les quelques requêtes sans authentification et sont les suivants :
-- `account` : numéro de compte.
-- `key` : BCRYPT du SHA-256 de la phrase secrète OU clé secrète permettant d'identifier une opération d'administration technique.
- 
-Les autres arguments sont les suivants :
-- `op` : nom de l'opération demandée. Obligatoire ce nom doit correspondre à une opération prévue dans l'API. `op` est employé pour invoquer directement la classe Java de traitement de la requête ;
-- `param` : c'est un objet JSON qui contient les paramètres éventuels de l'opération et qui sont spécifiques à chaque opération. Cet objet est directement dé-sérialisé et disponible dans la variable d'instance `param` de l'objet Java traitant l'opération ;
-- les autres arguments sont des pièces jointes (toujours en POST `multipart/form-data`). Chaque pièce est stocké dans un objet de classe `Attachment` (`name, filename, contentType, bytes`) accessible dans le traitement d'une opération par sa clé `name` par `inputData().attachments().get(name)`.
-
-Les retours peuvent être :
-- habituellement un objet JSON  ayant deux propriétés :
-  - `syncs` :  l'objet décrivant la synchronisation des documents ;
-  - `out` : l'objet résultat transmis à l'application cliente ;
-- sinon n'importe quel document (en binaire) de n'importe quel content type : le `content-type` et le `charset` sont récupérés depuis les propriétés de la requête.
-
 ## Opérations
-L'exécution d'une requête non technique correspond à une opération :
-- une opération **non authentifiée** n'est attachée à aucun compte.
-- une opération **authentifiée** est attachée à aucun compte et la session terminale ayant émis la requête correspondante fournit la preuve que le titulaire du compte en a délivré la phrase secrète.
+L'exécution d'une requête correspond à une opération :
+- **non authentifiée**, associée à aucun compte.
+- **authentifiée** associée à un compte : la session terminale ayant émis la requête  fournit la preuve que le titulaire du compte en a délivré la phrase secrète.
 
 ### Opérations NON authentifiées
 N'importe quelle application n'importe où dans le monde peut lancer une telle opération.  
-Une opération de simple consultation n'a, en général, pas besoin d'être authentifiée : les données retournées sont cryptées et illisibles par la session cliente si elle ne dispose pas des clés issues de la phrase secrète.  
+Une opération de simple consultation n'a, en général, pas strictement besoin d'être authentifiée : les données retournées sont cryptées et illisibles par la session cliente si elle ne dispose pas des clés issues de la phrase secrète.  
 L'opération de synchronisation est authentifiée afin de se faire délivrer des contenus qui, même cryptés, ne sont retournés qu'à des comptes cités dans les dossiers.
 
 ### Session *cliente* associée à un compte
 Une **session cliente associée à un compte** se déclare dans un terminal en demandant la frappe de la phrase secrète du compte. Cette saisie enregistre dans la session cliente,
-- `clé S` : la clé AES de cryptage de la clé `0` du compte obtenue depuis le SHA-256 de la phrase secrète donnant. **Ne sort jamais de la session**.
-- `psB` : le BCRYPT de la phrase secrète (qui sort de la session).
-- `psRB` : le BCRYPT de la phrase secrète réduite (qui sort de la session).
+- `clé S` : clé AES de cryptage de la clé `0` du compte. BCrypt du string de la phrase secrète (complétée par un O, un BCRYPT a une longueur de 31, une clé AES de 32). **Ne sort jamais de la session**.
+- `prB` : le BCRYPT du string réduit de la phrase secrète. `prB` est transmis au serveur pour identifier un compte et à la création pour vérifier qu'un autre compte n'a pas une phrase secrète voisine. 
+- `prBD` : le SHA-256 de `prB` est enregistré dans la dossier du compte et permet au serveur de vérifier que le `prB` fourni par le terminal correspond bien à un compte.
 
-La requête **non authentifiée** `Xauth` demande au serveur l'entête `EnC` et `c0S` (la clé 0 du compte cryptée par la clé S) du compte ayant pour propriétés `psRB` et `psBD` respectivement, le paramètre `psRB` et le SHA-256 du paramètre `psB` : 
+La requête **non authentifiée** `Xauth` demande au serveur l'entête `EnC` et `c0S` (la clé 0 du compte cryptée par la clé S) du compte ayant pour propriétés `prBD` le SHA-256 de l'argument de la requête `prB` : 
 - si le serveur trouve ce compte, cela prouve que le titulaire a bien saisi la bonne phrase secrète.
 - si la session peut décrypter `c0S` par la clé S détenue dans sa mémoire :
     - elle conserve la clé 0 qui permet de décrypter toutes les autres et les données du compte (dont le nom suffixé du compte et le numéro du compte `nc`).
-    - elle pourra effectuer des requêtes authentifiées sur ce compte en transmettant sur chacune (`nc->account` `psB->key`).
+    - elle pourra effectuer des requêtes authentifiées sur ce compte en transmettant sur chacune (`nc->account` `prB->key`).
 - si la session ne peut pas décrypter `c0S` par sa clé S, 
     - soit le compte a été créé par une session de logiciel non officiel.
     - soit la phrase secrète du compte a été changée par une session de logiciel non officiel.
     - soit elle-même s'exécute avec un logiciel non officiel.
-    - quoi qu'il en soit si le problème persiste, le compte est définitivement corrompu et ses données inutilisables. Le titulaire du compte sera invité à se résilier lui-même pour cause de compte corrompu.
+    - *si le problème persiste*, le compte est définitivement corrompu et ses données inutilisables. Le titulaire du compte sera invité à se résilier lui-même pour cause de compte corrompu.
 
->Le serveur étant **stateless** sans concept de session, ni d'utilisateur, chaque requête s'exécute sans mémoire des requêtes antérieures autre que l'état persistant des documents.
+Cette requête sert également à enregistrer, en cas de succès, la date-heure de dernière visite du compte.
 
 ### Opérations sur un compte authentifié
 Une requête peut être invoquée en spécifiant un compte *authentifié* en fournissant la preuve que la session terminale est bien contrôlée par le titulaire de ce compte en ayant fourni la phrase secrète.
@@ -82,183 +38,156 @@ Une requête peut être invoquée en spécifiant un compte *authentifié* en fou
 
 La requête porte deux paramètres identifiant et authentifiant le compte de la requête :
 - `account` : le numéro du compte.
-- `key` : le `psB` (BCRYPT de la phrase secrète du compte).
+- `key` : le `prB` (BCRYPT de la phrase secrète réduite du compte).
 
-Dans le serveur le dossier du compte est obtenu depuis `account` : dans son singleton `EnD` la propriété `psBD` est censée être le SHA-256 de `psB` passé en `key` sur la requête (ce que l'opération vérifie).
+Dans le serveur le dossier du compte est obtenu depuis `account` : dans son singleton `EnD` la propriété `prBD` est censée être le SHA-256 de `prB` passé en `key` sur la requête (ce que l'opération vérifie).
 
-# Structures génériques
+### Opérations sous privilège d'administrateur
+L'argument `sudo` de la requête contient le BCRYPT de la phrase secrète réduite d'administration dont le SHA-256 est enregistré en configuration des serveurs. Ce privilège peut être :
+- celui toutes instances confondues qui permet de les mettre on / off et d'inspecter les queues / traces des tâches pour des besoins techniques.
+- celui de chaque instance déclaré à la configuration pour chaque instance séparément.
 
-**Restriction d'accès** :
-- `r` : restriction d'accès.
-    - 1 : lecture et suppressions seulement. Permet de *vider* un mur de ses notes.
-    - 2 : lecture seulement.
-    - 3 : bloqué : pas de lecture et actions quasi toutes interdites.
-- `t` : date-heure de dernière modification (effective). 
+La clé AES tirée de la phrase secrète complète crypte certaines données (des disques virtuels par exemple).
 
-**Statut daté** étend **Restriction d'accès** :
-- `a` : vrai si présence d'une alerte de l'administrateur, du compte premier ou du compte / groupe lui-même ou du mur lui-même.
-- `s` : statut.
-    - 0 : en création. 
-    - 1 : actif.
-    - 2 : zombie, destruction imminente (implique l'effet d'un r à 1).
-    - 3 : destruction lancée, 
-    - 4 : destruction terminée.
-- `x` : date-heure de destruction prévue (s = 2).
+# Dossier *Disque Virtuel* `DV`
+Dossier unique de `docid` 1.
 
-**Visite**
-- idx : index du visiteur.
-- dh : date-heure de sa visite;
+L'espace de stockage global est constitué d'un ensemble de  **disques virtuels** chacun ayant :
+- un code court qui est son identifiant immuable.
+- un quota d'espace distingué en q1 / q2.
+- le volume effectivement occupé v1 / v2.
+- une clé de cryptage spécifique au disque générée à sa création et qui crypte le mémo pour les comptes contrôleurs?
+- un libellé / mémo crypté par la clé ci-dessus.
+- une restriction d'accès :
+    - *aucune restriction, lecture seule, accès interdit*.
+    - *un code d'alerte* : quelques codes sont prédéfinis par instance et qualifie à la fois le reproche fait aux utilisateurs du disque et un niveau de menace sur leurs comptes.
+- un ou quelques **comptes contrôleurs**.
 
-**Visites** : liste triée des N dernières visites, la plus récente en tête.
+Un compte connaissant la phrase secrète d'administration de l'instance peut :
+- accéder à la liste des disques virtuels, en ajouter et sous certaines conditions en supprimer.
+- modifier leurs quotas q1 / q2 et mémos.
+- changer leurs comptes contrôleurs.
+- ajuster la restriction d'accès.
+- en cas de changement de la phrase secrète d'administration ré-encrypter les clés de cryptage des disques en fournissant l'ancienne et la nouvelle clé d'administration.
 
-**Participation** :
-- `di dd df dr` : dates-heures : d'invitation, de début d'activité, de fin d'activité, de résiliation.
-- `dv` : liste des dernières visites.
-- `s` : statut calculé depuis les date-heure :
-    - 0 : invité.
-    - 1 : actif.
-    - 2 : révoqué.
-    - 3 : résilié.
+### Items *disque virtuel* `Dvi` / `Dvr`
+Un item `Dvi` et un item `Dvr` par disque existant.
 
-**Entête de compte / groupe / mur** `ECGM` :
-- `**dhc` : date-heure de création.
-- `*dha` : date-heure de passage à l'état actif.
-- `dhz` : date-heure de passage à l'état zombie.
-- `dhx` : *propriété indexée* : date-heure de destruction programmée calculée :
-    - NC jours après `dhc` pour un `std.s` absent (en création).
-    - NZ jours après `dhz` pour un `std.s` 2 (zombie).
-- `**dhd` : date-heure de destruction (début de la tâche de destruction).
-- `dhf` : date-heure de fin de destruction.
-- `r` : restriction d'accès propre au compte / groupe / mur
-- `al` : message d'alerte auto posé par le compte / groupe lui-même crypté par sa clé 1 ou le mur crypté par sa clé M ou G.
-- `std` : statut daté calculé
-    - s : calculé depuis `dha dhz dhd dhf`.
-    - x : `dhx`.
-    - t : date-heure de dernier changement effectif de `r a s x`.
-    - pour un mur :
-        - r : `r`.
-        - a : présence de la propriété `al`.
-- `q1 q2` : quota alloué au mur par le compte.
+**Clé** : `nd` code court identifiant le disque.
 
-**Entête de compte / groupe** `ECG` étend `ECGM`: 
-- *`dhz` : calculé `min(dhzad, dhzcp, dhzcg)`*
-- `dhzad` : date-heure de passage en zombie posée par l'administrateur (au compte premier).
-- `dhzcp` : *sauf compte premier*. date-heure de passage en zombie posée par le compte premier.
-- `dhzcg` : date-heure d'auto passage en zombie posée par le compte ou le groupe lui-même.
-- `alad` : code d'alerte `a-z` posé par l'administrateur au compte premier.
-- `alcp1` : *sauf compte premier*. Message d'alerte posé au compte / groupe par son compte premier crypté par sa clé 1.
-- `rad` : restriction d'accès posé par l'administrateur au compte premier.
-- `rcp` : *sauf compte premier*. Restriction d'accès posé par le compte premier.
-- `std` : statut daté calculé :
-    - *r : `max(rad, rcp, r)`.
-    - a : présence de l'une des propriétés `alad alcp1 al`.
-- `*cp` : *propriété indexée*. Compte premier du compte / groupe. Absent pour un compte premier et un compte *en création*.
-- `c1OG` : clé 1 (cryptée par la clé 0 du compte ou G du groupe) de cryptage,
-    - du nom du compte / titre du groupe
-    - des noms figurant dans les certificats d'identité.
-- `*c1P` : clé 1 du compte par la clé P ou 0 du compte premier le plus récent.
-- `*nom1` : nom suffixé du compte ou titre du groupe crypté par la clé 1.
+**Propriétés de `Dvi` :**
+- `dhop` : date-heure de la dernière opération.
+- `q1 / q2` : quota global alloué.
+- `q1 / q2` : somme des quotas attribués aux comptes.
+- `v1 / v2` : volume utilisé.
+- `cdA` : clé de cryptage D spécifique du disque cryptée par la clé d'administration.
+- `memoD` : intitulé / mémo à propos du disque crypté par la clé D du disque.
+- `lcc` : liste des numéros des comptes contrôleurs. Maximum 8.
 
-# Dossier `Jeton`
-Singleton de clé `groupid / docid` 1/1.
+**Propriétés de `Dvr` :**
+- `ra` : restriction d'accès sous forme d'un entier :
+  - dernier chiffre : 0: pas de restriction, 1: lecture seule, 2: accès bloqué
+  - chiffres avant : code symbolique éventuel associé (raison de la restriction ...).
 
-### Items *jeton* `Jet`
-Un item par jeton existant.
+#### Opérations
+Elles requièrent toutes le `sudo` d'administration de l'instance.
 
-**Clé** : `nj` numéro de jeton.
+##### Création d'un disque virtuel
 
-**Propriétés :**
-- `q1 q2` : quota.
-- `val` : validité indicative du quota (commentaire).
-- `categ` : code de catégorie.
-- `dhd` : date-heure limite de destruction.
+##### Mise à jour du mémo / quota d'un disque virtuel
+
+##### Restriction d'accès à un disque virtuel. 
+La propriété ra est propagée sur les propriétés rad :
+- des comptes dont le quota est imputé sur ce disque
+- des forums dont les comptes fournisseurs de quota imputent sur ce disque.
+
+##### Ajout / retrait d'un compte contrôleur
+
+##### Recalcul des quota attribués / volumes utilisés effectivement par les comptes
+Le calcul permanent du volume n'est qu'approximatif et ne s'opère que lors de franchissement de seuils de volume occupé. Ce calcul utilise tous les volumes actuels des comptes et en profite pour redonner une somme de quotas exacte.
+
+##### Changement de la clé de cryptage
+Ce n'est utile qu'après avoir retiré un compte contrôleur qui a été retiré / résilié et dont on craint qu'il puisse accéder à copie de la base (ce qui lui donnerait accès au mémo informatif).  
+Tous les comptes contrôleurs reçoivent la nouvelle clé cryptée par leur clé P.
+
+##### Changement de la clé d'administration
+Toutes les propriétés `cdA` sont ré-encryptées.
+
+##### Purge des disques inutiles
+Ce sont les disques,
+- n'ayant plus de contrôleur,
+- à qui aucun compte ni forum est associé.
 
 # Dossier `Compte`
-La clé `groupid / docid` d'un dossier `Compte`  :
-- `groupid` : hachage Java du numéro de compte `nc`.
-- `docid` : numéro du compte `nc`.
+La clé d'accès `docid` est le numéro de compte nc.
 
-**Données du cycle de vie du compte**
-- `EnC` : singleton : entête très stable du compte.
-- `EnD` : singleton : entête dynamique de gestion du compte. 
-- `Qvl` : singleton : quota et volumes du compte.
-
-**Données personnelles**
-- `Cvp` : CV personnels. Clé : index de 1 à 8.
-- `Abp` : Adresses de boîte postale. Clé : index de 1 à 4.
-
-**Murs et groupes**
-- `Mdc` : Murs du compte. Clé : index du mur dans le compte. Volume, quota, clé de cryptage, libellé / mémo. 
-- `Mca` : Murs de comptes accessibles par le compte. Clé : `nc.im` (numéro de compte, index du mur dans le compte).
-- `Grp` : Groupes dont le compte est membre. Clé : `ng` (numéro du groupe).
-
-**Données de notification, répertoire, murs et groupes accessibles**
-- `Ntf` : Avis / négociations / dialogues. Clé : `type` + "." + numéro aléatoire.
-- `Rep` : Répertoire des contacts. Clé : numéro de compte du contact.
-
-### Singleton : *Entête du compte* `EnC` étend `ECG`
+### Singleton : *Entête du compte* `EnC`
 Ce singleton porte des données publiques d'un compte :
 - quelques données ne sont pas exploitables publiquement mais étant cryptées leur transmission éventuelle est sans risque. 
 - il change peu souvent :
     - création du compte.
     - changement de phrase secrète.
     - changement de son statut : activation, annonce de destruction.
-    - changement de compte premier.
     - changement de restriction d'activité.
-    - changement de quota.
+    - changement de disque virtuel.
 - c'est la seule partie qui subsiste après destruction d'un compte. 
    - pendant quelques mois il ne reste que les propriétés marquées * qui permettent au dernier compte premier d'en connaître encore le nom qui peut subsister dans des alertes / dialogues archivés.
    - à plus long terme il ne reste que les propriétés marquées de 2 * qui permettent de ne garder que les dates de début et fin de vie et de bloquer la réutilisation du nom.
 
 **Propriétés :**
 - `nc` : numéro du compte.
-- `**nomRB` : *propriété indexée et unique*. BCRYPT du nom réduit du compte utilisé pour interdire l'usage de noms trop proches.
-- `psRB` : *propriété indexée unique*. BCRYPT de la phrase secrète réduite pour interdire l'usage de phrases secrètes trop proches.
-- `psBD` : SHA-256 du BCRYPT de la phrase secrète.
-- `c0S` : clé 0 du compte cryptée par le SHA-256 de la phrase secrète du compte. 
+- `nomrB` : *propriété indexée et unique*. BCRYPT du nom réduit du compte utilisé pour interdire l'usage de noms trop proches.
+- `prBD` : *propriété indexée unique*. BCRYPT de la phrase secrète réduite pour interdire l'usage de phrases secrètes trop proches. Sert aussi de clé d'accès pour `XAuth`.
+- `c0S` : clé 0 du compte cryptée par la phrase secrète du compte. 
+- `c1O` : clé 1 du compte cryptée par la clé 0. Elle crypte :
+    - le nom du compte,
+    - les noms des comptes figurant dans son certificat d'identité.
 - `pub` : clé publique en clair.
 - `priv0` : clé privée cryptée par la clé 0 du compte.
+- `d0 d1 d2 d3` : dates-heures de création, de début d'activité, de passage en état zombie, de destruction effective.
+- `s` : statut calculé depuis les dates d0 à d3.
+    - 0 : en création. 
+    - 1 : actif.
+    - 2 : zombie, destruction imminente.
+- `dhzc` : date-heure de passage en zombie posée par le contrôleur de son disque virtuel.
+- `dhza` : date-heure de passage en zombie posée par le compte lui-même.
+- `dhx` : *propriété indexée* date-heure de destruction prévue (s = 2) : la plus proche résultante de `dhzc` `dhza` et `d0` quand le compte est en création (s == 0 / `d1` absente), NC jours ou NZ jours après ces dates.
+- `dv` : numéro du disque virtuel sur lequel le compte impute son quota.
 
 ### Singleton : *Entête dynamique* `EnD`
 **Propriétés :**
 - `memo0` : mémo du compte crypté par la clé 0.
 - `monci` : mon certificat d'identité. Map `nc:nom1`. `nom1` : nom suffixé (crypté par la clé 1 du compte) d'un compte certificateur `nc`. `nom1` est précédé de `$` si le compte certificateur est résilié.
-- `mescert` : comptes certifiés par A. Map `nc:nom0`. `nom0` : nom suffixé (crypté par la clé 0) d'un compte certifié `nc`.
+- `mescert` : comptes certifiés par moi. Map `nc:nom0`. `nom0` : nom suffixé (crypté par la clé 0) d'un compte certifié `nc`.
 - `dv` : liste des date-heures des N dernières visites (opération `Xauth` ou `Xcre`).
-- `nbm` : nombre de murs du compte déjà créés.
 
-### Singleton *compte premier* `Pre`
-*Comptes premier seulement.*  
-Ce singleton totalise le volume total utilisé et la somme des quota attribués aux comptes ayant ce compte pour compte premier..
+### Items uniques `Dvr` et `Dvi`
+`Dvi` est un item unique de clé `dv`où `dv` est le code du disque virtuel.  
+`Dvr` est un item unique de clé `dv` + ".1" où `dv` est le code du disque virtuel et 1 est le `docid` du dossier, unique, DV).
 
-**Une sélection sur `Pre` spécifique permet à l'administrateur de lister les comptes premiers existants** en les filtrant selon la valeur du quota, du volume, du pourcentage de quota utilisé, de la catégorie, de la date limite du quota , etc.
+Les clés sont indexées.
 
-**Propriétés :**
-- `q1 q2` : quota alloué par l'administrateur (quota *payé*).
-- `val` : validité du quota.
-- `categ` : code de catégorie.
-- `qc1 qc2` : quota alloué au compte lui-même (redondance de `q1 q2` dans `Qvc`).
-- `vc1 vc2` : volume utilisé par le compte premier lui-même et ses murs. (redondance de `vm1 + vc vm2` dans `Qvc`).
-- `qt1 qt2` : total des quota alloués aux comptes et groupes ayant ce compte comme compte premier.
-- `vt1 vt2` : total de leur volume utilisé.
-- `pc1 pc2` : pourcentage d'utilisation du quota (`vt1 + vc1 / qt1 + qc1`, `vt2 + vc2 / qt2 + qc2`). Par convention 999% est donné pour un quota 0.
-- `rad` : restriction d'accès posée par l'administrateur au compte premier (redondance de `EnC.rad` pour les sélections).
+**Propriété de `Dvr` :**
+- `ra` : réplication de la propriété `ra` de l'item `Dvr` de clé `dv` du dossier `DV` de `docid` 1.
 
-### Singleton *quota et volume du compte* `Qvl`
-Ce singleton totalise le volume consommé et celui qui a été remonté au compte premier.
-
-**Une sélection sur `Qvl` par l'index sur `cp` permet à un compte premier de retrouver tous les comptes ayant un compte premier donné** selon des critères de quota / volume / pourcentage d'utilisation du quota.  
-Pour obtenir le nom d'un compte (et ses statut / dates) sélectionné sur ces critères un accès à `EnC` est nécessaire.
+L'item unique `Dvi` totalise le volume total utilisé et la somme des quota / volume alloués aux forums.
 
 **Propriétés :**
-- `cp` : *propriété indexée*. Compte premier. Absent *en création* et pour un compte premier.
-- `rcp` : restriction d'accès posée par le compte premier. Absent pour un compte premier. Redondance avec `EnC.rcp` pour sélection. 
-- `q1 q2` : quota alloué par le compte premier.
-- `v` : volume utilisé par le compte / groupe lui-même.
-- `vm1 vm2` : volume total utilisé par les murs du compte.
-- `qm1 qm2` : somme des quotas attribués aux murs du compte.
-- `pc1 pc2` : pourcentage d'utilisation du quota (`v + vm1 / q1`, `vm2 / q2`). Par convention 999% est donné pour un quota 0.
-- `rv1 rv2` : compte standard seulement. Derniers volumes remontés au compte premier.
+- `ra` : restriction d'accès posée par le contrôleur de son disque.
+- `q1 q2` : quota alloué par le contrôleur.
+- `qc1 qc2` : quota alloué au compte lui-même.
+- `vc1 vc2` : volume utilisé par le compte lui-même.
+- `vr1 vr2` : dernier volume remonté à la comptabilisation totale du disque qui ne s'opère qu'en cas de franchissement de seuils significatifs.
+- `qf1 qf2` : total des quota alloués par le compte aux forums (du même disque) auxquels il participe.
+- `vf1 vf2` : total des volumes utilisés par ces forums.
+
+Si q1 < qc1 + qf1 ou q2 < qc2 + qf2, le compte est en famine de quota ceci ne peut survenir que si le contrôleur du disque a réduit q1 ou q2.
+
+Si q1 < vc1 + vf1 ou q2 < vc2 + vf2, le compte est en famine de volume :
+- si le contrôleur du disque a réduit q1 ou q2.
+- si un forum a enregistré le départ d'un de ses comptes allocataires de quota et que le volume utilisé sur le forum est répercuté à la hausse (le cas échéant au-dessus des quotas attribués) sur chaque allocataire.
+
+>La restriction d'accès applicable est la plus restrictive de `Dvi.ra` et `Dvr.ra`.
 
 ### Items *adresse de boîte postale* `Abp`
 Un compte peut déclarer à un instant donné jusqu'à 4 adresses de boîte postale, chacune garantie unique.  
@@ -268,11 +197,11 @@ Un compte peut déclarer à un instant donné jusqu'à 4 adresses de boîte post
 **Clé** : index de 1 à 4.
 
 **Propriétés :**
-- `bpRB` : *propriété indexée unique*. BCRYPT de l'adresse réduite pour bloquer les adresses trop proches d'une adresse déjà déclarée.
+- `bprB` : *propriété indexée unique*. BCRYPT de l'adresse réduite pour bloquer les adresses trop proches d'une adresse déjà déclarée.
 - `bp0` : adresse cryptée par la clé 0 du compte.
 
 ### Items *CV personnel* `Cvp`
-**Clé** : index de 1 à 8.
+**Clé** : index de 1 à 4.
 
 **Propriétés :**
 - `l0` : libellé crypté par la clé 0 du compte.
@@ -280,32 +209,19 @@ Un compte peut déclarer à un instant donné jusqu'à 4 adresses de boîte post
 - `tC` : texte du CV crypté par la clé C.
 - `pC` : texte de la photo cryptée par la clé C.
 
-Quand une mise à jour intervient sur CV d'index `x` (texte et/ou photo), la session génère une nouvelle clé courante de cryptage C pour ce code. Elle recherche dans les `Mur Grp Rep` les entrées référençant cet index `x` et y crypte C par la clé (M / G / M) de cette entrée dans `cvcM`.  
+Quand une mise à jour intervient sur CV d'index `x` (texte et/ou photo), la session génère une nouvelle clé courante de cryptage C pour ce code. Elle recherche dans les `Fac Rep` les entrées référençant cet index `x` et y crypte C par la clé (F / M) de cette entrée dans `cvcM`.  
 Elle crypte dans `tC/pC` la nouvelle version du CV / photo par la clé elle-même cryptée par la clé 0 du compte.
 
 **Justification**  
-Le regroupement dans `Mur Grp Rep` permet de les remettre à jour en une transaction et au même niveau pour tous les murs, groupes et entrées du répertoire.  
-De cette manière le mur / groupe quitté, ou le contact révoqué n'est plus en mesure (même en volant la base) de lire les *nouvelles versions* du CV auquel il avait accès antérieurement (faute d'avoir la clé de cryptage de la nouvelle version).
+Le regroupement dans `Fac Rep` permet de les remettre à jour en une transaction et au même niveau pour tous les forums et entrées du répertoire.  
+De cette manière le forum quitté, ou le contact révoqué n'est plus en mesure (même sur une copie de base) de lire les *nouvelles versions* du CV auquel il avait accès antérieurement (faute d'avoir la clé de cryptage de la nouvelle version).
 
-### Items *mur du compte* `Mdc` :
-Un item par mur existant.
-
-**Clé** : `im` index du mur dans le compte.
+### Items *Forum accessibles* `Fac`
+**Clé** : `nf`. Identifiant du forum.
 
 **Propriétés :**
 - `dhop` : date-heure de la dernière opération.
-- `cm0` : clé M du mur crypté par la clé 0 du compte.
-- **Duplication avec Mur(nc,im).Emc** étend `ECGM` :
-    - `v1 v2` : volumes du mur.
- 
->La liste des participants au mur est donnée sur le dossier `Mur`. Pour un compte C accédant à un mur du compte A il n'y a aucune raison d'aller accéder au dossier de A. Les propriétés redondées ci-dessus permettent juste un affichage d'une entête du mur depuis le dossier de A sans avoir à ouvrir le mur lui-même.
-
-### Items *mur de compte accessible* `Mca`
-**Clé** : `nc` + "." + `im`. Identifiant du mur.
-
-**Propriétés :**
-- `dhop` : date-heure de la dernière opération.
-- `cm0P` : clé M du mur crypté par la clé 0/P du participant.
+- `cf0P` : clé M du forum crypté par la clé 0/P du participant.
 - `p` : participation du compte au mur.
 - `tiM` : titre du mur crypté par sa clé M. Propagée depuis `Compte(nc).Mdc(im).tiM`.
 - `stdcm` : statut daté du compte du mur. Propagé depuis `Compte(nc).EnC.std`.

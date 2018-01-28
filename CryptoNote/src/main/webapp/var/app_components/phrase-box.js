@@ -70,14 +70,15 @@ class PhraseBox extends Polymer.Element {
 					n = 0;
 			}
 		}
-		let s = App.Util.bcrypt(x);
+		let psB = App.Util.bcrypt(x);
 		let u = new Uint8Array(32);
-		for(let i = 0; i < 32; i++) u[i] = s.charCodeAt(i);
+		for(let i = 0; i < 32; i++) u[i] = psB.charCodeAt(i);
 		u[31] = 0;
 		let cleS = await App.AES.newAES(u);
 		let prB = App.Util.bcrypt(r);
 		let prBD = App.B64.encode(await Util.sha256(prB));
-		return {cleS:cleS, prB:prB, prBD:prBD};
+		let psBD = App.B64.encode(await Util.sha256(s));
+		return {cleS:cleS, psB:psB, psBD:psBD, prB:prB, prBD:prBD};
 	}
 	
 	async show(msg, nbmots, nbletters){
