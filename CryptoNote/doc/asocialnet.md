@@ -9,9 +9,9 @@ Une **note** est constituée,
 Une  **conversation**  est une suite chronologique **d'échanges textuels** entre ses participants. Une conversation dans un forum peut aussi supporter un vote validant ou invalidant une décision à prendre collégialement.
 
 **Le compte d'une personne** dispose principalement :
-- **d'un ou plusieurs CV**, pouvant comporter une photo d'identité, de présentation pour les autres comptes.
-- d'un **répertoire de contacts** avec d'autres comptes pouvant comporter un de leurs CV, avec qui une conversation privée peut avoir lieu et que le titulaire peut inviter sur ses forums.
-- de **notes personnelles**.
+- **d'un ou plusieurs CV** pour se présenter aux autres comptes (avec ou sans photo d'identité).
+- **d'un répertoire de contacts** avec d'autres comptes où peut figurer pour chacun un de leurs CV et avec qui une conversation privée peut avoir lieu ou qu'il peut inviter sur ses forums.
+- **de notes personnelles**.
 
 Un **forum** comporte :
 - un **répertoire de ses participants**, chacun y apparaissant avec un CV.
@@ -48,9 +48,9 @@ Toutes les données humainement signifiantes sont ***cryptés*** sur les termina
 
 >Aucune utilisation *commerciale* des données n'est possible puisqu'elles sont toutes indéchiffrables, même et surtout pour le prestataire de l'application et ses hébergeurs.
 
-**Aucun répertoire central ne peut être constitué, ile ne contiendrait que des données inintelligible** : il est impossible de chercher un compte ou un forum dans une instance de l'application en fonction de critères lisibles comme les noms, intitulés des forums, centres d'intérêt, mots clés ...
+**Aucun répertoire central ne peut être constitué, il ne contiendrait que des données inintelligible** : il est impossible de chercher un compte ou un forum dans une instance de l'application en fonction de critères comme les noms, intitulés des forums, centres d'intérêt, mots clés ...
 
-> On ne s'y connaît que par cooptation, contact direct et rencontre sur un forum.
+> On ne s'y connaît que par cooptation, contacts directs et rencontres sur des forum.
 
 ## Les Comptes
 ##### Phrase secrète d'un compte
@@ -79,7 +79,7 @@ Au fil du temps, le nom d'un compte apparaît à d'autres comptes : après avoir
 
 >Un compte A *actif* (ni en création, ni résilié) a toujours au moins un compte dans son certificat d'identité. Quand un compte certifiant est résilié il apparaît en tant que tel dans le certificat d'identité de A (ce qui réduit la crédibilité que les autres peuvent avoir dans le compte A).
 
-Comme au départ il n'y a pas de comptes dans l'instance, il est possible de créer ou ou quelques comptes **auto-certifiés** (voir plus avant).
+Comme au départ il n'y a pas de comptes dans l'instance, il est possible de créer ou ou quelques comptes **auto-certifiés** (voir ci-dessous).
 
 ##### Phrase secrète d'administration
 Cette phrase se transmet humainement hors de l'application : un brouillage complexe de cette phrase donne une clé de cryptage qui est mémorisée (elle-même brouillée) dans le configuration de l'instance : le serveur peut vérifier qu'un détenteur présumé de cette phrase l'est réellement sans que cette clé ne soit physiquement écrite quelque part.
@@ -93,15 +93,15 @@ Le premier compte créé dans une instance est par principe un compte auto-certi
 
 #### Cercles des comptes connus d'un compte A
 **Le premier cercle** est l'ensemble des comptes inscrits dans le répertoire personnel des contacts de A.  
-**Le deuxième cercle** est l'ensemble des comptes des participants inscrits aux mêmes forum que A (et par convention qui ne sont pas dans le premier cercle).  
+**Le deuxième cercle** est l'ensemble des comptes des participants inscrits aux mêmes forum que A (et ne sont pas déjà dans le premier cercle).  
 **Le troisième cercle**, plus indirect, est celui des comptes ayant certifié l'identité d'un compte d'un des deux premiers cercles.  
 
 **Pour inscrire un contact dans son répertoire personnel, A doit l'avoir trouvé dans l'un des deuxième ou troisième cercles.**  
 Comme au départ un nouveau compte ne connaît personne d'autre que son propre certificateur (seul présent dans son répertoire personnel), ses cercles de connaissances ne peuvent pas s'agrandir, du moins tant que son certificateur ne l'a pas invité au moins à participer à un forum où il pourra rencontrer d'autres comptes.
 
 **Contacts en attente d'approbation**  
-A peut enregistrer dans son répertoire un contact C en attente d'approbation : il faut pour cela que A ait rencontré dans la vraie vie la personne C ayant un compte dans l'application et lui ayant confié l'adresse d'une de ses (4 au plus) *boîtes postales*.
-- A peut inscrire C en attente d'approbation en donnant cette adresse de boîte postale et un court message de courtoisie destiné à se faire reconnaître.
+Un compte A peut enregistrer dans son répertoire un contact C (ayant un compte dans l'application ) : il faut pour cela qu'il l'ait rencontré dans la vraie vie et lui ait confié l'adresse d'une de ses (4 au plus) *boîtes postales*.
+- A peut inscrire C *en attente d'approbation* en donnant cette adresse de boîte postale et un court message de courtoisie destiné à se faire reconnaître.
 - C peut reconnaître A et accepter l'établissement de leur contact mutuel en inscrivant A dans son répertoire et en transmettant son nom à A.
 - mais C peut aussi se raviser, ne pas reconnaître A, suspecter une usurpation d'identité, bref refuser le contact : C reste un contact anonyme dans le répertoire de A. Si C a répondu au message de courtoisie de A en motivant son refus, A pourra le lire, sinon A n'a plus qu'à détruire cette entrée en attente qui encombre son répertoire.
 
@@ -112,17 +112,17 @@ Un compte peut créer un forum dès qu'il souhaite partager des notes et/ou ouvr
 - le forum ainsi créé a un identifiant interne tiré au hasard à sa création.
 - **le créateur devient le premier participant**, avec un statut de modérateur, du forum.
 - **il peut inviter certains des comptes** de ses cercles de connaissance, ou connue par une adresse de boîte postale, à participer au forum.
-- ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumise à approbation des autres participants.
+- ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumises à approbation des autres participants.
 
-Partager des informations privées à plusieurs suppose d'avoir confiance en ceux avec qui ça sera fait. Cette acquisition de confiance joue autant pour les **invitants** (*puis-je avoir confiance dans cet invité ?*) que pour **l'invité** (*avec qui vais-je partager des informations ?*).
+Partager des informations privées à plusieurs suppose d'avoir confiance en ceux avec qui ce partage s'établit. Cette acquisition de confiance joue autant pour les **invitants** (*puis-je avoir confiance dans cet invité ?*) que pour **l'invité** (*avec qui vais-je partager des informations ?*).
 
 Une note ou une conversation du forum peut avoir un **degré de confidentialité** :
 - lisible par les **invités**.
-- privées pour les **participants confirmés**.
+- privée pour les **participants confirmés**.
 
 Un invité reçoit avec son invitation une clé de cryptage qui lui permet :
-- **de lire la liste des participants**, leur CV (du moins celui choisi pour être visible par les participants et invités de ce forum) et leurs certificats d'identité (qui les certifie).
-- **de lire la ou les notes et conversation déclarées lisibles aux invités** et qui peuvent présenter l'objet du forum et le cas échéant ses règles internes.
+- **de lire la liste des participants**, leurs CV (du moins ceux que chaque participant a choisi de rendre visible aux participants et invités de ce forum) et leurs certificats d'identité (qui les certifie).
+- **de lire la ou les notes et conversations déclarées lisibles aux invités** et qui peuvent présenter l'objet du forum et le cas échéant ses règles internes.
 
 Ainsi un invité peut se forger une opinion sur le forum qui l'invite et il peut choisir d'accepter cette invitation ou de la décliner.
 
@@ -136,13 +136,13 @@ La vie du forum est pour l'essentiel marquée par :
 - la lecture et l'écriture de notes et de leurs pièces jointes.
 - l'ouverture de conversations et la poursuite de conversations en y ajoutant des échanges.
 
-##### Statut d'un participant
+##### Statut d'un participant dans un forum
 Un participant peut avoir plusieurs niveaux de statut :
 - **invité** en attente d'acceptation ou de refus de l'invité.
 - **en attente d'approbation** par les participants.
 - **observateur** : il peut lire mais pas écrire, ni note, ni échange de conversations. Il ne prend pas part aux votes.
 - **régulier** : il peut lire et écrire des notes et participer aux conversations. Il prend part aux votes selon les règles de gouvernance du forum.
-- **modérateur** : il peut de plus modérer des notes (et leurs pièces jointes) et échanges des conversation en les masquant (seuls les modérateurs peuvent les lire) ou les démasquant (lisibles par tous) ou détruisant le contenu. Les règles de gouvernance peuvent,
+- **modérateur** : il peut de plus modérer des notes (et leurs pièces jointes) et échanges des conversations en les masquant (seuls les modérateurs peuvent les lire) ou les démasquant (lisibles par tous) ou détruisant le contenu. Les règles de gouvernance peuvent,
     - fixer un poids supérieur aux décisions des modérateurs dans le forum.
     - décider de ne pas avoir de modérateur.
 
@@ -150,15 +150,16 @@ Un participant peut avoir plusieurs niveaux de statut :
 Une conversation est créée par un participant qui peut éventuellement restreindre la liste des participants pouvant la lire et y participer (listes qui peuvent être ultérieurement étendues mais pas restreintes). Par défaut c'est l'ensemble des participants.  
 Chaque échange d'un participant est inscrit par ordre chronologique et ne peut plus être rectifié, avec les deux exceptions suivantes :
 - son auteur a le droit d'effacement de ses propres échanges (oups !) mais pas de correction.
-- un modérateur a le droit à le classer *modéré* (lisible par les seuls modérateurs) et/ou l'effacer mais jamais d'en changer le contenu.
+- un modérateur peut le *modérer* (lisible par les seuls modérateurs) et/ou l'effacer mais jamais en changer le contenu.
 
 **La plupart des conversations sont à objet libre**: la première ligne du premier échange en donne l'intitulé.  
 Un sondage implicite est toujours ouvert mais dans bien des cas n'est pas utilisé.
 
 **Certaines conversations ont pour objet la prise d'une décision formelle**, comme par exemple :
-- l'invitation d'un nouveau participant et son approbation, le changement de son statut.
+- l'invitation d'un nouveau participant et son approbation.
+- le changement de son statut.
 - l'exclusion d'un participant.
-- la suppression de conversations / notes obsolètes et consommatrices d'espaces.
+- la suppression de conversations / notes obsolètes et consommatrices d'espace.
 - la clôture du forum lui-même.
 
 Dans ce cas le vote de la conversation a pour but de valider (ou d'invalider) une décision d'action, formelle et ayant des paramètres précis : 
@@ -166,7 +167,7 @@ Dans ce cas le vote de la conversation a pour but de valider (ou d'invalider) un
 - un participant peut voter plusieurs fois, le vote le plus récent est seul pris en compte.
 - les votes sont publics, vérifiables par chacun.
 - la fin de la conversation a lieu :
-    - soit parce que son initiateur y renonce : elle est annulée.
+    - soit parce que son initiateur y renonce : la conversation est annulée (la décision n'est pas approuvée).
     - soit sur constat d'un vote négatif, la décision n'est pas approuvée.
     - soit par la réalisation de l'action décidée, qui peut se conclure normalement ou sur un échec.
 
@@ -175,13 +176,13 @@ Dans ce cas le vote de la conversation a pour but de valider (ou d'invalider) un
 - elle comporte au moins une ligne de texte qui lui sert de titre / descriptif.
 - elle *peut* avoir une pièce jointe.
 - elle *peut* être marquée comme associée à une conversation précise ou au forum. Si elle est associée à une conversation elle disparaîtra quand celle-ci est détruite.
-- la liste des participants autorisés à lire / écrire *peut* être restreinte au départ (par défaut tous les participants au forum sont autorisés), peut être augmentée mais pas réduite.
+- la liste des participants autorisés à lire / écrire *peut* être restreinte au départ (mais par défaut tous les participants au forum sont autorisés) et peut être ensuite augmentée mais pas réduite.
 - elle peut être déclarée *archivée* par son propriétaire : elle ne pourra plus être modifiée par personne.
 - son propriétaire peut en transmettre la propriété à un autre participant.
-- un modérateur (s'il en existe sur le forum) peut modérer son contenu :
+- un modérateur (s'il en existe sur le forum) peut *modérer* son contenu :
     - la note n'est plus lisible que par son propriétaire (désormais seul à pouvoir la modifier) et les autres modérateurs.
     - elle peut être détruite par un modérateur.
-    - elle peut avoir sa modération levée par un modérateur (si elle n'a pas été détruite).
+    - elle peut avoir sa modération levée par un modérateur.
     - un modérateur ne peut pas en changer le contenu.
 
 ##### Clôture d'un forum
@@ -191,128 +192,161 @@ Elle se passe en deux temps :
 
 Il est possible de réactiver un forum zombie quand on a un remord ou de prolonger l'état zombie.
 
-La destruction effective supprime physiquement les données et retourne le quota aux comptes détenteurs (voir ci-près).
+La destruction effective supprime physiquement les données.
 
 >**Remarque** : dans le cas le plus simple un forum s'ouvre instantanément sur demande d'un compte qui y invite immédiatement les contacts qu'il souhaite avec approbation par défaut. Une gouvernance par défaut s'installe, et les participants peuvent sur l'instant accepter l'invitation et participer à une conversation et s'échanger des notes.
 
-## Gouvernance et contrôle de l'espace : volumes, quotas
+## Comptabilisation des consommations de ressources
 Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :
 - (1) l'une correspond à toutes les données sauf les pièces jointes attachées aux notes.
 - (2) l'autre correspond aux pièces jointes attachées aux notes.
 
 Selon les options techniques retenues pour chaque instance les coûts de stockage peuvent être significativement différents pour les deux types.
 
-### Gouvernance de l'instance
-Héberger un serveur et occuper de l'espace a un coût qui peut être couvert de diverses façons :
-- un mécène payeur s'acquitte des frais sans obligation ni contrepartie pour les comptes hébergés.
-- le payeur global refacture les frais de l'instance, typiquement par disque virtuel.
-- les comptes acquittent par ailleurs, éventuellement, une cotisation qui peut être associée au disque virtuel qu'ils utilisent.
+Les opérations lancées ont aussi un coût de calcul et d'échange sur le réseau.
 
-La gouvernance de l'instance fait face aux questions suivantes :
-- **doit-on réguler le volume utilisé** et si oui comment ?
-- **que fait-on des comptes, et indirectement des forums, inactifs** sur une longue durée et immobilisant en pure perte des ressources de stockage ?
+Un barème simple fixe les coûts unitaires suivants :
+- coût de stockage d'un Mo sur un jour pour les données sauf les pièces jointes.
+- coût de stockage d'un Mo sur un jour pour les pièces jointes.
+- coût fixe d'une opération simple (certaines sont gratuites) : des opérations complexes sont décomptées comme les N opérations simples qui les composent.
+- coût du volume échangé en entrée / sortie sur le réseau (au delà d'un certain seuil).
 
-L'instance a été créée par une personne physique ou une organisation ayant un but : une charte de déontologie peut être explicitement proposée aux comptes qui s'engagent à la respecter. Sans émettre aucun jugement une organisation suprémaciste n'a pas envie d'héberger des discours et des campagnes défendant l'idée qu'il n'y a pas de races humaines donc de suprématie de l'une sur les autres alors que la déontologie d'une association anti-raciste aura exactement les objectifs opposés.
+##### Crédit d'un compte
+Un compte dispose d'un crédit qui est amputé :
+- du coût de stockage journalier de ses propres données.
+- du coût des opérations menées par le compte, sur lui-même ou les forums auxquels il participe.
 
-Sachant que le contenu des notes et conversations d'un compte lui sont totalement personnelles et impossibles à décrypter, **aucun contrôle déontologique de peut s'effectuer sur les notes d'un compte**.  
-C'est un peu différent pour une conversation entre deux comptes : elle est certes totalement privée (et techniquement indiscutablement privée) et aucun des deux interlocuteurs n'est obligé à la poursuivre, chacun peut l'interrompre à son gré. Mais certains pays ont des lois réprimant l'insulte *même non publique* (même si l'application en est peu fréquente). Un compte peut être amené à se plaindre d'un autre et à justifier cette plainte par un texte indiscutable (non répudiable par son auteur).    
-De plus un compte représente une personne physique qui peut finalement être jugée *persona non grata* sur l'instance en raison de sa *notoriété* dans le vrai monde, voire des autorités judiciaires qui peuvent vouloir priver quelqu'un de toute capacité d'échange et d'enregistrement même personnel d'informations.
+Le détenteur d'un compte peut transférer de son crédit :
+- sur un autre compte.
+- sur un forum.
 
-Sur un forum c'est un peu différent : plusieurs comptes ont accès aux contenus et l'un d'entre eux peut estimer qu'un ou plusieurs contenus ne respectent pas la charte déontologique de l'instance. Un forum est certes strictement privé et ne fait pas partie de l'espace public : 
-- en toute rigueur la liberté d'expression *privée* n'est légalement pas réprimée (enfin en général).
-- mais les insultes, mêmes privées, peuvent parfois légalement ne pas être admises.
-- **enfin l'instance est sous gouvernance privée** : elle peut avoir les règles déontologiques de son choix.
+Quand son crédit est épuisé, le compte est gelé : seule une opération de rechargement du crédit peut le remettre en état normal.   
+Au bout d'un certain temps en état gelé, le compte est détruit.
 
-Quelques grands paramètres de gouvernance l'instance sont fixés en paramètre :
-- un quota attribué peut-il revu à la baisse ? 
-- le droit de dissolution d'un compte pour non respect de son quota est-il possible ?
-- des comptes inactifs peuvent-ils être supprimés ?
-- des alertes de non respect de la déontologie sont-elles recevables auprès d'un compte modérateur général de l'instance ? 
-    - Le lanceur d'une alerte peut-il être anonyme ? Toujours, jamais, à sa convenance ?
-    - un compte peut-il être résilié par la modération générale pour cause de non respect de la charte déontologique ?
+##### Crédit d'un forum
+Un compte dispose d'un crédit qui est amputé du coût de stockage journalier de ses propres données.
 
-Ainsi une instance peut avoir une gouvernance qui peut osciller entre :
-- ultra libertarienne et le cas échéant être dissoute par action violente hors de l'application. Fermeture du site par l'hébergeur, arrestations, etc.
-- moyennement contrôlée en y acceptant que des gentlemen ou des ladies.
-- structurée afin de protéger le plus grand nombre de dérives éventuelles de quelques uns.
+Sur décision, en général collégiale, un forum peut transférer de son crédit :
+- sur un autre compte.
+- sur un forum.
 
-### Techniques de contrôle du volume
-#### Disques virtuels
-L'espace de stockage global est constitué d'un ensemble de  **disques virtuels** chacun ayant :
-- un code court qui est son identifiant immuable.
-- un quota d'espace distingué en q1 / q2.
-- le volume effectivement occupé v1 / v2.
-- une clé de cryptage spécifique au disque générée à sa création et qui crypte le mémo pour les comptes contrôleurs?
-- un libellé / mémo crypté par la clé ci-dessus.- une restriction d'accès :
-    - *aucune restriction, lecture seule, accès interdit*.
-    - *un code d'alerte* : quelques codes sont prédéfinis par instance et qualifie à la fois le reproche fait aux utilisateurs du disque et un niveau de menace sur leurs comptes.
-- un ou quelques **comptes contrôleurs**.
+Quand son crédit est épuisé, le forum passe en lecture seule : seule une opération de rechargement du crédit par un participant peut le remettre en état normal. A noter que dans cet état ses participants peut encore lire le forum et en particulier en copier les informations puisque le coût des opérations est imputé aux comptes accédants, pas au forum.  
+Au bout d'un certain temps en état lecture seule, le forum est détruit.
 
-Un compte connaissant la phrase secrète d'administration de l'instance peut :
-- accéder à la liste des disques virtuels, en ajouter et sous certaines conditions en supprimer.
-- modifier leurs quotas q1 / q2 et mémos.
-- changer leurs comptes contrôleurs.
-- ajuster la restriction d'accès.
-- en cas de changement de la phrase secrète d'administration ré-encrypter les clés de cryptage des disques en fournissant l'ancienne et la nouvelle clé d'administration.
+##### Seuil d'alerte
+Avant de parvenir au niveau critique gelé / lecture seule, un compte ou un forum passe un seuil d'alerte qui est signalé à l'écran et permet de remédier à la situation avant d'atteindre la zone rouge.
 
-#### Contrôle de l'espace global
-Globalement chaque disque virtuel doit respecter son quota.  
-L'administration de l'instance peut, par un compte connaissant la phrase secrète d'administration, **restreindre voire supprimer l'accès à un disque virtuel**, et in fine le cas échéant le détruire.
+### Lignes de crédit
+Le réseau étant a-social il s'interdit d'établir une corrélation entre des paiements reçus et d'une manière ou d'une autre nominatifs et les comptes qui vont en bénéficier.
 
-#### Contrôle de l'espace sur un disque virtuel
-Son ou ses comptes contrôleurs gèrent les attributions de quotas aux comptes utilisant ce disque. Ils peuvent aussi contraindre ceux-ci au respect de leurs obligations en usant à leur égard d'une possible restriction d'accès puis de blocage et in fine le cas échéant de la destruction d'un compte. Ils sont en particulier capables :
-- de révoquer les comptes obsolètes utilisant des quotas qui seraient utiles à d'autres.
-- de restreindre l'accès voire supprimer des comptes suite à décision de modération.
+Une personne physique ou morale qui souhaite approvisionner un compte ou un forum en crédit procède ainsi :
+- il choisit une phrase secrète qu'il ne communique à personne si le paiement concerne son compte ou la communique au compte qui va en bénéficier.
+- il effectue un paiement (par exemple un virement) d'un montant de son choix en lui associant le brouillage cryptographique de cette phrase.
+- le comptable de l'instance, après avoir été crédité, enregistre cette ligne de crédit identifiée par la phrase brouillée et son montant.
+- le compte bénéficiaire fournit la phrase secrète, la ligne de crédit associée est retrouvée et le montant est crédité à son compte, la ligne de crédit correspondante étant effacée.
 
-#### Quota initial d'un compte A
-A la validation de sa création, lorsqu'un compte certificateur C a accepté de certifier l'identité de A, A reçoit de C un quota minimal du disque virtuel auquel C est associé.  
-A cette occasion une **conversation** est ouverte (mais vide) entre A et le ou les comptes contrôleurs (passés, actuels ou futurs) de son disque virtuel.
+De cette manière :
+- seul le détenteur de la phrase secrète peut imputer la ligne de crédit à son compte.
+- à aucun moment il n'est établi de lien entre la personne physique ou morale ayant payé et le compte ou forum bénéficiaire.
 
-##### Demandes d'augmentation de quota
-Le compte A peut faire une demande d'augmentation de son quota : elle est enregistrée sur la **conversation** entre le compte et son disque virtuel.
-- un exemplaire est enregistré dans le dossier du disque virtuel : les comptes contrôleurs y ont accès.
-- l'autre exemplaire est enregistré dans le dossier du compte.
+>**Remarque** : un compte prend un risque mesuré en payant d'avance et en faisant le pari qu'une ligne de crédit correspondante sera bien inscrite. Il peut vérifier que ceci est bien le cas sur une petite somme, peut faire des paiements modestes et successifs ...  
 
-La demande peut ainsi être :
-- satisfaite, complètement ou partiellement (mas pas plus que le niveau de la demande).
-- refusée.
-- conservée en attente, prioritaire ou non.
-- archivée un certain temps.
-- détruite.  
+>Il est aussi concevable que le comptable qui introduit les lignes de crédit dans l'instance soit une organisation indépendante de l'instance, un tiers de confiance dont la réputation est basée sur le fait qu'il s'engage à n'opérer que sur des instances qui accepte l'enregistrement de lignes de crédit sans exiger de données nominatives associées.
 
-##### Transfert d'un disque à un autre
-Une demande de quota peut aussi comporter le souhait du compte à être transféré sur un autre disque plus adapté à l'usage ou à l'organisation.  
-Tout contrôleur du disque étant aussi contrôleur d'un autre disque peut effectuer ce transfert qui se limite à une opération sur les quotas et à fournir la clé de cryptage du nouveau disque.
+>Dans le cas d'une instance gérée par une organisation au profit de ses membres, il n'intervient pas à proprement parler de mouvement monétaire : un adhérent à l'organisation peut recevoir périodiquement une phrase correspondant à une ligne de crédit déposée par l'organisation (quand c'est elle qui paye) ou à l'inverse l'organisation peut recevoir une phrase brouillée générée par l'adhérent et jointe au renouvellement de son adhésion.
 
-#### Quota d'un forum
-Un forum reçoit à sa création un quota prélevé sur le quota du compte créateur.
-- il peut recevoir ensuite des quotas en provenance d'autres comptes participants.
-- ces quotas restent **concédés** par les comptes participants au forum : son quota est virtuellement la somme des quotas concédés par les participants.
-- quand un forum décide de remettre à disposition du quota inutile, celui-ci est rendu aux participants concessionnaires, la règle de proportionnalité pouvant être contrariée par un vote des participants. C'est la même situation quand le forum est clôturé.
-- un forum ne fait pas de demande d’accroissement de quota, ce sont ses participants qui y contribue.
+### Synthèse
+Lignes de crédit monétaires, cadeaux, adhésions ou droits d'usage émis par une organisation à ses membres, mécénat sans contrepartie ... toutes ces possibilités sont ouvertes et externes au fonctionnement de l'instance : au bout de cette chaîne une ligne de crédit anonyme est disponible dans le serveur (avec une période de validité maximale) jusqu'à sa capture par un compte qui seul en connaît la phrase secrète et peut s'en faire attribuer le bénéfice.
 
-#### Restriction d'accès à un disque posée par un administrateur de l'instance
-Elle peut prendre les valeurs suivantes :
-- pas de restriction : lecture / écriture possible. Si l'écriture conduit à une *augmentation* de volume alors que le quota est déjà dépassé,  elle est refusée. 
-- lecture seule : toute modification des conversations et notes est impossible.
-- accès bloqué (ni lecture, ni écriture). 
- 
-La restriction est accompagnée d'un code explicitant la raison de la restriction ou de sa levée afin que les mesures correctives puissent être prises.
+Une fois leurs crédits expirés, les comptes / forums se bloquent puis s'autodétruisent.
 
-#### Restriction d'accès à un compte posée par un compte contrôleur
-Une restriction similaire peut être apposée sur un compte par un des contrôleurs de son disque virtuel avec le même objectif. Le contrôleur peut motiver sa décision par un échange sur la conversation permanente ouverte avec le compte.  
-La restriction effectivement applicable au compte est le plus restrictive des deux, mais les deux sont visibles pour un compte.
+## Modération d'une instance
+La modération d'une instance a deux composantes :
+- la possibilité pour un compte ayant un privilège d'administrateur :
+    - de restreindre l'accès à un compte ou un forum même disposant d'un crédit.
+    - de détruire effectivement un compte ou un forum.
+- la possibilité que des lanceurs d'alertes signalent des contenus incompatibles avec l'éthique de l'instance, avec pour objectif de faire cesser la production de ces contenus quitte à faire procéder à la restriction / destruction des comptes et forums responsables (ce qui rejoint le point 1).
 
-### Résiliations autoritaires de comptes
-Un compte peut ne pas respecte la limitation de quota qui lui a été fixée. Comme il n'est pas possible de créer / modifier des contenus qui feraient passer au dessus du quota d'un compte ou d'un forum, cette situation n'apparaît qu'en cas de restriction a posteriori :
-- un compte a eu son quota réduit autoritairement par un contrôleur de son disque : son volume utilisé courant peut excéder le quota restant ;
-- un forum a eu un participant résilié ou qui a réduit son le quota qu'il avait concédé au forum. Le volume utilisé par le forum peut excéder son quota et par rebond le volume imputé aux autres comptes étant accru en proportion peut leur faire excéder leur propre quota.
+>**Remarque** : en l'absence d'une possibilité technique de modération un compte est seul juge de l'opportunité de sa résiliation. Tant qu'il dispose de crédit et comme il peut financer une ligne de crédit anonyme sans aucune corrélation avec lui-même, il n'y a aucun moyen pour faire clore un compte qui ne le souhaite pas ... sauf à détruire toute l'instance.
 
-Un forum, donc indirectement des comptes, ou un compte a été la cible d'un lanceur d'alerte à propos d'un contenu non conforme à la charte éthique de l'instance et une décision de modération générale a été prise de fermeture.
+>La suite de ce développement ne fait appel à aucun concept de se que pourrait / devrait être une bonne modération ni ce que devrait ou pourrait être une bonne éthique pour une instance. Il est clair que pour une organisation suprémaciste un contenu conforme à son éthique serait exactement considéré comme anti-éthique pour une organisation anti raciste. 
+#### Instance sans modération
+C'est un simple paramètre de configuration de l'instance : 
+- une restriction d'accès ne se prononce que sur seul critère de disponibilité de crédit.
+- aucun compte ne peut ni restreindre l'accès d'un autre ni procéder à sa résiliation.
+- aucune alerte sur les contenus ne peut être soumise.
 
-Un contrôleur de disque a la possibilité de lister les comptes morts, n'ayant eu aucune activité depuis un certain temps. Chaque compte participant d'un forum est aussi en mesure de détecter de son côté quels sont les forums morts et peuvent s'en exclure.
+L'instance est du type libertaire, ses contenus sont intégralement libres et privés : aucune organisation ne peut y intervenir ni s'appuyer sur aucune information pour déclarer ses contenus illégaux / illicites etc. Seule la force physique peut techniquement empêcher le fonctionnement technique de l'ensemble de l'instance.
 
-La résiliation autoritaire est voisine d'une auto-résiliation du compte (voir ci-après).
+#### Instance avec droit de dissolution administrative
+Si ce droit est ouvert dans la configuration de l'instance, un compte ayant un privilège d'administration peut sur injonction externe agir sur le droit d'accès d'un compte ou d'un forum en en connaissant l'identifiant :
+- mettre un compte ou un forum en lecture seule ou le bloquer complètement.
+- le détruire après un certain délai de remord après blocage, juste le temps en fait de s'assurer qu'une erreur n'a pas été commise en fournissant son identifiant.
+
+Certaines instances peuvent préférer accepter l'arbitraire / contrainte d'une pression externe, judiciaire ou extra judiciaire, exercée à l'égard d'un compte précisément cité plutôt que de faire face à une fermeture imposée physiquement de l'ensemble de l'instance.  
+D'autres instances peuvent faire le choix inverse : tout dépend de l'engagement moral pris avec les comptes participants.
+
+>***En aucun cas le privilège d'administration ne permet d'accéder aux contenus, c'est techniquement impossible.***
+
+#### Instance avec lanceurs d'alertes
+Un lanceur d'alerte est une personne qui a eu accès normalement à un ou des contenus du fait de sa participation régulière à des conversations ou des notes d'un forum et qui considère un ou des contenus comme incompatible avec la charte éthique de l'instance.
+- son objectif est de porter à la connaissance de personnes externes le ou les contenus qu'elle juge non conforme.
+- ces personnes peuvent alors :
+    - s'assurer techniquement que ce ou ces contenus sont réels, ne sont pas des fake construits pour l'occasion.
+    - intervenir pour les faire rectifier en utilisant le pouvoir de restriction d'un compte ayant privilège d'administration.
+
+>Il est clair qu'autoriser le lancement d'alertes sans possibilité de coercition éventuel peut manquer d'intérêt ... quoi que ...
+
+La configuration de l'instance peut en conséquence spécifier :
+- si oui ou non les alertes sont gérées.
+- si oui, si l'identité du lanceur d'alerte est :
+    - non communiquée par le lanceur qui ne peut qu'être anonyme.
+    - obligatoire : le lanceur d'alerte verra son nom / numéro de compte obligatoirement associé à l'alerte.
+    - laissée au libre choix du lanceur d'alerte.
+
+##### Alerte
+Le lanceur d'alerte a lu un contenu qu'il considère comme inapproprié : il l'a forcément lu *en clair*.  
+- Si c'est une note ou une pièce jointe à une note, l'identifiant est celui de la note (son forum / compte et son identifiant dans ce compte / forum).
+- Si c'est une conversation c'est l'ensemble des échanges entre deux instants donnés : l'identifiant est celui de la conversation et deux date-heures (afin de permettre d'apprécier du contexte de la conversation et non pas seulement d'une ligne isolée).
+
+**Il choisit une phrase d'alerte et fait générer une clé de cryptage depuis cette phrase qu'il est seul à connaître.**
+
+Il demande à l'application de prendre **un cliché du contexte de l'alerte** :
+- l'identifiant du contenu.
+- la liste de /des numéros de compte de l'auteur / contributeurs.
+- la date-heure de prise de cliché.
+- le / les digests du / des contenus. Un digest est un très grand nombre qui a été calculé depuis le texte du contenu en clair avant son cryptage pour envoi, dans la session qui a envoyé le contenu.
+- l'application enregistre ce cliché crypté par la clé de cryptage de son alerte.
+
+Ayant ce / ces contenus en clair, le lanceur d'alerte les cryptent par la clé de cryptage de son alerte transmise elle-même cryptée par la clé publique d'administration de l'instance : seuls les comptes ayant privilège d'administration pourront la décrypter.  
+Le dossier d'alerte comporte :
+- l'identification ou non du lanceur d'alerte, avec ou non un de ses CV.
+- une note d'explication éventuelle de sa part, note qui est crypté comme le / les contenus.
+- le / les contenus cryptés et lisible par les seuls modérateurs.
+- la référence dans le serveur du cliché du contexte de l'alerte.
+
+##### Instruction d'une alerte par un / des modérateurs
+Ceux-ci ont obligatoirement des comptes avec privilège d'administration sans quoi ils ne peuvent pas décrypter le texte de l'alerte.
+
+Un modérateur doit d'abord déterminer si les contenus soumis sont réels ou des fake :
+- il demande à l'application le cliché du contexte de l'alerte et ceci lui procure en particulier les digests des contenus qui ont été transmis par le lanceur d'alerte.
+- il fait vérifier pas sa session que le digest des contenus (en clair) sont bien les mêmes que ceux photographiés par le serveur au moment de la capture de l'alerte.
+- il sait donc si le lanceur d'alerte a fabriqué des fake.
+
+Le modérateur peut apprécier les contenus, les autres modérateurs peuvent procéder de la même manière : après cela ils prennent les décisions que la charte d'éthique leur recommande de suivre, cette appréciation est humaine et externe à l'application. Le cas échéant le ou les comptes et forums peuvent bloqués et / ou détruits, mais l'alerte peut aussi être classée sans suite.
+
+#### Ce processus peut-il être fraudé ?  
+La question préliminaire est : est-il possible d'insérer un faux contenu directement en base sans passer par l'application ?
+- techniquement oui. L'administrateur technique de la base peut y patcher n'importe quelle information et remplacer un contenu vrai par un fake.
+- ce path est-il détectable ? Si cet administrateur technique dispose de la clé de cryptage du forum, non.
+
+>En conséquence : ***la complicité entre un participant régulier d'un forum et un administrateur technique de la base permet d'introduire, sans être détectable, un contenu fake correctement crypté en l'attribuant à un autre participant***.
+
+>***Un administrateur technique peut gommer n'importe quel contenu et ainsi masquer un contenu inapproprié qui lui aurait désigné et ce sans être détecté***.
+
+Un participant régulier peut normalement introduire un contenu correctement crypté et n'a aucunement besoin d'une quelconque complicité pour ça :
+- mais en procédant normalement le serveur a enregistré une date-heure réelle et lui a attribué la paternité du texte.
+- la complicité d'un administrateur est requis pour patcher l'auteur et la date-heure du contenu, bref pour l'attribuer à un autre.
 
 # Compte : ses contacts, sa création et sa résiliation
 
@@ -437,7 +471,7 @@ Avant de pouvoir créer son compte, A doit préalablement :
 - écrire un mot de courtoisie pour C.
 
 Une fois ces conditions remplies, l'opération de création du compte s'effectue :
-- le compte de A est créé et est en état *en création*. Il a des possibilités limitées et un quota très réduit.
+- le compte de A est créé et est en état *en création*. Il a des possibilités limitées et un crédit forfaitaire gratuit mais très réduit.
 - le répertoire des contacts de A est créé avec une unique entrée, celle de C. Y figure : le numéro de CV #1 (A accorde sa confiance d'avance à C) et l'indication que A souhaite que C certifie son nom.
 - une conversation est engagée entre A et C : C reçoit le mot de courtoisie de A et pourra y répondre.
 
@@ -445,7 +479,7 @@ Une fois ces conditions remplies, l'opération de création du compte s'effectue
 - le nom de C est désormais inscrit dans le répertoire de A. C a même pu à cette occasion accorder sa confiance à A en lui indiquant auquel de ses CV il lui donne accès.
 - A est inscrit réciproquement, avec son nom, dans le répertoire des contacts de C.
 - C est inscrit dans le certificat d'identité de A.
-- A reçoit pour quota celui que C a souhaité lui donner (avec un minimum), ce quota étant associé au même disque virtuel que celui supportant le quota de C.
+- A peut recevoir un crédit de bienvenue de C (avec ou sans promesse morale de remboursement).
 - le compte de A passe à l'état *actif*.
 
 **Cas 2 : C refuse de certifier le nom de A (ou ne répond pas).**
@@ -458,7 +492,7 @@ Une fois ces conditions remplies, l'opération de création du compte s'effectue
 ## Vie d'un compte actif
 La vie d'un compte actif est ponctuée par une suite d'opérations :
 - de mise à jour des notes personnelles, des CV, des adresses de boîte postale.
-- de gestion de son quota : réduction de quota, ou *demande* d'augmentation de quota ou de  transfert vers un autre disque virtuel.
+- de gestion de son crédit : acquisition de lignes de crédit, transfert de crédit à d'autres comptes / forums.
 - de gestion de son répertoire de contacts.
 - d'échange sur les conversations avec ses contacts personnels. Il existe potentiellement une conversation ouverte avec chaque contact du répertoire. Il est possible :
     - d'y ajouter un échange textuel,
@@ -473,9 +507,8 @@ Elle s'effectue en deux temps :
 
 **Le titulaire du compte peut revenir sur sa propre résiliation pendant quelques jours**. Il peut également prolonger l'état zombie.
 
-#### Résiliation par un des comptes contrôleurs de son disque virtuel
+#### Résiliation par un modérateur de l'instance
 La seule différence avec le résiliation par le compte lui-même est qu'il ne lui est pas possible d'arrêter par lui-même cette destruction, ni prolonger son état zombie, ni en sortir.  
-En état zombie toutefois la conversation avec ses contrôleurs de son disque virtuel reste active.
 
 #### Destruction physique d'un compte
 Cette destruction s'effectue N jours après,
@@ -485,7 +518,6 @@ Cette destruction s'effectue N jours après,
 Le compte est physiquement supprimé et certaines autres mises à jour interviennent également :
 - *le compte est marqué résilié dans la liste des participants de tous les forums* auxquels il participait.
 - *le compte est marqué résilié* dans tous les répertoires des autres comptes qui le référençait.
-- si le compte avait alloué un quota au forum, ce quota s'annule ce qui peut mettre le forum est pénurie d'espace.
 
 *Remarque :*
 - si le compte était *en création* il ne subsiste rien du compte.
@@ -533,7 +565,7 @@ Les processus courants sont :
     - en cas de vote positif, le participant a un statut *révoqué*, ne peut plus accéder au forum.
     - La trace de son passage dans les notes et conversations perdure après révocation : son droit à l'oubli se heurte au droit des autres à ne pas oublier. Les notes où il figurait comme seul auteur lui resteront attribuées (sauf en cas d'effacement pour raison éthiques). Son nom reste lisible mais son CV est effacé.
 - **Modération d'une note ou d'un échange** : le collège est celui des modérateurs. En général il est requis une voix, parfois N pour une approbation collégiale.
-- **Restitution de quota**. Le vote porte sur le montant restitué et en particulier à quels participants en ayant concédé et combien.
+- **Transfert de crédit**. Le vote porte sur les montants à transférer et à quels participants.
 - **Changement de gouvernance du forum**.
 - **Dissolution du forum**. En cas de vote positif, le forum ne passe pas en en état zombie, aucun remord n'est possible le vote ayant déjà pris du temps de réflexion (la décision ne peut pas être un loupé ou une faute de frappe).
 
@@ -576,19 +608,6 @@ Tout contenu dispose du digest de son texte en clair :
 Le serveur n'ayant jamais les contenus en clair est incapable de vérifier la validité de ce digest mais toute session lisant un contenu peut le faire et ainsi savoir,
 - si l'auteur a utilisé une session licite pour l'écrire et le transmettre au serveur,
 - ou s'il s'agit d'un contenu émis par une session opérée par un logiciel pirate (et maladroit).
-
-Dans ce dernier cas le découvreur de ce problème peut lancer une alerte au modérateur général de l'instance en lui transmettant :
-- le contenu en clair mais ré-encrypté pour le modérateur,
-- la référence du contenu dont le numéro de compte de l'auteur.
-
-Le modérateur peut vérifier :
-- si cette référence est réelle.
-- si le digest enregistré est bien celui qu'il obtient lui en le recalculant sur le texte en clair.
-- en conséquence si l'alerte est valide et qu'effectivement ce compte est indélicat.
-- le cas échéant le compte peut être résilié.
-
->L'objectif est surtout de faire apparaître aux pirates que leurs tentatives de boguer l'application sont certes possibles mais sont détectables et leurs comptes repérables.  
->Un pirate qui s'introduit sur un forum a toujours la possibilité d'effacer ou de caviarder les notes sur lesquelles il peut écrire, et ceci par les moyens techniques les plus licites.
 
 # Traces d'activités sur les comptes et forum
 Il n'est pas naturel de savoir si un compte ou un forum est *actif* : 
