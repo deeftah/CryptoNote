@@ -68,12 +68,12 @@
 	:host .back0 { cursor: pointer; color: var(--bar-view0btn1-color); background-color: var(--bar-view0btn1-bg);}
 	:host .back1 { cursor: pointer; color: var(--bar-view1btn1-color); background-color: var(--bar-view1btn1-bg);}
 	:host .back2 { cursor: pointer; color: var(--bar-view2btn1-color); background-color: var(--bar-view2btn1-bg);}
-	:host .backn { cursor: auto; }
 	:host .back0:hover { color: var(--bar-view0btn1-colorhover); background-color: var(--bar-view0btn1-bghover);}
 	:host .back1:hover { color: var(--bar-view1btn1-colorhover); background-color: var(--bar-view1btn1-bghover);}
 	:host .back2:hover { color: var(--bar-view2btn1-colorhover); background-color: var(--bar-view2btn1-bghover);}
 	
-	:host .backt { font-family: var(--font-cf); font-size:var(--font-l); height:var(--font-xl); margin-right:5rem; overflow:hidden; }
+	:host .backt { cursor:pointer; font-family: var(--font-cf); font-size:var(--font-l); margin-right:5rem; white-space: nowrap; overflow:hidden; text-overflow:ellipsis; }
+	:host .backt:hover { background-color: var(--bar-panelbtn1-colorhover);}
 	
 	:host .icr, :host .icr4 { margin:0 0.2rem; padding: 0.1rem 0; cursor:pointer; }
 	:host .icr { height: var(--bar-view-phsize); width: var(--bar-view-phsize); }
@@ -105,12 +105,8 @@
 	
 <div class$="[[clTop(mode)]]">
 	<div class="layout horizontal justified">
-		<div class$="[[clBack(mode,previousPage)]]" on-tap="back">
-			<div class="flex layout horizontal start center">
-				<paper-icon-button class$="[[clBtn(mode)]]" disabled="[[!previousPage]]" title="[[libPreviousPage]]" icon="icons:arrow-back"></paper-icon-button>
-				<div class="backt" hidden$="[[!previousPage]]">[[libPreviousPage]]</div>
-			</div>
-		</div>
+		<paper-icon-button class$="[[clBtn(mode)]]" on-tap="back" disabled="[[!previousPage]]" title="[[libPreviousPage]]" icon="icons:arrow-back"></paper-icon-button>
+		<div on-tap="back" class="backt flex self-center" hidden$="[[!previousPage]]">[[libPreviousPage]]</div>
 
 		<div class="layout horizontal center">
 			<div hidden$="[[isMode(mode,2)]]"  class$="[[clSync(mode)]]">[[lapse]]</div>
