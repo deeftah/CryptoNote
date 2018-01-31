@@ -1290,9 +1290,9 @@
 <p>Une  <strong>conversation</strong>  est une suite chronologique <strong>d'échanges textuels</strong> entre ses participants. Une conversation dans un forum peut aussi supporter un vote validant ou invalidant une décision à prendre collégialement.</p>
 <p><strong>Le compte d'une personne</strong> dispose principalement :</p>
 <ul>
-<li><strong>d'un ou plusieurs CV</strong>, pouvant comporter une photo d'identité, de présentation pour les autres comptes.</li>
-<li>d'un <strong>répertoire de contacts</strong> avec d'autres comptes pouvant comporter un de leurs CV, avec qui une conversation privée peut avoir lieu et que le titulaire peut inviter sur ses forums.</li>
-<li>de <strong>notes personnelles</strong>.</li>
+<li><strong>d'un ou plusieurs CV</strong> pour se présenter aux autres comptes (avec ou sans photo d'identité).</li>
+<li><strong>d'un répertoire de contacts</strong> avec d'autres comptes où peut figurer pour chacun un de leurs CV et avec qui une conversation privée peut avoir lieu ou qu'il peut inviter sur ses forums.</li>
+<li><strong>de notes personnelles</strong>.</li>
 </ul>
 <p>Un <strong>forum</strong> comporte :</p>
 <ul>
@@ -1336,11 +1336,11 @@ Les instances déployées sont étanches les unes des autres :</p>
 <p>Le détournement de données, que ce soit la base de données du serveur comme celles locales des terminaux ou de celles transitant sur les réseaux, est inexploitable : les données y sont indéchiffrables.</p>
 </blockquote>
 <blockquote>
-<p>Aucune utilisation <em>commerciale</em> des données n'est possible puisqu'elles sont toutes indéchiffrables, même et surtout pour le prestataire de l'application et ses hébergeurs.</p>
+<p>Aucune utilisation <em>commerciale</em> des données n'est possible puisque celles signifiantes sont toutes indéchiffrables, même et surtout pour le prestataire de l'application et ses hébergeurs.</p>
 </blockquote>
-<p><strong>Aucun répertoire central ne peut être constitué, ile ne contiendrait que des données inintelligible</strong> : il est impossible de chercher un compte ou un forum dans une instance de l'application en fonction de critères lisibles comme les noms, intitulés des forums, centres d'intérêt, mots clés ...</p>
+<p><strong>Aucun répertoire central ne peut être constitué, il ne contiendrait que des données inintelligible</strong> : il est impossible de chercher un compte ou un forum dans une instance de l'application en fonction de critères comme les noms, intitulés des forums, centres d'intérêt, mots clés ...</p>
 <blockquote>
-<p>On ne s'y connaît que par cooptation, contact direct et rencontre sur un forum.</p>
+<p>On ne s'y connaît que par cooptation, contacts directs et rencontres sur des forum.</p>
 </blockquote>
 <h2>Les Comptes</h2>
 <h5>Phrase secrète d'un compte</h5>
@@ -1353,7 +1353,7 @@ Aucun compte privilégié n'a la possibilité technologique de  réinitialiser u
 <p><strong>Un compte a un nom</strong> que son titulaire lui a attribué à sa création : ce nom est <strong>immuable</strong>, ne peut plus être changé, est <strong>unique</strong> dans l'application et un mécanisme interdit des <em>présomptions de ressemblance</em> entre noms.</p>
 <p>Au fil du temps, le nom d'un compte apparaît à d'autres comptes : après avoir accordé leur confiance à un nom, ils sont assurés qu'aucune usurpation d'identité ou réemploi de nom n'est possible.</p>
 <blockquote>
-<p><strong>Le numéro d'un compte</strong> est obtenu en brouillant aléatoirement son nom par un procédé de calcul fastidieux tel qu'il est impossible en interrogeant l'application ou en détournant la base de données,</p>
+<p><strong>Le numéro d'un compte</strong> est obtenu par hachage de deux clés cryptographiques générées à la création du compte et de son nom lui-même crypté. Il est impossible en interrogeant l'application ou en détournant la base de données,</p>
 <ul>
 <li>de connaître la liste des noms des comptes,</li>
 <li>de tester l'existence d'un compte en essayant des noms tirés de listes de noms usuels ou par force brute (essai de toutes les combinaisons).</li>
@@ -1362,12 +1362,12 @@ Aucun compte privilégié n'a la possibilité technologique de  réinitialiser u
 <h5>Certificat d'identité d'un compte</h5>
 <p><em>Un compte a son identité certifiée par un ou plusieurs autres comptes</em> : en certifiant l'identité d'un compte A, un compte C ne fait qu'affirmer que le nom du compte A est bien représentatif de la personne qui en est titulaire. Ceci ne signifie rien en termes d'amitié ou de convergence de vue, seulement une affirmation sur l'adéquation entre le nom présenté et la personne physique correspondante.</p>
 <blockquote>
-<p>Le certificat d'identité d'un compte est la liste des couples (numéro de compte,  nom) des comptes ayant certifié son identité.</p>
+<p>Le certificat d'identité d'un compte est la liste des comptes ayant certifié son identité: numéro du compte, son nom et la date-heure de certification.</p>
 </blockquote>
 <blockquote>
 <p>Un compte A <em>actif</em> (ni en création, ni résilié) a toujours au moins un compte dans son certificat d'identité. Quand un compte certifiant est résilié il apparaît en tant que tel dans le certificat d'identité de A (ce qui réduit la crédibilité que les autres peuvent avoir dans le compte A).</p>
 </blockquote>
-<p>Comme au départ il n'y a pas de comptes dans l'instance, il est possible de créer ou ou quelques comptes <strong>auto-certifiés</strong> (voir plus avant).</p>
+<p>Comme au départ il n'y a pas de comptes dans l'instance, il est possible de créer ou ou quelques comptes <strong>auto-certifiés</strong> (voir ci-dessous).</p>
 <h5>Phrase secrète d'administration</h5>
 <p>Cette phrase se transmet humainement hors de l'application : un brouillage complexe de cette phrase donne une clé de cryptage qui est mémorisée (elle-même brouillée) dans le configuration de l'instance : le serveur peut vérifier qu'un détenteur présumé de cette phrase l'est réellement sans que cette clé ne soit physiquement écrite quelque part.</p>
 <h5>Compte auto-certifié</h5>
@@ -1379,14 +1379,14 @@ Aucun compte privilégié n'a la possibilité technologique de  réinitialiser u
 <p>Le premier compte créé dans une instance est par principe un compte auto-certifié, les suivants pouvant se faire certifier par le compte auto-certifié. Mis à part qu'ils se sont auto-certifiés à leur création, ces comptes sont comme les autres et peuvent d'ailleurs ultérieurement avoir leur identité certifiée par d'autres comptes.</p>
 <h4>Cercles des comptes connus d'un compte A</h4>
 <p><strong>Le premier cercle</strong> est l'ensemble des comptes inscrits dans le répertoire personnel des contacts de A.<br>
-<strong>Le deuxième cercle</strong> est l'ensemble des comptes des participants inscrits aux mêmes forum que A (et par convention qui ne sont pas dans le premier cercle).<br>
+<strong>Le deuxième cercle</strong> est l'ensemble des comptes des participants inscrits aux mêmes forum que A (et ne sont pas déjà dans le premier cercle).<br>
 <strong>Le troisième cercle</strong>, plus indirect, est celui des comptes ayant certifié l'identité d'un compte d'un des deux premiers cercles.</p>
 <p><strong>Pour inscrire un contact dans son répertoire personnel, A doit l'avoir trouvé dans l'un des deuxième ou troisième cercles.</strong><br>
 Comme au départ un nouveau compte ne connaît personne d'autre que son propre certificateur (seul présent dans son répertoire personnel), ses cercles de connaissances ne peuvent pas s'agrandir, du moins tant que son certificateur ne l'a pas invité au moins à participer à un forum où il pourra rencontrer d'autres comptes.</p>
 <p><strong>Contacts en attente d'approbation</strong><br>
-A peut enregistrer dans son répertoire un contact C en attente d'approbation : il faut pour cela que A ait rencontré dans la vraie vie la personne C ayant un compte dans l'application et lui ayant confié l'adresse d'une de ses (4 au plus) <em>boîtes postales</em>.</p>
+Un compte A peut enregistrer dans son répertoire un contact C (ayant un compte dans l'application ) : il faut pour cela qu'il l'ait rencontré dans la vraie vie et lui ait confié l'adresse d'une de ses (4 au plus) <em>boîtes postales</em>.</p>
 <ul>
-<li>A peut inscrire C en attente d'approbation en donnant cette adresse de boîte postale et un court message de courtoisie destiné à se faire reconnaître.</li>
+<li>A peut inscrire C <em>en attente d'approbation</em> en donnant cette adresse de boîte postale et un court message de courtoisie destiné à se faire reconnaître.</li>
 <li>C peut reconnaître A et accepter l'établissement de leur contact mutuel en inscrivant A dans son répertoire et en transmettant son nom à A.</li>
 <li>mais C peut aussi se raviser, ne pas reconnaître A, suspecter une usurpation d'identité, bref refuser le contact : C reste un contact anonyme dans le répertoire de A. Si C a répondu au message de courtoisie de A en motivant son refus, A pourra le lire, sinon A n'a plus qu'à détruire cette entrée en attente qui encombre son répertoire.</li>
 </ul>
@@ -1397,18 +1397,18 @@ A peut enregistrer dans son répertoire un contact C en attente d'approbation : 
 <li>le forum ainsi créé a un identifiant interne tiré au hasard à sa création.</li>
 <li><strong>le créateur devient le premier participant</strong>, avec un statut de modérateur, du forum.</li>
 <li><strong>il peut inviter certains des comptes</strong> de ses cercles de connaissance, ou connue par une adresse de boîte postale, à participer au forum.</li>
-<li>ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumise à approbation des autres participants.</li>
+<li>ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumises à approbation des autres participants.</li>
 </ul>
-<p>Partager des informations privées à plusieurs suppose d'avoir confiance en ceux avec qui ça sera fait. Cette acquisition de confiance joue autant pour les <strong>invitants</strong> (<em>puis-je avoir confiance dans cet invité ?</em>) que pour <strong>l'invité</strong> (<em>avec qui vais-je partager des informations ?</em>).</p>
+<p>Partager des informations privées à plusieurs suppose d'avoir confiance en ceux avec qui ce partage s'établit. Cette acquisition de confiance joue autant pour les <strong>invitants</strong> (<em>puis-je avoir confiance dans cet invité ?</em>) que pour <strong>l'invité</strong> (<em>avec qui vais-je partager des informations ?</em>).</p>
 <p>Une note ou une conversation du forum peut avoir un <strong>degré de confidentialité</strong> :</p>
 <ul>
 <li>lisible par les <strong>invités</strong>.</li>
-<li>privées pour les <strong>participants confirmés</strong>.</li>
+<li>privée pour les <strong>participants confirmés</strong>.</li>
 </ul>
 <p>Un invité reçoit avec son invitation une clé de cryptage qui lui permet :</p>
 <ul>
-<li><strong>de lire la liste des participants</strong>, leur CV (du moins celui choisi pour être visible par les participants et invités de ce forum) et leurs certificats d'identité (qui les certifie).</li>
-<li><strong>de lire la ou les notes et conversation déclarées lisibles aux invités</strong> et qui peuvent présenter l'objet du forum et le cas échéant ses règles internes.</li>
+<li><strong>de lire la liste des participants</strong>, leurs CV (du moins ceux que chaque participant a choisi de rendre visible aux participants et invités de ce forum) et leurs certificats d'identité (qui les certifie).</li>
+<li><strong>de lire la ou les notes et conversations déclarées lisibles aux invités</strong> et qui peuvent présenter l'objet du forum et le cas échéant ses règles internes.</li>
 </ul>
 <p>Ainsi un invité peut se forger une opinion sur le forum qui l'invite et il peut choisir d'accepter cette invitation ou de la décliner.</p>
 <p><strong>S'il l'accepte</strong>, il fournit un de ses CV et son certificat d'identité pour que les autres participants sachent si oui ou non il est souhaitable de valider cette participation.</p>
@@ -1422,14 +1422,14 @@ A peut enregistrer dans son répertoire un contact C en attente d'approbation : 
 <li>la lecture et l'écriture de notes et de leurs pièces jointes.</li>
 <li>l'ouverture de conversations et la poursuite de conversations en y ajoutant des échanges.</li>
 </ul>
-<h5>Statut d'un participant</h5>
+<h5>Statut d'un participant dans un forum</h5>
 <p>Un participant peut avoir plusieurs niveaux de statut :</p>
 <ul>
 <li><strong>invité</strong> en attente d'acceptation ou de refus de l'invité.</li>
 <li><strong>en attente d'approbation</strong> par les participants.</li>
 <li><strong>observateur</strong> : il peut lire mais pas écrire, ni note, ni échange de conversations. Il ne prend pas part aux votes.</li>
 <li><strong>régulier</strong> : il peut lire et écrire des notes et participer aux conversations. Il prend part aux votes selon les règles de gouvernance du forum.</li>
-<li><strong>modérateur</strong> : il peut de plus modérer des notes (et leurs pièces jointes) et échanges des conversation en les masquant (seuls les modérateurs peuvent les lire) ou les démasquant (lisibles par tous) ou détruisant le contenu. Les règles de gouvernance peuvent,
+<li><strong>modérateur</strong> : il peut de plus modérer des notes (et leurs pièces jointes) et échanges des conversations en les masquant (seuls les modérateurs peuvent les lire) ou les démasquant (lisibles par tous) ou détruisant le contenu. Les règles de gouvernance peuvent,
 <ul>
 <li>fixer un poids supérieur aux décisions des modérateurs dans le forum.</li>
 <li>décider de ne pas avoir de modérateur.</li>
@@ -1441,15 +1441,16 @@ A peut enregistrer dans son répertoire un contact C en attente d'approbation : 
 Chaque échange d'un participant est inscrit par ordre chronologique et ne peut plus être rectifié, avec les deux exceptions suivantes :</p>
 <ul>
 <li>son auteur a le droit d'effacement de ses propres échanges (oups !) mais pas de correction.</li>
-<li>un modérateur a le droit à le classer <em>modéré</em> (lisible par les seuls modérateurs) et/ou l'effacer mais jamais d'en changer le contenu.</li>
+<li>un modérateur peut le <em>modérer</em> (lisible par les seuls modérateurs) et/ou l'effacer mais jamais en changer le contenu.</li>
 </ul>
 <p><strong>La plupart des conversations sont à objet libre</strong>: la première ligne du premier échange en donne l'intitulé.<br>
 Un sondage implicite est toujours ouvert mais dans bien des cas n'est pas utilisé.</p>
 <p><strong>Certaines conversations ont pour objet la prise d'une décision formelle</strong>, comme par exemple :</p>
 <ul>
-<li>l'invitation d'un nouveau participant et son approbation, le changement de son statut.</li>
+<li>l'invitation d'un nouveau participant et son approbation.</li>
+<li>le changement de son statut.</li>
 <li>l'exclusion d'un participant.</li>
-<li>la suppression de conversations / notes obsolètes et consommatrices d'espaces.</li>
+<li>la suppression de conversations / notes obsolètes et consommatrices d'espace.</li>
 <li>la clôture du forum lui-même.</li>
 </ul>
 <p>Dans ce cas le vote de la conversation a pour but de valider (ou d'invalider) une décision d'action, formelle et ayant des paramètres précis :</p>
@@ -1459,7 +1460,7 @@ Un sondage implicite est toujours ouvert mais dans bien des cas n'est pas utilis
 <li>les votes sont publics, vérifiables par chacun.</li>
 <li>la fin de la conversation a lieu :
 <ul>
-<li>soit parce que son initiateur y renonce : elle est annulée.</li>
+<li>soit parce que son initiateur y renonce : la conversation est annulée (la décision n'est pas approuvée).</li>
 <li>soit sur constat d'un vote négatif, la décision n'est pas approuvée.</li>
 <li>soit par la réalisation de l'action décidée, qui peut se conclure normalement ou sur un échec.</li>
 </ul>
@@ -1471,14 +1472,14 @@ Un sondage implicite est toujours ouvert mais dans bien des cas n'est pas utilis
 <li>elle comporte au moins une ligne de texte qui lui sert de titre / descriptif.</li>
 <li>elle <em>peut</em> avoir une pièce jointe.</li>
 <li>elle <em>peut</em> être marquée comme associée à une conversation précise ou au forum. Si elle est associée à une conversation elle disparaîtra quand celle-ci est détruite.</li>
-<li>la liste des participants autorisés à lire / écrire <em>peut</em> être restreinte au départ (par défaut tous les participants au forum sont autorisés), peut être augmentée mais pas réduite.</li>
+<li>la liste des participants autorisés à lire / écrire <em>peut</em> être restreinte au départ (mais par défaut tous les participants au forum sont autorisés) et peut être ensuite augmentée mais pas réduite.</li>
 <li>elle peut être déclarée <em>archivée</em> par son propriétaire : elle ne pourra plus être modifiée par personne.</li>
 <li>son propriétaire peut en transmettre la propriété à un autre participant.</li>
-<li>un modérateur (s'il en existe sur le forum) peut modérer son contenu :
+<li>un modérateur (s'il en existe sur le forum) peut <em>modérer</em> son contenu :
 <ul>
 <li>la note n'est plus lisible que par son propriétaire (désormais seul à pouvoir la modifier) et les autres modérateurs.</li>
 <li>elle peut être détruite par un modérateur.</li>
-<li>elle peut avoir sa modération levée par un modérateur (si elle n'a pas été détruite).</li>
+<li>elle peut avoir sa modération levée par un modérateur.</li>
 <li>un modérateur ne peut pas en changer le contenu.</li>
 </ul>
 </li>
@@ -1490,135 +1491,229 @@ Un sondage implicite est toujours ouvert mais dans bien des cas n'est pas utilis
 <li>une destruction effective un certain temps après.</li>
 </ul>
 <p>Il est possible de réactiver un forum zombie quand on a un remord ou de prolonger l'état zombie.</p>
-<p>La destruction effective supprime physiquement les données et retourne le quota aux comptes détenteurs (voir ci-près).</p>
+<p>La destruction effective supprime physiquement les données.</p>
 <blockquote>
 <p><strong>Remarque</strong> : dans le cas le plus simple un forum s'ouvre instantanément sur demande d'un compte qui y invite immédiatement les contacts qu'il souhaite avec approbation par défaut. Une gouvernance par défaut s'installe, et les participants peuvent sur l'instant accepter l'invitation et participer à une conversation et s'échanger des notes.</p>
 </blockquote>
-<h2>Gouvernance et contrôle de l'espace : volumes, quotas</h2>
-<p>Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :</p>
+<h2>Confiance dans l'application</h2>
+<p>Ces données passent par deux applications, une terminale, l'autre dans le serveur, circulent sur internet et sont stockées dans une base de données. Tous ces niveaux techniques sont susceptibles d'être attaqués et déroutés.<br>
+Les techniques de cryptographie employées offrent certaines garanties en elles-mêmes, mais pas toutes les garanties et le niveau de confiance à accorder à l'application n'est pas un sujet trivial et s'étudie en fonction des niveaux de confiance qu'on peut accorder à chacun de ces éléments.</p>
+<p>Il est impossible de garantir que toutes les données seront toujours présentes et inviolées mais il est possible de garantir que pour certaines données :</p>
+<ul>
+<li>si elles ont été trouvées elles sont fiables et inviolées, c'est à dire effectivement produites par qui de droit.</li>
+<li>plus exactement il est possible de détecter si une telle donnée a été corrompue, donc si elle est fiable ou non. En règle générale les hackers ne se fatiguent pas à corrompre des données dont la corruption serait détectable, sauf seulement à rendre l'application inutilisable.</li>
+</ul>
+<h4>Confiance dans l'application terminale et le réseau Internet</h4>
+<p>C'est elle qui crypte, signe, décrypte et vérifie les signatures. Si l'application terminale, dans son ensemble, n'est pas de confiance, aucune confiance ne peut être accordée à l'application.</p>
+<ul>
+<li>son logiciel est open source et lisible en clair dans n'importe quel terminal. Il est vérifiable par tout lecteur ayant le minimum requis de compétence technique.</li>
+<li>il peut être disponible depuis des sources diverses, et en particulier des sources de confiance.</li>
+<li>l'application s'exécute dans un environnement technique de l'appareil dans lequel, usuellement et à juste titre, on a confiance : navigateur, système d'exploitation, matériel. On a toutefois relevé par exemple :
+<ul>
+<li>un fournisseur de haute renommée qui détournait les frappes au clavier de l'utilisateur.</li>
+<li>des CPU de haute renommée également mais pas complètement étanches aux inspections indésirables des autres programmes.</li>
+</ul>
+</li>
+</ul>
+<p>La transmission avec le serveur utilise le protocole chiffré d'internet, dont pour l'instant il n'existe pas de preuve de fragilité.</p>
+<blockquote>
+<p>Ce niveau technique est supposé de confiance, sinon l'application n'est pas pertinente (ni la quasi totalité des autres d'ailleurs).</p>
+</blockquote>
+<p>Dans ce contexte :</p>
+<ul>
+<li>les clés de cryptographie requises sont générées aléatoirement à la création du compte dans l'application terminale :
+<ul>
+<li>le nom du compte est crypté et les diverses clés (sauf la clé 0) sont scellés dans <strong><em>un ticket public immuable et inviolable portant le numéro du compte</em></strong>.</li>
+<li><strong><em>un ticket privé est généré</em></strong> : il ne contient que la clé 0 crypté par la phrase secrète utilisée à la création.</li>
+</ul>
+</li>
+<li>aucun autre compte ne peut être créé (dans aucune instance d'ailleurs) et présenter le même numéro de compte avec un ticket public valide différent (un <em>fake</em>): c'est détectable.</li>
+<li>si l'application mémorise pour chaque numéro de compte son <strong>ticket public immuable et scellé</strong>, n'importe quel terminal de la planète peut en conserver des copies sur n'importe quels supports. Depuis ce ticket n'importe quel terminal, avec ou sans le logiciel de l'application :
+<ul>
+<li><strong>peut obtenir le nom du compte</strong> à condition de disposer de plus de la clé qui en autorise la lecture (le décryptage).</li>
+<li><strong>s'il connaît ou croit connaître le nom du compte</strong>, peut vérifier si c'est ou non le bon. Une tentative de recherche du nom scellé par force brute en essayant toutes les combinaisons est vouée à l'échec.</li>
+<li><strong>peut s'adresser au compte en cryptant son message de telle sorte que seul le détenteur du compte puisse le décrypter</strong>.</li>
+<li><strong>principe d'inviolabilité et de non répudiation</strong> : il peut vérifier qu'un texte qui prétend avoir été horodaté et signé par un compte, l'a véritablement été en utilisant les clés ad hoc que nul ne peut avoir inventé.</li>
+</ul>
+</li>
+</ul>
+<p>A la création du compte, un premier ticket privé a été généré pour ne contenir que la seule clé 0 du compte, clé cryptée par la phrase secrète utilisé à la création. Ce ticket porte une double identification, a) celle du numéro du compte, b) celle de la phrase secrète raccourcie et brouillée.<br>
+Ultérieurement, à condition de disposer pour un compte donné d'un ticket privé et de la phrase secrète qui l'ouvre, une session (ou n'importe quel terminal) peut fabriquer un autre ticket privé crypté par une autre phrase secrète.</p>
+<p><strong>N'importe quel terminal</strong> (même sans disposer de l'application) disposant du ticket public d'un compte, d'un ticket privé et de la phrase secrète ouvrant ce ticket privé, peut obtenir :</p>
+<ul>
+<li>le <strong>nom du compte</strong>.</li>
+<li>confirmation que les deux tickets ne sont pas des <em>fake</em>,</li>
+<li>confirmation que la phrase secrète qu'il a utilisée pour ouvrir son ticket privé est correcte (conforme à celle utilisée pour générer ce ticket).</li>
+</ul>
+<blockquote>
+<p><strong>Remarque</strong> : il existe des moyens non techniques pour demander, et souvent finir par obtenir, la clé d'un compte par son titulaire. La violence certes, mais aussi plus fréquemment la persuasion couplée à l'imprudence du titulaire, sont les moyens les plus usuels.</p>
+</blockquote>
+<blockquote>
+<p><strong>Synthèse</strong> : le système cryptographique garantit, même à un terminal indépendant de l'application, que muni du ticket public d'un compte identifié par son numéro :</p>
+<ul>
+<li>il peut vérifier techniquement que le ticket n'est pas un fake,</li>
+<li>que tout message envoyé à ce compte en utilisant la clé qui s'y trouve ne pourra être décrypté que par une application détenant au moins un ticket privé du compte et la phrase secrète associé.</li>
+<li>que tout contenu prétendu horodaté et signé par ce ticket l'a vraiment été, que son contenu n'a pas été altéré et qu'il était impossible à produire sans ce ticket.</li>
+</ul>
+</blockquote>
+<h3>Confiance dans le serveur et la base de données</h3>
+<p>Les tickets et contenus sont générés, cryptés et scellés dans les applications terminales. Le serveur ne reçoit jamais aucun élément qui lui permette de décrypter ou crypter ces contenus : au plus peut-il vérifier que les signatures des contenus signent bien ce qu'elles prétendent signer, mais ce contrôle est juste destiné à décourager un éventuel hacker maladroit qui tenterait de pervertir les données à distance : la vraie et seule vérification crédible est celle refaite dans la session terminale lectrice des contenus.</p>
+<p>Les contenus stockés dans la base de données ne sont pas possibles à décrypter sans disposer des tickets officiels et des clés. En conséquence, le détournement / copie de la base de données ne peut fournir aucun contenu sans disposer de leurs clés, c'est à dire sans la complicité d'un compte disposant d'un accès régulier à certains contenus.<br>
+Bref pourquoi détourner la base ne sert qu'à en obtenir que ce que le complice utilisateur peut avoir régulièrement.</p>
+<h4>Destruction d'informations</h4>
+<p>Techniquement une application serveur pirate peut intercepter les opérations demandées au serveur :</p>
+<ul>
+<li>son action ne peut être que destructrice : suppression de comptes, de contenus, de participants à des forums, de contacts dans les répertoires des comptes.</li>
+<li>il ne peut pas créer des contenus fake (notes et conversations), ni de faux certificats d'identité, ni de faux CV, ni des participants clandestins à un forum, ni des usurpations d'identité : tout cela est détecté à la lecture dans les applications terminales.</li>
+</ul>
+<p>De même une intervention directe sur la base de données ne que miter les données mais pas pervertir celles restantes.</p>
+<blockquote>
+<p><strong>Synthèse</strong> : rendre une application inutilisable ou non crédible en raison des attaques destructives de ses données n'est pas un aspect secondaire.</p>
+<ul>
+<li>en revanche tout ce qui s'y trouve peut être considéré comme crédible.</li>
+<li>il est parfois, mais rarement, possible de détecter que des données ont été détruits.</li>
+</ul>
+</blockquote>
+<h2>Comptabilisation des consommations de ressources</h2>
+<p>Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes et conversations, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :</p>
 <ul>
 <li>(1) l'une correspond à toutes les données sauf les pièces jointes attachées aux notes.</li>
 <li>(2) l'autre correspond aux pièces jointes attachées aux notes.</li>
 </ul>
 <p>Selon les options techniques retenues pour chaque instance les coûts de stockage peuvent être significativement différents pour les deux types.</p>
-<h3>Gouvernance de l'instance</h3>
-<p>Héberger un serveur et occuper de l'espace a un coût qui peut être couvert de diverses façons :</p>
+<p>Les opérations lancées ont aussi un coût de calcul et d'échange sur le réseau.</p>
+<p>Un barème fixe les coûts unitaires suivants :</p>
 <ul>
-<li>un mécène payeur s'acquitte des frais sans obligation ni contrepartie pour les comptes hébergés.</li>
-<li>le payeur global refacture les frais de l'instance, typiquement par disque virtuel.</li>
-<li>les comptes acquittent par ailleurs, éventuellement, une cotisation qui peut être associée au disque virtuel qu'ils utilisent.</li>
+<li>coût de stockage d'un Mo sur un jour pour les données sauf les pièces jointes.</li>
+<li>coût de stockage d'un Mo sur un jour pour les pièces jointes.</li>
+<li>coût fixe d'une opération simple (certaines sont gratuites) : les opérations complexes sont décomptées comme les N opérations simples qui les composent.</li>
+<li>coût du volume échangé à chaque opération en entrée / sortie sur le réseau au delà d'un certain seuil.</li>
 </ul>
-<p>La gouvernance de l'instance fait face aux questions suivantes :</p>
+<h5>Crédit d'un compte</h5>
+<p>Un compte dispose d'un <strong>crédit</strong> qui est amputé :</p>
 <ul>
-<li><strong>doit-on réguler le volume utilisé</strong> et si oui comment ?</li>
-<li><strong>que fait-on des comptes, et indirectement des forums, inactifs</strong> sur une longue durée et immobilisant en pure perte des ressources de stockage ?</li>
+<li>du coût de stockage journalier de ses propres données.</li>
+<li>du coût des opérations menées par le compte, sur lui-même ou les forums auxquels il participe.</li>
 </ul>
-<p>L'instance a été créée par une personne physique ou une organisation ayant un but : une charte de déontologie peut être explicitement proposée aux comptes qui s'engagent à la respecter. Sans émettre aucun jugement une organisation suprémaciste n'a pas envie d'héberger des discours et des campagnes défendant l'idée qu'il n'y a pas de races humaines donc de suprématie de l'une sur les autres alors que la déontologie d'une association anti-raciste aura exactement les objectifs opposés.</p>
-<p>Sachant que le contenu des notes et conversations d'un compte lui sont totalement personnelles et impossibles à décrypter, <strong>aucun contrôle déontologique de peut s'effectuer sur les notes d'un compte</strong>.<br>
-C'est un peu différent pour une conversation entre deux comptes : elle est certes totalement privée (et techniquement indiscutablement privée) et aucun des deux interlocuteurs n'est obligé à la poursuivre, chacun peut l'interrompre à son gré. Mais certains pays ont des lois réprimant l'insulte <em>même non publique</em> (même si l'application en est peu fréquente). Un compte peut être amené à se plaindre d'un autre et à justifier cette plainte par un texte indiscutable (non répudiable par son auteur).<br>
-De plus un compte représente une personne physique qui peut finalement être jugée <em>persona non grata</em> sur l'instance en raison de sa <em>notoriété</em> dans le vrai monde, voire des autorités judiciaires qui peuvent vouloir priver quelqu'un de toute capacité d'échange et d'enregistrement même personnel d'informations.</p>
-<p>Sur un forum c'est un peu différent : plusieurs comptes ont accès aux contenus et l'un d'entre eux peut estimer qu'un ou plusieurs contenus ne respectent pas la charte déontologique de l'instance. Un forum est certes strictement privé et ne fait pas partie de l'espace public :</p>
+<p>Le détenteur d'un compte peut transférer à tout instant une part de son crédit :</p>
 <ul>
-<li>en toute rigueur la liberté d'expression <em>privée</em> n'est légalement pas réprimée (enfin en général).</li>
-<li>mais les insultes, mêmes privées, peuvent parfois légalement ne pas être admises.</li>
-<li><strong>enfin l'instance est sous gouvernance privée</strong> : elle peut avoir les règles déontologiques de son choix.</li>
+<li>sur un autre compte.</li>
+<li>sur un forum.</li>
 </ul>
-<p>Quelques grands paramètres de gouvernance l'instance sont fixés en paramètre :</p>
+<p><strong>Quand son crédit est épuisé, le compte est gelé</strong> : seule une opération de rechargement du crédit peut le remettre en état normal.<br>
+<em>Au bout d'un certain temps en état gelé, le compte est détruit.</em></p>
+<h5>Crédit d'un forum</h5>
+<p>Un forum dispose d'un crédit qui est amputé du coût de stockage journalier de ses propres données.</p>
+<p>Son crédit peut être augmenté par les comptes participants.</p>
+<p>Sur décision, en général collégiale, un forum peut transférer une part de son crédit :</p>
 <ul>
-<li>un quota attribué peut-il revu à la baisse ?</li>
-<li>le droit de dissolution d'un compte pour non respect de son quota est-il possible ?</li>
-<li>des comptes inactifs peuvent-ils être supprimés ?</li>
-<li>des alertes de non respect de la déontologie sont-elles recevables auprès d'un compte modérateur général de l'instance ?
+<li>sur un autre compte.</li>
+<li>sur un forum.</li>
+</ul>
+<p><strong>Quand son crédit est épuisé, le forum passe en lecture seule</strong> : seule une opération de rechargement du crédit par un participant peut le remettre en état normal. A noter que dans cet état ses participants peut encore lire le forum et en particulier en copier les informations puisque le coût des opérations est imputé aux comptes accédants, pas au forum.<br>
+<em>Au bout d'un certain temps en état lecture seule, le forum est détruit</em>.</p>
+<h5>Seuil d'alerte</h5>
+<p>Avant de parvenir au niveau critique gelé / lecture seule, un compte ou un forum passe un seuil d'alerte qui est signalé sur les écrans et permet de remédier à la situation avant d'atteindre la zone rouge.</p>
+<h3>Lignes de crédit</h3>
+<p>Le réseau étant a-social il s'interdit d'établir une corrélation entre des paiements reçus, d'une manière ou d'une autre nominatifs, et les comptes qui vont en bénéficier.</p>
+<p>Une personne physique ou morale qui souhaite approvisionner un compte ou un forum en crédit procède ainsi :</p>
 <ul>
-<li>Le lanceur d'une alerte peut-il être anonyme ? Toujours, jamais, à sa convenance ?</li>
-<li>un compte peut-il être résilié par la modération générale pour cause de non respect de la charte déontologique ?</li>
+<li>il choisit une phrase secrète qu'il ne communique à personne si le paiement concerne son compte ou la communique au compte qui va en bénéficier.</li>
+<li>il effectue un paiement (par exemple un virement) d'un montant de son choix en lui associant le brouillage cryptographique de cette phrase.</li>
+<li>le comptable de l'instance, après avoir observé la réalité du crédit, enregistre cette <strong>ligne de crédit</strong> identifiée par la phrase brouillée et son montant.</li>
+<li>le compte bénéficiaire fournit la phrase secrète, la ligne de crédit associée est retrouvée et le montant est crédité à son compte, la ligne de crédit correspondante étant effacée.</li>
+</ul>
+<p>De cette manière :</p>
+<ul>
+<li>seul le détenteur de la phrase secrète peut imputer la ligne de crédit à son compte.</li>
+<li>à aucun moment il n'est établi de lien entre la personne physique ou morale ayant payé et le compte ou forum bénéficiaire.</li>
+</ul>
+<blockquote>
+<p><strong>Remarque</strong> : un compte prend un risque mesuré en payant d'avance et en faisant le pari qu'une ligne de crédit correspondante sera bien inscrite. Il peut vérifier que ceci est bien le cas sur une petite somme, peut faire des paiements modestes et successifs ...</p>
+</blockquote>
+<blockquote>
+<p>Il est aussi concevable que le comptable qui introduit les lignes de crédit dans l'instance soit une organisation indépendante de l'instance, un tiers de confiance dont la réputation est basée sur le fait qu'il s'engage à n'opérer que sur des instances qui accepte l'enregistrement de lignes de crédit sans exiger de données nominatives associées.</p>
+</blockquote>
+<blockquote>
+<p>Dans le cas d'une instance gérée par une organisation au profit de ses membres, il n'intervient pas à proprement parler de mouvement monétaire : un adhérent à l'organisation peut recevoir périodiquement une phrase correspondant à une ligne de crédit déposée par l'organisation (quand c'est elle qui paye) ou à l'inverse l'organisation peut recevoir une phrase brouillée générée par l'adhérent et jointe au renouvellement de son adhésion.</p>
+</blockquote>
+<h3>Synthèse</h3>
+<p>Lignes de crédit monétaires, cadeaux, adhésions ou droits d'usage émis par une organisation à ses membres, mécénat sans contrepartie ... toutes ces possibilités sont ouvertes et externes au fonctionnement de l'instance : au bout de cette chaîne <strong>une ligne de crédit anonyme est disponible dans le serveur</strong> (avec une période de validité maximale) jusqu'à sa capture par un compte qui seul en connaît la phrase secrète et peut s'en faire verser le montant.</p>
+<p>Une fois leurs crédits expirés, les comptes / forums se bloquent puis s'autodétruisent.</p>
+<h2>Modération d'une instance</h2>
+<p>La modération d'une instance a deux composantes :</p>
+<ul>
+<li>la possibilité pour un <strong>compte ayant un privilège d'administrateur</strong> :
+<ul>
+<li><em>de restreindre l'accès à un compte ou un forum</em>, même disposant d'un crédit.</li>
+<li><em>de détruire effectivement un compte ou un forum</em>.</li>
+</ul>
+</li>
+<li>la possibilité que des <strong>lanceurs d'alertes signalent des contenus incompatibles avec l'éthique de l'instance</strong>, avec pour objectif de faire cesser la production de ces contenus quitte à faire procéder à la restriction / destruction des comptes et forums responsables (ce qui rejoint le point 1).</li>
+</ul>
+<blockquote>
+<p><strong>Remarque</strong> : en l'absence d'une possibilité technique de modération centrale un compte est seul juge de l'opportunité de sa résiliation. Tant qu'il dispose de crédit (et il peut financer une ligne de crédit anonyme sans aucune corrélation avec lui-même), il n'y a aucun moyen pour faire clore un compte qui ne le souhaite pas ... sauf à détruire toute l'instance.</p>
+</blockquote>
+<blockquote>
+<p>La suite de ce développement ne fait appel à aucun concept de se que pourrait / devrait être une bonne modération ni ce que devrait ou pourrait être une bonne éthique pour une instance. Il est clair que pour une organisation suprémaciste un contenu conforme à son éthique serait exactement considéré comme anti-éthique pour une organisation anti raciste.</p>
+</blockquote>
+<h4>Instance sans modération</h4>
+<p>C'est un simple paramètre de configuration de l'instance :</p>
+<ul>
+<li>une restriction d'accès ne se prononce que sur seul critère de disponibilité de crédit.</li>
+<li>aucun compte ne peut ni restreindre l'accès d'un autre ni procéder à sa résiliation.</li>
+<li>aucune alerte sur les contenus ne peut être soumise.</li>
+</ul>
+<p>L'instance est du type <em>libertaire</em>, ses contenus sont intégralement <em>libres et privés</em> : aucune organisation ne peut y intervenir ni s'appuyer sur aucune information pour déclarer ses contenus illégaux / illicites etc. Seule la force physique peut techniquement empêcher le fonctionnement technique de l'ensemble de l'instance.</p>
+<blockquote>
+<p>Remarque : rien n'empêche un participant régulier R à publier hors de l'application un texte en clair copie d'un texte auquel il a accès régulièrement. Mieux, ce participant peut exhiber la signature du texte par l'auteur A, signature vérifiable et qui ne peut pas être techniquement contestée, et même publier le nom de A (et de ceux ayant certifié son identité) puisque lui R y a eu accès, ce qui peut aussi être vérifié techniquement :</p>
+<ul>
+<li>et alors ? A est très vilain mais nul ne peut contraindre A à résilier son compte.</li>
+<li>le nom de A est peut-être un pseudo : c'est dans l'application que son nom est certifié ... au dehors c'est une autre affaire.</li>
+<li>prouver qu'un texte a été techniquement écrit par quelqu'un ayant eu connaissance de la phrase secrète de A est une chose quand à prouver que A n'a pas cédé à une contrainte insurmontable ou est simplement victime d'une imprudence certes coupable dans la conservation du secret de cette phrase secrète ...</li>
+</ul>
+</blockquote>
+<h4>Instance avec droit de dissolution administrative</h4>
+<p>Si ce droit est ouvert dans la configuration de l'instance, un compte ayant un privilège d'administration peut sur injonction externe agir sur le droit d'accès d'un compte ou d'un forum en en connaissant l'identifiant :</p>
+<ul>
+<li>mettre un compte ou un forum en lecture seule ou le bloquer complètement.</li>
+<li>le détruire après un certain délai de remord après blocage, juste le temps en fait de s'assurer qu'une erreur n'a pas été commise en fournissant son identifiant.</li>
+</ul>
+<p>Certaines instances peuvent préférer accepter l'arbitraire / contrainte d'une pression externe, judiciaire ou extra judiciaire, exercée à l'égard d'un compte précisément cité plutôt que de faire face à une fermeture imposée physiquement de l'ensemble de l'instance.<br>
+D'autres instances peuvent faire le choix inverse : tout dépend de l'engagement moral pris avec les comptes participants.</p>
+<blockquote>
+<p><strong><em>En aucun cas le privilège d'administration ne permet d'accéder aux contenus, c'est techniquement impossible.</em></strong></p>
+</blockquote>
+<h4>Instance avec lanceurs d'alertes</h4>
+<p>Un lanceur d'alerte est une personne qui a eu accès normalement à un ou des contenus du fait de sa participation régulière à des conversations ou des notes d'un forum et qui considère un ou des contenus comme incompatible avec la charte éthique de l'instance.</p>
+<ul>
+<li>son objectif est de porter à la connaissance de personnes externes le ou les contenus qu'elle juge non conforme.</li>
+<li>le lanceur d'alerte constitue et enregistre un dossier :
+<ul>
+<li>avec les signatures du / des contenus en cause (une note, une conversation entre deux date-heures données).</li>
+<li>avec les textes de ces contenus encryptés pour n'être lisibles que par un compte ayant privilège d'administration.</li>
+<li>en fournissant ou non son nom / numéro de compte, selon que c'est déclaré interdit / obligatoire / au choix du lanceur d'alerte dans la configuration de l'instance.</li>
 </ul>
 </li>
 </ul>
-<p>Ainsi une instance peut avoir une gouvernance qui peut osciller entre :</p>
+<p>Un dossier d'alerte peut être expertisé par un compte ayant privilège d'administration :</p>
 <ul>
-<li>ultra libertarienne et le cas échéant être dissoute par action violente hors de l'application. Fermeture du site par l'hébergeur, arrestations, etc.</li>
-<li>moyennement contrôlée en y acceptant que des gentlemen ou des ladies.</li>
-<li>structurée afin de protéger le plus grand nombre de dérives éventuelles de quelques uns.</li>
+<li>il peut recalculer le hachage des contenus (qu'il a reçus cryptés pour lui seul) et les confronter avec la signature de l'auteur, bref s'assurer que ce n'est pas un fake.</li>
+<li>apprécier du contenu et des mesures à prendre.</li>
 </ul>
-<h3>Techniques de contrôle du volume</h3>
-<h4>Disques virtuels</h4>
-<p>L'espace de stockage global est constitué d'un ensemble de  <strong>disques virtuels</strong> chacun ayant :</p>
+<blockquote>
+<p>Il est clair qu'autoriser le lancement d'alertes sans possibilité de coercition éventuel peut manquer d'intérêt ... quoi que ...</p>
+</blockquote>
+<p>Différences entre le lancement d'alertes dans une instance <em>modérée</em> et une instance <em>libertaire</em> :</p>
 <ul>
-<li>un code court qui est son identifiant immuable.</li>
-<li>un quota d'espace distingué en q1 / q2.</li>
-<li>une clé de cryptage spécifique mémorisée cryptée par la clé d'administration. Cette clé ne crypte que son libellé, pas les contenus qu y sont inscrits.</li>
-<li>un libellé crypté par cette clé.</li>
-<li>une restriction d'accès :
-<ul>
-<li><em>aucune restriction, lecture seule, accès interdit</em>.</li>
-<li><em>un code d'alerte</em> : quelques codes sont prédéfinis par instance et qualifie à la fois le reproche fait aux utilisateurs du disque et un niveau de menace sur leurs comptes.</li>
+<li>dans l'instance <em>libertaire</em> l'alerte ne peut être que publiée hors de l'application auprès d'un public qui certes peut vérifier que l'alerte n'est pas un fake ... mais peut ne pas le faire. L'alerte est publiée dans le vaste internet anonyme.</li>
+<li>dans l'instance <em>modérée</em>, certes la publication grand public ne peut être interdite mais il existe au moins une instance discrète interne.</li>
+<li>dans l'instance <em>libertaire</em> le soi disant coupable ... fait ce qu'il veut, y compris continuer. Pour le faire taire il faut ... tuer l'instance.</li>
+<li>dans l'instance <em>modérée</em> le compte incriminé peut être bloqué seul.</li>
 </ul>
-</li>
-<li>un ou quelques <strong>comptes contrôleurs</strong>.</li>
-</ul>
-<p>Un compte connaissant la phrase secrète d'administration peut :</p>
-<ul>
-<li>accéder à la liste des disques virtuels, en ajouter et sous certaines conditions en supprimer.</li>
-<li>modifier leurs quotas q1 / q2.</li>
-<li>changer leurs comptes contrôleurs des disque virtuel.</li>
-<li>en cas de changement de la phrase secrète d'administration mettre à jour le cryptage des clés des disques par la clé d'administration en fournissant l'ancienne et la nouvelle clé d'administration.</li>
-</ul>
-<h4>Contrôle de l'espace global</h4>
-<p>Globalement chaque disque virtuel doit respecter son quota.<br>
-L'administration de l'instance peut, par un compte connaissant la phrase secrète d'administration, <strong>restreindre voire supprimer l'accès à un disque virtuel</strong>, et in fine le cas échéant le détruire.</p>
-<h4>Contrôle de l'espace sur un disque virtuel</h4>
-<p>Son ou ses comptes contrôleurs gèrent les attributions de quotas aux comptes utilisant ce disque. Ils peuvent aussi contraindre ceux-ci au respect de leurs obligations en usant à leur égard d'une possible restriction d'accès puis de blocage et in fine le cas échéant de la destruction d'un compte. Ils sont en particulier capables :
-- de révoquer les comptes obsolètes utilisant des quotas qui seraient utiles à d'autres.
-- de restreindre l'accès voire supprimer des comptes suite à décision de modération.</p>
-<h4>Quota initial d'un compte A</h4>
-<p>A la validation de sa création, lorsqu'un compte certificateur C a accepté de certifier l'identité de A, A reçoit de C un quota minimal du disque virtuel auquel C est associé.<br>
-A cette occasion une <strong>conversation</strong> est ouverte (mais vide) entre A et le ou les comptes contrôleurs (passés, actuels ou futurs) de son disque virtuel.</p>
-<h5>Demandes d'augmentation de quota</h5>
-<p>Le compte A peut faire une demande d'augmentation de son quota : elle est enregistrée sur la <strong>conversation</strong> entre le compte et son disque virtuel.</p>
-<ul>
-<li>un exemplaire est enregistré dans le dossier du disque virtuel : les comptes contrôleurs y ont accès.</li>
-<li>l'autre exemplaire est enregistré dans le dossier du compte.</li>
-</ul>
-<p>La demande peut ainsi être :</p>
-<ul>
-<li>satisfaite, complètement ou partiellement (mas pas plus que le niveau de la demande).</li>
-<li>refusée.</li>
-<li>conservée en attente, prioritaire ou non.</li>
-<li>archivée un certain temps.</li>
-<li>détruite.</li>
-</ul>
-<h5>Transfert d'un disque à un autre</h5>
-<p>Une demande de quota peut aussi comporter le souhait du compte à être transféré sur un autre disque plus adapté à l'usage ou à l'organisation.<br>
-Tout contrôleur du disque étant aussi contrôleur d'un autre disque peut effectuer ce transfert qui se limite à une opération sur les quotas et à fournir la clé de cryptage du nouveau disque.</p>
-<h4>Quota d'un forum</h4>
-<p>Un forum reçoit à sa création un quota prélevé sur le quota du compte créateur.</p>
-<ul>
-<li>il peut recevoir ensuite des quotas en provenance d'autres comptes participants.</li>
-<li>ces quotas restent <strong>concédés</strong> par les comptes participants au forum : son quota est virtuellement la somme des quotas concédés par les participants.</li>
-<li>quand un forum décide de remettre à disposition du quota inutile, celui-ci est rendu aux participants concessionnaires, la règle de proportionnalité pouvant être contrariée par un vote des participants. C'est la même situation quand le forum est clôturé.</li>
-<li>un forum ne fait pas de demande d’accroissement de quota, ce sont ses participants qui y contribue.</li>
-</ul>
-<h4>Restriction d'accès à un disque posée par un administrateur de l'instance</h4>
-<p>Elle peut prendre les valeurs suivantes :</p>
-<ul>
-<li>pas de restriction : lecture / écriture possible. Si l'écriture conduit à une <em>augmentation</em> de volume alors que le quota est déjà dépassé,  elle est refusée.</li>
-<li>lecture seule : toute modification des conversations et notes est impossible.</li>
-<li>accès bloqué (ni lecture, ni écriture).</li>
-</ul>
-<p>La restriction est accompagnée d'un code explicitant la raison de la restriction ou de sa levée afin que les mesures correctives puissent être prises.</p>
-<h4>Restriction d'accès à un compte posée par un compte contrôleur</h4>
-<p>Une restriction similaire peut être apposée sur un compte par un des contrôleurs de son disque virtuel avec le même objectif. Le contrôleur peut motiver sa décision par un échange sur la conversation permanente ouverte avec le compte.<br>
-La restriction effectivement applicable au compte est le plus restrictive des deux, mais les deux sont visibles pour un compte.</p>
-<h3>Résiliations autoritaires de comptes</h3>
-<p>Un compte peut ne pas respecte la limitation de quota qui lui a été fixée. Comme il n'est pas possible de créer / modifier des contenus qui feraient passer au dessus du quota d'un compte ou d'un forum, cette situation n'apparaît qu'en cas de restriction a posteriori :</p>
-<ul>
-<li>un compte a eu son quota réduit autoritairement par un contrôleur de son disque : son volume utilisé courant peut excéder le quota restant ;</li>
-<li>un forum a eu un participant résilié ou qui a réduit son le quota qu'il avait concédé au forum. Le volume utilisé par le forum peut excéder son quota et par rebond le volume imputé aux autres comptes étant accru en proportion peut leur faire excéder leur propre quota.</li>
-</ul>
-<p>Un forum, donc indirectement des comptes, ou un compte a été la cible d'un lanceur d'alerte à propos d'un contenu non conforme à la charte éthique de l'instance et une décision de modération générale a été prise de fermeture.</p>
-<p>Un contrôleur de disque a la possibilité de lister les comptes morts, n'ayant eu aucune activité depuis un certain temps. Chaque compte participant d'un forum est aussi en mesure de détecter de son côté quels sont les forums morts et peuvent s'en exclure.</p>
-<p>La résiliation autoritaire est voisine d'une auto-résiliation du compte (voir ci-après).</p>
+<blockquote>
+<p><strong>Remarque</strong> : dans un cas comme dans l'autre la notion d'appréciation ne peut pas être technique mais uniquement humaine et partiale. La preuve technique n'est qu'une preuve de publication de contenu sous contrôle d'une phrase secrète, réputée théoriquement devoir le rester sauf pour une personne : c'est certes un élément troublant mais l'ADN de l'auteur n'est pas capté par le système (et d'ailleurs le serait-il que c'est seulement le fichier le contenant qui le serait).</p>
+</blockquote>
 <h1>Compte : ses contacts, sa création et sa résiliation</h1>
 <h5>CV (curriculum vitae) d'une personne</h5>
 <p>Un compte peut se déclarer de 1 à 4 CV comportant :</p>
@@ -1766,7 +1861,7 @@ Pour chaque compte C ainsi répertorié, il est noté :</p>
 </ul>
 <p>Une fois ces conditions remplies, l'opération de création du compte s'effectue :</p>
 <ul>
-<li>le compte de A est créé et est en état <em>en création</em>. Il a des possibilités limitées et un quota très réduit.</li>
+<li>le compte de A est créé et est en état <em>en création</em>. Il a des possibilités limitées et un crédit forfaitaire gratuit mais très réduit.</li>
 <li>le répertoire des contacts de A est créé avec une unique entrée, celle de C. Y figure : le numéro de CV #1 (A accorde sa confiance d'avance à C) et l'indication que A souhaite que C certifie son nom.</li>
 <li>une conversation est engagée entre A et C : C reçoit le mot de courtoisie de A et pourra y répondre.</li>
 </ul>
@@ -1775,7 +1870,7 @@ Pour chaque compte C ainsi répertorié, il est noté :</p>
 <li>le nom de C est désormais inscrit dans le répertoire de A. C a même pu à cette occasion accorder sa confiance à A en lui indiquant auquel de ses CV il lui donne accès.</li>
 <li>A est inscrit réciproquement, avec son nom, dans le répertoire des contacts de C.</li>
 <li>C est inscrit dans le certificat d'identité de A.</li>
-<li>A reçoit pour quota celui que C a souhaité lui donner (avec un minimum), ce quota étant associé au même disque virtuel que celui supportant le quota de C.</li>
+<li>A peut recevoir un crédit de bienvenue de C (avec ou sans promesse morale de remboursement).</li>
 <li>le compte de A passe à l'état <em>actif</em>.</li>
 </ul>
 <p><strong>Cas 2 : C refuse de certifier le nom de A (ou ne répond pas).</strong></p>
@@ -1793,7 +1888,7 @@ Pour chaque compte C ainsi répertorié, il est noté :</p>
 <p>La vie d'un compte actif est ponctuée par une suite d'opérations :</p>
 <ul>
 <li>de mise à jour des notes personnelles, des CV, des adresses de boîte postale.</li>
-<li>de gestion de son quota : réduction de quota, ou <em>demande</em> d'augmentation de quota ou de  transfert vers un autre disque virtuel.</li>
+<li>de gestion de son crédit : acquisition de lignes de crédit, transfert de crédit à d'autres comptes / forums.</li>
 <li>de gestion de son répertoire de contacts.</li>
 <li>d'échange sur les conversations avec ses contacts personnels. Il existe potentiellement une conversation ouverte avec chaque contact du répertoire. Il est possible :
 <ul>
@@ -1811,9 +1906,8 @@ Pour chaque compte C ainsi répertorié, il est noté :</p>
 <li><strong>A la fin de ce délai le compte est physiquement détruit</strong> ainsi que les forums dont il était l'unique participant.</li>
 </ul>
 <p><strong>Le titulaire du compte peut revenir sur sa propre résiliation pendant quelques jours</strong>. Il peut également prolonger l'état zombie.</p>
-<h4>Résiliation par un des comptes contrôleurs de son disque virtuel</h4>
-<p>La seule différence avec le résiliation par le compte lui-même est qu'il ne lui est pas possible d'arrêter par lui-même cette destruction, ni prolonger son état zombie, ni en sortir.<br>
-En état zombie toutefois la conversation avec ses contrôleurs de son disque virtuel reste active.</p>
+<h4>Résiliation par un modérateur de l'instance</h4>
+<p>La seule différence avec le résiliation par le compte lui-même est qu'il ne lui est pas possible d'arrêter par lui-même cette destruction, ni prolonger son état zombie, ni en sortir.</p>
 <h4>Destruction physique d'un compte</h4>
 <p>Cette destruction s'effectue N jours après,</p>
 <ul>
@@ -1824,7 +1918,6 @@ En état zombie toutefois la conversation avec ses contrôleurs de son disque vi
 <ul>
 <li><em>le compte est marqué résilié dans la liste des participants de tous les forums</em> auxquels il participait.</li>
 <li><em>le compte est marqué résilié</em> dans tous les répertoires des autres comptes qui le référençait.</li>
-<li>si le compte avait alloué un quota au forum, ce quota s'annule ce qui peut mettre le forum est pénurie d'espace.</li>
 </ul>
 <p><em>Remarque :</em></p>
 <ul>
@@ -1884,7 +1977,7 @@ En état zombie toutefois la conversation avec ses contrôleurs de son disque vi
 </ul>
 </li>
 <li><strong>Modération d'une note ou d'un échange</strong> : le collège est celui des modérateurs. En général il est requis une voix, parfois N pour une approbation collégiale.</li>
-<li><strong>Restitution de quota</strong>. Le vote porte sur le montant restitué et en particulier à quels participants en ayant concédé et combien.</li>
+<li><strong>Transfert de crédit</strong>. Le vote porte sur les montants à transférer et à quels participants.</li>
 <li><strong>Changement de gouvernance du forum</strong>.</li>
 <li><strong>Dissolution du forum</strong>. En cas de vote positif, le forum ne passe pas en en état zombie, aucun remord n'est possible le vote ayant déjà pris du temps de réflexion (la décision ne peut pas être un loupé ou une faute de frappe).</li>
 </ul>
@@ -1930,22 +2023,6 @@ En état zombie toutefois la conversation avec ses contrôleurs de son disque vi
 <li>si l'auteur a utilisé une session licite pour l'écrire et le transmettre au serveur,</li>
 <li>ou s'il s'agit d'un contenu émis par une session opérée par un logiciel pirate (et maladroit).</li>
 </ul>
-<p>Dans ce dernier cas le découvreur de ce problème peut lancer une alerte au modérateur général de l'instance en lui transmettant :</p>
-<ul>
-<li>le contenu en clair mais ré-encrypté pour le modérateur,</li>
-<li>la référence du contenu dont le numéro de compte de l'auteur.</li>
-</ul>
-<p>Le modérateur peut vérifier :</p>
-<ul>
-<li>si cette référence est réelle.</li>
-<li>si le digest enregistré est bien celui qu'il obtient lui en le recalculant sur le texte en clair.</li>
-<li>en conséquence si l'alerte est valide et qu'effectivement ce compte est indélicat.</li>
-<li>le cas échéant le compte peut être résilié.</li>
-</ul>
-<blockquote>
-<p>L'objectif est surtout de faire apparaître aux pirates que leurs tentatives de boguer l'application sont certes possibles mais sont détectables et leurs comptes repérables.<br>
-Un pirate qui s'introduit sur un forum a toujours la possibilité d'effacer ou de caviarder les notes sur lesquelles il peut écrire, et ceci par les moyens techniques les plus licites.</p>
-</blockquote>
 <h1>Traces d'activités sur les comptes et forum</h1>
 <p>Il n'est pas naturel de savoir si un compte ou un forum est <em>actif</em> :</p>
 <ul>
@@ -1990,7 +2067,7 @@ Un pirate qui s'introduit sur un forum a toujours la possibilité d'effacer ou d
 </ul>
 <p>A suivre.</p>
 <h1>Cryptographie</h1>
-<h2>Éléments très simplifiés de cryptographie</h2>
+<h2>Éléments simplifiés de cryptographie</h2>
 <h4>Octet : nombre de 0 à 255</h4>
 <p>Un grand nombre (dépassant 255) peut être représenté par une suite d'octets.<br>
 Une chaîne de caractères est représentée par une suite d'octets : le codage standard UTF-8 définit comment chaque caractère est codé en 1 2 ou 3 octets.</p>
@@ -2066,18 +2143,21 @@ Le nombre de collisions est négligeable : deux textes différents ont, en prati
 </ul>
 <p>Elle n'existe <em>en clair</em> (si on peut dire !) que le temps court de sa saisie à l'intérieur de la mémoire d'une session terminale et en sort sous trois formes :</p>
 <ul>
-<li><code>clé S</code> : la clé AES de cryptage de la clé <code>0</code> du compte obtenue depuis le SHA-256 du string de la phrase secrète. <strong>Elle ne sort jamais de la session</strong>.</li>
-<li><code>psB</code> : le BCRYPT du string de la phrase secrète (qui sort de la session).</li>
-<li>le SHA-256 de <code>psB</code> qui est enregistré dans la base.</li>
-<li><code>psRB</code> : le BCRYPT du string réduit de la phrase secrète (qui sort de la session).</li>
+<li><code>clé S</code> : la clé AES de cryptage de la clé <code>0</code> du compte obtenue depuis le BCrypt du string de la phrase secrète (complétée par un O, un BCRYPT a une longueur de 31, une clé AES de 32). <strong>Elle ne sort jamais de la session</strong>.</li>
+<li><code>prB</code> : le BCRYPT du string réduit de la phrase secrète. <code>prB</code> est transmis au serveur pour identifier un compte et à la création pour vérifier qu'un autre compte n'a pas une phrase secrète voisine.</li>
+<li><code>prBD</code> : le SHA-256 de <code>prB</code> qui est enregistré dans la dossier du compte et permet au serveur de vérifier que le <code>prB</code> fourni par le terminal correspond bien à un compte.</li>
 </ul>
 <blockquote>
-<p>La phrase réduite est garantie unique afin d'empêcher de tomber par hasard (ou usage d'un robot) sur une phrase secrète enregistrée ouvrant un accès à un compte.  Ainsi il n'existe pas deux comptes ayant déclaré des phrases secrètes <em>trop proches</em>.
-En supposant que le logiciel du serveur ait été substitué par une version pirate indélicate qui enregistrerait les requêtes en clair, et donc <code>psB</code>, une session non officielle pourrait se faire reconnaître comme disposant d'un compte authentifié vis à vis du serveur sans disposer de la phrase secrète. Elle ne serait toutefois pas capable de décrypter la clé <em>mère</em> S obtenue cryptée par le SHA-256 du string de la phrase secrète originale connue du seul titulaire et serait incapable de déchiffre la moindre donnée du compte.</p>
+<p>La phrase réduite est garantie unique afin d'empêcher de tomber par hasard (ou usage d'un robot) sur une phrase secrète enregistrée ouvrant un accès à un compte.  Ainsi il n'existe pas deux comptes ayant déclaré des phrases secrètes <em>trop proches</em>.<br>
+En supposant que le logiciel du serveur ait été substitué par une version pirate indélicate qui enregistrerait les requêtes en clair, et donc <code>prB</code>, une session non officielle pourrait se faire reconnaître comme disposant d'un compte authentifié vis à vis du serveur sans disposer de la phrase secrète. Elle ne serait toutefois pas capable de décrypter la clé <em>mère</em> S obtenue depuis la phrase secrète originale connue du seul titulaire et serait incapable de déchiffre la moindre donnée du compte.</p>
 </blockquote>
-<p><em>Pratique interdite</em> : la clé S pourrait être conservée en données persistantes dans le browser cryptée par un code PIN numérique de 4 caractères : un utilisateur tentant une connexion rapide a alors 3 essais sinon la clé S mémorisée est détruite (et la phrase secrète demandée). Un simple passage du browser en debug exhibe cette valeur cryptée permet de la copier puis de tester les 10000 clés AES possibles (ce qui va être court).</p>
+<blockquote>
+<p>SHA-256 est considéré comme fragile à une attaque par force brute : c'est vrai pour un mot de passe de faible longueur alors qu'ici il s'agit des 31 caractères sortis d'un BCRYPT. Il est impossible de retrouver <code>prB</code> depuis <code>prBD</code> par attaque de force brute.<br>
+L'attaque du BCRYPT sur un minimum de 20 caractères, sachant qu'en plus les mots correspondants sont préfixés d'un chiffre aléatoire vis à vis des dictionnaires, semble vouée à l'échec d'après la littérature spécialisée.</p>
+</blockquote>
+<p><em>Pratique interdite</em> : la clé S et <code>prB</code> pourraient être conservés en données persistantes dans le browser cryptée par un code PIN numérique de 4 caractères : un utilisateur tentant une connexion rapide a alors 3 essais sinon la mémorisation est détruite. Un simple passage du browser en debug exhibe cette valeur cryptée permet de la copier puis de tester les 10000 clés AES possibles (ce qui va être court).</p>
 <h3>Phrase secrète d'administration</h3>
-<p>C'est une phrase secrète dont le SHA-256 de la <code>psB</code> est enregistré dans la configuration de l'instance. Même le piratage de cette <code>psB</code> par un serveur indélicat ne sert à rien : c'est la clé S, qui n'est jamais sortie de la session et directement issue du string de la phrase secrète qui permet de décrypter les informations.</p>
+<p>C'est une phrase secrète dont le <code>prBD</code> est enregistré dans la configuration de l'instance. Même le piratage de cette <code>prBD</code> (voire de <code>prB</code>) par un serveur indélicat ne sert à rien : c'est la clé S, qui n'est jamais sortie de la session et directement issue du string de la phrase secrète qui permet de décrypter les informations.</p>
 <h3>Numéro long : forum</h3>
 <p>Un vecteur de 15 octets tirés au hasard est codé en base 64 URL de 20 caractères.</p>
 <blockquote>

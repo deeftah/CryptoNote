@@ -49,116 +49,103 @@ L'argument `sudo` de la requête contient le BCRYPT de la phrase secrète rédui
 
 La clé AES tirée de la phrase secrète complète crypte certaines données (des disques virtuels par exemple).
 
-# Dossier *Disque Virtuel* `DV`
-Dossier unique de `docid` 1.
 
-L'espace de stockage global est constitué d'un ensemble de  **disques virtuels** chacun ayant :
-- un code court qui est son identifiant immuable.
-- un quota d'espace distingué en q1 / q2.
-- le volume effectivement occupé v1 / v2.
-- une clé de cryptage spécifique au disque générée à sa création et qui crypte le mémo pour les comptes contrôleurs?
-- un libellé / mémo crypté par la clé ci-dessus.
-- une restriction d'accès :
-    - *aucune restriction, lecture seule, accès interdit*.
-    - *un code d'alerte* : quelques codes sont prédéfinis par instance et qualifie à la fois le reproche fait aux utilisateurs du disque et un niveau de menace sur leurs comptes.
-- un ou quelques **comptes contrôleurs**.
+## Constante : numéro de compte public
+La constante a été générée par la session créatrice du compte et comporte les propriétés suivantes :
+- `nom1` : nom du compte crypté par sa clé 1.
+- `pub` : clé RSA publique de cryptage.
+- `verif` : clé RSA publique de vérification.
 
-Un compte connaissant la phrase secrète d'administration de l'instance peut :
-- accéder à la liste des disques virtuels, en ajouter et sous certaines conditions en supprimer.
-- modifier leurs quotas q1 / q2 et mémos.
-- changer leurs comptes contrôleurs.
-- ajuster la restriction d'accès.
-- en cas de changement de la phrase secrète d'administration ré-encrypter les clés de cryptage des disques en fournissant l'ancienne et la nouvelle clé d'administration.
+La clé de la constante est le SHA-256 de ces champs séparés par un espace et est le numéro de compte.
 
-### Items *disque virtuel* `Dvi` / `Dvr`
-Un item `Dvi` et un item `Dvr` par disque existant.
+Toute session disposant du numéro de compte peut :
+- obtenir les clés de cryptage et de vérification,
+- s'assurer de sa validité en recalculant le SHA et en le comparant au numéro de compte.
+- obtenir le nom du compte s'il en possède la clé 1.
 
-**Clé** : `nd` code court identifiant le disque.
-
-**Propriétés de `Dvi` :**
-- `dhop` : date-heure de la dernière opération.
-- `q1 / q2` : quota global alloué.
-- `q1 / q2` : somme des quotas attribués aux comptes.
-- `v1 / v2` : volume utilisé.
-- `cdA` : clé de cryptage D spécifique du disque cryptée par la clé d'administration.
-- `memoD` : intitulé / mémo à propos du disque crypté par la clé D du disque.
-- `lcc` : liste des numéros des comptes contrôleurs. Maximum 8.
-
-**Propriétés de `Dvr` :**
-- `ra` : restriction d'accès sous forme d'un entier :
-  - dernier chiffre : 0: pas de restriction, 1: lecture seule, 2: accès bloqué
-  - chiffres avant : code symbolique éventuel associé (raison de la restriction ...).
-
-#### Opérations
-Elles requièrent toutes le `sudo` d'administration de l'instance.
-
-##### Création d'un disque virtuel
-
-##### Mise à jour du mémo / quota d'un disque virtuel
-
-##### Restriction d'accès à un disque virtuel. 
-La propriété ra est propagée sur les propriétés rad :
-- des comptes dont le quota est imputé sur ce disque
-- des forums dont les comptes fournisseurs de quota imputent sur ce disque.
-
-##### Ajout / retrait d'un compte contrôleur
-
-##### Recalcul des quota attribués / volumes utilisés effectivement par les comptes
-Le calcul permanent du volume n'est qu'approximatif et ne s'opère que lors de franchissement de seuils de volume occupé. Ce calcul utilise tous les volumes actuels des comptes et en profite pour redonner une somme de quotas exacte.
-
-##### Changement de la clé de cryptage
-Ce n'est utile qu'après avoir retiré un compte contrôleur qui a été retiré / résilié et dont on craint qu'il puisse accéder à copie de la base (ce qui lui donnerait accès au mémo informatif).  
-Tous les comptes contrôleurs reçoivent la nouvelle clé cryptée par leur clé P.
-
-##### Changement de la clé d'administration
-Toutes les propriétés `cdA` sont ré-encryptées.
-
-##### Purge des disques inutiles
-Ce sont les disques,
-- n'ayant plus de contrôleur,
-- à qui aucun compte ni forum est associé.
+Après destruction du compte, la constante est inutile et détruite.
 
 # Dossier `Compte`
 La clé d'accès `docid` est le numéro de compte nc.
 
-### Singleton : *Entête du compte* `EnC`
-Ce singleton porte des données publiques d'un compte :
-- quelques données ne sont pas exploitables publiquement mais étant cryptées leur transmission éventuelle est sans risque. 
-- il change peu souvent :
-    - création du compte.
-    - changement de phrase secrète.
-    - changement de son statut : activation, annonce de destruction.
-    - changement de restriction d'activité.
-    - changement de disque virtuel.
-- c'est la seule partie qui subsiste après destruction d'un compte. 
-   - pendant quelques mois il ne reste que les propriétés marquées * qui permettent au dernier compte premier d'en connaître encore le nom qui peut subsister dans des alertes / dialogues archivés.
-   - à plus long terme il ne reste que les propriétés marquées de 2 * qui permettent de ne garder que les dates de début et fin de vie et de bloquer la réutilisation du nom.
+## Constante : ticket public d'un compte
+Ce ticket a été généré par la session créatrice du compte et comporte les propriétés suivantes :
+- `dhc` : date-heure de génération.
+- `c1O` : clé 1 du compte cryptée par la clé 0. Elle crypte le nom du compte dans son ticket public et ceux des comptes certifiant son identité.
+- `nom1` : nom crypté par sa clé 1.
+- `nomrB` : BCRYPT du nom réduit utilisé pour détecter et interdire l'usage de noms trop proches.
+- `pub` : clé RSA publique de cryptage.
+- `verif` : clé RSA publique de vérification.
+- `priv0` : clé privée RSA de décryptage cryptée par la clé 0.
+- `sign0` : clé privée RSA de signature cryptée par la clé 0.
+
+La clé de la constante est le SHA-256 de ces champs séparés par un espace et est le numéro de compte.
+
+En base les tickets publics sont stockés avec,
+- pour clé primaire le numéro de compte,
+- un index unique sur `nomrB`.
+
+Toute session disposant du numéro de compte peut :
+- obtenir les clés de cryptage et de vérification,
+- s'assurer de sa validité en recalculant le SHA et en le comparant au numéro de compte.
+- obtenir le nom du compte s'il en possède la clé 1.
+
+Après destruction du compte, la constante est inutile et détruite.
+
+## Constante : trace d'un compte détruit
+La clé est le numéro de compte et n'a que trois propriétés destinées à éviter le réemploi dans l'instance d'un nom proche à celui d'un compte ayant existé dans l'instance.
+- `dhc` : date-heure de création.
+- `dhd` : date-heure de destruction.
+- `nomrB` : BCRYPT du nom réduit.
+
+## Constante : tickets privés d'un compte
+Un compte `nc` donné peut avoir, successivement dans l'application, plusieurs tickets privés, autant que de phrases secrètes choisies par son titulaire. Chaque ticket privé,
+- est identifié par :
+    - `nc` : numéro du compte.
+    - `prBD` : BCRYPT de la phrase secrète réduite afin de détecter et d'interdire l'usage de phrases secrètes trop proches dans la même instance.
+- et contient `c0S`, la clé 0 du compte cryptée par la phrase secrète qui ouvre ce ticket. 
+L'application enregistre ces tickets privés identifiés par leur couple `nc / prBD` : pour un numéro `nc` donné, à un instant donné un seul ticket privé est enregistré.
+
+## Singleton : *Entête du compte* `EnC`
+Ce singleton est déclaré à la création du compte et n'est modifié qu'à quelques rares occasions :
+- mise à jour de la phrase secrète du compte : son ticket privé valide change.
+- lors des changements d'état : *début d'activité, passages zombie / retour à l'état actif, destruction physique*.
 
 **Propriétés :**
-- `nc` : numéro du compte.
-- `nomrB` : *propriété indexée et unique*. BCRYPT du nom réduit du compte utilisé pour interdire l'usage de noms trop proches.
-- `prBD` : *propriété indexée unique*. BCRYPT de la phrase secrète réduite pour interdire l'usage de phrases secrètes trop proches. Sert aussi de clé d'accès pour `XAuth`.
-- `c0S` : clé 0 du compte cryptée par la phrase secrète du compte. 
-- `c1O` : clé 1 du compte cryptée par la clé 0. Elle crypte :
-    - le nom du compte,
-    - les noms des comptes figurant dans son certificat d'identité.
-- `pub` : clé publique en clair.
-- `priv0` : clé privée cryptée par la clé 0 du compte.
-- `d0 d1 d2 d3` : dates-heures de création, de début d'activité, de passage en état zombie, de destruction effective.
-- `s` : statut calculé depuis les dates d0 à d3.
-    - 0 : en création. 
-    - 1 : actif.
-    - 2 : zombie, destruction imminente.
-- `dhzc` : date-heure de passage en zombie posée par le contrôleur de son disque virtuel.
-- `dhza` : date-heure de passage en zombie posée par le compte lui-même.
+- `prBD c0S` : **le** ticket privé courant valide du compte. `prBD` est indexée de manière à ne tolérer que des phrases secrètes pas trop ressemblantes dans l'instance.
+- `dha` : date-heure de début d'activité.
+- `dhzm` : date-heure de passage en zombie posée par la modération de l'instance.
+- `dhzc` : date-heure de passage en zombie posée par le compte lui-même.
 - `dhx` : *propriété indexée* date-heure de destruction prévue (s = 2) : la plus proche résultante de `dhzc` `dhza` et `d0` quand le compte est en création (s == 0 / `d1` absente), NC jours ou NZ jours après ces dates.
-- `dv` : numéro du disque virtuel sur lequel le compte impute son quota.
 
-### Singleton : *Entête dynamique* `EnD`
+Le statut courant s est calculé depuis les dates `dha dhzm dhzc`.
+- 0 : en création. 
+- 1 : actif.
+- 2 : zombie, destruction imminente.
+
+### Singletons : *certificat d'identité* : `Cid` et *certifications* : `Crt`
+Le certificat d'identité `Cid` comporte deux parties :
+- une liste de triplets `dh nc nomc1A` ordonnés par `dh`, chacun correspond à la certification du nom de A par un compte C du numéro `nc` à la date-heure `dh` en fournissant `nomc1A` son nom crypté par la clé 1 du compte A. 
+- le numéro du dernier compte ayant mis à jour le certificat et sa signature du texte précédent.
+
+`Crt` la liste des comptes certifiés par A et comporte comporte deux parties :
+- une liste de triplets `dh nc nomc1C` ordonnés par `dh`, chacun correspond à la signature d'un compte C du numéro `nc` à la date-heure `dh` en fournissant `nomc0` le nom de C crypté par la clé 0 du compte A. nomc1A peut être O, signifiant l'effacement d'une certification.
+- la signature du texte précédent par le compte A.
+
+L'opération de certification ou suppression de certification par A du compte C opère en symétrique sur le `Crt` de A et le `Cid` de C. Elle vérifie :
+- que A a bien signé les deux listes.
+- que A n'a pas altéré dans le `Cid` des triplets qui ne sont pas le sien : il peut effacer le sien mais pas les autres et s'il ajoute le sien que c'est bien à la fin.
+- que dans la liste `Crt` seul le triplet de C est ajouté / supprimé.
+
+L'opération ne peut pas vérifier que le nom ajouté est bien celui du compte certificateur ni qu'il est effectivement crypté par la clé 1 du compte certifié ni par la clé 0 de A dans `Crt`.
+
+Les certificats ou liste de certifications sont garanties complètes ou complètement détruites par piratage. 
+
+La création d'un compte a signé des `Cid` `Crt` vides (mais bel et bien signées par A).
+
+### Singleton : *Crédit courant* `Cre`
 **Propriétés :**
-- `memo0` : mémo du compte crypté par la clé 0.
-- `monci` : mon certificat d'identité. Map `nc:nom1`. `nom1` : nom suffixé (crypté par la clé 1 du compte) d'un compte certificateur `nc`. `nom1` est précédé de `$` si le compte certificateur est résilié.
-- `mescert` : comptes certifiés par moi. Map `nc:nom0`. `nom0` : nom suffixé (crypté par la clé 0) d'un compte certifié `nc`.
+
 - `dv` : liste des date-heures des N dernières visites (opération `Xauth` ou `Xcre`).
 
 ### Items uniques `Dvr` et `Dvi`

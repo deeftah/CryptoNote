@@ -46,7 +46,7 @@ Toutes les données humainement signifiantes sont ***cryptés*** sur les termina
 
 >Le détournement de données, que ce soit la base de données du serveur comme celles locales des terminaux ou de celles transitant sur les réseaux, est inexploitable : les données y sont indéchiffrables.
 
->Aucune utilisation *commerciale* des données n'est possible puisqu'elles sont toutes indéchiffrables, même et surtout pour le prestataire de l'application et ses hébergeurs.
+>Aucune utilisation *commerciale* des données n'est possible puisque celles signifiantes sont toutes indéchiffrables, même et surtout pour le prestataire de l'application et ses hébergeurs.
 
 **Aucun répertoire central ne peut être constitué, il ne contiendrait que des données inintelligible** : il est impossible de chercher un compte ou un forum dans une instance de l'application en fonction de critères comme les noms, intitulés des forums, centres d'intérêt, mots clés ...
 
@@ -68,14 +68,14 @@ Tous les comptes ont des phrases secrètes différentes, un dispositif interdit 
 
 Au fil du temps, le nom d'un compte apparaît à d'autres comptes : après avoir accordé leur confiance à un nom, ils sont assurés qu'aucune usurpation d'identité ou réemploi de nom n'est possible.
 
->**Le numéro d'un compte** est obtenu en brouillant aléatoirement son nom par un procédé de calcul fastidieux tel qu'il est impossible en interrogeant l'application ou en détournant la base de données,
+>**Le numéro d'un compte** est obtenu par hachage de deux clés cryptographiques générées à la création du compte et de son nom lui-même crypté. Il est impossible en interrogeant l'application ou en détournant la base de données,
 >- de connaître la liste des noms des comptes,
 >- de tester l'existence d'un compte en essayant des noms tirés de listes de noms usuels ou par force brute (essai de toutes les combinaisons).
 
 ##### Certificat d'identité d'un compte
 *Un compte a son identité certifiée par un ou plusieurs autres comptes* : en certifiant l'identité d'un compte A, un compte C ne fait qu'affirmer que le nom du compte A est bien représentatif de la personne qui en est titulaire. Ceci ne signifie rien en termes d'amitié ou de convergence de vue, seulement une affirmation sur l'adéquation entre le nom présenté et la personne physique correspondante.
 
->Le certificat d'identité d'un compte est la liste des couples (numéro de compte,  nom) des comptes ayant certifié son identité.
+>Le certificat d'identité d'un compte est la liste des comptes ayant certifié son identité: numéro du compte, son nom et la date-heure de certification.
 
 >Un compte A *actif* (ni en création, ni résilié) a toujours au moins un compte dans son certificat d'identité. Quand un compte certifiant est résilié il apparaît en tant que tel dans le certificat d'identité de A (ce qui réduit la crédibilité que les autres peuvent avoir dans le compte A).
 
@@ -196,8 +196,71 @@ La destruction effective supprime physiquement les données.
 
 >**Remarque** : dans le cas le plus simple un forum s'ouvre instantanément sur demande d'un compte qui y invite immédiatement les contacts qu'il souhaite avec approbation par défaut. Une gouvernance par défaut s'installe, et les participants peuvent sur l'instant accepter l'invitation et participer à une conversation et s'échanger des notes.
 
+## Confiance dans l'application
+Ces données passent par deux applications, une terminale, l'autre dans le serveur, circulent sur internet et sont stockées dans une base de données. Tous ces niveaux techniques sont susceptibles d'être attaqués et déroutés.  
+Les techniques de cryptographie employées offrent certaines garanties en elles-mêmes, mais pas toutes les garanties et le niveau de confiance à accorder à l'application n'est pas un sujet trivial et s'étudie en fonction des niveaux de confiance qu'on peut accorder à chacun de ces éléments.
+
+Il est impossible de garantir que toutes les données seront toujours présentes et inviolées mais il est possible de garantir que pour certaines données :
+- si elles ont été trouvées elles sont fiables et inviolées, c'est à dire effectivement produites par qui de droit.
+- plus exactement il est possible de détecter si une telle donnée a été corrompue, donc si elle est fiable ou non. En règle générale les hackers ne se fatiguent pas à corrompre des données dont la corruption serait détectable, sauf seulement à rendre l'application inutilisable.
+
+#### Confiance dans l'application terminale et le réseau Internet
+C'est elle qui crypte, signe, décrypte et vérifie les signatures. Si l'application terminale, dans son ensemble, n'est pas de confiance, aucune confiance ne peut être accordée à l'application.
+- son logiciel est open source et lisible en clair dans n'importe quel terminal. Il est vérifiable par tout lecteur ayant le minimum requis de compétence technique.
+- il peut être disponible depuis des sources diverses, et en particulier des sources de confiance.
+- l'application s'exécute dans un environnement technique de l'appareil dans lequel, usuellement et à juste titre, on a confiance : navigateur, système d'exploitation, matériel. On a toutefois relevé par exemple :
+    - un fournisseur de haute renommée qui détournait les frappes au clavier de l'utilisateur.
+    - des CPU de haute renommée également mais pas complètement étanches aux inspections indésirables des autres programmes.
+
+La transmission avec le serveur utilise le protocole chiffré d'internet, dont pour l'instant il n'existe pas de preuve de fragilité.
+
+>Ce niveau technique est supposé de confiance, sinon l'application n'est pas pertinente (ni la quasi totalité des autres d'ailleurs).
+
+Dans ce contexte :
+- les clés de cryptographie requises sont générées aléatoirement à la création du compte dans l'application terminale :
+    - le nom du compte est crypté et les diverses clés (sauf la clé 0) sont scellés dans ***un ticket public immuable et inviolable portant le numéro du compte***.
+    - ***un ticket privé est généré*** : il ne contient que la clé 0 crypté par la phrase secrète utilisée à la création.
+- aucun autre compte ne peut être créé (dans aucune instance d'ailleurs) et présenter le même numéro de compte avec un ticket public valide différent (un *fake*): c'est détectable.
+- si l'application mémorise pour chaque numéro de compte son **ticket public immuable et scellé**, n'importe quel terminal de la planète peut en conserver des copies sur n'importe quels supports. Depuis ce ticket n'importe quel terminal, avec ou sans le logiciel de l'application :
+    - **peut obtenir le nom du compte** à condition de disposer de plus de la clé qui en autorise la lecture (le décryptage).
+    - **s'il connaît ou croit connaître le nom du compte**, peut vérifier si c'est ou non le bon. Une tentative de recherche du nom scellé par force brute en essayant toutes les combinaisons est vouée à l'échec.
+    - **peut s'adresser au compte en cryptant son message de telle sorte que seul le détenteur du compte puisse le décrypter**.
+    - **principe d'inviolabilité et de non répudiation** : il peut vérifier qu'un texte qui prétend avoir été horodaté et signé par un compte, l'a véritablement été en utilisant les clés ad hoc que nul ne peut avoir inventé.
+
+A la création du compte, un premier ticket privé a été généré pour ne contenir que la seule clé 0 du compte, clé cryptée par la phrase secrète utilisé à la création. Ce ticket porte une double identification, a) celle du numéro du compte, b) celle de la phrase secrète raccourcie et brouillée.   
+Ultérieurement, à condition de disposer pour un compte donné d'un ticket privé et de la phrase secrète qui l'ouvre, une session (ou n'importe quel terminal) peut fabriquer un autre ticket privé crypté par une autre phrase secrète.
+
+**N'importe quel terminal** (même sans disposer de l'application) disposant du ticket public d'un compte, d'un ticket privé et de la phrase secrète ouvrant ce ticket privé, peut obtenir :
+- le **nom du compte**.
+- confirmation que les deux tickets ne sont pas des *fake*,
+- confirmation que la phrase secrète qu'il a utilisée pour ouvrir son ticket privé est correcte (conforme à celle utilisée pour générer ce ticket).
+
+>**Remarque** : il existe des moyens non techniques pour demander, et souvent finir par obtenir, la clé d'un compte par son titulaire. La violence certes, mais aussi plus fréquemment la persuasion couplée à l'imprudence du titulaire, sont les moyens les plus usuels.
+
+>**Synthèse** : le système cryptographique garantit, même à un terminal indépendant de l'application, que muni du ticket public d'un compte identifié par son numéro :
+>- il peut vérifier techniquement que le ticket n'est pas un fake,
+>- que tout message envoyé à ce compte en utilisant la clé qui s'y trouve ne pourra être décrypté que par une application détenant au moins un ticket privé du compte et la phrase secrète associé.
+>- que tout contenu prétendu horodaté et signé par ce ticket l'a vraiment été, que son contenu n'a pas été altéré et qu'il était impossible à produire sans ce ticket.
+
+### Confiance dans le serveur et la base de données
+Les tickets et contenus sont générés, cryptés et scellés dans les applications terminales. Le serveur ne reçoit jamais aucun élément qui lui permette de décrypter ou crypter ces contenus : au plus peut-il vérifier que les signatures des contenus signent bien ce qu'elles prétendent signer, mais ce contrôle est juste destiné à décourager un éventuel hacker maladroit qui tenterait de pervertir les données à distance : la vraie et seule vérification crédible est celle refaite dans la session terminale lectrice des contenus.
+
+Les contenus stockés dans la base de données ne sont pas possibles à décrypter sans disposer des tickets officiels et des clés. En conséquence, le détournement / copie de la base de données ne peut fournir aucun contenu sans disposer de leurs clés, c'est à dire sans la complicité d'un compte disposant d'un accès régulier à certains contenus.  
+Bref pourquoi détourner la base ne sert qu'à en obtenir que ce que le complice utilisateur peut avoir régulièrement.
+
+#### Destruction d'informations
+Techniquement une application serveur pirate peut intercepter les opérations demandées au serveur :
+- son action ne peut être que destructrice : suppression de comptes, de contenus, de participants à des forums, de contacts dans les répertoires des comptes.
+- il ne peut pas créer des contenus fake (notes et conversations), ni de faux certificats d'identité, ni de faux CV, ni des participants clandestins à un forum, ni des usurpations d'identité : tout cela est détecté à la lecture dans les applications terminales.
+
+De même une intervention directe sur la base de données ne que miter les données mais pas pervertir celles restantes.
+
+>**Synthèse** : rendre une application inutilisable ou non crédible en raison des attaques destructives de ses données n'est pas un aspect secondaire.
+>- en revanche tout ce qui s'y trouve peut être considéré comme crédible.
+>- il est parfois, mais rarement, possible de détecter que des données ont été détruits.
+
 ## Comptabilisation des consommations de ressources
-Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :
+Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes et conversations, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :
 - (1) l'une correspond à toutes les données sauf les pièces jointes attachées aux notes.
 - (2) l'autre correspond aux pièces jointes attachées aux notes.
 
@@ -205,44 +268,46 @@ Selon les options techniques retenues pour chaque instance les coûts de stockag
 
 Les opérations lancées ont aussi un coût de calcul et d'échange sur le réseau.
 
-Un barème simple fixe les coûts unitaires suivants :
+Un barème fixe les coûts unitaires suivants :
 - coût de stockage d'un Mo sur un jour pour les données sauf les pièces jointes.
 - coût de stockage d'un Mo sur un jour pour les pièces jointes.
-- coût fixe d'une opération simple (certaines sont gratuites) : des opérations complexes sont décomptées comme les N opérations simples qui les composent.
-- coût du volume échangé en entrée / sortie sur le réseau (au delà d'un certain seuil).
+- coût fixe d'une opération simple (certaines sont gratuites) : les opérations complexes sont décomptées comme les N opérations simples qui les composent.
+- coût du volume échangé à chaque opération en entrée / sortie sur le réseau au delà d'un certain seuil.
 
 ##### Crédit d'un compte
-Un compte dispose d'un crédit qui est amputé :
+Un compte dispose d'un **crédit** qui est amputé :
 - du coût de stockage journalier de ses propres données.
 - du coût des opérations menées par le compte, sur lui-même ou les forums auxquels il participe.
 
-Le détenteur d'un compte peut transférer de son crédit :
+Le détenteur d'un compte peut transférer à tout instant une part de son crédit :
 - sur un autre compte.
 - sur un forum.
 
-Quand son crédit est épuisé, le compte est gelé : seule une opération de rechargement du crédit peut le remettre en état normal.   
-Au bout d'un certain temps en état gelé, le compte est détruit.
+**Quand son crédit est épuisé, le compte est gelé** : seule une opération de rechargement du crédit peut le remettre en état normal.   
+*Au bout d'un certain temps en état gelé, le compte est détruit.*
 
 ##### Crédit d'un forum
-Un compte dispose d'un crédit qui est amputé du coût de stockage journalier de ses propres données.
+Un forum dispose d'un crédit qui est amputé du coût de stockage journalier de ses propres données.
 
-Sur décision, en général collégiale, un forum peut transférer de son crédit :
+Son crédit peut être augmenté par les comptes participants.
+
+Sur décision, en général collégiale, un forum peut transférer une part de son crédit :
 - sur un autre compte.
 - sur un forum.
 
-Quand son crédit est épuisé, le forum passe en lecture seule : seule une opération de rechargement du crédit par un participant peut le remettre en état normal. A noter que dans cet état ses participants peut encore lire le forum et en particulier en copier les informations puisque le coût des opérations est imputé aux comptes accédants, pas au forum.  
-Au bout d'un certain temps en état lecture seule, le forum est détruit.
+**Quand son crédit est épuisé, le forum passe en lecture seule** : seule une opération de rechargement du crédit par un participant peut le remettre en état normal. A noter que dans cet état ses participants peut encore lire le forum et en particulier en copier les informations puisque le coût des opérations est imputé aux comptes accédants, pas au forum.  
+*Au bout d'un certain temps en état lecture seule, le forum est détruit*.
 
 ##### Seuil d'alerte
-Avant de parvenir au niveau critique gelé / lecture seule, un compte ou un forum passe un seuil d'alerte qui est signalé à l'écran et permet de remédier à la situation avant d'atteindre la zone rouge.
+Avant de parvenir au niveau critique gelé / lecture seule, un compte ou un forum passe un seuil d'alerte qui est signalé sur les écrans et permet de remédier à la situation avant d'atteindre la zone rouge.
 
 ### Lignes de crédit
-Le réseau étant a-social il s'interdit d'établir une corrélation entre des paiements reçus et d'une manière ou d'une autre nominatifs et les comptes qui vont en bénéficier.
+Le réseau étant a-social il s'interdit d'établir une corrélation entre des paiements reçus, d'une manière ou d'une autre nominatifs, et les comptes qui vont en bénéficier.
 
 Une personne physique ou morale qui souhaite approvisionner un compte ou un forum en crédit procède ainsi :
 - il choisit une phrase secrète qu'il ne communique à personne si le paiement concerne son compte ou la communique au compte qui va en bénéficier.
 - il effectue un paiement (par exemple un virement) d'un montant de son choix en lui associant le brouillage cryptographique de cette phrase.
-- le comptable de l'instance, après avoir été crédité, enregistre cette ligne de crédit identifiée par la phrase brouillée et son montant.
+- le comptable de l'instance, après avoir observé la réalité du crédit, enregistre cette **ligne de crédit** identifiée par la phrase brouillée et son montant.
 - le compte bénéficiaire fournit la phrase secrète, la ligne de crédit associée est retrouvée et le montant est crédité à son compte, la ligne de crédit correspondante étant effacée.
 
 De cette manière :
@@ -256,27 +321,33 @@ De cette manière :
 >Dans le cas d'une instance gérée par une organisation au profit de ses membres, il n'intervient pas à proprement parler de mouvement monétaire : un adhérent à l'organisation peut recevoir périodiquement une phrase correspondant à une ligne de crédit déposée par l'organisation (quand c'est elle qui paye) ou à l'inverse l'organisation peut recevoir une phrase brouillée générée par l'adhérent et jointe au renouvellement de son adhésion.
 
 ### Synthèse
-Lignes de crédit monétaires, cadeaux, adhésions ou droits d'usage émis par une organisation à ses membres, mécénat sans contrepartie ... toutes ces possibilités sont ouvertes et externes au fonctionnement de l'instance : au bout de cette chaîne une ligne de crédit anonyme est disponible dans le serveur (avec une période de validité maximale) jusqu'à sa capture par un compte qui seul en connaît la phrase secrète et peut s'en faire attribuer le bénéfice.
+Lignes de crédit monétaires, cadeaux, adhésions ou droits d'usage émis par une organisation à ses membres, mécénat sans contrepartie ... toutes ces possibilités sont ouvertes et externes au fonctionnement de l'instance : au bout de cette chaîne **une ligne de crédit anonyme est disponible dans le serveur** (avec une période de validité maximale) jusqu'à sa capture par un compte qui seul en connaît la phrase secrète et peut s'en faire verser le montant.
 
 Une fois leurs crédits expirés, les comptes / forums se bloquent puis s'autodétruisent.
 
 ## Modération d'une instance
 La modération d'une instance a deux composantes :
-- la possibilité pour un compte ayant un privilège d'administrateur :
-    - de restreindre l'accès à un compte ou un forum même disposant d'un crédit.
-    - de détruire effectivement un compte ou un forum.
-- la possibilité que des lanceurs d'alertes signalent des contenus incompatibles avec l'éthique de l'instance, avec pour objectif de faire cesser la production de ces contenus quitte à faire procéder à la restriction / destruction des comptes et forums responsables (ce qui rejoint le point 1).
+- la possibilité pour un **compte ayant un privilège d'administrateur** :
+    - *de restreindre l'accès à un compte ou un forum*, même disposant d'un crédit.
+    - *de détruire effectivement un compte ou un forum*.
+- la possibilité que des **lanceurs d'alertes signalent des contenus incompatibles avec l'éthique de l'instance**, avec pour objectif de faire cesser la production de ces contenus quitte à faire procéder à la restriction / destruction des comptes et forums responsables (ce qui rejoint le point 1).
 
->**Remarque** : en l'absence d'une possibilité technique de modération un compte est seul juge de l'opportunité de sa résiliation. Tant qu'il dispose de crédit et comme il peut financer une ligne de crédit anonyme sans aucune corrélation avec lui-même, il n'y a aucun moyen pour faire clore un compte qui ne le souhaite pas ... sauf à détruire toute l'instance.
+>**Remarque** : en l'absence d'une possibilité technique de modération centrale un compte est seul juge de l'opportunité de sa résiliation. Tant qu'il dispose de crédit (et il peut financer une ligne de crédit anonyme sans aucune corrélation avec lui-même), il n'y a aucun moyen pour faire clore un compte qui ne le souhaite pas ... sauf à détruire toute l'instance.
 
 >La suite de ce développement ne fait appel à aucun concept de se que pourrait / devrait être une bonne modération ni ce que devrait ou pourrait être une bonne éthique pour une instance. Il est clair que pour une organisation suprémaciste un contenu conforme à son éthique serait exactement considéré comme anti-éthique pour une organisation anti raciste. 
+
 #### Instance sans modération
 C'est un simple paramètre de configuration de l'instance : 
 - une restriction d'accès ne se prononce que sur seul critère de disponibilité de crédit.
 - aucun compte ne peut ni restreindre l'accès d'un autre ni procéder à sa résiliation.
 - aucune alerte sur les contenus ne peut être soumise.
 
-L'instance est du type libertaire, ses contenus sont intégralement libres et privés : aucune organisation ne peut y intervenir ni s'appuyer sur aucune information pour déclarer ses contenus illégaux / illicites etc. Seule la force physique peut techniquement empêcher le fonctionnement technique de l'ensemble de l'instance.
+L'instance est du type *libertaire*, ses contenus sont intégralement *libres et privés* : aucune organisation ne peut y intervenir ni s'appuyer sur aucune information pour déclarer ses contenus illégaux / illicites etc. Seule la force physique peut techniquement empêcher le fonctionnement technique de l'ensemble de l'instance.
+
+>Remarque : rien n'empêche un participant régulier R à publier hors de l'application un texte en clair copie d'un texte auquel il a accès régulièrement. Mieux, ce participant peut exhiber la signature du texte par l'auteur A, signature vérifiable et qui ne peut pas être techniquement contestée, et même publier le nom de A (et de ceux ayant certifié son identité) puisque lui R y a eu accès, ce qui peut aussi être vérifié techniquement :
+>- et alors ? A est très vilain mais nul ne peut contraindre A à résilier son compte.
+>- le nom de A est peut-être un pseudo : c'est dans l'application que son nom est certifié ... au dehors c'est une autre affaire.
+>- prouver qu'un texte a été techniquement écrit par quelqu'un ayant eu connaissance de la phrase secrète de A est une chose quand à prouver que A n'a pas cédé à une contrainte insurmontable ou est simplement victime d'une imprudence certes coupable dans la conservation du secret de cette phrase secrète ...
 
 #### Instance avec droit de dissolution administrative
 Si ce droit est ouvert dans la configuration de l'instance, un compte ayant un privilège d'administration peut sur injonction externe agir sur le droit d'accès d'un compte ou d'un forum en en connaissant l'identifiant :
@@ -291,62 +362,24 @@ D'autres instances peuvent faire le choix inverse : tout dépend de l'engagement
 #### Instance avec lanceurs d'alertes
 Un lanceur d'alerte est une personne qui a eu accès normalement à un ou des contenus du fait de sa participation régulière à des conversations ou des notes d'un forum et qui considère un ou des contenus comme incompatible avec la charte éthique de l'instance.
 - son objectif est de porter à la connaissance de personnes externes le ou les contenus qu'elle juge non conforme.
-- ces personnes peuvent alors :
-    - s'assurer techniquement que ce ou ces contenus sont réels, ne sont pas des fake construits pour l'occasion.
-    - intervenir pour les faire rectifier en utilisant le pouvoir de restriction d'un compte ayant privilège d'administration.
+- le lanceur d'alerte constitue et enregistre un dossier :
+    - avec les signatures du / des contenus en cause (une note, une conversation entre deux date-heures données).
+    - avec les textes de ces contenus encryptés pour n'être lisibles que par un compte ayant privilège d'administration.
+    - en fournissant ou non son nom / numéro de compte, selon que c'est déclaré interdit / obligatoire / au choix du lanceur d'alerte dans la configuration de l'instance.
+
+Un dossier d'alerte peut être expertisé par un compte ayant privilège d'administration :
+- il peut recalculer le hachage des contenus (qu'il a reçus cryptés pour lui seul) et les confronter avec la signature de l'auteur, bref s'assurer que ce n'est pas un fake.
+- apprécier du contenu et des mesures à prendre.
 
 >Il est clair qu'autoriser le lancement d'alertes sans possibilité de coercition éventuel peut manquer d'intérêt ... quoi que ...
 
-La configuration de l'instance peut en conséquence spécifier :
-- si oui ou non les alertes sont gérées.
-- si oui, si l'identité du lanceur d'alerte est :
-    - non communiquée par le lanceur qui ne peut qu'être anonyme.
-    - obligatoire : le lanceur d'alerte verra son nom / numéro de compte obligatoirement associé à l'alerte.
-    - laissée au libre choix du lanceur d'alerte.
+Différences entre le lancement d'alertes dans une instance *modérée* et une instance *libertaire* :
+- dans l'instance *libertaire* l'alerte ne peut être que publiée hors de l'application auprès d'un public qui certes peut vérifier que l'alerte n'est pas un fake ... mais peut ne pas le faire. L'alerte est publiée dans le vaste internet anonyme.
+- dans l'instance *modérée*, certes la publication grand public ne peut être interdite mais il existe au moins une instance discrète interne.
+- dans l'instance *libertaire* le soi disant coupable ... fait ce qu'il veut, y compris continuer. Pour le faire taire il faut ... tuer l'instance.
+- dans l'instance *modérée* le compte incriminé peut être bloqué seul.
 
-##### Alerte
-Le lanceur d'alerte a lu un contenu qu'il considère comme inapproprié : il l'a forcément lu *en clair*.  
-- Si c'est une note ou une pièce jointe à une note, l'identifiant est celui de la note (son forum / compte et son identifiant dans ce compte / forum).
-- Si c'est une conversation c'est l'ensemble des échanges entre deux instants donnés : l'identifiant est celui de la conversation et deux date-heures (afin de permettre d'apprécier du contexte de la conversation et non pas seulement d'une ligne isolée).
-
-**Il choisit une phrase d'alerte et fait générer une clé de cryptage depuis cette phrase qu'il est seul à connaître.**
-
-Il demande à l'application de prendre **un cliché du contexte de l'alerte** :
-- l'identifiant du contenu.
-- la liste de /des numéros de compte de l'auteur / contributeurs.
-- la date-heure de prise de cliché.
-- le / les digests du / des contenus. Un digest est un très grand nombre qui a été calculé depuis le texte du contenu en clair avant son cryptage pour envoi, dans la session qui a envoyé le contenu.
-- l'application enregistre ce cliché crypté par la clé de cryptage de son alerte.
-
-Ayant ce / ces contenus en clair, le lanceur d'alerte les cryptent par la clé de cryptage de son alerte transmise elle-même cryptée par la clé publique d'administration de l'instance : seuls les comptes ayant privilège d'administration pourront la décrypter.  
-Le dossier d'alerte comporte :
-- l'identification ou non du lanceur d'alerte, avec ou non un de ses CV.
-- une note d'explication éventuelle de sa part, note qui est crypté comme le / les contenus.
-- le / les contenus cryptés et lisible par les seuls modérateurs.
-- la référence dans le serveur du cliché du contexte de l'alerte.
-
-##### Instruction d'une alerte par un / des modérateurs
-Ceux-ci ont obligatoirement des comptes avec privilège d'administration sans quoi ils ne peuvent pas décrypter le texte de l'alerte.
-
-Un modérateur doit d'abord déterminer si les contenus soumis sont réels ou des fake :
-- il demande à l'application le cliché du contexte de l'alerte et ceci lui procure en particulier les digests des contenus qui ont été transmis par le lanceur d'alerte.
-- il fait vérifier pas sa session que le digest des contenus (en clair) sont bien les mêmes que ceux photographiés par le serveur au moment de la capture de l'alerte.
-- il sait donc si le lanceur d'alerte a fabriqué des fake.
-
-Le modérateur peut apprécier les contenus, les autres modérateurs peuvent procéder de la même manière : après cela ils prennent les décisions que la charte d'éthique leur recommande de suivre, cette appréciation est humaine et externe à l'application. Le cas échéant le ou les comptes et forums peuvent bloqués et / ou détruits, mais l'alerte peut aussi être classée sans suite.
-
-#### Ce processus peut-il être fraudé ?  
-La question préliminaire est : est-il possible d'insérer un faux contenu directement en base sans passer par l'application ?
-- techniquement oui. L'administrateur technique de la base peut y patcher n'importe quelle information et remplacer un contenu vrai par un fake.
-- ce path est-il détectable ? Si cet administrateur technique dispose de la clé de cryptage du forum, non.
-
->En conséquence : ***la complicité entre un participant régulier d'un forum et un administrateur technique de la base permet d'introduire, sans être détectable, un contenu fake correctement crypté en l'attribuant à un autre participant***.
-
->***Un administrateur technique peut gommer n'importe quel contenu et ainsi masquer un contenu inapproprié qui lui aurait désigné et ce sans être détecté***.
-
-Un participant régulier peut normalement introduire un contenu correctement crypté et n'a aucunement besoin d'une quelconque complicité pour ça :
-- mais en procédant normalement le serveur a enregistré une date-heure réelle et lui a attribué la paternité du texte.
-- la complicité d'un administrateur est requis pour patcher l'auteur et la date-heure du contenu, bref pour l'attribuer à un autre.
+>**Remarque** : dans un cas comme dans l'autre la notion d'appréciation ne peut pas être technique mais uniquement humaine et partiale. La preuve technique n'est qu'une preuve de publication de contenu sous contrôle d'une phrase secrète, réputée théoriquement devoir le rester sauf pour une personne : c'est certes un élément troublant mais l'ADN de l'auteur n'est pas capté par le système (et d'ailleurs le serait-il que c'est seulement le fichier le contenant qui le serait).
 
 # Compte : ses contacts, sa création et sa résiliation
 
