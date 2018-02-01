@@ -469,6 +469,40 @@ class RSA {
 	constructor() {	
 	}
 
+	static pemToSpki(pem) {
+		let x = pem.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replace(/\n/g, "").replace(/\r/g, "");
+		return B64.decode(x);
+	}
+	
+	static spkiToPem(ab) { // ArrayBuffer
+		const x = B64.encode(new Uint8Array(ab), true);
+		let i = 0;
+		let a = ["-----BEGIN PUBLIC KEY-----"];
+		while (i < x.length) {
+			a.push(x.substring(i, i + 64));
+			i += 64;
+		}
+		a.push("-----END PUBLIC KEY-----");
+		return a.join("\n");
+	}
+
+	static pemToPkcs8(pem) {
+		let x = pem.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "").replace(/\n/g, "").replace(/\r/g, "");
+		return B64.decode(x);
+	}
+
+	static pkcs8ToPem(ab) { // ArrayBuffer
+		const x = B64.encode(new Uint8Array(ab), true);
+		let i = 0;
+		let a = ["-----BEGIN PRIVATE KEY-----"];
+		while (i < x.length) {
+			a.push(x.substring(i, i + 64));
+			i += 64;
+		}
+		a.push("-----END PRIVATE KEY-----");
+		return a.join("\n");
+	}
+
 	static get rsaObj() {
 		// le hash DOIT être SHA-1 pour interaction avec java (le seul qu'il accepte d'échanger)
 		return {name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: {name: "SHA-1"}};
@@ -496,10 +530,10 @@ class RSA {
 		let key = await crypto.subtle.generateKey(obj, true, ["encrypt", "decrypt"]);
 		rsa.priv = key.privateKey;
 		rsa.pub = key.publicKey;
-		let jpriv = await crypto.subtle.exportKey("jwk", rsa.priv);
-		rsa.jwkpriv = RSA.ios() ? Util.bytes2string(jpriv) : JSON.stringify(jpriv);
-		let jpub = await crypto.subtle.exportKey("jwk", rsa.pub);
-		rsa.jwkpub = RSA.ios() ? Util.bytes2string(jpub) : JSON.stringify(jpub);
+		let jpriv = await crypto.subtle.exportKey("pkcs8", rsa.priv);
+		rsa.pkcs8 = this.pkcs8ToPem(jpriv);
+		let jpub = await crypto.subtle.exportKey("spki", rsa.pub);
+		rsa.spki = this.spkiToPem(jpub);
 		return rsa;
 	}
 	
@@ -537,40 +571,22 @@ class RSA {
 		const ch64 = B64.encode(ch, true);
 		return await this.compareRSAPriv(priv1, priv2, chec64, ch64);
 	}
-		
-//	static async ios() {
-//		if (App.IOS == null) {
-//			try {
-//				let key = await crypto.subtle.generateKey(RSA.rsaObj, true, ["encrypt", "decrypt"]);
-//				let jwk = await crypto.subtle.exportKey("jwk", key.privateKey);
-//				const x = JSON.stringify(jwk);
-//				const y = JSON.parse(x);
-//				let result2 = await crypto.subtle.importKey("jwk", y, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
-//				App.IOS = false;
-//			} catch (err) {
-//				App.IOS = true;
-//			}
-//		}
-//		return App.IOS;
-//	}
 	
-	static ios() { return App.IOS; }
-	
-	static async newRSAPriv(jwkJson) {
-		const key = RSA.ios() ? Util.string2bytes(jwkJson) : JSON.parse(jwkJson);
-		let result2 = await crypto.subtle.importKey("jwk", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
+	static async newRSAPriv(pkcs8) {
+		const key = this.pemToPkcs8(pkcs8);
+		let result2 = await crypto.subtle.importKey("pkcs8", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
 		const rsa = new RSA();
 		rsa.priv = result2;
-		rsa.jwkpriv = jwkJson;
+		rsa.pkcs8 = pkcs8;
 		return rsa;
 	}
 
-	static async newRSAPub(jwkJson) {
-		const key = RSA.ios() ? Util.string2bytes(jwkJson) : JSON.parse(jwkJson);
-		let result2 = await crypto.subtle.importKey("jwk", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["encrypt"])
+	static async newRSAPub(spki) {
+		const key = this.pemToSpki(spki);
+		let result2 = await crypto.subtle.importKey("spki", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["encrypt"])
 		const rsa = new RSA();
 		rsa.pub = result2;
-		rsa.jwkpub = jwkJson;
+		rsa.spki = spki;
 		return rsa;
 	}
 

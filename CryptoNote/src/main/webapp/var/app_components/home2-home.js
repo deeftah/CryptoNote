@@ -122,7 +122,7 @@ class Home2Home extends Polymer.Element {
 			console.error(App.Util.error("DbInfo KO - " + err.message, 3000));
 		}
 	}
-	
+		
 	async crypto() {
 		try{
 			let x = await App.Util.sha256("toto");
@@ -147,15 +147,39 @@ class Home2Home extends Polymer.Element {
 			console.log("AES decrypted z: " + App.Util.bytesEqual(z1, z2));
 			
 			let rsa = await App.RSA.newRSAGen();
-			let pub = await App.RSA.newRSAPub(rsa.jwkpub);
-			let priv = await App.RSA.newRSAPriv(rsa.jwkpriv);
-			
+			console.log("rsa.spki : " + rsa.spki);
+			console.log("rsa.pkcs8 : " + rsa.pkcs8);
+			let pub = await App.RSA.newRSAPub(rsa.spki);
+			let priv = await App.RSA.newRSAPriv(rsa.pkcs8);
+
 			y = await pub.encode("toto est beau");
-			console.log("RSA crypted: " + App.B64.encode(y, true)  + " / " + y.length);
+			console.log("RSA crypted: " + App.B64.encode(y)  + " / " + y.length);
 
 			x = await priv.decode(y);
 			console.log("RSA decrypted: " + App.Util.bytes2string(x));
 
+			let pri;
+			let cryp;
+			let pu;
+			let r = await fetch(App.basevar + "z/z/private.pem");
+			if (r.ok) 
+				pri = await r.text();
+			r = await fetch(App.basevar + "z/z/public.pem");
+			if (r.ok) 
+				pu = await r.text();
+			r = await fetch(App.basevar + "z/z/crypted.txt");
+			if (r.ok) 
+				cryp = await r.text();
+
+			let pub2 = await App.RSA.newRSAPub(pu);
+
+			let priv2 = await App.RSA.newRSAPriv(pri);
+			x = await priv2.decode(cryp);
+			let s = App.Util.bytes2string(x);
+			console.log("RSA decrypted2: " + s);
+
+			x = await pub2.encode(s);
+			console.log("RSA crypted2: " + App.Util.B64.encode(x));
 			
 		} catch(err) {
 			console.log(err.message + "/n" + err.stack);

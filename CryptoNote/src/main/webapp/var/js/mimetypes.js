@@ -10,7 +10,8 @@ App.mimetypes = {
 		"md":"text/markdown",
 		"txt":"text/plain",
 		"xml":"application/xml",
-		"appcache":"text/cache-manifest"
+		"appcache":"text/cache-manifest",
+		"pem":"application/x-pem-file"
 	},
 	"bin":{
 		"woff":"application/font-woff",

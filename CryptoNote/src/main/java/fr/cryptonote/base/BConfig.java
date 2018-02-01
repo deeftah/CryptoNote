@@ -208,7 +208,7 @@ public class BConfig {
 		public int scanlapseinseconds() { return scanlapseinseconds; }
 		
 		public boolean isPwd(String key) {
-			String sha = Servlet.SHA256b64(key, false);
+			String sha = Servlet.SHA256b64(key);
 			return sha != null && sha.equals(pwd());
 		}
 		

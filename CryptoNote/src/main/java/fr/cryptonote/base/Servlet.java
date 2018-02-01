@@ -76,6 +76,10 @@ public class Servlet extends HttpServlet {
 		}
 	}
 	
+	public static String bytesToB64(byte[] b){
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(b);
+	}
+	
 	public static String b64(byte[] b, boolean padding){
 		String s = Base64.getUrlEncoder().encodeToString(b);
 		if (padding) return s;
@@ -88,12 +92,12 @@ public class Servlet extends HttpServlet {
 			return s;
 	}
 	
-	public static String SHA256b64(String s, boolean padding) {
-		return b64(SHA256(s == null ? null : Util.toUTF8(s)), padding);
+	public static String SHA256b64(String s) {
+		return bytesToB64(SHA256(s == null ? null : Util.toUTF8(s)));
 	}
 
-	public static String SHA256b64(byte[] bytes, boolean padding) {
-		return b64(SHA256(bytes == null ? new byte[0] : bytes), padding);
+	public static String SHA256b64(byte[] bytes) {
+		return bytesToB64(SHA256(bytes == null ? new byte[0] : bytes));
 	}
 
 	/********************************************************************************/
@@ -802,7 +806,7 @@ public class Servlet extends HttpServlet {
 		public Resource(byte[] bytes, String mime) { 
 			this.bytes = bytes; 
 			this.mime = mime;  
-			sha = SHA256b64(bytes, false); 
+			sha = SHA256b64(bytes); 
 		}
 		public Resource(String text, String mime){ this(Util.toUTF8(text), mime); }
 		public String toString(){ String s = Util.fromUTF8(bytes); return s == null ? "" : s; }
