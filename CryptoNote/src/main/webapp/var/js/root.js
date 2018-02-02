@@ -94,8 +94,9 @@ class App {
 		// test buuild du serveur
 		App.srvbuild = await this.pingFetch();
 		if (App.mode == 0) 
-			return !App.srvbuild || App.srvbuild != App.build ? this.reloadWB() : this.rootready();
-		
+			// return !App.srvbuild || App.srvbuild != App.build ? this.reloadWB() : this.rootready();
+			return this.rootready();
+			
 		// mode 1
 		if (!App.srvbuild) {
 			if (App.modeMax < 2) 
@@ -250,7 +251,9 @@ class App {
 	static applabel() { return App.lib("application");}
 
 	static scriptErr(err, severe) { 
-		if (!err || !(err instanceof Error)) return;
+		if (!err || !(err instanceof Error)) {
+			err = new Error(err ? err.toString() : "???");
+		};
 		if (App.scriptErrPanel)
 			App.scriptErrPanel.open(err, severe); 
 		else {

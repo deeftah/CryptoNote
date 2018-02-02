@@ -179,10 +179,24 @@ class Home2Home extends Polymer.Element {
 			console.log("RSA decrypted2: " + s);
 
 			x = await pub2.encode(s);
-			console.log("RSA crypted2: " + App.Util.B64.encode(x));
+			console.log("RSA crypted2: " + App.B64.encode(x));
 			
+			rsa = await App.RSA.newSSAGen();
+			console.log("rsa.spki : " + rsa.spki);
+			console.log("rsa.pkcs8 : " + rsa.pkcs8);
+			pub = await App.RSA.newSSAPub(rsa.spki);
+			priv = await App.RSA.newSSAPriv(rsa.pkcs8);
+
+			y = await priv.sign("toto est beau");
+			console.log("RSA sign: " + App.B64.encode(y)  + " / " + y.length);
+
+			x = await pub.verify(y, "toto est beau");
+			console.log("RSA verify: " + x);
+
+			x = await pub.verify(y, "titi est beau");
+			console.log("RSA verify: " + x);
 		} catch(err) {
-			console.log(err.message + "/n" + err.stack);
+			App.scriptErr(err);
 		}
 	}
 	

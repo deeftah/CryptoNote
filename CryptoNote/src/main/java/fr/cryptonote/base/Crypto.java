@@ -10,6 +10,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
+import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -87,7 +88,7 @@ public class Crypto {
 	
 //	private static KeyPairGenerator keyGen;
 	private static KeyFactory keyFactory;
-//	private static Signature sig;
+	private static Signature sig;
 	private static MessageDigest digestSha1;
 	private static MessageDigest digestSha256;
 	
@@ -95,12 +96,12 @@ public class Crypto {
 //		keyGen = KeyPairGenerator.getInstance("RSA");
 //		SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
 //		keyGen.initialize(2048, random);
-//		sig = Signature.getInstance("SHA256withRSA");
+		sig = Signature.getInstance("SHA256withRSA");
 		keyFactory = KeyFactory.getInstance("RSA");
 		digestSha1 = MessageDigest.getInstance("SHA-1");
 		digestSha256 = MessageDigest.getInstance("SHA-256");
 		// OAEPWithSHA1AndMGF1Padding : seul qui accepte de matcher avec Web Cryptography
-		Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding"); // pour tester l'exception
+		// Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding"); // pour tester l'exception
 	}
 	
 	private static Cipher cipher() throws Exception { 
@@ -148,24 +149,24 @@ public class Crypto {
 //		res[1] = pair.getPublic().getEncoded();
 //		return res;
 //	}
-//	
-//	public static byte[] sign(byte[] ssaPkcs8, byte[] texte) throws Exception {
-//		synchronized (sig) {
-//			RSAPrivateKey privateKey = (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(ssaPkcs8));
-//			sig.initSign(privateKey);
-//			sig.update(texte);
-//			return sig.sign();
-//		}
-//	}
-//	
-//	public static boolean verify(byte[] ssaSpki, byte[] texte, byte[] signature) throws Exception {
-//		synchronized (sig) {
-//			RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(ssaSpki));
-//			sig.initVerify(publicKey);
-//			sig.update(texte);
-//			return sig.verify(signature);
-//		}
-//	}
+	
+	public static byte[] sign(byte[] ssaPkcs8, byte[] texte) throws Exception {
+		synchronized (sig) {
+			RSAPrivateKey privateKey = (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(ssaPkcs8));
+			sig.initSign(privateKey);
+			sig.update(texte);
+			return sig.sign();
+		}
+	}
+	
+	public static boolean verify(byte[] ssaSpki, byte[] signature, byte[] texte) throws Exception {
+		synchronized (sig) {
+			RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(ssaSpki));
+			sig.initVerify(publicKey);
+			sig.update(texte);
+			return sig.verify(signature);
+		}
+	}
 	
 	public static byte[] pemToSpki(String b64){
 		String s = b64.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replaceAll("\n", "").replaceAll("\r", "");
@@ -286,9 +287,11 @@ public class Crypto {
 			String s;
 			byte[] privkey;
 			byte[] pubkey;
+			byte[] toto = "toto est beau".getBytes("UTF-8");
+			byte[] titi = "titi est beau".getBytes("UTF-8");
 			
 			pubkey =  pemToSpki(bytes2string(bytesFromStream(new FileInputStream ("data/public.pem"))));
-			crypted = encrypt(pubkey, "toto est beau".getBytes("UTF-8"));
+			crypted = encrypt(pubkey, toto);
 			System.out.println(bytesToB64(crypted));
 			stringToStream(bytesToB64(crypted), new FileOutputStream("data/crypted2.txt"));
 
@@ -301,30 +304,21 @@ public class Crypto {
 			bytesToStream(crypted2, new FileOutputStream("data/crypted2.bin"));
 			decrypted = decrypt(privkey, crypted2);
 			System.out.println(new String(decrypted, "UTF-8"));
+			
+			pubkey =  pemToSpki(bytes2string(bytesFromStream(new FileInputStream ("data/publics.pem"))));
+			privkey = pemToPkcs8(bytes2string(bytesFromStream(new FileInputStream ("data/privates.pem"))));
+			s =  bytes2string(bytesFromStream(new FileInputStream ("data/sign.txt")));
+			byte[] sign = b64ToBytes(s);
+			// byte[] ssaSpki, byte[] signature, byte[] texte
+			boolean v = verify(pubkey, sign, toto);
+			System.out.println(v);
+			v = verify(pubkey, sign, titi);
+			System.out.println(v);
 
-//			String s1 = bytes2string(bytesFromStream(new FileInputStream ("data/public.pem")));
-//			String s2 = s1.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replaceAll("\n", "").replaceAll("\r", "");
-//			byte[] b1 = b64ToBytesX(s2);
-//			RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(b1));
-//			
-//			String s3 = bytes2string(bytesFromStream(new FileInputStream ("data/pkcs8.pem")));
-//			String s4 = s3.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "").replaceAll("\n", "");
-//			byte[] b2 = b64ToBytes(s4);
-//			
-//			Cipher cipher = cipher();
-//			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-//			crypted = cipher.doFinal("toto est beau".getBytes("UTF-8"));
-//
-//			stringToStream(bytesToB64(crypted), new FileOutputStream("data/crypted.txt"));
-//			
-//			byte[] b3 = bytesFromStream(new FileInputStream ("data/private.der"));
-//			String s5 = bytesToB64(b3);
-//			System.out.println(s5.equals(s4) ? "yes" : "no");
-//			
-//			RSAPrivateKey privateKey = (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(b2));
-//			cipher.init(Cipher.DECRYPT_MODE, privateKey);
-//			decrypted = cipher.doFinal(crypted);
-//			System.out.println(new String(decrypted, "UTF-8"));
+			crypted = sign(privkey, toto);
+			System.out.println(bytesToB64(crypted));
+			stringToStream(bytesToB64(crypted), new FileOutputStream("data/sign2.txt"));
+
 		} catch (Throwable t){
 			t.printStackTrace();
 		}

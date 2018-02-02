@@ -508,10 +508,12 @@ class RSA {
 		return {name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: {name: "SHA-1"}};
 	}
 
-	//	rsassaObj : {name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: {name: "SHA-256"}},
+	static get rsassaObj() { 
+		return {name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: {name: "SHA-256"}};
+	}
+	
 	// http://stackoverflow.com/questions/33043091/public-key-encryption-in-microsoft-edge
 	// hash: { name: "SHA-1" } inutile mais fait marcher edge !!!
-	
 	async encode(data) {
 		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
 		let result = await crypto.subtle.encrypt({name: "RSA-OAEP", hash: { name: "SHA-1" }}, this.pub, uint8);
@@ -524,6 +526,19 @@ class RSA {
 	    return new Uint8Array(result);
 	}
 	
+	async sign(data) {
+		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
+		let result = await crypto.subtle.sign({name: "RSASSA-PKCS1-v1_5"}, this.priv, uint8);
+		return new Uint8Array(result);
+	}
+	
+	async verify(signature, data) {
+		const sig8 = typeof signature === "string" ? B64.decode(signature) : signature;
+		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
+		let result = await crypto.subtle.verify({name: "RSASSA-PKCS1-v1_5"}, this.pub, sig8, uint8);
+	    return result;
+	}
+
 	static async newRSAGen() {
 		const rsa = new RSA();
 		const obj = this.rsaObj;
@@ -537,40 +552,53 @@ class RSA {
 		return rsa;
 	}
 	
-	static async compareRSAPub(p1, p2, ch){ 
-		if ((p1 && !p2) || (p2 && !p1) || !ch) return null;
-		try {
-			let x = await p1.encode(ch);
-			let chec64 = B64.encode(x, true);
-			let y = await p2.encode(ch);
-			let y64 = B64.encode(y, true);
-			return y64 == chec64 ? chec64 : null;
-		} catch(err) {
-			return null;
-		}
+	static async newSSAGen() {
+		const rsa = new RSA();
+		const obj = this.rsassaObj;
+		let key = await crypto.subtle.generateKey(obj, true, ["sign", "verify"]);
+		rsa.priv = key.privateKey;
+		rsa.pub = key.publicKey;
+		let jpriv = await crypto.subtle.exportKey("pkcs8", rsa.priv);
+		rsa.pkcs8 = this.pkcs8ToPem(jpriv);
+		let jpub = await crypto.subtle.exportKey("spki", rsa.pub);
+		rsa.spki = this.spkiToPem(jpub);
+		return rsa;
 	}
 
-	static async compareRSAPriv(p1, p2, chec64, ch64){ 
-		if ((p1 && !p2) || (p2 && !p1) || !chec64 || !ch64) return false;
-		try {
-			const chec = B64.decode(chec64);
-			let x = await p1.decode(chec);
-			let chdc64 = B64.encode(x, true);
-			if (chdc64 != ch64) return false;
-			let y = await p2.decode(chec);
-			const y64 = B64.encode(y, true);
-			return y64 == chdc64;
-		} catch (err) {
-			return false;
-		}
-	}
-
-	static async compareRSA(pub1, pub2, priv1, priv2, ch) {
-		let chec64 = await this.compareRSAPub(pub1, pub2, ch);
-		if (!chec64) return false;
-		const ch64 = B64.encode(ch, true);
-		return await this.compareRSAPriv(priv1, priv2, chec64, ch64);
-	}
+//	static async compareRSAPub(p1, p2, ch){ 
+//		if ((p1 && !p2) || (p2 && !p1) || !ch) return null;
+//		try {
+//			let x = await p1.encode(ch);
+//			let chec64 = B64.encode(x, true);
+//			let y = await p2.encode(ch);
+//			let y64 = B64.encode(y, true);
+//			return y64 == chec64 ? chec64 : null;
+//		} catch(err) {
+//			return null;
+//		}
+//	}
+//
+//	static async compareRSAPriv(p1, p2, chec64, ch64){ 
+//		if ((p1 && !p2) || (p2 && !p1) || !chec64 || !ch64) return false;
+//		try {
+//			const chec = B64.decode(chec64);
+//			let x = await p1.decode(chec);
+//			let chdc64 = B64.encode(x, true);
+//			if (chdc64 != ch64) return false;
+//			let y = await p2.decode(chec);
+//			const y64 = B64.encode(y, true);
+//			return y64 == chdc64;
+//		} catch (err) {
+//			return false;
+//		}
+//	}
+//
+//	static async compareRSA(pub1, pub2, priv1, priv2, ch) {
+//		let chec64 = await this.compareRSAPub(pub1, pub2, ch);
+//		if (!chec64) return false;
+//		const ch64 = B64.encode(ch, true);
+//		return await this.compareRSAPriv(priv1, priv2, chec64, ch64);
+//	}
 	
 	static async newRSAPriv(pkcs8) {
 		const key = this.pemToPkcs8(pkcs8);
@@ -584,6 +612,24 @@ class RSA {
 	static async newRSAPub(spki) {
 		const key = this.pemToSpki(spki);
 		let result2 = await crypto.subtle.importKey("spki", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["encrypt"])
+		const rsa = new RSA();
+		rsa.pub = result2;
+		rsa.spki = spki;
+		return rsa;
+	}
+
+	static async newSSAPriv(pkcs8) {
+		const key = this.pemToPkcs8(pkcs8);
+		let result2 = await crypto.subtle.importKey("pkcs8", key, {name: "RSASSA-PKCS1-v1_5", hash:{name:"SHA-256"}}, true, ["sign"]);
+		const rsa = new RSA();
+		rsa.priv = result2;
+		rsa.pkcs8 = pkcs8;
+		return rsa;
+	}
+
+	static async newSSAPub(spki) {
+		const key = this.pemToSpki(spki);
+		let result2 = await crypto.subtle.importKey("spki", key, {name: "RSASSA-PKCS1-v1_5", hash:{name:"SHA-256"}}, true, ["verify"])
 		const rsa = new RSA();
 		rsa.pub = result2;
 		rsa.spki = spki;
