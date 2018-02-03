@@ -6,22 +6,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.crypto.Cipher;
@@ -315,6 +312,8 @@ public class Crypto {
 		
 	// https://stackoverflow.com/questions/6481627/java-security-illegal-key-size-or-default-parameters
 	// Security.setProperty("crypto.policy", "unlimited");
+	// Requis pour java8 < 130
+	/*
 	public static void fixKeyLength() {
 	    String errorString = "Failed manually overriding key-length permissions.";
 	    int newMaxKeyLength;
@@ -352,11 +351,12 @@ public class Crypto {
 	    if (newMaxKeyLength < 256)
 	        throw new RuntimeException(errorString); // hack failed
 	}
+	*/
 	
 	public static void main(String[] args){
 		try {
-			fixKeyLength();
-			// Security.setProperty("crypto.policy", "unlimited");
+			// fixKeyLength();
+			Security.setProperty("crypto.policy", "unlimited");
 			
 			byte[] crypted;
 			byte[] decrypted;
