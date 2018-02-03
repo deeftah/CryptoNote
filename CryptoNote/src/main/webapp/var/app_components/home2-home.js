@@ -125,6 +125,9 @@ class Home2Home extends Polymer.Element {
 		
 	async crypto() {
 		try{
+			const ivHex = App.Util.uint8ToHex(App.AES.iv());
+			console.log("ivHex : " + ivHex);
+			
 			let x = await App.Util.sha256("toto");
 			console.log(App.B64.encode(x, true));
 			let y = App.Util.string2bytes("toto");
@@ -133,29 +136,42 @@ class Home2Home extends Polymer.Element {
 			
 			x = App.Util.bcrypt("toto est beau");
 			console.log("BCrypt: " + x + " / " + x.length);
-			let aes1 = await App.AES.newAES(App.Util.bcrypt2u32(x));
+			const aeskeyBin = App.Util.bcrypt2u32(x);
+			const aeskeyHex = App.Util.uint8ToHex(aeskeyBin);
+			console.log("aeskeyHex : " + aeskeyHex);
+			let aeskey = App.B64.encode(aeskeyBin);
 			
-			y = await aes1.encode("toto est beau");
+			console.log("AESKEY: " + aeskey);
+			let aes1 = await App.AES.newAES(App.Util.bcrypt2u32(x));
+			console.log("B: " + App.B64.encode(aes1.uint8));
+			
+			y = await aes1.encrypt("toto est beau");
 			console.log("AES crypted: " + App.B64.encode(y, true)  + " / " + y.length);
-			x = await aes1.decode(y);
+			
+			let aes2 = await App.AES.newAES(B64.decode(aeskey));
+			y = await aes2.encrypt("toto est beau");
+			console.log("AES crypted: " + App.B64.encode(y, true)  + " / " + y.length);
+			
+			x = await aes1.decrypt(y);
 			console.log("AES decrypted: " + App.Util.bytes2string(x));
+						
 			let z1 = JSON.stringify(App.zres);
-			y = await aes1.encode(z1, true);
+			y = await aes1.encrypt(z1, true);
 			console.log("AES crypted z: " + y.length + " / " + z1.length);
-			x = await aes1.decode(y, true);
+			x = await aes1.decrypt(y, true);
 			let z2 = App.Util.bytes2string(x);
 			console.log("AES decrypted z: " + App.Util.bytesEqual(z1, z2));
 			
-			let rsa = await App.RSA.newRSAGen();
-			console.log("rsa.spki : " + rsa.spki);
-			console.log("rsa.pkcs8 : " + rsa.pkcs8);
-			let pub = await App.RSA.newRSAPub(rsa.spki);
-			let priv = await App.RSA.newRSAPriv(rsa.pkcs8);
+			let kp = await App.RSA.newEDKeyPair();
+			console.log(kp.pub);
+			console.log(kp.priv);
+			let pub = await App.RSA.encrypter(kp.pub);
+			let priv = await App.RSA.decrypter(kp.priv);
 
-			y = await pub.encode("toto est beau");
+			y = await pub.encrypt("toto est beau");
 			console.log("RSA crypted: " + App.B64.encode(y)  + " / " + y.length);
 
-			x = await priv.decode(y);
+			x = await priv.decrypt(y);
 			console.log("RSA decrypted: " + App.Util.bytes2string(x));
 
 			let pri;
@@ -171,21 +187,21 @@ class Home2Home extends Polymer.Element {
 			if (r.ok) 
 				cryp = await r.text();
 
-			let pub2 = await App.RSA.newRSAPub(pu);
-
-			let priv2 = await App.RSA.newRSAPriv(pri);
-			x = await priv2.decode(cryp);
+			let pub2 = await App.RSA.encrypter(pu);
+			let priv2 = await App.RSA.decrypter(pri);
+			
+			x = await priv2.decrypt(cryp);
 			let s = App.Util.bytes2string(x);
 			console.log("RSA decrypted2: " + s);
 
-			x = await pub2.encode(s);
+			x = await pub2.encrypt(s);
 			console.log("RSA crypted2: " + App.B64.encode(x));
 			
-			rsa = await App.RSA.newSSAGen();
-			console.log("rsa.spki : " + rsa.spki);
-			console.log("rsa.pkcs8 : " + rsa.pkcs8);
-			pub = await App.RSA.newSSAPub(rsa.spki);
-			priv = await App.RSA.newSSAPriv(rsa.pkcs8);
+			kp = await App.RSA.newSVKeyPair();
+			console.log(kp.pub);
+			console.log(kp.priv);
+			pub = await App.RSA.verifier(kp.pub);
+			priv = await App.RSA.signer(kp.priv);
 
 			y = await priv.sign("toto est beau");
 			console.log("RSA sign: " + App.B64.encode(y)  + " / " + y.length);

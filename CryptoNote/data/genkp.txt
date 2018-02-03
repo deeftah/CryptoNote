@@ -9,3 +9,7 @@ openssl pkcs8 -topk8 -inform PEM -outform PEM -in keypair.pem -out pkcs8.pem -no
 openssl rsautl -decrypt -oaep -in crypted2.bin -out crypted5.txt -inkey private.pem
 
 openssl rsautl -encrypt -in crypted4.txt -out crypted4.bin -pubin -inkey public.pem
+
+openssl aes-256-cbc -e -base64 -in crypted5.txt -out aescrypted2.txt -iv 65666768696A6B6C6D6E6F7071727374 -K 3BBB08C8859E927DCCA16304CD3D549448B16DC6ADB142000000000000000000
+
+openssl aes-256-cbc -d -in aescrypted.bin -iv 65666768696A6B6C6D6E6F7071727374 -K 3BBB08C8859E927DCCA16304CD3D549448B16DC6ADB142000000000000000000
