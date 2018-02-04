@@ -1,16 +1,10 @@
 package fr.cryptonote.base;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.Signature;
@@ -18,192 +12,82 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.concurrent.ThreadLocalRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Crypto {
-	public static String randomB64(int n8) { return bytesToB64(SHA256(random(n8))); }
-	
-	public static byte[] random(int n8) {
-		int n = n8 < 1 ? 1 : (n8 > 4 ? 4 : n8);
-		ThreadLocalRandom tlr = ThreadLocalRandom.current();
-		ByteBuffer bf = ByteBuffer.allocate(n * 8);
-		try {
-			for(int i = 0; i < n; i++)
-				bf.putLong(tlr.nextLong(1, Long.MAX_VALUE));
-			return bf.array();
-		} catch (Exception e) { 
-			return bf.array();
-		}
-	}
-	
-	private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
-
-	/**
-	 * Retourne en String la représentation en hexa d'un byte[]
-	 * @param bytes
-	 * @return
-	 */
-	public static String bytesToHex(byte[] bytes) {
-		if (bytes == null || bytes.length == 0) return "";
-	    char[] hexChars = new char[bytes.length * 2];
-	    for ( int j = 0; j < bytes.length; j++ ) {
-	        int v = bytes[j] & 0xFF;
-	        hexChars[j * 2] = hexArray[v >>> 4];
-	        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-	    }
-	    return new String(hexChars);
-	}
-
-	public static byte[] hexToBytes(String s) {
-		if (s == null || s.length() < 2) return new byte[0];
-	    int len = s.length();
-	    byte[] data = new byte[len / 2];
-	    for (int i = 0; i < len; i += 2) {
-	        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i+1), 16));
-	    }
-	    return data;
-	}
-
-	public static String bytesToB64P(byte[] b){
-		return Base64.getEncoder().encodeToString(b);
-	}
-
-	public static String bytesToB64(byte[] b){
-		return Base64.getUrlEncoder().withoutPadding().encodeToString(b);
-	}
-
-	public static byte[] b64ToBytes(String b64){
-		return Base64.getUrlDecoder().decode(b64);
-	}
-
-	public static byte[] b64ToBytesX(String b64){
-		return Base64.getDecoder().decode(b64);
-	}
-
-	public static String bytes2string(byte[] bytes){
-		if (bytes == null || bytes.length == 0) return "";
-		try { return new String(bytes, "UTF-8"); } catch (Exception e) { return "";}
-	}
-
-	public static byte[] bytesFromStream(InputStream is) {
-		try {
-			if (is == null) return null;
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			byte[] buf = new byte[4096];
-			int l = 0;
-			while((l = is.read(buf)) > 0)
-				bos.write(buf, 0, l);
-			is.close();
-			bos.flush();
-			byte[] bytes = bos.toByteArray();
-			bos.close();
-			return bytes;
-		} catch (Exception e) { return null; }
-	}
-
-	public static void bytesToStream(byte[] bytes, FileOutputStream os) throws IOException {
-		os.write(bytes);
-		os.close();
-	}
-
-	public static void stringToStream(String s, FileOutputStream os) throws UnsupportedEncodingException, IOException {
-		os.write(s.getBytes("UTF-8"));
-		os.close();
-	}
-
-	/********************************************************************************/
-	
 	private static KeyPairGenerator keyGen;
 	private static KeyFactory keyFactory;
-	private static MessageDigest digestSha1;
-	private static MessageDigest digestSha256;
 	private static SecureRandom random;
 	
 	static {
 		try {
+			// fixKeyLength(); // java 8 < 160 (environ)
+			Security.setProperty("crypto.policy", "unlimited"); // java > (environ)
 			keyGen = KeyPairGenerator.getInstance("RSA");
 			random = SecureRandom.getInstance("SHA1PRNG", "SUN");
 			keyGen.initialize(2048, random);
-//			sig = Signature.getInstance("SHA256withRSA");
 			keyFactory = KeyFactory.getInstance("RSA");
-			digestSha1 = MessageDigest.getInstance("SHA-1");
-			digestSha256 = MessageDigest.getInstance("SHA-256");
 		} catch (Exception e) {}
-		// OAEPWithSHA1AndMGF1Padding : seul qui accepte de matcher avec Web Cryptography
-		// Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding"); // pour tester l'exception
-	}
+	}	
 	
-//	private static Cipher cipher() throws Exception { 
-//		return Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
-//	}
-	
-	/**
-	 * Digest SHA-1 d'un byte[] retourné en byte[]
-	 * @param x
-	 * @return
-	 * @throws Exception
-	 */
-	public static byte[] SHA1(byte[] x) {
-		if (x == null) return null;
-		synchronized (digestSha1) {
-		    digestSha1.reset();
-		    digestSha1.update(x);
-		    return digestSha1.digest();
-		}
-	}
-
-	public static String SHA256b64(String x) {
-		return bytesToB64(Crypto.SHA256(b64ToBytes(x)));
-	}
-	
-	/**
-	 * Digest SHA-256 d'un byte[] retourné en byte[]
-	 * @param x
-	 * @return
-	 * @throws Exception
-	 */
-	public static byte[] SHA256(byte[] x) {
-		if (x == null) return null;
-		synchronized (digestSha256) {
-		    digestSha256.reset();
-		    digestSha256.update(x);
-		    return digestSha256.digest();
-		}
-	}
-	
+	/*** AES *******************************************************************/ 
 	public static class AES {
 		private static final byte[] ivb = {101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116};
-        private static final IvParameterSpec iv = new IvParameterSpec(ivb, 0, 16);
+		
+		public static byte[] iv() { return ivb; }
+		
         private Cipher cipher;
         private SecretKeySpec skeySpec;
+        byte[] iv;
         
 		public AES(byte[] key) throws Exception{
-			if (key.length != 32) key = SHA256(key);
+			if (key.length != 32) key = Util.SHA256(key);
             skeySpec = new SecretKeySpec(key, "AES");
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 		}
 		
-		public AES(String key) throws Exception {
-			this(b64ToBytes(key));
-		}
+		public AES(String key) throws Exception { this(Util.b64uToBytes(key)); }
 		
-		public byte[] encrypt(byte[] data) throws Exception {
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-            return cipher.doFinal(data);
+		public byte[] encrypt(byte[] data, byte[] ivSpec) throws Exception {
+			if (ivSpec != null && ivSpec.length == 16)
+				iv = ivSpec; 
+			else {
+				iv = new byte[16];
+				byte[] rnd = Util.random(1);
+				for(int i = 0; i < 16; i++) iv[i] = rnd[i % 4];
+			}
+	        IvParameterSpec ivx = new IvParameterSpec(iv, 0, 16);
+			cipher.init(Cipher.ENCRYPT_MODE, skeySpec, ivx);
+            byte[] res = cipher.doFinal(data);
+            if (ivSpec != null) return res;
+            byte[] r = new byte[res.length + 4];
+            System.arraycopy(res, 0, r, 4, res.length);
+            System.arraycopy(iv, 0, r, 0, 4);
+            return r;
 		}
 
-		public byte[] decrypt(byte[] data) throws Exception {
-            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-            return cipher.doFinal(data);
+		public byte[] decrypt(byte[] data, byte[] ivSpec) throws Exception {
+			byte[] cr;
+			if (ivSpec != null && ivSpec.length == 16) {
+				iv = ivSpec;
+				cr = data;
+			} else {
+				iv = new byte[16];
+				for(int i = 0; i < 16; i++) iv[i] = data[i % 4];
+				cr = new byte[data.length - 4];
+				System.arraycopy(data, 4, cr, 0, data.length - 4);
+			}
+	        IvParameterSpec ivx = new IvParameterSpec(iv, 0, 16);
+	        cipher.init(Cipher.DECRYPT_MODE, skeySpec, ivx);
+            return cipher.doFinal(cr);
 		}
 
 	}
 	
+	/*** RSA KeyPair *******************************************************************/ 
 	public static class KP {
 		public String pub; 		// PEM public
 		public String priv; 	// PEM private
@@ -224,11 +108,11 @@ public class Crypto {
 			if (s.length() != 0 && !s.startsWith("---"))
 				sb.append(s);
 		}
-		return b64ToBytesX(sb.toString());
+		return Util.b64ToBytes(sb.toString());
 	}
 	
 	public static String bytesToPem(byte[] bytes, boolean isPub) {
-		String s = bytesToB64P(bytes);
+		String s = Util.bytesToB64(bytes);
 		int i = 0;
 		String x = isPub ? "PUBLIC" : "PRIVATE";
 		StringBuffer a = new StringBuffer().append("-----BEGIN " + x + " KEY-----\n");
@@ -241,8 +125,11 @@ public class Crypto {
 		return a.toString();
 	}
 		
+	/*** RSA Encrypter *******************************************************************/ 
 	public static class Encrypter {
 		private Cipher cipher;
+		// OAEPWithSHA1AndMGF1Padding : seul qui accepte de matcher avec Web Cryptography
+		
 		public Encrypter(String pem) throws Exception {
 			cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
 			byte[] spki = pemToBytes(pem);
@@ -255,6 +142,7 @@ public class Crypto {
 		}		
 	}
 
+	/*** RSA Decrypter *******************************************************************/ 
 	public static class Decrypter {
 		private Cipher cipher;
 		public Decrypter(String pem) throws Exception {
@@ -269,6 +157,7 @@ public class Crypto {
 		}		
 	}
 
+	/*** RSA Signer *******************************************************************/ 
 	public static class Signer {
 		private RSAPrivateKey privateKey;
 		private Signature sig;
@@ -285,6 +174,7 @@ public class Crypto {
 		}
 	}
 	
+	/*** RSA Verifier *******************************************************************/ 
 	public static class Verifier {
 		private RSAPublicKey publicKey;
 		private Signature sig;
@@ -302,13 +192,6 @@ public class Crypto {
 	}
 
 	/**********************************************************/
-	public static final String bytes2String(byte[] b){
-		if (b == null || b.length == 0) return "[]";
-		StringBuffer sb = new StringBuffer();
-		for(int i = 0; i < b.length; i++)
-			sb.append(i == 0 ? '[' : ',').append(b[i]);
-		return sb.append(']').toString();
-	}
 		
 	// https://stackoverflow.com/questions/6481627/java-security-illegal-key-size-or-default-parameters
 	// Security.setProperty("crypto.policy", "unlimited");
@@ -355,8 +238,6 @@ public class Crypto {
 	
 	public static void main(String[] args){
 		try {
-			// fixKeyLength();
-			Security.setProperty("crypto.policy", "unlimited");
 			
 			byte[] crypted;
 			byte[] decrypted;
@@ -364,48 +245,48 @@ public class Crypto {
 			String s;
 			String privkey;
 			String pubkey;
-			byte[] toto = "toto est beau".getBytes("UTF-8");
-			byte[] titi = "titi est beau".getBytes("UTF-8");
+			byte[] toto = Util.toUTF8("toto est beau");
+			byte[] titi = Util.toUTF8("titi est beau");
 			
-			String aeskey = bytes2string(bytesFromStream(new FileInputStream ("data/aeskey.txt")));
-			String aescrypted = bytes2string(bytesFromStream(new FileInputStream ("data/aescrypted.txt")));
-			byte[] binkey = b64ToBytes(aeskey);
-			byte[] bincrypted = b64ToBytesX(aescrypted);
-			bytesToStream(binkey, new FileOutputStream("data/aeskey.bin"));
-			bytesToStream(bincrypted, new FileOutputStream("data/aescrypted.bin"));
+			String aeskey = Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/aeskey.txt")));
+			String aescrypted = Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/aescrypted.txt")));
+			byte[] binkey = Util.b64uToBytes(aeskey);
+			byte[] bincrypted = Util.b64ToBytes(aescrypted);
+			Util.bytesToStream(binkey, new FileOutputStream("data/aeskey.bin"));
+			Util.bytesToStream(bincrypted, new FileOutputStream("data/aescrypted.bin"));
 			System.out.println(binkey.length);
+			
 			AES aes = new AES(aeskey);
-			crypted = aes.encrypt(toto);
-			System.out.println(bytesToB64P(crypted));
-			decrypted = aes.decrypt(crypted);
+			crypted = aes.encrypt(toto, null);
+			System.out.println(Util.bytesToB64(crypted));
+			decrypted = aes.decrypt(crypted, null);
 			System.out.println(new String(decrypted, "UTF-8"));
 			
-			decrypted = aes.decrypt(bincrypted);
+			decrypted = aes.decrypt(bincrypted, AES.iv());
 			System.out.println(new String(decrypted, "UTF-8"));
 			
-			pubkey =  bytes2string(bytesFromStream(new FileInputStream ("data/public.pem")));
-			privkey = bytes2string(bytesFromStream(new FileInputStream ("data/private.pem")));
+			pubkey =  Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/public.pem")));
+			privkey = Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/private.pem")));
 
 			Encrypter ec = new Encrypter(pubkey);
 			crypted = ec.encrypt(toto);
-			System.out.println(bytesToB64(crypted));
-			stringToStream(bytesToB64(crypted), new FileOutputStream("data/crypted2.txt"));
+			System.out.println(Util.bytesToB64(crypted));
+			Util.stringToStream(Util.bytesToB64(crypted), new FileOutputStream("data/crypted2.txt"));
 
 			Decrypter dc = new Decrypter(privkey);
 			decrypted = dc.decrypt(crypted);
 			System.out.println(new String(decrypted, "UTF-8"));
 
-			s =  bytes2string(bytesFromStream(new FileInputStream ("data/crypted.txt")));
-			byte[] crypted2 = b64ToBytes(s);
-			bytesToStream(crypted2, new FileOutputStream("data/crypted2.bin"));
+			s =  Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/crypted.txt")));
+			byte[] crypted2 = Util.b64uToBytes(s);
+			Util.bytesToStream(crypted2, new FileOutputStream("data/crypted2.bin"));
 			decrypted = dc.decrypt(crypted2);
 			System.out.println(new String(decrypted, "UTF-8"));
 			
-			pubkey =  bytes2string(bytesFromStream(new FileInputStream ("data/publics.pem")));
-			privkey = bytes2string(bytesFromStream(new FileInputStream ("data/privates.pem")));
-			s =  bytes2string(bytesFromStream(new FileInputStream ("data/sign.txt")));
-			byte[] sign = b64ToBytes(s);
-			// byte[] ssaSpki, byte[] signature, byte[] texte
+			pubkey =  Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/publics.pem")));
+			privkey = Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/privates.pem")));
+			s =  Util.fromUTF8(Util.bytesFromStream(new FileInputStream ("data/sign.txt")));
+			byte[] sign = Util.b64uToBytes(s);
 			Verifier vf = new Verifier(pubkey);
 			boolean v = vf.verify(sign, toto);
 			System.out.println(v);
@@ -413,20 +294,20 @@ public class Crypto {
 			System.out.println(v);
 
 			crypted = new Signer(privkey).sign(toto);
-			System.out.println(bytesToB64(crypted));
-			stringToStream(bytesToB64(crypted), new FileOutputStream("data/sign2.txt"));
+			System.out.println(Util.bytesToB64u(crypted));
+			Util.stringToStream(Util.bytesToB64u(crypted), new FileOutputStream("data/sign2.txt"));
 
 			KP kp = new KP();
 			Encrypter ec2 = new Encrypter(kp.pub);
 			crypted = ec2.encrypt(toto);
-			System.out.println(bytesToB64(crypted));
+			System.out.println(Util.bytesToB64(crypted));
 
 			Decrypter dc2 = new Decrypter(kp.priv);
 			decrypted = dc2.decrypt(crypted);
 			System.out.println(new String(decrypted, "UTF-8"));
 
 			crypted = new Signer(kp.priv).sign(toto);
-			System.out.println(bytesToB64(crypted));
+			System.out.println(Util.bytesToB64(crypted));
 			vf = new Verifier(kp.pub);
 			v = vf.verify(crypted, toto);
 			System.out.println(v);

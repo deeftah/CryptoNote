@@ -36,12 +36,12 @@ class Util {
 		return new Date().format("Y-m-d H:i:s.S") + " - " + message;
 	}
 
-	static bytes2string(bytes) { 
+	static fromUTF8(bytes) { 
 		if (!this.decoder) this.decoder = new TextDecoder("utf-8");
 		return bytes ? this.decoder.decode(bytes) : ""; 
 	}
 
-	static string2bytes(string) { 
+	static toUTF8(string) { 
 		if (!this.encoder) this.encoder = new TextEncoder("utf-8");
 		return string ? this.encoder.encode(string) : new Uint8Array(0); 
 	}
@@ -180,7 +180,7 @@ class Util {
 	
 	/** SHA-256 ***************************************************/
 	static async sha256(data) {
-		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
+		const uint8 = typeof data === "string" ? Util.toUTF8(data) : data;
 		let result = await crypto.subtle.digest({name: "SHA-256"}, uint8);
 		return new Uint8Array(result);
 	}
@@ -216,6 +216,13 @@ class Util {
 		for(var i = 0, j = 0; i < hex.length - 1; i += 2, j++)
 			uint8[j] = parseInt(hex.substr(i, 2), 16);
 		return uint8;
+	}
+
+	static random(n4){ // nombre de 4 bytes (de 1 à 8)
+		const n = !n4 ? 4 : (n4 <= 0 ? 4 : (n4 > 8 ? 32 : 4 * n4));
+		const array = new Uint8Array(n);
+		window.crypto.getRandomValues(array);
+		return array;
 	}
 
 }
@@ -374,7 +381,7 @@ class B64 {
 			}
 		}
 
-		return Util.bytes2string(u8);
+		return Util.fromUTF8(u8);
 	}
 	
 	static decode(strBase64) {
@@ -432,164 +439,6 @@ class B64 {
 		return {uint8:uint8, type:type};
 	}
 	
-}
-
-/*****************************************************/
-class AES {
-	constructor(key, uint8){
-		this.key = key;
-		this.uint8 = uint8;
-	}
-	
-	static iv() { 
-		if (!this.defaultVector)
-			this.defaultVector = new Uint8Array([101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116]); 
-		return this.defaultVector;
-	}
-	
-	static async newAES(passphraseKey) {
-		const uint8 = typeof passphraseKey === "string" ? Util.string2bytes(passphraseKey) : passphraseKey;
-		const b = uint8.length == 32 ? uint8 : Util.sha256(uint8);
-		let webkey = await crypto.subtle.importKey('raw', b, {name: "AES-CBC"}, false, ["encrypt", "decrypt"]);
-		return new AES(webkey, b);
-	}
-
-	async encrypt(data, gzip){
-		if (data == null) return null;
-		let uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
-		if (!uint8) uint8 = new Uint8Array(0);
-		const deflated = gzip ? pako.deflate(uint8) : uint8;
-		let result = await crypto.subtle.encrypt({name: "AES-CBC", iv:AES.iv()}, this.key, deflated);
-		return new Uint8Array(result);
-	}
-
-	async decrypt(encoded, gzip){
-		if (encoded == null) return null;
-	    let result = await crypto.subtle.decrypt({name: "AES-CBC", iv:AES.iv()}, this.key, encoded);
-    	const bin = new Uint8Array(result);
-        return gzip ? pako.inflate(bin) : bin;
-	}
-
-	/*
-	 * photo est un base64 du cryptage d'une URL d'image par une clé AES
-	 */
-	async decodeImage(photoB64) {
-		let photob = await this.decrypt(B64.decode(photoB64));
-		const ph = Util.bytes2string(photob);
-		if (!ph || !ph.startsWith("data:image/")) return null;
-		const i = ph.indexOf(";");
-		if (i == -1) return null;
-		const j = ph.indexOf(",");
-		if (j != i + 7 || ph.substring(i + 1, j) != "base64" || !B64.isBase64NN(ph.substring(j + 1))) return null;
-		return ph;
-	}
-
-}
-
-/*****************************************************/
-class RSA {
-	static async encrypter(pem){
-		const key = this.pemToUint8(pem);
-		const rsa = new RSA();
-		rsa.e = await crypto.subtle.importKey("spki", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["encrypt"]);
-		return rsa;
-	}
-
-	static async decrypter(pem){
-		const key = this.pemToUint8(pem);
-		const rsa = new RSA();
-		rsa.d = await crypto.subtle.importKey("pkcs8", key, {name:"RSA-OAEP", hash:{name:"SHA-1"}}, true, ["decrypt"]);
-		return rsa;
-	}
-
-	static async verifier(pem){
-		const key = this.pemToUint8(pem);
-		const rsa = new RSA();
-		rsa.v = await crypto.subtle.importKey("spki", key, {name:"RSASSA-PKCS1-v1_5", hash:{name:"SHA-256"}}, true, ["verify"]);
-		return rsa;
-	}
-
-	static async signer(pem){
-		const key = this.pemToUint8(pem);
-		const rsa = new RSA();
-		rsa.s = await crypto.subtle.importKey("pkcs8", key, {name:"RSASSA-PKCS1-v1_5", hash:{name:"SHA-256"}}, true, ["sign"]);
-		return rsa;
-	}
-
-	static pemToUint8(pem){
-		const a = pem.split("\n");
-		const r = [];
-		for(let i = 0, l = null; l = a[i]; i++){
-			let x = l.trim();
-			if (x && !x.startsWith("---"))
-				r.push(x);
-		}
-		return B64.decode(r.join(""));
-	}
-	
-	static abToPem(ab, pub) { // ArrayBuffer
-		const s = B64.encode(new Uint8Array(ab), true);
-		let i = 0;
-		let x = pub ? "PUBLIC" : "PRIVATE";
-		let a = ["-----BEGIN " + x + " KEY-----"];
-		while (i < s.length) {
-			a.push(s.substring(i, i + 64));
-			i += 64;
-		}
-		a.push("-----END " + x + " KEY-----");
-		return a.join("\n");
-	}
-
-	static async newEDKeyPair() {
-		let key = await crypto.subtle.generateKey(this.rsaObj, true, ["encrypt", "decrypt"]);
-		let jpriv = await crypto.subtle.exportKey("pkcs8", key.privateKey);
-		let jpub = await crypto.subtle.exportKey("spki", key.publicKey);
-		return {priv:this.abToPem(jpriv, false), pub:this.abToPem(jpub, true)};
-	}
-
-	static async newSVKeyPair() {
-		let key = await crypto.subtle.generateKey(this.rsassaObj, true, ["sign", "verify"]);
-		let jpriv = await crypto.subtle.exportKey("pkcs8", key.privateKey);
-		let jpub = await crypto.subtle.exportKey("spki", key.publicKey);
-		return {priv:this.abToPem(jpriv, false), pub:this.abToPem(jpub, true)};
-	}
-	
-	static get rsaObj() {
-		// le hash DOIT être SHA-1 pour interaction avec java (le seul qu'il accepte d'échanger)
-		return {name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: {name: "SHA-1"}};
-	}
-
-	static get rsassaObj() { 
-		return {name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: {name: "SHA-256"}};
-	}
-	
-	// http://stackoverflow.com/questions/33043091/public-key-encryption-in-microsoft-edge
-	// hash: { name: "SHA-1" } inutile mais fait marcher edge !!!
-	async encrypt(data) {
-		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
-		let result = await crypto.subtle.encrypt({name: "RSA-OAEP", hash: { name: "SHA-1" }}, this.e, uint8);
-		return new Uint8Array(result);
-	}
-	
-	async decrypt(data) {
-		const uint8 = typeof data === "string" ? B64.decode(data) : data;
-		let result = await crypto.subtle.decrypt({name: "RSA-OAEP", hash: { name: "SHA-1" }}, this.d, uint8);
-	    return new Uint8Array(result);
-	}
-	
-	async sign(data) {
-		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
-		let result = await crypto.subtle.sign({name: "RSASSA-PKCS1-v1_5"}, this.s, uint8);
-		return new Uint8Array(result);
-	}
-	
-	async verify(signature, data) {
-		const sig8 = typeof signature === "string" ? B64.decode(signature) : signature;
-		const uint8 = typeof data === "string" ? Util.string2bytes(data) : data;
-		let result = await crypto.subtle.verify({name: "RSASSA-PKCS1-v1_5"}, this.v, sig8, uint8);
-	    return result;
-	}
-
 }
 
 /*****************************************************/
@@ -822,7 +671,7 @@ class Retry { // un objet par retry pour éviter les collisions sur le XHR
 					let text;
 					if (isJson) {
 						try {
-							text = uint8 ? Util.bytes2string(uint8) : "{}";
+							text = uint8 ? Util.fromUTF8(uint8) : "{}";
 							jsonObj = JSON.parse(text);
 						} catch (e) {
 							err = this.req.op, new ReqErr("BJSONRESP", 9, App.format("BJSONRESP", this.req.url, e.message), [this.req.url, text]); 
@@ -883,6 +732,4 @@ App.Req = Req;
 App.ReqErr = ReqErr;
 App.Util = Util;
 App.B64 = B64;
-App.AES = AES;
-App.RSA = RSA;
 App.defaultSpinner = new DefaultSpinner();

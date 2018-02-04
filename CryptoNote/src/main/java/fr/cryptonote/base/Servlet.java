@@ -3,9 +3,6 @@ package fr.cryptonote.base;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
@@ -59,48 +56,6 @@ public class Servlet extends HttpServlet {
 	}
 	
 	/********************************************************************************/
-	private static MessageDigest digestSha256;
-	/**
-	 * Digest SHA-256 d'un byte[] retourné en byte[]
-	 * @param x
-	 * @return
-	 * @throws Exception
-	 */
-	public static byte[] SHA256(byte[] x) {
-		if (x == null) return null;
-		synchronized (digestSha256) {
-		    digestSha256.reset();
-		    digestSha256.update(x);
-		    byte[] b = digestSha256.digest();
-		    return b;
-		}
-	}
-	
-	public static String bytesToB64(byte[] b){
-		return Base64.getUrlEncoder().withoutPadding().encodeToString(b);
-	}
-	
-	public static String b64(byte[] b, boolean padding){
-		String s = Base64.getUrlEncoder().encodeToString(b);
-		if (padding) return s;
-		int l = s.length();
-		if (s.charAt(l - 1) == '=') {
-			l--;
-			if (s.charAt(l - 1) == '=') l--;
-			return s.substring(0, l);
-		} else
-			return s;
-	}
-	
-	public static String SHA256b64(String s) {
-		return bytesToB64(SHA256(s == null ? null : Util.toUTF8(s)));
-	}
-
-	public static String SHA256b64(byte[] bytes) {
-		return bytesToB64(SHA256(bytes == null ? new byte[0] : bytes));
-	}
-
-	/********************************************************************************/
 	private void lpath(String root){
 		Set<String> paths = servletContext.getResourcePaths(root);
 		if (paths != null)
@@ -152,7 +107,6 @@ public class Servlet extends HttpServlet {
 		synchronized (done) {
 			if (done) return;
 			new ExecContext();
-			try { digestSha256 = MessageDigest.getInstance("SHA-256"); } catch (NoSuchAlgorithmException e) { throw new ServletException(e); }
 			emptyResource = new Resource((byte[])null, null);
 			servletContext = servletConfig.getServletContext();
 			String s  = servletContext.getContextPath();
@@ -604,17 +558,12 @@ public class Servlet extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 		setBuild(resp);
 		if (code == 0 || code == 200) {
-			try {
-				resp.setStatus(200);
-				byte[] bytes = text.getBytes("UTF-8");
-				resp.setContentLength(bytes.length);
-				resp.getOutputStream().write(bytes);		
-			} catch (UnsupportedEncodingException e) {
-				resp.sendError(500);
-			}
-		} else {
+			resp.setStatus(200);
+			byte[] bytes = Util.toUTF8(text);
+			resp.setContentLength(bytes.length);
+			resp.getOutputStream().write(bytes);		
+		} else 
 			resp.sendError(code, text);
-		}
 	}
 
 	/********************************************************************************/
@@ -626,7 +575,7 @@ public class Servlet extends HttpServlet {
 		resp.setContentLength(bytes.length);
 		resp.setContentType(r.mime());
 		resp.setCharacterEncoding(r.encoding());
-		try { Util.streamBytes(resp.getOutputStream(), bytes); } catch (IOException e) {	}
+		try { Util.bytesToStream(bytes, resp.getOutputStream()); } catch (IOException e) {	}
 	}
 
 	/*********************************************************************************/
@@ -806,7 +755,7 @@ public class Servlet extends HttpServlet {
 		public Resource(byte[] bytes, String mime) { 
 			this.bytes = bytes; 
 			this.mime = mime;  
-			sha = SHA256b64(bytes); 
+			sha = bytes == null ? null : Util.bytesToB64u(Util.SHA256(bytes)); 
 		}
 		public Resource(String text, String mime){ this(Util.toUTF8(text), mime); }
 		public String toString(){ String s = Util.fromUTF8(bytes); return s == null ? "" : s; }

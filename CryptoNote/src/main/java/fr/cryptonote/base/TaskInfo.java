@@ -36,7 +36,7 @@ public class TaskInfo {
 		} else
 			this.toStartAt =  toStartAt < 366 * 86400 ? Stamp.fromNow(toStartAt * 1000).stamp() : toStartAt;
 		this.ns = ns;
-		this.taskid = Crypto.randomB64(2);
+		this.taskid = Util.randomB64(4);
 		this.info = info;
 		this.opName = op.getSimpleName();
 		this.qn = qn;
@@ -46,7 +46,7 @@ public class TaskInfo {
 	public TaskInfo cloneCron(){
 		TaskInfo t = new TaskInfo();
 		t.ns = ns;
-		t.taskid = Crypto.randomB64(2);;
+		t.taskid = Util.randomB64(4);;
 		t.step = 1;
 		t.opName = opName;
 		t.toStartAt = new Cron(cron).nextStart().stamp();

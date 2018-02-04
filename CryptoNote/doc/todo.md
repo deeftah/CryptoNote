@@ -34,6 +34,3 @@ TaskQueue - opérations
 - revisiter cron avec distinction date-heure réelle et date-heure fonctionnelle
 
 Document DB - API : à revoir à partir de ExecContext
-
-Rewamper crypto des deux côtés pour garder en cache les clé sans les réimporter à chaque fois.
-

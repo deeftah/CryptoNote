@@ -12,8 +12,13 @@ import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -25,6 +30,114 @@ import fr.cryptonote.base.BConfig.Nsqm;
 public class Util {
 	public static final Logger log = Logger.getLogger("fr.cryptonote");
 
+	/** Digest ****************************************************************/
+	private static MessageDigest MD256;
+	private static MessageDigest MD1;
+	
+	static {
+		try { MD256 = MessageDigest.getInstance("SHA-256"); } catch (NoSuchAlgorithmException e) { }
+		try { MD1 = MessageDigest.getInstance("SHA-1"); } catch (NoSuchAlgorithmException e) { }
+	}
+	
+	/**
+	 * Digest SHA-1 d'un byte[] retourné en byte[]
+	 * @param x
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] SHA1(byte[] x) {
+		if (x == null) return null;
+		synchronized (MD1) {
+			MD1.reset();
+			MD1.update(x);
+		    return MD1.digest();
+		}
+	}
+	
+	/**
+	 * Digest SHA-256 d'un byte[] retourné en byte[]
+	 * @param x
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] SHA256(byte[] x) {
+		if (x == null) return null;
+		synchronized (MD256) {
+			MD256.reset();
+			MD256.update(x);
+		    return MD256.digest();
+		}
+	}
+	
+	public static String randomB64(int n8) { return bytesToB64u(SHA256(random(n8))); }
+	
+	/**
+	 * Return un byte[] random de 4 * n4 bytes.
+	 * @param n4 entre 1 et 8.
+	 * @return
+	 */
+	public static byte[] random(int n4) {
+		int n = n4 < 1 ? 1 : (n4 > 8 ? 8 : n4);
+		ThreadLocalRandom tlr = ThreadLocalRandom.current();
+		ByteBuffer bf = ByteBuffer.allocate(n * 4);
+		try { for(int i = 0; i < n; i++)	bf.putInt(tlr.nextInt(1, Integer.MAX_VALUE)); } catch (Exception e) { }
+		return bf.array();
+	}
+	
+	private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
+
+	/**
+	 * Retourne en String la représentation en hexa d'un byte[]
+	 * @param bytes
+	 * @return
+	 */
+	public static String bytesToHex(byte[] bytes) {
+		if (bytes == null || bytes.length == 0) return "";
+	    char[] hexChars = new char[bytes.length * 2];
+	    for ( int j = 0; j < bytes.length; j++ ) {
+	        int v = bytes[j] & 0xFF;
+	        hexChars[j * 2] = hexArray[v >>> 4];
+	        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+	    }
+	    return new String(hexChars);
+	}
+
+	public static byte[] hexToBytes(String s) {
+		if (s == null || s.length() < 2) return new byte[0];
+	    int len = s.length();
+	    byte[] data = new byte[len / 2];
+	    for (int i = 0; i < len; i += 2) {
+	        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i+1), 16));
+	    }
+	    return data;
+	}
+
+	public static final String bytes2JSON(byte[] b){
+		if (b == null || b.length == 0) return "[]";
+		StringBuffer sb = new StringBuffer();
+		for(int i = 0; i < b.length; i++)
+			sb.append(i == 0 ? '[' : ',').append(b[i]);
+		return sb.append(']').toString();
+	}
+
+	public static String bytesToB64(byte[] b){ return Base64.getEncoder().encodeToString(b);}
+	
+	public static byte[] b64ToBytes(String b64){ return Base64.getDecoder().decode(b64); }
+
+	public static String bytesToB64u(byte[] b){ return Base64.getUrlEncoder().withoutPadding().encodeToString(b); }
+
+	public static byte[] b64uToBytes(String b64){ return Base64.getUrlDecoder().decode(b64); }
+
+	/******************************************************************************/
+	public static byte[] toUTF8(String s){
+		try { return s == null ? null : s.getBytes("UTF-8"); } catch (UnsupportedEncodingException e) { return null; }	
+	}
+
+	public static String fromUTF8(byte[] s){
+		try { return s == null ? null : new String(s, "UTF-8"); } catch (UnsupportedEncodingException e) { return null; }	
+	}
+
+	/** Reflect ****************************************************************/
 	public static Class<?> hasClass(String name, Class<?> type) {
 		try {
 			Class<?> c = Class.forName(name);
@@ -74,25 +187,44 @@ public class Util {
 		}
 		return null;
 	}
-
+	
 	/******************************************************************************/
-	public static byte[] gzip(String text){
-		if (text == null || text.length() == 0) return null;
+	public static byte[] bytesFromStream(InputStream is) {
 		try {
-			return gzip(text.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			return new byte[0];
-		}
+			if (is == null) return null;
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			byte[] buf = new byte[4096];
+			int l = 0;
+			while((l = is.read(buf)) > 0) bos.write(buf, 0, l);
+			is.close();
+			bos.flush();
+			byte[] bytes = bos.toByteArray();
+			bos.close();
+			return bytes;
+		} catch (Exception e) { return null; }
 	}
 
-	
+	public static void bytesToStream(byte[] bytes, OutputStream os) throws IOException {
+		int i = 0;
+		int l = bytes.length;
+		while (i < l) {
+			int lx = i + 4096 < l ? 4096 : l - i;
+			os.write(bytes, i, lx);
+			i += lx;
+		}
+		os.close();
+	}
+
+	public static void stringToStream(String s, OutputStream os) throws IOException { bytesToStream(toUTF8(s), os);}
+
+	/******************************************************************************/
+	public static byte[] gzip(String text) { return gzip(toUTF8(text)); }
+
 	public static byte[] gzip(byte[] bytes){
-		if (bytes == null || bytes.length == 0) return null;
+		if (bytes == null) return null;
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try {
-			GZIPOutputStream zos = new GZIPOutputStream(bos);
-			zos.write(bytes);
-			zos.close();
+			bytesToStream(bytes, new GZIPOutputStream(bos));
 			return bos.toByteArray();
 		} catch (IOException e) {
 			return null;
@@ -109,14 +241,13 @@ public class Util {
 	}
 
 	public static byte[] ungzip(byte[] bytes){
-		if (bytes == null || bytes.length == 0) return null;
+		if (bytes == null) return null;
 		try {
 			GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(bytes));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			byte[] b = new byte[8192];
 			int l;
-			while((l = gzis.read(b)) >= 0)
-				bos.write(b, 0, l);
+			while((l = gzis.read(b)) >= 0) bos.write(b, 0, l);
 			gzis.close();
 			return bos.toByteArray();
 		} catch (IOException e) {
@@ -148,56 +279,6 @@ public class Util {
 		return x;
 	}
 
-	/******************************************************************************/
-	public static void streamBytes(OutputStream os, byte[] bytes) throws IOException{
-		ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-		byte[] buf = new byte[4096];
-		int l = 0;
-		while((l = bis.read(buf)) > 0)
-			os.write(buf, 0, l);
-		os.flush();
-		bis.close();
-	}
-	
-	public static String bytes2string(byte[] bytes){
-		if (bytes == null || bytes.length == 0) return "";
-		try { return new String(bytes, "UTF-8"); } catch (Exception e) { return "";}
-	}
-
-	public static byte[] bytesFromStream(InputStream is) {
-		try {
-			if (is == null) return null;
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			byte[] buf = new byte[4096];
-			int l = 0;
-			while((l = is.read(buf)) > 0)
-				bos.write(buf, 0, l);
-			is.close();
-			bos.flush();
-			byte[] bytes = bos.toByteArray();
-			bos.close();
-			return bytes;
-		} catch (Exception e) { return null; }
-	}
-
-	/******************************************************************************/
-	public static byte[] toUTF8(String s){
-		if (s == null || s.length() == 0) return null;
-		try {
-			return s.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			return null;
-		}	
-	}
-
-	public static String fromUTF8(byte[] s){
-		if (s == null || s.length == 0) return null;
-		try {
-			return new String(s, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			return null;
-		}	
-	}
 	
 	/******************************************************************************/
 	public static String stack(Throwable t) {
@@ -261,47 +342,5 @@ public class Util {
 		}
 		return pr;
 	}
-
-//	private static final boolean[] reserved = new boolean[123];
-//	
-//	static {
-//		for(int i = 0; i < reserved.length; i++) reserved[i] = true;
-//		reserved[37] = false; // %
-//		reserved[42] = false; // *
-//		reserved[43] = false; // +
-//		reserved[45] = false; // -
-//		reserved[46] = false; // .
-//		reserved[95] = false; // _
-//		for(int i = 48; i <= 57; i++) reserved[i] = false; // 0-9
-//		for(int i = 65; i <= 90; i++) reserved[i] = false; // A-Z
-//		for(int i = 97; i <= 122; i++) reserved[i] = false; // a-z
-//	}
-//	
-//	/**
-//	 * Indique si un caractère fait partie du jeu "unreserved" pouvant figurer dans une URL 
-//	 * sans encocage ou contient + ou % correspondant à une uRL encodée
-//	 * @param c
-//	 * @return
-//	 */
-//	public static boolean isUnreserved(Character c){ return c >= 37 && c <= 122 && !reserved[c]; }
-//	
-//	public static boolean isValidId(String s, int len){
-//		if (s == null || s.length() > len)
-//			return false;
-//		for(int i = 0; i < s.length(); i++)
-//			if (!isUnreserved(s.charAt(i))) return false;
-//		return true;
-//	}
-//
-//	
-//	public static String urlDec(String s){
-//		if (s == null || s.length() == 0) return s;
-//		try {
-//			return URLDecoder.decode(s, "UTF-8");
-//		} catch (Exception e) {
-//			return s;
-//		}
-//	}
-
 
 }
