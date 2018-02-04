@@ -49,62 +49,75 @@ L'argument `sudo` de la requête contient le BCRYPT de la phrase secrète rédui
 
 La clé AES tirée de la phrase secrète complète crypte certaines données (des disques virtuels par exemple).
 
+# Comptabilité
+La comptabilité est gérée par deux tables indépendantes des dossiers.
 
-## Constante : numéro de compte public
-La constante a été générée par la session créatrice du compte et comporte les propriétés suivantes :
-- `nom1` : nom du compte crypté par sa clé 1.
-- `pub` : clé RSA publique de cryptage.
-- `verif` : clé RSA publique de vérification.
+### Table `LCR` : ligne de crédit.
+Chaque item est une ligne de crédit : 
+- `psBD` : SHA-256 de la phrase secrète brouillée d'inscription de la ligne de crédit.  
+- `psrB` : propriété indexée. Phase secrète réduite brouillée afin d'éviter que la même phrase secrète ne soit utilisée par deux lignes de crédit.
+- `cr` : montant du crédit porté par la ligne.
+- `dh` : date-heure à laquelle la ligne a été enregistrée.
 
-La clé de la constante est le SHA-256 de ces champs séparés par un espace et est le numéro de compte.
+L'opération de transfert d'une ligne de crédit sur un compte ou un forum requiert que la session fournisse le BCRYPT de la phrase secrète donnée par le payeur (dont le SHA-256 est le `docid` de la ligne de crédit).
 
-Toute session disposant du numéro de compte peut :
-- obtenir les clés de cryptage et de vérification,
-- s'assurer de sa validité en recalculant le SHA et en le comparant au numéro de compte.
-- obtenir le nom du compte s'il en possède la clé 1.
+### Table `CRE` : crédit courant
+**Propriétés :**
+- `id` : numéro de compte ou de forum.
+- `cr` : montant du crédit courant en unités de compte. Il peut être négatif.
+- `v1 v2` : volumes occupés lors du dernier calcul du crédit restant.
+- `dh` : date-heure de dernier calcul du crédit restant.
 
-Après destruction du compte, la constante est inutile et détruite.
+L'opération de crédit verse tout le crédit d'une ligne authentifiée sur le cr du compte et détruit cette ligne.  
+Le crédit est réduit :
+- à chaque fin d'opération :
+    - le coût de l'occupation du volume depuis le dernier calcul est calculé.
+    - le nouveau niveau d'occupation du volume est calculé.
+    - le crédit est réduit de ce  montant et de celui de l'opération (dont le volume d'entrée / sortie).
+- périodiquement, par exemple toutes les semaines, pour calculer les coûts d'occupation d'espace en l'absence d'opérations. 
 
-# Dossier `Compte`
-La clé d'accès `docid` est le numéro de compte nc.
+# Constantes
+Ces données ont :
+- une clé primaire.
+- `dh` : une date-heure de création de la constante.
+- `alias` : un alias éventuel (unique).
+- `value` : une valeur qui reste constante depuis la création de la constante.
 
-## Constante : ticket public d'un compte
+Une constante est créée, peut être purgée mais jamais mise à jour.
+
+## Constante : `TPC` : ticket public d'un compte
 Ce ticket a été généré par la session créatrice du compte et comporte les propriétés suivantes :
-- `dhc` : date-heure de génération.
+- `dh` : date-heure de génération.
+- **alias** : `nomrBD` : SHA-256 du BCRYPT du nom réduit utilisé pour détecter et interdire l'usage de noms trop proches.
 - `c1O` : clé 1 du compte cryptée par la clé 0. Elle crypte le nom du compte dans son ticket public et ceux des comptes certifiant son identité.
 - `nom1` : nom crypté par sa clé 1.
-- `nomrB` : BCRYPT du nom réduit utilisé pour détecter et interdire l'usage de noms trop proches.
 - `pub` : clé RSA publique de cryptage.
 - `verif` : clé RSA publique de vérification.
 - `priv0` : clé privée RSA de décryptage cryptée par la clé 0.
 - `sign0` : clé privée RSA de signature cryptée par la clé 0.
 
-La clé de la constante est le SHA-256 de ces champs séparés par un espace et est le numéro de compte.
+**La clé de la constante** est le SHA-256 des champs `nom1 pub verif` séparés par un espace et est le numéro de compte.  
 
-En base les tickets publics sont stockés avec,
-- pour clé primaire le numéro de compte,
-- un index unique sur `nomrB`.
-
-Toute session disposant du numéro de compte peut :
-- obtenir les clés de cryptage et de vérification,
-- s'assurer de sa validité en recalculant le SHA et en le comparant au numéro de compte.
-- obtenir le nom du compte s'il en possède la clé 1.
+Toute session disposant du numéro de compte peut en obtenir le ticket public qui permet :
+- d'obtenir les clés de cryptage et de vérification de signature,
+- de s'assurer de sa validité en recalculant le SHA-256 des champs `nom1 pub verif` et en le comparant au numéro de compte.
+- s'il pense connaître le nom du compte, en obtenir confirmation (ou infirmation).
+- d'obtenir le nom du compte s'il en possède la clé 1 du compte.
 
 Après destruction du compte, la constante est inutile et détruite.
 
-## Constante : trace d'un compte détruit
-La clé est le numéro de compte et n'a que trois propriétés destinées à éviter le réemploi dans l'instance d'un nom proche à celui d'un compte ayant existé dans l'instance.
-- `dhc` : date-heure de création.
-- `dhd` : date-heure de destruction.
-- `nomrB` : BCRYPT du nom réduit.
+#### Clés privées d'accès d'un compte
+Un compte `nc` donné peut avoir, successivement dans l'application, plusieurs clés privées, autant que de phrases secrètes successivement choisies par son titulaire.  
+Cette clé est cryptée par la phrase secrète du compte : c'est elle qui permet au titulaire d'accéder aux clé privées, clé 1 (donc nom) du `TPC`.
 
-## Constante : tickets privés d'un compte
-Un compte `nc` donné peut avoir, successivement dans l'application, plusieurs tickets privés, autant que de phrases secrètes choisies par son titulaire. Chaque ticket privé,
-- est identifié par :
-    - `nc` : numéro du compte.
-    - `prBD` : BCRYPT de la phrase secrète réduite afin de détecter et d'interdire l'usage de phrases secrètes trop proches dans la même instance.
-- et contient `c0S`, la clé 0 du compte cryptée par la phrase secrète qui ouvre ce ticket. 
-L'application enregistre ces tickets privés identifiés par leur couple `nc / prBD` : pour un numéro `nc` donné, à un instant donné un seul ticket privé est enregistré.
+## Constante : `TCD` : trace d'un compte détruit
+La clé est le numéro de compte et n'a que trois propriétés destinées à éviter le réemploi dans l'instance d'un nom proche à celui d'un compte ayant existé dans l'instance.
+- `dh` : date-heure de destruction.
+- `dhc` : date-heure de création.
+- **alias** : `nomrBD` : BCRYPT du nom réduit.
+
+# Dossier `Compte`
+La clé d'accès `docid` est le numéro de compte nc.
 
 ## Singleton : *Entête du compte* `EnC`
 Ce singleton est déclaré à la création du compte et n'est modifié qu'à quelques rares occasions :
@@ -112,7 +125,8 @@ Ce singleton est déclaré à la création du compte et n'est modifié qu'à que
 - lors des changements d'état : *début d'activité, passages zombie / retour à l'état actif, destruction physique*.
 
 **Propriétés :**
-- `prBD c0S` : **le** ticket privé courant valide du compte. `prBD` est indexée de manière à ne tolérer que des phrases secrètes pas trop ressemblantes dans l'instance.
+- `prBD` : propriété indexée. SHA-256 du BCRYPT de la phrase secrète réduite. Permet de ne pas tolérer que des phrases secrètes soient trop ressemblantes dans l'instance.
+- `c0S` : clé 0 du compte cryptée par le SHA-256 du BCRYPT de la phrase secrète. Cette cl ouvre toutes les autres clé mères du compte présentes dans son `TPC`.
 - `dha` : date-heure de début d'activité.
 - `dhzm` : date-heure de passage en zombie posée par la modération de l'instance.
 - `dhzc` : date-heure de passage en zombie posée par le compte lui-même.
@@ -124,68 +138,117 @@ Le statut courant s est calculé depuis les dates `dha dhzm dhzc`.
 - 2 : zombie, destruction imminente.
 
 ### Singletons : *certificat d'identité* : `Cid` et *certifications* : `Crt`
-Le certificat d'identité `Cid` comporte deux parties :
-- une liste de triplets `dh nc nomc1A` ordonnés par `dh`, chacun correspond à la certification du nom de A par un compte C du numéro `nc` à la date-heure `dh` en fournissant `nomc1A` son nom crypté par la clé 1 du compte A. 
-- le numéro du dernier compte ayant mis à jour le certificat et sa signature du texte précédent.
+Le certificat d'identité `Cid` comporte une liste et sa signature :
+- `lst` : une liste de triplets `dh nc nomc1A` ou `dh nc dhf` ordonnés par `dh`, chacun correspond à la certification du nom de A par un compte C du numéro `nc` à la date-heure `dh` en fournissant `nomc1A` son nom crypté par la clé 1 du compte A. Si la certification est résiliée, `dhf` est la date-heure de fin de certification (précédée de $) et remplace `nomc1A`.
+- `nc` : le numéro du dernier compte ayant mis à jour le certificat,
+- `sign` : sa signature de la liste.
+- `dh` : la date-heure de l'opération.
 
-`Crt` la liste des comptes certifiés par A et comporte comporte deux parties :
-- une liste de triplets `dh nc nomc1C` ordonnés par `dh`, chacun correspond à la signature d'un compte C du numéro `nc` à la date-heure `dh` en fournissant `nomc0` le nom de C crypté par la clé 0 du compte A. nomc1A peut être O, signifiant l'effacement d'une certification.
-- la signature du texte précédent par le compte A.
+`Crt` la liste des comptes certifiés par A et comporte comporte une liste et sa signature :
+- `lst` : une liste de triplets `dh nc nomc1C` ordonnés par `dh`, chacun correspond à la signature d'un compte C du numéro `nc` à la date-heure `dh` en fournissant `nomc0` le nom de C crypté par la clé 0 du compte A. `nomc1A` peut être remplacé par `dhf` (date-heure de fin précédée de $), signifiant l'effacement d'une certification.
+- `nc` : le numéro du dernier compte ayant mis à jour la liste des certifications,
+- `sign` sa signature de la liste.
+- `dh` : la date-heure de l'opération.
 
 L'opération de certification ou suppression de certification par A du compte C opère en symétrique sur le `Crt` de A et le `Cid` de C. Elle vérifie :
 - que A a bien signé les deux listes.
-- que A n'a pas altéré dans le `Cid` des triplets qui ne sont pas le sien : il peut effacer le sien mais pas les autres et s'il ajoute le sien que c'est bien à la fin.
+- que A n'a pas altéré dans le `Cid` des triplets qui ne sont pas le sien : il peut mettre à jour le sien mais pas les autres et s'il ajoute le sien que c'est bien à la fin.
 - que dans la liste `Crt` seul le triplet de C est ajouté / supprimé.
 
-L'opération ne peut pas vérifier que le nom ajouté est bien celui du compte certificateur ni qu'il est effectivement crypté par la clé 1 du compte certifié ni par la clé 0 de A dans `Crt`.
+L'opération ne peut pas vérifier les noms ni leur cryptages dans `Cid` et `Crt`.
 
-Les certificats ou liste de certifications sont garanties complètes ou complètement détruites par piratage. 
+Etant signées dans leur globalité, les certificats ou liste de certifications sont garanties complètes ou complètement détruites par piratage.
 
 La création d'un compte a signé des `Cid` `Crt` vides (mais bel et bien signées par A).
 
-### Singleton : *Crédit courant* `Cre`
-**Propriétés :**
+### Items *phrases de contact* `Phc`
+Un compte A peut déclarer à un instant donné jusqu'à 4 phrases de contact permettant d'être contacté par un compte C n'ayant pas A dans ses cercles de connaissance. Chaque phrase est garantie unique.
 
-- `dv` : liste des date-heures des N dernières visites (opération `Xauth` ou `Xcre`).
-
-### Items uniques `Dvr` et `Dvi`
-`Dvi` est un item unique de clé `dv`où `dv` est le code du disque virtuel.  
-`Dvr` est un item unique de clé `dv` + ".1" où `dv` est le code du disque virtuel et 1 est le `docid` du dossier, unique, DV).
-
-Les clés sont indexées.
-
-**Propriété de `Dvr` :**
-- `ra` : réplication de la propriété `ra` de l'item `Dvr` de clé `dv` du dossier `DV` de `docid` 1.
-
-L'item unique `Dvi` totalise le volume total utilisé et la somme des quota / volume alloués aux forums.
-
-**Propriétés :**
-- `ra` : restriction d'accès posée par le contrôleur de son disque.
-- `q1 q2` : quota alloué par le contrôleur.
-- `qc1 qc2` : quota alloué au compte lui-même.
-- `vc1 vc2` : volume utilisé par le compte lui-même.
-- `vr1 vr2` : dernier volume remonté à la comptabilisation totale du disque qui ne s'opère qu'en cas de franchissement de seuils significatifs.
-- `qf1 qf2` : total des quota alloués par le compte aux forums (du même disque) auxquels il participe.
-- `vf1 vf2` : total des volumes utilisés par ces forums.
-
-Si q1 < qc1 + qf1 ou q2 < qc2 + qf2, le compte est en famine de quota ceci ne peut survenir que si le contrôleur du disque a réduit q1 ou q2.
-
-Si q1 < vc1 + vf1 ou q2 < vc2 + vf2, le compte est en famine de volume :
-- si le contrôleur du disque a réduit q1 ou q2.
-- si un forum a enregistré le départ d'un de ses comptes allocataires de quota et que le volume utilisé sur le forum est répercuté à la hausse (le cas échéant au-dessus des quotas attribués) sur chaque allocataire.
-
->La restriction d'accès applicable est la plus restrictive de `Dvi.ra` et `Dvr.ra`.
-
-### Items *adresse de boîte postale* `Abp`
-Un compte peut déclarer à un instant donné jusqu'à 4 adresses de boîte postale, chacune garantie unique.  
-
-> Une adresse réduite extraite d'une adresse est elle-même garantie unique afin d'éviter de tomber par hasard (ou en utilisant un robot) lors de la déclaration d'une adresse sur une déjà enregistrée et d'en déduire qu'un compte est joignable par cette adresse.
+> Une phrase réduite est elle-même garantie unique afin d'éviter de tomber par hasard (ou en utilisant un robot) lors de la déclaration d'une phrase sur une déjà enregistrée et d'en déduire qu'un compte peut être contacté par cette phrase.
 
 **Clé** : index de 1 à 4.
 
 **Propriétés :**
-- `bprB` : *propriété indexée unique*. BCRYPT de l'adresse réduite pour bloquer les adresses trop proches d'une adresse déjà déclarée.
-- `bp0` : adresse cryptée par la clé 0 du compte.
+- `pcrBD` : *propriété indexée unique*. SHA-256 du BCRYPT de la phrase réduite pour bloquer les phrases trop proches d'une phrase déjà déclarée.
+- `pc0` : phrase de contact cryptée par la clé 0 du compte.
+
+### Items *contact du répertoire* `Rep`
+A peut avoir C comme contact : `Rep(A)` a une entrée C : `cDansA`.  
+C peut avoir A comme contact : `Rep(C)` a une entrée A.  `aDansC`.
+
+Chaque entrée est créée et peut disparaître n'importe quand, l'autre continue sa vie.  
+Les informations suivantes sont maintenues redondées (réciproquement) **uniquement quand les deux entrées existent** :
+- `cDansA.moi` est égal à `aDansC.lui` et réciproquement.
+- `aDansC.dhr` est la date-heure de résiliation de C. 
+
+**Clé** : numéro de compte du contact C.
+
+**Propriétés** :
+- `dh` : date heure de la dernière opération.
+- `cm0P` : clé M cryptée, soit par la clé 0 du compte A, soit par sa clé publique (initiée par C).
+- `nomcM` : nom du contact C crypté par la clé M. Si absent **son nom n'est pas encore connu de A**.
+- `c1CM` : clé 1 du compte C cryptée par la clé M. **Si absent son nom (donc son CI) n'est pas encore connu de A**.
+- `dhi` : date-heure d'inscription du contact dans le répertoire.
+- `dhr` : date-heure de résiliation du contact.
+- `moi` : état synthétique du contact : `ncd`.
+    - n : nom : 1:anonyme, 2:nommé, 3:C est certifié par le compte.
+    - c : confiance : 0:pas confiance 1:confiance (une note est disponible).
+    - d : 1:le compte demande à C de le certifier. Remis à 0 quand le contact certifie le compte, ou que le compte renonce à sa demande.
+- `lui` : réplication de `aDansC.moi` (0 quand `aDansC` n'existe pas).
+- `fav` : 1:contact favori (affiché en tête), 0:normal, 2:caché.
+- `cvA` : identifiant de la note que A a communiqué à C pour se présenter (absent si A n'a pas confiance en C).
+- `cvC ccvCM` : identifiant de la note (et sa clé de cryptage) de C pour se présenter à A (absent si C n'a pas confiance en A).
+
+#### Gestion de la clé mutuelle M
+**Une nouvelle clé mutuelle M n'est générée par A que quand aucune des deux entrées `aDansC` et `cDansA` n'existent** ce dont la session va s'assurer par l'opération `Cinfo` quand `cDansA` n'existe pas avant de proposer une nouvelle clé. 
+- la clé M ne disparaît de facto que quand les deux entrées sont supprimées.
+- tant que l'une des entrées existe la clé M reste la même.
+- dans les notifications cette clé est toujours donnée puisque au cours du temps elle pourrait changer pour un couple A / C donné (cas d'une notification archivée longtemps).
+- la clé M est stockée :
+    - dans `cDansA` cryptée par la clé 0 de A dans `cmma0` et cryptée par la clé publique de C dans `cmsa0P`. Toutefois celle-ci va être remplacée à la première occasion par son cryptage par la clé 0 de C (plus courte et plus rapide).
+    - dans `aDansC` cryptée par la clé 0 de C dans `cmma0` et cryptée par la clé publique de A dans `cmsa0P`. Toutefois celle-ci va être remplacée à la première occasion par son cryptage par la clé 0 de A (plus courte et plus rapide).
+    - en régime établi `aDansC.cmma0` == `cDansA.cmsa0P` et `cDansA.cmma0` == `aDansC.cmsa0P`.
+
+**A l'invocation d'une opération `Contact` (inscription ou mise à jour)**,
+- *quand `cDansA` existe* la clé M y figure déjà : ni `cmma0` ni `cmsa0P` ne sont transmises puisque déjà présentes. Si `aDansC` existe, `cDansA.cmma0` est copiée dans `aDansC.cmsa0P` si celle-ci était plus longue (elle était encore cryptée par la clé publique).
+- *quand `cDansA` n'existe pas mais que `aDansC` existe*, la clé M y figure, 
+     - la session récupère la clé M par `Cinfo` dans `aDansC.cmsa0P` de l'autre entrée. Si elle est longue (encryptée par la clé publique de A), elle est décryptée et encryptée par la clé 0 de A.
+     - la clé M étant désormais toujours disponible cryptée par la clé 0 de A elle est copiée dans `cDansA.cmma0` et `aDansC.cmsa0P`.
+     - la clé M cryptée par la clé 0 de C dans `aDansC.cmma0` est copiée dans `cDansA.cmsa0P`.
+- *quand aucune des entrées n'existent* la session génère une clé M et l'encrypte en `cmma0` (par sa clé 0) et en `cmsa0P` (par la clé publique de C). Le serveur vérifie qu'effectivement aucune des deux entrées n'existent. Les clés sont stockées dans `aDansC` et `cDansA` (`cmma0 / cmsa0P`). 
+
+**La clé M est utilisée comme clé dans les notifications / conversations entre A et C** où elles sont explicitement stockées afin qu'une vieille notification soit toujours lisible. 
+
+#### Dialogues `contact` associés
+La gestion d'une entrée répertoire de A vis à vis de C et réciproquement peut concerner l'autre : toutes ces actions s'inscrivent dans un dialogue qui permet ainsi de suivre une succession d'échanges entre A et C (ou C et A selon qui a été initiateur de la conversation).  
+Les opérations `Contact` et `ContactS` donne en paramètre un numéro de dialogue,
+- soit *existant* où elles ajouteront un échange supplémentaire,
+- soit *à créer* avec un premier échange.
+
+Pour qu'un échange soit ajouté (et le cas échéant son dialogue support créé) il faut que,
+- l'opération ait eu une action réelle intéressant l'autre,
+- et/ou qu'elle ait un texte de message à communiquer.  
+
+C'est la session qui détermine d'après son contexte si l'opération invoquée l'est dans le cadre d'un dialogue en cours ou à l'opposé à créer parce qu'elle concerne un nouveau sujet.
+
+#### Relations de A vers C autorisées : comment A connaît C
+- `bp` : (*) A connaît une adresse de boîte postale que C lui a communiquée dans la vraie vie.
+- `cr` : A a inscrit C dans son répertoire et réciproquement C a inscrit A dans son répertoire.
+- `mg` : A et C sont membres d'un même groupe G.
+- `mm` : A et C participent au même mur M.N.
+- `acpc` : A est le compte premier de C.
+- `ccpa` : A a C comme compte premier.
+- `acnc` : A a certifié le nom de C.
+- `ccna` : A a son nom certifié par C.
+- `ccpga` : C est le compte premier du groupe G dont A est membre.
+- `acpgc` : (*) A est le compte premier d'un groupe G dont C est membre.
+- `acnxcfc` : (*) A certifie le nom de X contact de confiance de C.
+- `ccnxcfa` : C certifie le nom de X contact de confiance de A.
+- `acnxmgc` : (*) A certifie le nom de X membre du même groupe G que C.
+- `ccnxmga` : A est membre du même groupe G que X dont C certifie le nom.
+- `acnxmmc` : (*) A certifie le nom de X participant au même mur M.N que C.
+- `ccnxmma` : A participe au même mur M.N que X dont C certifie le nom.
+
 
 ### Items *CV personnel* `Cvp`
 **Clé** : index de 1 à 4.
@@ -307,90 +370,6 @@ Clé des items : `type` + "." + `ntf` numéro de notification.
 **Dialogue**
 - st = 1 (clôture) résulte de l'action de raccrocher de l'avant dernier interlocuteur.
 
-### Items *contact du répertoire* `Rep`
-A peut avoir C comme contact : `Rep(A)` a une entrée C : `cDansA`.  
-C peut avoir A comme contact : `Rep(C)` a une entrée A.  `aDansC`.
-
-Chaque entrée est créée et peut disparaître n'importe quand, l'autre continue sa vie.  
-Les informations suivantes sont maintenues redondées (réciproquement) **uniquement quand les deux entrées existent** :
-- `cDansA.moi` est égal à `aDansC.lui` et réciproquement.
-- `cDansA.cmma0 cmsa0P` correspondent à `aDansC.cmsa0P cmma0` et cryptent la clé mutuelle selon respectivement les clés: 0 de A, 0 ou publique de C, 0 de C et 0 ou publique de A.
-- `aDansC.dhr` est la date-heure de résiliation de C. 
-
-**Clé** : numéro de compte du contact C.
-
-**Propriétés** :
-- `dhop` : date heure de la dernière opération.
-- `cmma0` : clé M cryptée par la clé 0 du compte.
-- `cmsa0P` : clé M cryptée par la clé 0 ou publique du contact.
-- `sonnomM` : nom suffixé du contact crypté par la clé M. Si absent **son nom n'est pas encore connu**.
-- `monnomM` : nom suffixé du compte crypté par la clé M. Si absent c'est que le compte ne souhaite pas que le contact ne connaisse son nom lorsqu'il créera son entrée.
-- `dhi` : date-heure d'inscription du contact dans le répertoire.
-- `dhr` : date-heure de résiliation du contact.
-- `moi` : état synthétique du contact : `ncd`.
-    - n : nom : 1:anonyme, 2:nommé, 3:C est certifié par le compte.
-    - c : confiance : 0:pas confiance 1-8:`cvn`.
-    - d : 1:le compte demande à C de le certifier. Remis à 0 quand le contact certifie le compte, ou que le compte renonce à sa demande.
-- `lui` : réplication de `aDansC.moi` (0 quand `aDansC` n'existe pas).
-- `memo0` : mémo personnel du compte à propos de ce contact.
-- `fav` : 1:contact favori (affiché en tête), 0:normal, 2:caché.
-- `dhvr` : date-heure de dernière vérification des relations.
-- `rels` : map (`rel:*vi*`) des relations du compte vers son contact. 
-    - `rel` : code de la relation, 
-    - *v* si source valide. *i* si source initiale.
-- `cvn` : numéro de CV du compte visible par son contact (0 si non confiance).
-- `cvcM` : clé de cryptage de CV cryptée par la clé M (absent si non confiance).
-- `c1M` : clé 1 du compte cryptée par la clé M.
-
-#### Gestion de la clé mutuelle M
-**Une nouvelle clé mutuelle M n'est générée par A que quand aucune des deux entrées `aDansC` et `cDansA` n'existent** ce dont la session va s'assurer par l'opération `Cinfo` quand `cDansA` n'existe pas avant de proposer une nouvelle clé. 
-- la clé M ne disparaît de facto que quand les deux entrées sont supprimées.
-- tant que l'une des entrées existe la clé M reste la même.
-- dans les notifications cette clé est toujours donnée puisque au cours du temps elle pourrait changer pour un couple A / C donné (cas d'une notification archivée longtemps).
-- la clé M est stockée :
-    - dans `cDansA` cryptée par la clé 0 de A dans `cmma0` et cryptée par la clé publique de C dans `cmsa0P`. Toutefois celle-ci va être remplacée à la première occasion par son cryptage par la clé 0 de C (plus courte et plus rapide).
-    - dans `aDansC` cryptée par la clé 0 de C dans `cmma0` et cryptée par la clé publique de A dans `cmsa0P`. Toutefois celle-ci va être remplacée à la première occasion par son cryptage par la clé 0 de A (plus courte et plus rapide).
-    - en régime établi `aDansC.cmma0` == `cDansA.cmsa0P` et `cDansA.cmma0` == `aDansC.cmsa0P`.
-
-**A l'invocation d'une opération `Contact` (inscription ou mise à jour)**,
-- *quand `cDansA` existe* la clé M y figure déjà : ni `cmma0` ni `cmsa0P` ne sont transmises puisque déjà présentes. Si `aDansC` existe, `cDansA.cmma0` est copiée dans `aDansC.cmsa0P` si celle-ci était plus longue (elle était encore cryptée par la clé publique).
-- *quand `cDansA` n'existe pas mais que `aDansC` existe*, la clé M y figure, 
-     - la session récupère la clé M par `Cinfo` dans `aDansC.cmsa0P` de l'autre entrée. Si elle est longue (encryptée par la clé publique de A), elle est décryptée et encryptée par la clé 0 de A.
-     - la clé M étant désormais toujours disponible cryptée par la clé 0 de A elle est copiée dans `cDansA.cmma0` et `aDansC.cmsa0P`.
-     - la clé M cryptée par la clé 0 de C dans `aDansC.cmma0` est copiée dans `cDansA.cmsa0P`.
-- *quand aucune des entrées n'existent* la session génère une clé M et l'encrypte en `cmma0` (par sa clé 0) et en `cmsa0P` (par la clé publique de C). Le serveur vérifie qu'effectivement aucune des deux entrées n'existent. Les clés sont stockées dans `aDansC` et `cDansA` (`cmma0 / cmsa0P`). 
-
-**La clé M est utilisée comme clé dans les notifications / conversations entre A et C** où elles sont explicitement stockées afin qu'une vieille notification soit toujours lisible. 
-
-#### Dialogues `contact` associés
-La gestion d'une entrée répertoire de A vis à vis de C et réciproquement peut concerner l'autre : toutes ces actions s'inscrivent dans un dialogue qui permet ainsi de suivre une succession d'échanges entre A et C (ou C et A selon qui a été initiateur de la conversation).  
-Les opérations `Contact` et `ContactS` donne en paramètre un numéro de dialogue,
-- soit *existant* où elles ajouteront un échange supplémentaire,
-- soit *à créer* avec un premier échange.
-
-Pour qu'un échange soit ajouté (et le cas échéant son dialogue support créé) il faut que,
-- l'opération ait eu une action réelle intéressant l'autre,
-- et/ou qu'elle ait un texte de message à communiquer.  
-
-C'est la session qui détermine d'après son contexte si l'opération invoquée l'est dans le cadre d'un dialogue en cours ou à l'opposé à créer parce qu'elle concerne un nouveau sujet.
-
-#### Relations de A vers C autorisées : comment A connaît C
-- `bp` : (*) A connaît une adresse de boîte postale que C lui a communiquée dans la vraie vie.
-- `cr` : A a inscrit C dans son répertoire et réciproquement C a inscrit A dans son répertoire.
-- `mg` : A et C sont membres d'un même groupe G.
-- `mm` : A et C participent au même mur M.N.
-- `acpc` : A est le compte premier de C.
-- `ccpa` : A a C comme compte premier.
-- `acnc` : A a certifié le nom de C.
-- `ccna` : A a son nom certifié par C.
-- `ccpga` : C est le compte premier du groupe G dont A est membre.
-- `acpgc` : (*) A est le compte premier d'un groupe G dont C est membre.
-- `acnxcfc` : (*) A certifie le nom de X contact de confiance de C.
-- `ccnxcfa` : C certifie le nom de X contact de confiance de A.
-- `acnxmgc` : (*) A certifie le nom de X membre du même groupe G que C.
-- `ccnxmga` : A est membre du même groupe G que X dont C certifie le nom.
-- `acnxmmc` : (*) A certifie le nom de X participant au même mur M.N que C.
-- `ccnxmma` : A participe au même mur M.N que X dont C certifie le nom.
 
 ## Cycle de vie d'un compte
 Il passe par les états principaux suivants :
