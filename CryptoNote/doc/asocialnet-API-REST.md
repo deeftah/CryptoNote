@@ -90,25 +90,26 @@ Ce ticket a été généré par la session créatrice du compte et comporte les 
 - `dh` : date-heure de génération.
 - **alias** : `nomrBD` : SHA-256 du BCRYPT du nom réduit utilisé pour détecter et interdire l'usage de noms trop proches.
 - `c1O` : clé 1 du compte cryptée par la clé 0. Elle crypte le nom du compte dans son ticket public et ceux des comptes certifiant son identité.
+- `nomBD` : SHA-256 du BCRYPT du nom.
 - `nom1` : nom crypté par sa clé 1.
 - `pub` : clé RSA publique de cryptage.
 - `verif` : clé RSA publique de vérification.
 - `priv0` : clé privée RSA de décryptage cryptée par la clé 0.
 - `sign0` : clé privée RSA de signature cryptée par la clé 0.
 
-**La clé de la constante** est le SHA-256 des champs `nom1 pub verif` séparés par un espace et est le numéro de compte.  
+**La clé de la constante** est le SHA-256 des champs `nomBD pub verif` séparés par un espace et est le numéro de compte.  
 
 Toute session disposant du numéro de compte peut en obtenir le ticket public qui permet :
 - d'obtenir les clés de cryptage et de vérification de signature,
-- de s'assurer de sa validité en recalculant le SHA-256 des champs `nom1 pub verif` et en le comparant au numéro de compte.
-- s'il pense connaître le nom du compte, en obtenir confirmation (ou infirmation).
+- de s'assurer de sa validité en recalculant le SHA-256 des champs `nomBD pub verif` et en le comparant au numéro de compte.
+- s'il pense connaître le nom du compte, en obtenir confirmation (ou infirmation) en calculant son BRCYPT.
 - d'obtenir le nom du compte s'il en possède la clé 1 du compte.
 
 Après destruction du compte, la constante est inutile et détruite.
 
 #### Clés privées d'accès d'un compte
 Un compte `nc` donné peut avoir, successivement dans l'application, plusieurs clés privées, autant que de phrases secrètes successivement choisies par son titulaire.  
-Cette clé est cryptée par la phrase secrète du compte : c'est elle qui permet au titulaire d'accéder aux clé privées, clé 1 (donc nom) du `TPC`.
+Cette clé est cryptée par la phrase secrète du compte : c'est elle qui permet au titulaire d'accéder aux clé privées et clé 1 (donc nom) du `TPC`.
 
 ## Constante : `TCD` : trace d'un compte détruit
 La clé est le numéro de compte et n'a que trois propriétés destinées à éviter le réemploi dans l'instance d'un nom proche à celui d'un compte ayant existé dans l'instance.
@@ -161,7 +162,7 @@ Etant signées dans leur globalité, les certificats ou liste de certifications 
 
 La création d'un compte a signé des `Cid` `Crt` vides (mais bel et bien signées par A).
 
-### Items *phrases de contact* `Phc`
+### Items *phrase de contact* `Phc`
 Un compte A peut déclarer à un instant donné jusqu'à 4 phrases de contact permettant d'être contacté par un compte C n'ayant pas A dans ses cercles de connaissance. Chaque phrase est garantie unique.
 
 > Une phrase réduite est elle-même garantie unique afin d'éviter de tomber par hasard (ou en utilisant un robot) lors de la déclaration d'une phrase sur une déjà enregistrée et d'en déduire qu'un compte peut être contacté par cette phrase.
@@ -176,95 +177,99 @@ Un compte A peut déclarer à un instant donné jusqu'à 4 phrases de contact pe
 A peut avoir C comme contact : `Rep(A)` a une entrée C : `cDansA`.  
 C peut avoir A comme contact : `Rep(C)` a une entrée A.  `aDansC`.
 
-Chaque entrée est créée et peut disparaître n'importe quand, l'autre continue sa vie.  
-Les informations suivantes sont maintenues redondées (réciproquement) **uniquement quand les deux entrées existent** :
-- `cDansA.moi` est égal à `aDansC.lui` et réciproquement.
-- `aDansC.dhr` est la date-heure de résiliation de C. 
-
 **Clé** : numéro de compte du contact C.
 
 **Propriétés** :
 - `dh` : date heure de la dernière opération.
-- `cm0P` : clé M cryptée, soit par la clé 0 du compte A, soit par sa clé publique (initiée par C).
-- `nomcM` : nom du contact C crypté par la clé M. Si absent **son nom n'est pas encore connu de A**.
-- `c1CM` : clé 1 du compte C cryptée par la clé M. **Si absent son nom (donc son CI) n'est pas encore connu de A**.
+- `nom0P` : nom du contact crypté par la clé 0 du compte ou sa clé publique (quand c'est le contact qui l'a donné et que le compte ne l'a pas encore ré-encrypté par sa clé 0).
+- `c10P` : clé 1 du compte cryptée par la clé 0 du compte ou sa clé publique (quand c'est le contact qui l'a donné et que le compte ne l'a pas encore ré-encrypté par sa clé 0).
+- `memo0` : un court texte de commentaire du compte à propos de son contact (crypté par la clé 0).
+- `photo0` : une photo d'identité du contact qui a pu être récupérée dans une note reçue ou sur un forum (crypté par la clé 0).
 - `dhi` : date-heure d'inscription du contact dans le répertoire.
 - `dhr` : date-heure de résiliation du contact.
-- `moi` : état synthétique du contact : `ncd`.
-    - n : nom : 1:anonyme, 2:nommé, 3:C est certifié par le compte.
-    - c : confiance : 0:pas confiance 1:confiance (une note est disponible).
-    - d : 1:le compte demande à C de le certifier. Remis à 0 quand le contact certifie le compte, ou que le compte renonce à sa demande.
-- `lui` : réplication de `aDansC.moi` (0 quand `aDansC` n'existe pas).
+- `dhdc` : date-heure de demande au contact de certification émise par le compte. Effacée quand le contact a certifié l'identité du compte ou que le compte a renoncé à sa demande.
 - `fav` : 1:contact favori (affiché en tête), 0:normal, 2:caché.
-- `cvA` : identifiant de la note que A a communiqué à C pour se présenter (absent si A n'a pas confiance en C).
-- `cvC ccvCM` : identifiant de la note (et sa clé de cryptage) de C pour se présenter à A (absent si C n'a pas confiance en A).
 
-#### Gestion de la clé mutuelle M
-**Une nouvelle clé mutuelle M n'est générée par A que quand aucune des deux entrées `aDansC` et `cDansA` n'existent** ce dont la session va s'assurer par l'opération `Cinfo` quand `cDansA` n'existe pas avant de proposer une nouvelle clé. 
-- la clé M ne disparaît de facto que quand les deux entrées sont supprimées.
-- tant que l'une des entrées existe la clé M reste la même.
-- dans les notifications cette clé est toujours donnée puisque au cours du temps elle pourrait changer pour un couple A / C donné (cas d'une notification archivée longtemps).
-- la clé M est stockée :
-    - dans `cDansA` cryptée par la clé 0 de A dans `cmma0` et cryptée par la clé publique de C dans `cmsa0P`. Toutefois celle-ci va être remplacée à la première occasion par son cryptage par la clé 0 de C (plus courte et plus rapide).
-    - dans `aDansC` cryptée par la clé 0 de C dans `cmma0` et cryptée par la clé publique de A dans `cmsa0P`. Toutefois celle-ci va être remplacée à la première occasion par son cryptage par la clé 0 de A (plus courte et plus rapide).
-    - en régime établi `aDansC.cmma0` == `cDansA.cmsa0P` et `cDansA.cmma0` == `aDansC.cmsa0P`.
+#### Opérations
+##### Inscription d'un contact / mise à jour
+Le compte A peut inscrire un contact C en fournissant a minima son numéro de compte.  
+Il peut simultanément ou ultérieurement fournir :
+- `memo0` : un court texte de commentaire personnel à propos du contact.
+- `photo0` : une photo d'identité du contact qui a pu être récupérée dans une note reçue ou sur un forum
+- `nom0` : son nom s'il l'a obtenu par ailleurs dans l'application (co-participant à un forum, certificateur d'un de ses contacts ou d'un co-participant à un forum).
+- `c10` : sa clé 1 s'il l'a obtenu par ailleurs dans l'application (co-participant à un forum).
+- demande de certification / renoncement à cette demande : cette demande suppose que le compte ait donné au contact sa clé 1 et son nom. Dans ce cas il donne également les paramètres :
 
-**A l'invocation d'une opération `Contact` (inscription ou mise à jour)**,
-- *quand `cDansA` existe* la clé M y figure déjà : ni `cmma0` ni `cmsa0P` ne sont transmises puisque déjà présentes. Si `aDansC` existe, `cDansA.cmma0` est copiée dans `aDansC.cmsa0P` si celle-ci était plus longue (elle était encore cryptée par la clé publique).
-- *quand `cDansA` n'existe pas mais que `aDansC` existe*, la clé M y figure, 
-     - la session récupère la clé M par `Cinfo` dans `aDansC.cmsa0P` de l'autre entrée. Si elle est longue (encryptée par la clé publique de A), elle est décryptée et encryptée par la clé 0 de A.
-     - la clé M étant désormais toujours disponible cryptée par la clé 0 de A elle est copiée dans `cDansA.cmma0` et `aDansC.cmsa0P`.
-     - la clé M cryptée par la clé 0 de C dans `aDansC.cmma0` est copiée dans `cDansA.cmsa0P`.
-- *quand aucune des entrées n'existent* la session génère une clé M et l'encrypte en `cmma0` (par sa clé 0) et en `cmsa0P` (par la clé publique de C). Le serveur vérifie qu'effectivement aucune des deux entrées n'existent. Les clés sont stockées dans `aDansC` et `cDansA` (`cmma0 / cmsa0P`). 
+##### Information du contact : nom / clé 1
+Un compte peut informer un contact qui a lui a demandé par une note à avoir son nom et/ou sa clé 1 pour lire son certificat d'identité. Il fournit en paramètre :
+- `c10P` : sa clé 1 cryptée par la clé publique de son contact.
+- `nom0P` : son nom crypté par la clé publique de son contact.
 
-**La clé M est utilisée comme clé dans les notifications / conversations entre A et C** où elles sont explicitement stockées afin qu'une vieille notification soit toujours lisible. 
+##### Certification d'identité
+Le compte peut certifier l'identité d'un contact à condition :
+- que le contact l'ait demandé (`dhdc` présente dans son entrée ADansC).
+- que le contact ait donné sa clé 1.
 
-#### Dialogues `contact` associés
-La gestion d'une entrée répertoire de A vis à vis de C et réciproquement peut concerner l'autre : toutes ces actions s'inscrivent dans un dialogue qui permet ainsi de suivre une succession d'échanges entre A et C (ou C et A selon qui a été initiateur de la conversation).  
-Les opérations `Contact` et `ContactS` donne en paramètre un numéro de dialogue,
-- soit *existant* où elles ajouteront un échange supplémentaire,
-- soit *à créer* avec un premier échange.
+Les certifications d'identité (que A a accordé à C ou que C a accordé à A) peuvent être radiés par A.
 
-Pour qu'un échange soit ajouté (et le cas échéant son dialogue support créé) il faut que,
-- l'opération ait eu une action réelle intéressant l'autre,
-- et/ou qu'elle ait un texte de message à communiquer.  
+##### Suppression d'un contact
 
-C'est la session qui détermine d'après son contexte si l'opération invoquée l'est dans le cadre d'un dialogue en cours ou à l'opposé à créer parce qu'elle concerne un nouveau sujet.
+### Note
+Une note est un enregistrement horodaté, signé avec des contenus cryptés par une clé (non incluse dans la note) comportant :
+- `a` : le numéro de compte de son auteur.
+- `dh` :sa date-heure d'écriture.
+- `s` : son sujet crypté : c'est un texte court sans formatage qui peut contenir des hashtags (#truc ...).
+- `t` : son texte crypté : il peut être relativement long et son format MD autorise à la fois une lecture / écriture textuelle et un aspect plus plaisant (titres, liste à puces, gras / souligné ...). Au delà d'une certaine taille le texte est compressé.
+- `gz` : indicateur de compression du texte.
+- `ic` : une vignette / icône cryptée : elle est de faible définition (32x32).
+- `pj` : une pièce jointe cryptée : n'importe quel fichier dont le type MIME et la taille figure ci-après. La pièce jointe peut être un ZIP de plusieurs fichiers de types différents. Quand la pièce jointe est une image la vignette est en général une réduction de cette image.
+- `mt` : type MIME de la pièce jointe.
+- `lg` : taille de la pièce jointe : c'est sa taille cryptée, le volume occupé en stockage et celui qui transitera par le réseau lors de son téléchargement (bref la taille du fichier crypté).
+- `hs` : SHA-256 du sujet en clair.
+- `ht` : SHA-256 du texte en clair.
+- `hi` : SHA-256 de l'icône / vignette en clair.
+- `hp` : SHA-256 de la pièce jointe en clair.
+- `sig` : signature de `dh hs ht hi hp` séparés par un espace, l'absence (null) d'un argument est noté par 0. Cette signature a été faite par la clé privée de signature de son auteur (voir son TPC).
 
-#### Relations de A vers C autorisées : comment A connaît C
-- `bp` : (*) A connaît une adresse de boîte postale que C lui a communiquée dans la vraie vie.
-- `cr` : A a inscrit C dans son répertoire et réciproquement C a inscrit A dans son répertoire.
-- `mg` : A et C sont membres d'un même groupe G.
-- `mm` : A et C participent au même mur M.N.
-- `acpc` : A est le compte premier de C.
-- `ccpa` : A a C comme compte premier.
-- `acnc` : A a certifié le nom de C.
-- `ccna` : A a son nom certifié par C.
-- `ccpga` : C est le compte premier du groupe G dont A est membre.
-- `acpgc` : (*) A est le compte premier d'un groupe G dont C est membre.
-- `acnxcfc` : (*) A certifie le nom de X contact de confiance de C.
-- `ccnxcfa` : C certifie le nom de X contact de confiance de A.
-- `acnxmgc` : (*) A certifie le nom de X membre du même groupe G que C.
-- `ccnxmga` : A est membre du même groupe G que X dont C certifie le nom.
-- `acnxmmc` : (*) A certifie le nom de X participant au même mur M.N que C.
-- `ccnxmma` : A participe au même mur M.N que X dont C certifie le nom.
+En pratique l'enregistrement d'une note est toujours double :
+- l'enregistrement ci-dessus **sauf** le texte de la pièce jointe qui est remplacé par le SHA-256 de son texte crypté.
+- le texte crypté de la pièce jointe à part et dont le stockage secondaire peut fournir une copie depuis son SHA-256 en guise d'identifiant.
+
+En ne disposant que de l'enregistrement d'une note il est juste possible de vérifier qu'elle est correctement signée :
+- obtention du ticket public du compte depuis le numéro de compte de l'auteur. La validité de ce ticket est vérifiable en elle-même. Le nom de l'auteur,
+    - peut être obtenu du ticket si sa clé 1 est connue.
+    - peut être confirmé s'il est supposé connu.
+- en obtenant de ce ticket la clé publique de vérification de signature et en vérifiant que la signature par ce compte a bien signé `dh hs ht hi hp`.
+
+En disposant de plus de la clé de cryptage de la note :
+- les textes peuvent être obtenus en clair.
+- il est possible de s'assurer que l'auteur n'a pas signé un faux en recalculant les quatre h (`hs ht hi hp`).
+
+##### Réductions d'une note, aperçus
+La principale réduction consiste à omettre l'auteur quand le contexte le donne.  
+Un aperçu est une note réduite aux propriétés suivantes :
+- date-heure.
+- sujet.
+- éventuellement vignette (selon les cas). 
+
+## Items *note du compte* `Ndc`
+Le compte mémorise l'ensemble des notes écrites par lui-même (ou qu'il a dupliquées en son nom).  
+La clé d'accès est `nn` un numéro tiré au sort à la création de la note. Chaque item ne conserve que la dernière version d'une note.
+
+***Propriétés :***
+- `cn0` : clé de cryptage de la note cryptée par la clé 0 du compte. Cette clé change à chaque version et un lecteur externe devra recevoir la nouvelle clé à chaque changement du contenu de a note.
+- `lntf` : liste des numéros des comptes et des forums ayant été notifiés de l'existence de cette note et en ayant reçu la clé.
+- `apropos` : numéro de compte ou de forum auquel la note se rapporte (facultatif). Dans ce cas la note est censé commenté ou avoir pour sujet essentiel cette note ce qui permet à l'écran d'en retrouver une référence dans le répertoire des contacts ou des forums accédés.
+- `note` : enregistrement de la note :
+    - sans son auteur (c'est le compte).
+    - sans sa pièce jointe remplacée par son SHA-256.
+
+#### Opérations
+##### Création / mise à jour / destruction d'une note (son contenu, sa clé, son à propos).
+
+##### Notification d'une note à un compte
 
 
-### Items *CV personnel* `Cvp`
-**Clé** : index de 1 à 4.
-
-**Propriétés :**
-- `l0` : libellé crypté par la clé 0 du compte.
-- `c0` : clé de cryptage C de la version courante cryptée par la clé 0 du compte.
-- `tC` : texte du CV crypté par la clé C.
-- `pC` : texte de la photo cryptée par la clé C.
-
-Quand une mise à jour intervient sur CV d'index `x` (texte et/ou photo), la session génère une nouvelle clé courante de cryptage C pour ce code. Elle recherche dans les `Fac Rep` les entrées référençant cet index `x` et y crypte C par la clé (F / M) de cette entrée dans `cvcM`.  
-Elle crypte dans `tC/pC` la nouvelle version du CV / photo par la clé elle-même cryptée par la clé 0 du compte.
-
-**Justification**  
-Le regroupement dans `Fac Rep` permet de les remettre à jour en une transaction et au même niveau pour tous les forums et entrées du répertoire.  
-De cette manière le forum quitté, ou le contact révoqué n'est plus en mesure (même sur une copie de base) de lire les *nouvelles versions* du CV auquel il avait accès antérieurement (faute d'avoir la clé de cryptage de la nouvelle version).
 
 ### Items *Forum accessibles* `Fac`
 **Clé** : `nf`. Identifiant du forum.
