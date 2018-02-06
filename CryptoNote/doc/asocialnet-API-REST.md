@@ -14,15 +14,15 @@ L'opération de synchronisation est authentifiée afin de se faire délivrer des
 
 ### Session *cliente* associée à un compte
 Une **session cliente associée à un compte** se déclare dans un terminal en demandant la frappe de la phrase secrète du compte. Cette saisie enregistre dans la session cliente,
-- `clé S` : clé AES de cryptage de la clé `0` du compte. BCrypt du string de la phrase secrète (complétée par un O, un BCRYPT a une longueur de 31, une clé AES de 32). **Ne sort jamais de la session**.
-- `prB` : le BCRYPT du string réduit de la phrase secrète. `prB` est transmis au serveur pour identifier un compte et à la création pour vérifier qu'un autre compte n'a pas une phrase secrète voisine. 
-- `prBD` : le SHA-256 de `prB` est enregistré dans la dossier du compte et permet au serveur de vérifier que le `prB` fourni par le terminal correspond bien à un compte.
+- `cleS` : SHA-256 du BCRYPT de la phase complète. **Cette forme ne sort jamais de la session**.
+- `psrB` : BCRYPT de la phrase réduite. **Cette forme s'échange sur le réseau** (cachée par le HTTPS).
+- `psrBD` : SHA-256 de `psr`. **Cette forme est stockée en base**.
 
-La requête **non authentifiée** `Xauth` demande au serveur l'entête `EnC` et `c0S` (la clé 0 du compte cryptée par la clé S) du compte ayant pour propriétés `prBD` le SHA-256 de l'argument de la requête `prB` : 
+La requête **non authentifiée** `Xauth` demande au serveur l'entête `EnC` (dont `c0S` la clé 0 du compte cryptée par la clé S) du compte ayant pour propriétés `psrBD` le SHA-256 de l'argument de la requête `psrB` et la constante TPC correspondant à ce numéro de compte: 
 - si le serveur trouve ce compte, cela prouve que le titulaire a bien saisi la bonne phrase secrète.
 - si la session peut décrypter `c0S` par la clé S détenue dans sa mémoire :
-    - elle conserve la clé 0 qui permet de décrypter toutes les autres et les données du compte (dont le nom suffixé du compte et le numéro du compte `nc`).
-    - elle pourra effectuer des requêtes authentifiées sur ce compte en transmettant sur chacune (`nc->account` `prB->key`).
+    - elle conserve la clé 0 qui permet de décrypter toutes les autres et les données du compte.
+    - elle pourra effectuer des requêtes authentifiées sur ce compte en transmettant sur chacune (`nc->account` `psrB->key`).
 - si la session ne peut pas décrypter `c0S` par sa clé S, 
     - soit le compte a été créé par une session de logiciel non officiel.
     - soit la phrase secrète du compte a été changée par une session de logiciel non officiel.
