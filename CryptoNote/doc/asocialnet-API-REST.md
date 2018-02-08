@@ -85,25 +85,23 @@ Ces données ont :
 
 Une constante est créée, peut être purgée mais jamais mise à jour.
 
-## Constante : `TPC` : ticket public d'un compte
+## Constante : `TPU` : ticket public d'un compte
 Ce ticket a été généré par la session créatrice du compte et comporte les propriétés suivantes :
 - `dh` : date-heure de génération.
 - **alias** : `nomrBD` : SHA-256 du BCRYPT du nom réduit utilisé pour détecter et interdire l'usage de noms trop proches.
 - `c1O` : clé 1 du compte cryptée par la clé 0. Elle crypte le nom du compte dans son ticket public et ceux des comptes certifiant son identité.
-- `nomBD` : SHA-256 du BCRYPT du nom.
 - `nom1` : nom crypté par sa clé 1.
 - `pub` : clé RSA publique de cryptage.
 - `verif` : clé RSA publique de vérification.
 - `priv0` : clé privée RSA de décryptage cryptée par la clé 0.
 - `sign0` : clé privée RSA de signature cryptée par la clé 0.
 
-**La clé de la constante** est le SHA-256 des champs `nomBD pub verif` séparés par un espace et est le numéro de compte.  
+**La clé de la constante** est le SHA-256 des champ `nom1 pub verif` et est le numéro de compte.  
 
 Toute session disposant du numéro de compte peut en obtenir le ticket public qui permet :
 - d'obtenir les clés de cryptage et de vérification de signature,
-- de s'assurer de sa validité en recalculant le SHA-256 des champs `nomBD pub verif` et en le comparant au numéro de compte.
-- s'il pense connaître le nom du compte, en obtenir confirmation (ou infirmation) en calculant son BRCYPT.
-- d'obtenir le nom du compte s'il en possède la clé 1 du compte.
+- de s'assurer de sa validité en recalculant le SHA-256 des champs `nom1 pub verif` et en le comparant au numéro de compte.
+- s'il connaît la clé 1 -clé des noms- d'obtenir le nom.
 
 Après destruction du compte, la constante est inutile et détruite.
 
@@ -111,7 +109,7 @@ Après destruction du compte, la constante est inutile et détruite.
 Un compte `nc` donné peut avoir, successivement dans l'application, plusieurs clés privées, autant que de phrases secrètes successivement choisies par son titulaire.  
 Cette clé est cryptée par la phrase secrète du compte : c'est elle qui permet au titulaire d'accéder aux clé privées et clé 1 (donc nom) du `TPC`.
 
-## Constante : `TCD` : trace d'un compte détruit
+## Constante : `TCR` : trace d'un compte résilié
 La clé est le numéro de compte et n'a que trois propriétés destinées à éviter le réemploi dans l'instance d'un nom proche à celui d'un compte ayant existé dans l'instance.
 - `dh` : date-heure de destruction.
 - `dhc` : date-heure de création.

@@ -3,13 +3,13 @@
 
 Une personne ayant un **compte** dans une *instance* de cette application la perçoit d'abord comme *un espace de stockage hiérarchique classique* où les feuilles sont des **notes** (et non exactement des fichiers).  
 En tête de ce stockage apparaissent des *répertoires racines* :
-- **home** : le répertoire strictement personnel du compte est totalement fermé et invisible aux autres comptes, seul le compte titulaire y a accès.
-- **forums** : les autres répertoires racines sont partagés avec d'autres comptes et sont dénommés *forum*, justement parce que plusieurs comptes s'y retrouvent pour partager des notes.
+- un répertoire **home** : strictement personnel, ce répertoire est totalement invisible aux autres comptes, seul le compte titulaire y a accès.
+- des répertoires **forums** : ils sont partagés avec d'autres comptes et sont dénommés *forum* précisément parce que plusieurs comptes s'y retrouvent pour partager des notes.
 
 ##### Note
 Le contenu d'une **note** est constitué,
 - **d'un sujet / résumé** textuel court (sans formatage), contenant éventuellement des hashtags permettant de retrouver les notes par centres d'intérêt.
-- **d'une vignette** facultative, aperçu d'une photo / clip joint, photo d'identité de l'auteur, icône...
+- **d'une vignette** facultative, aperçu d'une photo ou d'un clip joint, photo d'identité de l'auteur, icône...
 - **d'un texte** facultatif pouvant comporter jusqu'à quelques milliers de caractères lisible sous une présentation simple agréable (niveaux de titre, gras / italique, liste à puces ...).
 - **d'une pièce jointe** facultative de n'importe quel type : photo, clip vidéo, etc. et qui peut être le ZIP de plusieurs fichiers.
 
@@ -19,9 +19,22 @@ Chaque version (première et suivantes) a
 - sa **date-heure**, 
 - son **auteur**,
 - son **contenu** (sujet / texte / vignette / pièce jointe) propre.
-- sa **clé de cryptage** propre : sans cette clé le contenu n'est pas lisible.
+- sa **clé de cryptage** : sans cette clé le contenu n'est pas lisible.
 - sa **signature par son auteur** (un compte) : un procédé cryptographique permet à un lecteur (ou qu'il soit dans le monde, même non connecté) de vérifier à partir de la signature :
-    - que le contenu de la note a bien été signé par l'auteur déclaré (non répudiation). - quand il dispose de la clé de cryptage, que le contenu n'a pas été falsifié depuis sa création par son auteur.
+    - que le contenu de la note a bien été signé par l'auteur déclaré.
+    - quand il dispose de la clé de cryptage, que le contenu n'a pas été falsifié et est bien celui écrit par son auteur.
+
+***Paths* d'une note**  
+Une note est disponible dans l'arbre de stockage d'un répertoire home ou d'un forum, son path est le nom d'accès dans ce répertoire racine, par exemple :  
+`/Banques/Relevés-2017/janvier`  
+Une note donnée peut être rangée à plus d'un endroit différent, avoir plus d'un path, désignant toutefois la même note. La note ci-dessus pourrait avoir un second path :  
+`/A vérifier/relevé banque-2018-01`  
+Ceci concerne en fait *une version d'une note*, en général quand elle est révisable la dernière. Mais chaque version peut avoir *son* path et être le cas échéant rangée à des endroits différents (par exemple les versions antérieures dans un sous-répertoire `../Historique/...`.
+
+>**Remarque** : les *répertoires* comme `/Banques/Relevés-2017 `n'ont pas vraiment d'existence. Ils ne sont que des éléments de regroupements graphiques et si aucune note n'a un path commençant par `/Banques/Relevés-2017` ce répertoire ne peut pas apparaître
+
+>Une note copiée d'un forum à un autre est bel et bien stockées en deux exemplaires, occupe deux fois du volume, mais a le même identifiant universel et sa version de date-heure `d1` y est strictement identique dans les deux forums. Elle peut être détruite dans l'un sans impact sur l'autre.  
+>D'ailleurs une version d'une note exportée à l'autre bout de la planète dans un fichier local d'un poste portable déconnecté, aura sous le même identifiant exactement le même contenu (pour autant qu'on ait vérifié sa non falsification, ce que la signature et la connaissance de sa clé permet).
 
 #### Forum
 Le répertoire **home** ne pose guère de problème de confidentialité : seul le compte y a accès, il est crypté et seul le compte titulaire en possède la clé.  
@@ -32,24 +45,24 @@ Le répertoire d'un **forum** pose d'avantage de questions : plusieurs comptes o
 >Toutes ces notes sont cryptées et seuls les comptes ayant accès au forum ont accès à leurs clés respectives.
 
 **Participants**  
-A la racine de l'espace d'un forum, figure un répertoire **Participants** qui contient un *sous répertoire spécial pour chaque compte* ayant accès au forum, ayant pour **nom** celui du compte avec une petite fiche d'information donnant :
+A la racine de l'espace d'un forum, figure un répertoire **Participants** qui contient un *sous répertoire spécial pour chaque compte* ayant accès au forum ayant pour **nom** celui du compte et auquel est attachée une petite fiche d'information donnant :
 - son numéro de compte.
 - une photo d'identité (facultative) choisie par le titulaire du compte.
-- **son certificat d'identité**, à savoir la liste des comptes avec leur nom ayant certifié qu'il connaissait le titulaire du compte et que ce nom est bien représentatif.
+- **son certificat d'identité**, à savoir la liste des numéros des comptes *avec leur nom* ayant certifié qu'il connaissait le titulaire du compte et que ce nom est bien représentatif.
 
-Dans ce sous-répertoire on va en général trouver une courte *note d'auto-présentation* par le titulaire qu'il a eu la courtoisie de montrer lorsqu'il a été invité à partager ce forum.  
-On peut le cas échéant trouver d'autres notes rangées à cet endroit, typiquement celles directement relatives à ce compte dans ce forum (mais le choix du classement des notes est libre et dépend des conventions librement consenties dans le forum).
+Dans le répertoire d'un participant on va en général trouver une courte *note d'auto-présentation* qu'il a eu la courtoisie de montrer lorsqu'il a été invité sur ce forum.  
+D'autres notes peuvent aussi être rangées à cet endroit, typiquement celles directement relatives à ce compte dans ce forum : le choix du classement des notes est libre et dépend des conventions librement consenties dans le forum.
 
 **A propos**  
 Toujours à la racine de l'espace d'un forum, un autre répertoire standard **A propos** est réservé à héberger des notes expliquant l'objet du forum, ses règles éthiques, ses conventions d'organisation du rangement des notes ...
 
 **Confiance entre les participants**  
 Inviter un nouveau participant à partager l'espace d'un forum pose deux problèmes de confiance :
-- *à l'invité* : quel est l'objet de ce forum, comment fonctionne-t-il et surtout qui vais-je y rencontrer et puis-je avoir confiance dans les participants actuels ?
-- *aux participants actuels* : quel est ce nouvel invité, qui le connaît, qui certifie son nom, pouvons accepter de dévoiler nos notes à ce nouvel arrivant ?
+- *à l'invité* : quel est l'objet de ce forum, comment fonctionne-t-il et surtout qui va-t-il y rencontrer et peut-il avoir confiance dans les participants actuels ?
+- *aux participants actuels* : quel est ce nouvel invité, qui le connaît, qui certifie son nom, peuvent-ils accepter de dévoiler leurs notes à ce nouvel arrivant ?
 
 Pour tenter de résoudre ce double problème l'invitation d'un nouvel arrivant passe par deux étapes :
-- **l'invitation** : l'invité reçoit une clé qui lui permet de lire les répertoires **Participants** et **A propos** et ainsi de prendre connaissance de ce qu'est le forum et qui sont ses participants. L'invité peut déposer dans son sous répertoire du répertoire **Participants** une ou des notes d'auto-présentation (que nul autre ne peut ni altérer ni détruire). L'invité peut également renoncer et disparaître du forum.
+- **l'invitation** : l'invité reçoit une clé qui lui permet de lire les répertoires **Participants** et **A propos** et ainsi de prendre connaissance de ce qu'est le forum et qui sont ses participants. L'invité peut déposer dans son répertoire dans **Participants** une ou des notes d'auto-présentation (que nul autre ne peut ni altérer ni détruire). L'invité peut également renoncer et disparaître du forum.
 - **la confirmation** par les autres participants : au vu de cette information apportée par l'invité, de son certificat d'identité et des avis des uns et des autres, le nouvel invité peut être confirmé (ou refusé et disparaître).
 
 Un chapitre particulier **Gouvernance des forums** traite des questions sous-jacentes à ce bref aperçu :
@@ -64,37 +77,47 @@ Un chapitre particulier **Gouvernance des forums** traite des questions sous-jac
     - changer le mode de gouvernance.
 - **démocratique directe** : toutes les décisions de gestion sont prises par consentement (absence d'opposition formelle) ou vote majoritaire des participants, y compris le changement de mode de gouvernance.
 
-#### Compte
-Chaque compte organise son espace de stockage de notes comme il l'entend. Un seul répertoire racine spécifique y apparaît toujours : Contacts.
+**Accès à une note dans un forum**  
+*Les invités* n'ont accès en lecture qu'aux notes des répertoires **Participants** et **A propos**.   
+Ils ne peuvent écrire des notes que dans leur propre répertoire sous Participants.
 
-Le répertoire racine Contacts a un sous répertoire pour chacun des autres comptes avec lequel le compte est (ou a été) en relation plus ou moins proche.
-- le nom de ce répertoire est celui du compte (il peut temporairement ne pas l'être encore).
+Une note est :
+- lisible par tous les participants.
+- si elle est révisable, par défaut elle ne peut l'être que par son créateur. Celui-ci a toutefois la possibilité *d'ajouter* des participants à la liste des auteurs autorisés et qui dès lors ont même niveau de droit sur la note.
+- une note peut être détruite par son auteur, ou l'un de ses auteurs listés.
+
+#### Compte
+Chaque compte organise son espace de stockage de notes comme il l'entend. Un seul répertoire racine spécifique y apparaît toujours : **Contacts**.
+
+Le répertoire racine **Contacts** a un sous répertoire pour chacun des autres comptes avec lequel le compte est, ou a été, en relation plus ou moins proche.
+- **le nom de ce répertoire est celui du compte** quand il est connu : il peut temporairement ne pas l'être encore.
 - une petite fiche d'information y est associée avec :
     - son numéro de compte.
     - sa photo d'identité (facultative).
     - son certificat d'identité quand il est connu.
     - quelques autres informations facultatives qui seront détaillées plus loin.
 
-Le sous répertoire d'un contact peut contenir une note d'auto-présentation communiquée par le contact mais aussi d'autres notes rangées par le titulaire du compte à propos de ce contact (c'est libre).
+Le répertoire d'un contact contient habituellement une note d'auto-présentation communiquée par le contact mais aussi d'autres notes rangées par le titulaire du compte à propos de ce contact (c'est libre).
 
 **Échanges**  
-Le sous répertoire d'un contact contient toujours un sous-répertoire particulier Échanges qui représente le fil historique des échanges de notes entre le titulaire du compte et son contact. Les notes qui y apparaissent ici ne sont toutefois pas complètes mais ne sont que l'aperçu d'une note complète :
-- si elle est reçue (a été présentée par le contact) ou émise (proposée par le titulaire à son contact).
-- sa date-heure.
-- son sujet. 
+Le sous répertoire d'un contact contient toujours un sous-répertoire particulier **Échanges** qui représente le fil historique des échanges de notes entre le titulaire du compte et son contact. Les notes qui y apparaissent ici ne sont toutefois pas complètes mais ne sont que *l'aperçu d'une note complète* indiquant :
+- si elle est *reçue* (c'est à dire a été présentée par le contact) ou *émise* (c'est à dire proposée par le titulaire à son contact).
+- sa *date-heure*.
+- son *sujet*. 
 - quelques indicateurs sur la présence et la taille des autres éléments de contenu.
 
 >Si la note est très courte et n'a qu'un sujet ... l'aperçu est la note elle-même.
 
 En présence de l'aperçu d'une note proposée par un de ses contacts, le titulaire du compte :
-- obtenir la note complète correspondante et la ranger où il veut (voir même ici en remplacement de l'aperçu).
-- effacer l'aperçu qui ne l'intéresse pas ou plus.
-- ne rien faire : l'aperçu reste.
+- **obtenir une copie de la note complète** correspondante en remplacement de l'aperçu (optionnellement avec sa pièce jointe) et si souhaité lui donner un second path pour la voir rangée aussi à l'endroit approprié.
+- **effacer l'aperçu** qui ne l'intéresse pas ou plus.
+- ne rien faire : l'aperçu reste en attente.
 
 >L'objectif est que cet espace d'échanges ne soit pas saturé par des volumes importants de notes pas toujours souhaitées : ainsi l'espace d'un compte reste maîtrisable par son titulaire.
->L'aperçu d'une note proposée par A à C est double : chez A il figure comme une note proposée à C et chez C celui d'une note proposée par A. Les deux sont strictement synchronisés à la création, mais plus tard,
->- A a pu détruire la note proposée à C : si C ne l'a pas obtenu avant, il ne l'obtiendra plus (une date-heure minimale de conservation est spécifiée pour palier, en général, à cette difficulté).
->- A comme C peuvent effacer de leur côté l'aperçu qui les encombre.
+
+L'aperçu d'une note proposée par A à C est double : chez A il figure comme une note proposée à C et chez C celui d'une note proposée par A. Les deux sont strictement synchronisés à la création, mais plus tard,
+- A a pu détruire la note proposée à C : si C ne l'a pas obtenu avant, il ne l'obtiendra plus. Une date-heure minimale de conservation est spécifiée pour palier, en général, à cette difficulté.
+- A comme C peuvent effacer de leur côté l'aperçu qui les encombre.
 
 ## L'application : instances et logiciels
 Toute organisation / association / société ... (sous condition d'en payer les frais d'hébergement / administration technique) peut déployer *sa propre instance* qui lui sera privée et aura ses propres règles de gouvernance et de déontologie. Une instance est identifiée par l'URL de son serveur central.  
@@ -116,24 +139,29 @@ L'application fonctionne par la collaboration de plusieurs logiciels :
 # Un réseau a-social et crypté
 Les personnes ayant un **compte** dans une *instance* de cette application ont certes des notes strictement personnelles mais l'effet de réseau leur permet aussi d'en partager avec d'autres comptes,
 - **en contrôlant avec qui**,
-- **en étant assuré de la non accessibilité des informations intelligibles**, même en cas d'écoute intempestive du réseau comme de détournement des données stockées dans le cloud.
+- **en étant assuré de la non accessibilité des informations intelligibles**, même en cas d'écoute intempestive du réseau comme de détournement des données stockées dans le cloud ce que, par construction même, aucun réseau social ne peut proposer.
 
 Ce dernier point induit des contraintes de cryptages sur les terminaux. Toutes les données humainement signifiantes :
 - sont ***cryptés*** sur les terminaux, 
-- transitent cryptées sur le réseau, 
-- sont stockées cryptées sur les serveurs du cloud comme dans les mémoires des terminaux (en modes synchronisé et avion). 
+- transitent ***cryptées sur le réseau***, 
+- sont ***stockées cryptées*** sur les serveurs du cloud comme dans les mémoires des terminaux (en modes synchronisé et avion). 
 - ne peuvent être ***décryptées*** que dans l'application qui s'exécute sur les terminaux des titulaires des comptes.
 
 >Le détournement de données, que ce soit la base de données du serveur comme celles locales des terminaux ou de celles transitant sur les réseaux, est inexploitable : les données y sont indéchiffrables.
 
->Aucune utilisation *commerciale* des données n'est possible puisque celles signifiantes sont toutes indéchiffrables, même **et surtout** pour le prestataire de l'application et ses hébergeurs.
+>Aucune utilisation *commerciale* des données n'est possible puisque celles signifiantes sont toutes indéchiffrables, même **et surtout** pour le prestataire de l'application et ses hébergeurs.  
+>Le *business model* d'un réseau a-social peut être basé sur une acquisition par des organisations, le sponsoring d'entreprises désintéressées, mais jamais par la perspective de publicité ciblée (à la limite de publicité totalement aveugle qui n'est prisée par aucun annonceur).
 
 **Aucun répertoire central ne peut être constitué, il ne contiendrait que des données inintelligibles** : il est impossible de chercher un compte ou un forum dans une instance de l'application en fonction de critères comme les noms, intitulés des forums, centres d'intérêt, mots clés ...
 
 >On ne s'y connaît que par cooptation, contacts directs et rencontres sur des forum.
 
 ## Compte
-A sa création un compte reçoit une identification universelle unique et un enregistrement dit *Ticket public du compte* qui contient les éléments cryptographiques nécessaires. Ce *Ticket public* est comme son, nom l'indique, public, peut être copié sans restriction et est immuable pour toute la vie du compte, et même après pour authentifier les notes signées par un compte même après sa résiliation.
+A sa création un compte reçoit une identification universelle unique et un enregistrement dit *Ticket public* qui contient les éléments cryptographiques nécessaires. Ce *Ticket public* est comme son, nom l'indique, public, peut être copié sans restriction et est immuable pour toute la vie du compte, et même après pour authentifier, après sa résiliation de son instance, les notes signées par un compte.
+
+**Un compte est identifié par un numéro de compte** : c'est un *identifiant universel unique* est calculable depuis son Ticket public. Ce dernier est généré hors de toute instance.
+
+>Cette universalité rend *possible* l'exportation du **home** d'un compte d'une instance (sans ses **Contacts**) et son importation dans une autre instance, pour autant que celle-ci n'ait pas de collision sur le nom avec un compte y étant déjà enregistré. D'où l'intérêt de se choisir un nom long (*`Edward Kennedy Ellington dit Duke, Washington D.C. USA`* plutôt que *`The Duke`*).
 
 #### Phrase secrète d'un compte
 Le ticket public d'un compte contient en particulier des clés cryptographiques privées, cryptées, qui ne peuvent être décryptées que par son titulaire en utilisant sa **phrase secrète**.  
@@ -151,57 +179,63 @@ Dans une instance, les comptes ont des phrases secrètes différentes, un dispos
 
 Au fil du temps, le nom d'un compte apparaît à d'autres comptes : après avoir accordé leur confiance à un nom, ils sont assurés qu'aucune usurpation d'identité ou réemploi de nom n'est possible.
 
->Il est impossible de deviner la liste des noms des comptes connus dans une instance : toutefois connaissant un nom il est possible de savoir s'il correspond à un compte de l'instance. ?????????????????????????
+>Il est impossible de deviner la liste des noms des comptes connus dans une instance.
+
+>La résiliation d'un compte dans une instance laisse une trace indélébile qui bloque l'utilisation d'un nom proche : la ré-importation du **home** exporté d'un compte résilié exigerait qu'elle se fasse avec exactement le même nom (crypté dans le Ticket public par une clé impossible à deviner).
 
 ##### Certificat d'identité d'un compte
-*Un compte a son identité certifiée par un ou plusieurs autres comptes* : en certifiant l'identité d'un compte A, un compte C ne fait qu'affirmer que le nom du compte A est bien représentatif de la personne qui en est titulaire. Ceci ne signifie rien en termes d'amitié ou de convergence de vue, seulement une affirmation sur l'adéquation entre le nom présenté et la personne physique correspondante.
+*Un compte a son identité certifiée par un ou plusieurs autres comptes* : en certifiant l'identité d'un compte A, un compte C ne fait qu'affirmer que le nom du compte A est bien représentatif de la personne qui en est titulaire.  
+Ceci ne signifie rien en termes d'amitié ou de convergence de vue, seulement une affirmation sur l'adéquation entre le nom présenté et la personne physique correspondante.
 
 >**Le certificat d'identité d'un compte** est la liste des comptes ayant certifié son identité avec pour chacun :
 >- *son numéro de compte*.
 >- *son nom* (si la certification n'a pas été résiliée).
 >- la date-heure de début certification (et celle de fin si elle a été résiliée).
->- le certificat d'identité de ce compte n'y figure pas : quand on accède au certificat d'identité d'un compte on obtient la liste des noms des certificateurs mais pas ceux des certificateurs des certificateurs.
+>- le certificat d'identité des comptes certificateurs n'y figurent pas : accéder au certificat d'identité d'un compte donne la liste des noms des certificateurs mais pas ceux des certificateurs des certificateurs.
 
 #### Processus de création d'un compte
 Un compte se crée par auto-déclaration par son titulaire :
-- il choisit un nom qui ne sera accepté que s'il ne ressemble pas à un nom déjà déclaré dans l'instance.
-- il choisit une phrase secrète dont il sera vérifiée qu'elle ne ressemble pas à une phrase déjà déclarée dans l'instance.
-- il rédige une courte note d'auto présentation 
-- il donne la *phrase de contact* que lui a confié un compte parrain déjà enregistré et s'étant engagé, hors de l'application, à certifier le nom du nouveau compte.
+- **il doit avoir trouvé un *parrain*** ayant un compte dans l'instance qui accepte :
+    - de certifier son nom.
+    - de lui communiquer une *phrase de contact* pour être reconnu en adressant sa demande de certification.
+    - de lui prêter / donner un crédit minimal pour démarrer avant de pouvoir alimenter son compte.
+- **il choisit un nom** : le serveur vérifie que s'il ne ressemble pas à un nom déjà déclaré dans l'instance.
+- **il choisit une phrase secrète** : le serveur vérifie qu'elle ne ressemble pas à une phrase déjà déclarée dans l'instance.
+- **il rédige une note d'auto présentation** pour son parrain et pour lui demander de bien vouloir certifier son nom.
+- **il donne la *phrase de contact*** que lui a confié son parrain hors de l'application.
 - le compte parrain voit dans ses **Échanges** l'aperçu de cette note d'auto présentation qui exprime le souhait du nouveau compte d'être certifié.
-- le compte est en état en création et peut rester dans cet état au plus quelques jours en disposant d'un crédit de ressources très limité.
+- le compte est en état *en création* et peut rester dans cet état au plus quelques jours en disposant d'un crédit de ressources très limité.
 
-Si le compte parrain accepte de certifier le nouveau compte :
-- les deux comptes figurent dans leurs **Contacts** respectifs comme **contacts de confiance**, c'est à dire que chacun peut connaître de l'autre son nom et son certificat d'identité et peuvent partager des notes.
-- le nouveau compte devient actif et son crédit peut être rechargé (en général le parrain fait un cadeau de bienvenue ou au moins une avance remboursable).
+**Si le compte parrain accepte de certifier le nouveau compte** :
+- les deux comptes figurent dans leurs **Contacts** respectifs comme **contacts de confiance**, c'est à dire que chacun peut connaître de l'autre son *nom* et son *certificat d'identité* et peuvent partager des notes.
+- le nouveau compte devient *actif* et son crédit peut être rechargé (en général le parrain fait un cadeau de bienvenue ou au moins une avance remboursable).
 - le compte parrain a un compte supplémentaire dans *sa liste des comptes certifiés* de son profil et le nouveau compte a le compte parrain dans sa liste *des comptes certificateurs* de son profil. 
 
-Si le compte parrain refuse de certifier le nouveau compte :
-- le nouveau compte reste en création : il n'a toujours pas de comptes certificateurs dans son certificat d'identité (toujours vide).
-- il peut lire le contenu de la note explicative du refus écrite par son parrain (espéré).
+**Si le compte parrain refuse de certifier le nouveau compte** :
+- le nouveau compte reste en création : il n'a toujours pas de compte certificateur dans son certificat d'identité (toujours vide).
+- il peut toutefois lire le contenu de la note explicative du refus écrite par celui qu'il espérait être son son parrain.
 - son parrain espéré figure dans **Contacts** mais pas comme contact de confiance (et même peut-être sans nom).
 - le nouveau compte doit chercher, rapidement, un autre parrain potentiel, obtenir de lui une phrase de contact et partager avec lui sa note de présentation demandant à être certifié par lui.
 - au bout de quelques jours le compte en création est détruit automatiquement.
 
-##### Phrases de contact
-Un compte peut déclarer dans son profil quelques **phrases de contact**, garanties uniques dans l'instance. Chaque phrase a une date-heure limite fixée par le compte a sa déclaration et le compte peut détruire une de ses phrases ou la prolonger.  
-Un compte A ne peut partager une note avec un compte C que :
-- soit si A connaît le certificat d'identité de C (donc son nom) : 
-    - soit A et C se sont réciproquement acceptés comme contact de confiance.
-    - soit A et C participe à un même forum.
-- soit si A connaît une phrase de contact en cours de validité de C que C lui a confiée,
-    - soit hors de l'application après un contact direct.
-    - soit par l'entremise d'un compte tiers, de confiance de A et de C, ayant accepté de relayer la phrase de contact que C lui a fourni pour A.
+##### Profil d'un compte
+C'est un enregistrement accessible au titulaire du compte qui donne :
+- son numéro de compte.
+- son nom.
+- la liste des certifications dont il a fait l'objet.
+- la liste des comptes qu'il a certifiés.
+- quelques phrases de contact. Une **phrases de contact** est garantie unique dans l'instance durant sa période de validité fixée par le compte a sa déclaration. Le compte peut ajouter des phrases, détruire ses phrases ou les prolonger.
 
 ##### Phrase secrète d'administration et comptes auto-certifiés
-Comme au départ il n'y a pas de comptes dans l'instance, le premier compte à s'inscrire ne peut pas passer par la procédure normale puisque personne ne peut certifier son identité.  
+Comme au départ il n'y a pas de compte dans l'instance, le premier compte à s'inscrire ne peut pas passer par la procédure normale puisque personne ne peut certifier son identité.  
 Il est possible de créer ou ou quelques comptes **auto-certifiés** qui connaissent la **phrase secrète d'administration**.
 
-Cette phrase se transmet humainement hors de l'application : un brouillage complexe de cette phrase donne une clé de cryptage qui est mémorisée (elle-même brouillée) dans le configuration de l'instance : le serveur peut vérifier qu'un détenteur présumé de cette phrase l'est réellement sans que cette clé ne soit physiquement écrite quelque part.
+Cette phrase se transmet humainement hors de l'application : un brouillage de cette phrase donne une clé de cryptage qui est mémorisée (hachée) dans le configuration de l'instance : le serveur peut vérifier qu'un détenteur présumé de cette phrase l'est réellement sans que cette clé ne soit physiquement écrite quelque part.
 
 Une personne connaissant la phrase secrète d'administration peut créer un compte **auto-certifié** en fournissant un brouillage de cette phrase après l'avoir saisie sur son terminal :
 - la création du compte est immédiate.
 - elle ne requiert pas qu'un autre compte certifie l'identité du compte créé.
+- un crédit fixé dans la configuration est donné *gratuitement*.
 
 Le premier compte créé dans une instance est par principe un compte auto-certifié, les suivants pouvant se faire certifier par le compte auto-certifié. Mis à part qu'ils se sont auto-certifiés à leur création, ces comptes sont comme les autres et peuvent d'ailleurs ultérieurement avoir leur identité certifiée par d'autres comptes.
 
@@ -209,9 +243,9 @@ Le premier compte créé dans une instance est par principe un compte auto-certi
 Un compte A peut avoir dans ses **Contacts** un compte C connu :
 - par son seul numéro de compte.
 - par son numéro de compte et son nom.
-- par son numéro de compte, son nom et avoir accès à son certificat d'identité. C'est le cas pour :
+- par son numéro de compte, son nom et accès à son certificat d'identité. C'est le cas pour :
     - tous les comptes inscrits sur au moins un même forum. Cette situation n'est pas pérenne si le compte quitte le forum ou que le forum est dissous.
-    - les **contacts de confiance** : la confiance est mutuelle et cesse dès lors que l'un des deux décide d'y mettre fin.
+    - les **contacts de confiance** : la confiance est mutuelle, s'exprime explicitement  et cesse dès lors que l'un des deux décide d'y mettre fin.
 
 Quand deux comptes sont **contacts de confiance**, de plus,
 - l'un peut certifier l'identité de l'autre à condition qu'il le lui ait demandé.
@@ -233,59 +267,63 @@ Un compte A peut partager une note N avec un autre compte C (voir les restrictio
 
 **Oups !**  
 A peut avoir un remord d'avoir partagé une note avec C :
-- il peut tenter d'effacer l'aperçu reçu de C : mais ceci est sans effet si C a déjà obtenu la note (copié dans son compte).
-- il peut effacer la note dans son compte : c'est aussi sans effet si C a déjà obtenu la note, mais ceci supprime aussi la pièce jointe et C ne l'a peut-être pas encore obtenue.
+- il peut tenter d'effacer l'aperçu reçu de C : mais ceci est sans effet si C a déjà obtenu la note (l'a déjà copiée dans son compte).
+- il peut effacer la note dans son propre compte : c'est aussi sans effet si C a déjà obtenu la note, mais ceci supprime aussi la pièce jointe et C ne l'a peut-être pas encore obtenue.
 
 #### Restriction au partage de notes
 N'importe qui ne peut pas partager une note avec qui il veut, ni inviter n'importe qui à un forum en partageant une note d'invitation.  
-Le réseau est a-social : un compte ne peut partager des notes qu'avec les comptes pour lesquels une acceptation réciproque explicite est établie :
-- tout compte avec lequel les certificats d'identité sont mutuellement connus :
-    - **participant à un forum commun**.
-    - **contact de confiance** dans leurs **Contacts** respectifs.
-- tout compte pour lequel une *phrase de contact* est connue, le partage de note ayant pour objectif l'inscription à un forum ou l'établissement d'un contact de confiance.
+Le réseau est a-social : un compte A ne peut partager une note avec un compte C que :
+- soit il en connaît le certificat d'identité C (donc son nom) : 
+    - soit que A et C se soient réciproquement acceptés comme *contact de confiance*.
+    - soit que A et C participent à un même forum.
+- soit il en connaît une phrase de contact en cours de validité,
+    - soit confiée par C hors de l'application après un contact direct.
+    - soit transmise par un compte tiers, de confiance de A et de C, ayant accepté de relayer la phrase de contact que C lui a fourni pour A.
 
-#### Clôture d'un compte
+#### Auto résiliation d'un compte
 Elle se passe en deux temps :
-- le compte est d'abord mis en état zombie.
-- après un certain temps en état zombie, destruction physique du compte. Les comptes et forums ayant un contact avec ce compte en sont informés.
+- le compte est se met d'abord en état *zombie*.
+- après un certain temps en état zombie, la destruction physique du compte intervient automatiquement. Les comptes et forums ayant un contact avec ce compte en sont informés.
 
-Ceci laisse un délai de remord permettant :
+Ceci laisse un délai de remord permettant au compte :
 - de prolonger l'état zombie.
 - de revenir à l'état actif normal.
 
 ## Les Forum
 Un compte peut créer un forum dès qu'il souhaite partager des notes avec plusieurs autres comptes sur un espace commun.
-- le forum ainsi créé a un identifiant interne tiré au hasard à sa création.
-- **le créateur devient le premier participant**, avec selon le type de gouvernance un statut de dirigeant / élu (ou simple membre dans une gouvernance démocratique directe).
-- **il peut inviter certains des comptes**, en fait tous ceux avec qui il peut partager une note (d'invitation).
+- le forum ainsi créé a un identifiant universel unique tiré au hasard à sa création.
+- **le créateur devient le premier participant**, avec selon le type de gouvernance un privilège dirigeant / élu (ou simple membre dans une gouvernance démocratique directe).
+- **il peut y inviter des comptes** : tous ceux avec qui il peut partager une note (d'invitation).
 
-Ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumises à approbation des autres participants.
+Ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumises à sondage / approbation des autres participants.
 
 Partager des informations privées à plusieurs suppose d'avoir confiance en ceux avec qui ce partage s'établit. Cette acquisition de confiance joue autant pour les **invitants** (*puis-je avoir confiance dans cet invité ?*) que pour **l'invité** (*avec qui vais-je partager des informations ?*).
 
-A sa création un forum dispose de deux clés :
-- une clé transmise aux invités avant qu'ils soient acceptés en tant que participants confirmés.
-- une clé transmise à un invité lors de sa confirmation comme participant.
+A sa création un forum a généré aléatoirement une **clé complète** et en a dérivé par réduction simple une seconde dite **clé réduite** :
+- la **clé réduite** est transmise aux invités avant qu'ils ne soient acceptés en tant que participants confirmés.
+- la **clé complète** est transmise à un invité lors de sa confirmation comme participant.
 
-Une note d'un forum est inscrite à son répertoire avec l'indication de sa clé de cryptage :
-- elle peut ainsi être lisible par les **invités**.
-- elle peut n'est lisible que par les **participants confirmés**.
+#### Espace hiérarchique de stockage des notes
+Une note d'un forum est inscrite dans son répertoire en un ou plusieurs endroits selon son / ses *paths*. Sa clé de cryptage y est cryptée,
+- soit par la clé réduite : elle est lisible par les **invités** et les **participants confirmés**.
+- soit par la clé complète du forum : elle n'est lisible que par les **participants confirmés**.
 
-Le répertoire des participants liste les invités / participants avec pour chacun :
-- son **nom** et son **certificat d'identité** cryptés par la clé transmise aux invités.
+#### Participants
+Ce répertoire liste les invités / participants avec un sous répertoire pour chacun :
+- son **nom** et son **certificat d'identité** cryptés par la clé réduite du forum.
 - son **statut** :
     - *invité en attente d'acceptation* : son certificat d'identité et son nom peuvent ne pas figurer encore s'il a été invité par une note accompagnée d'une phrase de contact.
-    - *invité ayant accepté mais n'ayant pas encore été confirmé*. L'invité peut écrire des notes avec la seule clé transmise aux invités et c'est par ce moyen qu'il peut s'auto-présenter aux autres participants.
+    - *invité ayant accepté mais n'ayant pas encore été confirmé*. L'invité peut écrire des notes avec la seule clé transmise aux invités et c'est par ce moyen qu'il s'est auto-présenté aux autres participants.
     - *participant confirmé* :
         - *simple*.
-        - *dirigeant / élu* selon le modèle de gouvernance retenu. 
+        - *privilégié* selon le modèle de gouvernance retenu. 
     - *résilié* :
         - *avant confirmation*.
-        - *après confirmation*. 
+        - *après confirmation*.
 
-Un invité qui est notifié d'une note d'invitation dispose donc de la clé de cryptage qui lui permet :
-- **de lire la liste des participants**, leurs certificats d'identité (qui les certifient).
-- **de lire la ou les notes et conversations déclarées lisibles aux invités** et qui peuvent présenter l'objet du forum, ses règles internes. Beaucoup de ces notes sont associées aux participants et présentent qui ils sont.
+Un invité qui est notifié par une note d'invitation partagée par un participant invitant du forum, y dispose de la clé réduite qui lui permet :
+- **de lire la liste des participants** avec leurs certificats d'identité (qui les certifient).
+- **de lire la ou les notes lisibles aux invités** qui présentent l'objet du forum, ses règles internes : certaines de ces notes sont associées aux participants et présentent qui ils sont.
 
 Ainsi un invité peut se forger une opinion sur le forum sur lequel il est invité et il peut choisir d'accepter cette invitation ou de la décliner.
 - **s'il refuse l'invitation** il est marqué comme résilié avant confirmation.
@@ -293,54 +331,55 @@ Ainsi un invité peut se forger une opinion sur le forum sur lequel il est invit
     - **si oui** l'invité devenu *participant confirmé* dispose dès lors de la clés de cryptage lui permet de lire aussi les notes cryptées pour les participants.
     - **si non**, l'invité est recalé. Il aura eu le temps de lire la liste des participants et la ou les quelques notes de présentation mais rien d'autre.
 
-Dans les cas simples ou un invité est particulièrement et favorablement bien connu, *son invitation peut se faire avec approbation implicite* pour raccourcir le délai. Il reçoit dès l'invitation les clés permettant d'accéder à tout le forum, le serveur ne lui donnant effectivement accès qu'aux notes réservées aux invités tant que l'invitation n'a pas été accepté par l'invité.
+Dans les cas simples ou un invité est particulièrement et favorablement bien connu, *son invitation peut se faire avec approbation implicite* pour raccourcir le délai. Il reçoit dès l'invitation la clé complète permettant d'accéder à tout le forum, le serveur ne lui donnant effectivement accès qu'aux notes réservées aux invités tant que l'invitation n'a pas été acceptée par l'invité.
 
 #### Restrictions d'accès d'une note d'un forum
-Toute note a pour propriétaire son créateur. Lui seul peut ensuite en transmettre la propriété à un autre participant. Le propriétaire d'une note a certains droits sur cette note :
-- la détruire.
-- en restreindre la lecture à certains participants.
-- en restreindre l'écriture (la production d'une nouvelle version pour une note versionnée) à certains participants.
+Toute note a par défaut pour seul auteur, son créateur. Un auteur peut ajouter d'autres participants à la liste des auteurs, tous de même rang.  
+Une note ne peut être détruite que par l'un de ses auteurs enregistrés et selon la gouvernance du forum par décision de gestion.
 
 #### Vie d'un forum
 La vie du forum est pour l'essentiel marquée par :
 - **la lecture et l'écriture de notes** et de leurs pièces jointes.
 - **des actes de gestion** :
-    - invitation / confirmation / résiliation d'un participant et changement de statut entre *participant simple* et *dirigeant / élu*.
-    - suppression de notes obsolètes, transfert de propriété d'une ou de plusieurs note.
+    - invitation / confirmation / résiliation d'un participant et attribution / retrait de *privilège* (selon le schéma de gouvernance retenu).
+    - suppression de notes obsolètes en l'absence d'action de ses auteurs (qui ont pu quitter le forum).
     - débit / crédit du forum.
     - clôture du forum.
-- **des votes sur les scrutins organisés** :
+- **des votes sur les sondages organisés** :
     - à propos de ces actes de gestion.
-    - à propos du changement de mode de gouvernance et d'élection des élus.
+    - à propos du changement de mode de gouvernance et d'élection des participants ayant un *privilège*.
 
 ##### Clôture d'un forum
 Elle se passe en deux temps :
-- une annonce de clôture proche qui le place en état zombie laissant le temps aux participants de copier des contenus jugés utiles et surtout ouvrant un délai de remord.
+- une annonce de clôture proche qui le place en état *zombie* laissant le temps aux participants de copier des contenus jugés utiles et ouvrant un délai de remord.
 - une destruction effective un certain temps après.
 
-Il est possible de réactiver un forum zombie quand on a un remord ou de prolonger l'état zombie.
+Il est possible de réactiver un forum zombie quand les participants ont un remord ou qu'ils souhaitent prolonger l'état zombie.
 
 La destruction effective supprime physiquement les données.
 
 >**Remarque** : dans le cas le plus simple un forum s'ouvre instantanément sur demande d'un compte qui y invite immédiatement les contacts qu'il souhaite avec approbation par défaut. Une gouvernance par défaut s'installe, et les participants peuvent sur l'instant accepter l'invitation et participer à une conversation et s'échanger des notes.
 
 # Confiance dans l'application
-Ces données passent par deux applications, une terminale, l'autre dans le serveur, circulent sur internet et sont stockées dans une base de données. Tous ces niveaux techniques sont susceptibles d'être attaqués et déroutés.  
+Ces données passent par deux applications (une terminale, l'autre dans le serveur), circulent sur internet et sont stockées dans une base de données. Tous ces niveaux techniques sont susceptibles d'être attaqués et déroutés.  
 Les techniques de cryptographie employées offrent certaines garanties en elles-mêmes, mais pas toutes les garanties et le niveau de confiance à accorder à l'application n'est pas un sujet trivial et s'étudie en fonction des niveaux de confiance qu'on peut accorder à chacun de ces éléments.
 
 Il est impossible de garantir que toutes les données seront toujours présentes et inviolées mais il est possible de garantir que pour certaines données :
-- si elles ont été trouvées elles sont fiables et inviolées, c'est à dire effectivement produites par qui de droit.
-- plus exactement il est possible de détecter si une telle donnée a été corrompue, donc si elle est fiable ou non. En règle générale les hackers ne se fatiguent pas à corrompre des données dont la corruption serait détectable, sauf seulement à rendre l'application inutilisable.
+- si elles ont été trouvées elles sont fiables et inviolées, c'est à dire effectivement produites par qui prétend l'avoir fait et que le contenu n'en a pas été altéré.
+- plus exactement il est possible de détecter si une telle donnée a été corrompue, donc si elle est fiable ou non. En règle générale les hackers ne se fatiguent pas à corrompre des données dont la corruption est détectable : ça ne fait que rendre l'application inutilisable (au même titre que des suppressions aveugles).
+
+>**Se focaliser principalement sur la confiance envers l'environnement technique n'est pas une bonne idée. Un bon agent infiltré au bon endroit peut être beaucoup plus efficace.**
 
 #### Confiance dans l'application terminale et le réseau Internet
-C'est elle qui crypte, signe, décrypte et vérifie les signatures. Si l'application terminale, dans son ensemble, n'est pas de confiance, aucune confiance ne peut être accordée à l'application.
+C'est l'application terminale qui crypte, signe, décrypte et vérifie les signatures. Si l'application terminale, dans son ensemble, n'est pas de confiance, aucune confiance ne peut être accordée à l'application.
 - son logiciel est open source et lisible en clair dans n'importe quel terminal. Il est vérifiable par tout lecteur ayant le minimum requis de compétence technique.
-- il peut être disponible depuis des sources diverses, et en particulier des sources de confiance.
-- l'application s'exécute dans un environnement technique de l'appareil dans lequel, usuellement et à juste titre, on a confiance : navigateur, système d'exploitation, matériel. On a toutefois relevé par exemple :
-    - un fournisseur de haute renommée qui détournait les frappes au clavier de l'utilisateur.
+- il peut être rendu disponible depuis des serveurs divers, et en particulier des serveurs de confiance distincts des serveurs d'instance qui hébergent les données et l'application centrale.
+- l'application s'exécute dans un environnement technique de l'appareil dans lequel, usuellement et à juste titre, on a confiance : *navigateur, système d'exploitation, matériel*. On a toutefois relevé par exemple :
+    - un fournisseur de matériel de haute renommée qui détournait les frappes au clavier de l'utilisateur.
     - des CPU de haute renommée également mais pas complètement étanches aux inspections indésirables des autres programmes.
+    - des navigateurs dont l'éditeur offre des primes à ceux qui y trouvent une faille de sécurité, preuve qu'il y en a.
 
-La transmission avec le serveur utilise le protocole chiffré d'internet, dont pour l'instant il n'existe pas de preuve de fragilité.
+**La transmission avec le serveur utilise le protocole chiffré d'internet HTTPS**, dont pour l'instant il n'existe pas de preuve de fragilité.
 
 >Ce niveau technique est supposé de confiance, sinon l'application n'est pas pertinente (ni la quasi totalité des autres d'ailleurs).
 
@@ -349,11 +388,10 @@ Dans ce contexte :
     - le nom du compte est crypté et les diverses clés (sauf la clé 0) sont scellés dans ***un ticket public immuable et inviolable portant le numéro du compte***.
     - la clé 0 *mère* est enregistrée cryptée par la phrase secrète utilisée à la création.
 - aucun autre compte ne peut être créé (dans aucune instance d'ailleurs) et présenter le même numéro de compte avec un ticket public valide différent (un *fake*): c'est détectable.
-- si l'application mémorise pour chaque numéro de compte son **ticket public immuable et scellé**, n'importe quel terminal de la planète peut en conserver des copies sur n'importe quels supports. Depuis ce ticket n'importe quel terminal, avec ou sans le logiciel de l'application :
-    - **peut obtenir le nom du compte** à condition de disposer de plus de la clé 1 qui en autorise la lecture (le décryptage).
-    - **s'il connaît ou croit connaître le nom du compte**, peut vérifier si c'est ou non le bon. Une tentative de recherche du nom scellé par force brute en essayant toutes les combinaisons est vouée à l'échec.
+- si l'application mémorise pour chaque numéro de compte son **ticket public immuable et scellé**, n'importe quel terminal de la planète peut aussi en conserver des copies sur n'importe quels supports. Depuis ce ticket n'importe quel terminal, avec ou sans le logiciel de l'application :
+    - **peut obtenir le nom du compte** à condition de disposer de la clé 1 qui le crypte. Une tentative de recherche du nom scellé par force brute en essayant toutes les combinaisons est vouée à l'échec.
     - **peut s'adresser au compte en cryptant des données de telle sorte que seul le détenteur du compte puisse les décrypter**.
-    - **principe d'inviolabilité et de non répudiation** : il peut vérifier qu'une note qui prétend avoir été horodatée et signée par un compte, l'a véritablement été en utilisant les clés ad hoc que nul ne peut avoir inventé. S'il possède la clé de cryptage d'une note, la signature lui indiquera si le contenu a été violé (n'en rien croire c'est un faux) ou non.
+    - **principe d'inviolabilité et de non répudiation** : il peut vérifier qu'une note qui prétend avoir été horodatée et signée par un compte, l'a véritablement été en utilisant les clés ad hoc que nul ne peut avoir inventé. S'il possède la clé de cryptage d'une note, la signature lui indiquera si le contenu est un faux ou non.
 
 A la création du compte, la clé 0 mère est cryptée par la première phrase secrète.  
 Ultérieurement, à condition de disposer pour un compte donné de la clé 0 cryptée par l'ancienne phrase secrète, une session peut ré-encrypter la clé 0 par une nouvelle phrase secrète.
@@ -367,36 +405,54 @@ Ultérieurement, à condition de disposer pour un compte donné de la clé 0 cry
 >- que la note n'a pas été altérée (après l'avoir décryptée par sa clé de cryptage).
 
 ### Confiance dans le serveur et la base de données
-Les tickets et contenus sont générés, cryptés et scellés dans les applications terminales. Le serveur ne reçoit jamais aucun élément qui lui permette de décrypter ou crypter ces contenus : au plus peut-il vérifier que les signatures des contenus signent bien ce qu'elles prétendent signer, mais ce contrôle est juste destiné à décourager un éventuel hacker maladroit qui tenterait de pervertir les données à distance : la vraie et seule vérification crédible est celle refaite dans la session terminale lectrice des notes.
+Les tickets et contenus sont générés, cryptés et scellés dans les applications terminales.  
+Le serveur ne reçoit jamais aucun élément qui lui permette de décrypter ou crypter ces contenus : au plus peut-il vérifier que les signatures des contenus signent bien ce qu'elles prétendent signer, mais ce contrôle est juste destiné à décourager un éventuel hacker maladroit qui tenterait de pervertir les données à distance : la vraie et seule vérification crédible est celle refaite dans la session terminale lectrice des notes.
 
-Une note stockée dans la base de données ne peut pas être décrypter sans disposer du ticket public de son auteur et de sa clé de cryptage.  
-Le détournement / copie de la base de données ne peut fournir aucune note sans disposer de leurs clés, c'est à dire sans la complicité d'un compte disposant d'un accès régulier.  
-Détourner une base ne servirait qu'à en obtenir les notes que le complice utilisateur peut avoir régulièrement.
+Une note stockée dans la base de données ne peut pas être décryptée sans disposer de sa clé de cryptage. Le ticket public de son auteur est nécessaire pour vérifier la signature.  
+Le détournement / copie de la base de données ne peut fournir aucune note sans disposer de leurs clés, c'est à dire **sans la complicité d'un compte disposant d'un accès régulier**.  
+Détourner une base ne servirait qu'à en obtenir les notes que le complice peut avoir régulièrement.
 
 #### Destruction d'informations
-Techniquement une application serveur pirate peut intercepter les opérations demandées au serveur :
+Techniquement une *application serveur pirate* peut intercepter les opérations demandées au serveur régulier et effectuer son propre traitement :
 - son action ne peut être que destructrice : suppression de comptes, de notes, de participants à des forums, de contacts dans les répertoires des comptes.
 - il ne peut pas créer des notes fake, ni de faux certificats d'identité, ni de faux participants à un forum : tout cela est détecté à la lecture dans les applications terminales.
 
-De même une intervention directe sur la base de données ne que miter les données mais pas pervertir celles restantes.
+De même une intervention directe sur la base de données ne que miter les données mais pas pervertir silencieusement celles restantes.
 
->**Synthèse** : rendre une application inutilisable ou non crédible en raison des attaques destructives de ses données n'est pas un aspect secondaire.
+>**Synthèse** : rendre une application inutilisable et non crédible en raison des *attaques destructives de ses données* n'est pas un aspect secondaire.
 >- en revanche tout ce qui s'y trouve peut être considéré comme crédible, non altéré.
->- il est parfois, mais rarement, possible de détecter que des données ont été détruites.
+>- il est possible de détecter que des données ont été détruites *quand leur liste peut être scellée et signée* (par exemple, un certificat d'identité, la liste des participants d'un forum ... ) mais pas dans le cas général (la liste des notes d'un forum n'est pas scellée : un hacker pourrait parvenir à en détruire silencieusement).
 
 ### URLs d'une note et de sa pièce jointe
-Un peu paradoxalement un compte peut obtenir pour toute note qu'il peut décrypter une URL qui comporte l'identification de la note, sa clé de cryptage et une URL pour sa pièce jointe.  
+Un peu paradoxalement un compte peut obtenir pour toute note une URL qui comporte l'identification de la note et sa clé de cryptage (à condition qu'il l'ait) et une URL pour sa pièce jointe.  
 Il peut transmettre cette URL à n'importe qui, la publier dans un blog ...
 
-**Choquant pour une application a-sociale ?**
-En fait non, c'est normal. Si un compte a normalement accès à une note, il peut bien la lire en clair. L'objectif de l'application est de partager des notes avec qui on veut et si on a décidé que C pouvait lire une note, c'est bien que C en verra le contenu en clair, pièce jointe comprise. Dès lors cette note en clair peut se retrouver sur un fichier et il peut bien la diffuser où il veut : c'est le risque pour toute information confidentielle. Dès lors qu'elle est connue de quelqu'un, il faut avoir confiance dans cette personne pour qu'elle reste non publiée, si tel était l'intention de son auteur.
+**Choquant pour une application a-sociale cryptée ?**
+En fait non, c'est normal. Si un compte a un accès *licite et authentifié* à une note, il peut bien la lire en clair. L'objectif de l'application est de partager des notes avec qui on veut et si on a décidé que C pouvait lire une note, c'est bien que C en verra le contenu en clair, pièce jointe comprise. Dès lors cette note en clair peut se retrouver sur un fichier et il peut (*can* en anglais) bien la diffuser où il veut : c'est le risque pour toute information confidentielle. Dès lors qu'elle est connue de quelqu'un, il faut avoir confiance dans cette personne pour qu'elle reste non publiée, si tel était l'intention de son auteur.
 
-Bref rien de nouveau sous le soleil : la seule information qui ne pourra jamais être publiée hors de la volonté de son auteur est celle qu'il n'a pas écrite ou du moins n'a jamais fait lire à personne. C'est exactement la cas d'une note d'un compte qui n'a jamais été partagée. Seul son auteur la connaît et il ne faut qu'il l'imprime (ou qu'il broie le papier sans l'avoir perdu de vue).
+>Pierre Dac avait soulevé il y a longtemps ce problème en publiant une petite annonce : *recherche personne ayant une belle écriture et ne sachant pas lire pour recopier des documents secrets*.
 
-Dès lors fournir une URL contenant la clé de cryptage d'une note ne pose pas plus de problème que de transmettre une copie par fichier de la note.
+Bref rien de nouveau sous le soleil : la seule information qui ne pourra jamais être publiée hors de la volonté de son auteur est celle qu'il n'a pas écrite ou du moins n'a jamais fait lire à personne. C'est exactement la cas d'une note du **home** d'un compte qui n'a jamais été partagée. Seul son auteur la connaît et il ne faut pas qu'il l'imprime (ou qu'il broie le papier sans l'avoir perdu de vue).
+
+Dès lors fournir une URL contenant la clé de cryptage d'une note ne pose pas plus de problème que de transmettre une copie par fichier de la note ou d'avoir laissé traîner une impression sur une imprimante.
 
 Il est aussi possible d'obtenir l'URL d'une note sans sa clé de cryptage et de l'envoyer par e-mail : elle ne sera lisible que quand le destinataire aura reçu, peut-être par un autre canal (un SMS par exemple), la clé de cryptage.
 
+### De l'usage des vrais noms ou des pseudos
+Qu'est ce qu'un vrai nom ? En droit français un *nom / prénoms date et lieu de naissance* vérifiable dans un registre d'état civil. L'absence d'un tel registre informatisé et les approximations orthographiques que contiennent les registres rend ce concept techniquement malaisé à utiliser.  
+Comment vérifier qu'une personne physique derrière un terminal distant n'usurpe pas l'état civil d'une autre ? Les données biométriques ne sont, à ce jour, que partiellement fiables et non vérifiables facilement à la création d'un compte.
+
+L’État français ne signe pas de certificat d'état civil.
+
+Les autorités de certifications reconnues en signent à toute personne qui peut payer (et même gratuitement parfois).
+
+**Un serveur central pourrait techniquement exiger que les requêtes de création de comptes auto-certifiées soit faites en utilisant un certificat** signé par une ou des autorités de certification enregistrées à la configuration du serveur.  
+Les autres requêtes n'utilisent que l'authentification par phrase secrète, largement aussi fiable que le mot de passe demandé pour obtenir son certificat sur son poste. Encore faut-il avoir confiance dans la distribution de ces certificats qui n'est guère envisageable que dans une organisation ayant intégré cet objectif.
+
+>Mais la question centrale est : le *vrai* nom est-il souhaitable ?
+>- cela dépend de chaque instance et de son objet.
+>- des organisations de résistance, certains services secrets ... peuvent définitivement répondre NON.
+>- le plus simple est d'utiliser ... la convention prévue dans la charte éthique de l'instance utilisée et accessible sur la page d'accueil.
 
 # Comptabilisation des consommations de ressources
 Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :
@@ -569,10 +625,9 @@ Le scrutin par défaut pour changer de gouvernance est :
 - pas de quorum.
 - majorité simple.
 
-##### Election des N délégués
+##### Élection des N délégués
 Chaque participant a 10 bulletins et les affectent sur les participants au forum (le cas échéant plusieurs pour un participant).  
 A l'issue du scrutin les N participants ayant reçu le plus de votes sont élus délégués.
-
 
 # Traces d'activités sur les comptes et forum
 Il n'est pas naturel de savoir si un compte ou un forum est *actif* : 
@@ -634,7 +689,7 @@ Le texte crypté d'un texte source dépend de ces deux suites.
     - constante dans l'ensemble de l'application.
     - être générée aléatoirement et être jointe en texte du résultat crypté de manière à ce que le décryptage lise cette suite comme `iv`.
 
-Le choix a été fait d'une suite de 4 octets, aléatoire au cryptage et placée en tête du texte crypté. `iv` est cette suite répétée 4 fois. De ce fait un même contenu cryptée deux fois par la même clé a deux valeurs encryptées différentes : sans la clé il est impossible de savoir si deux textes encryptés différents sont le résultat de l'encryptage de deux contenus différents ou du même contenu. Ceci évite, par exemple sur une base détournée, de pouvoir déterminer si des données cryptées sont identiques ou si des clés cryptées sont identiques : l'interprétation même des metadonnées obscures devient impossible.
+Le choix a été fait d'une suite de 4 octets, aléatoire au cryptage et placée en tête du texte crypté. `iv` est cette suite répétée 4 fois. De ce fait un même contenu cryptée deux fois par la même clé a deux valeurs encryptées différentes : sans la clé il est impossible de savoir si deux textes encryptés différents sont le résultat de l'encryptage de deux contenus différents ou du même contenu. Ceci évite, par exemple sur une base détournée, de pouvoir déterminer si des données cryptées sont identiques ou si des clés cryptées sont identiques : l'interprétation même des métadonnées obscures devient impossible.
 
 AES  permet de crypter une suite d'octets (donc un texte) de n'importe quelle longueur et de décrypter la suite résultante avec la même clé pour ré-obtenir la suite initiale. Le cryptage / décryptage symétrique est rapide.
 
@@ -723,27 +778,26 @@ C'est un vecteur de 15 octets tirés au hasard et codé en base 64 URL de 20 car
 
 ### Identifiant d'une note
 Il est constitué de 3 parties :
-- 0 ou 1. O:note immutable, 1:note versionnée.
-- 8 caractères en base 64 URL représentant 6 octets dont la valeur binaire forme, en lecture décimale, la date-heure de création AAMMJJhhmmssSSS (180224225959001).
+- 0 ou 1. O:note immuable, 1:note versionnée.
+- 8 caractères en base 64 URL représentant 6 octets dont la valeur binaire forme, en lecture décimale, la date-heure de création `AAMMJJhhmmssSSS` (180224225959001).
 - 12 caractères en base 64 URL représentant un vecteur de 9 octets tirés au hasard pour éviter les collisions dans la même milliseconde de création.
 
 Cet identifiant a l'avantage de pouvoir être considéré comme universel (toutes instances confondues).
 
-### `TPC` : ticket public d'un compte
+### `TPU` : ticket public d'un compte
 Ce ticket a été généré par la session créatrice du compte et comporte les propriétés suivantes :
 - `dh` : date-heure de génération.
 - **alias** : `nomrBD` : SHA-256 du BCRYPT du nom réduit utilisé pour détecter et interdire l'usage de noms trop proches.
 - `c1O` : clé 1 du compte cryptée par la clé 0. Elle crypte le nom du compte `nom1` ci-dessous et ceux des comptes certifiant son identité.
-- `nomBD` : SHA-256 du BCRYPT du nom.
 - `nom1` : nom crypté par sa clé 1.
 - `pub` : clé RSA publique de cryptage.
 - `verif` : clé RSA publique de vérification.
 - `priv0` : clé privée RSA de décryptage cryptée par la clé 0.
 - `sign0` : clé privée RSA de signature cryptée par la clé 0.
 
-**La clé de la constante** est le SHA-256 de `pub` et est le numéro de compte.
+**La clé de la constante** est le SHA-256 de `nom1 pub verif` et est le numéro de compte.
 
->Remarque : les trois identifiants majeurs, numéro de compte, numéro de forum, numéro d'une note sont des identifiants universels qui n'ont pas de possibilité relle de collision même entre instances différentes. Ils ont l'avantage d'avoir des longueurs fixes et différentes (32, 21 et 20 caractères).
+>Remarque : les trois identifiants majeurs, numéro de compte, numéro de forum, numéro d'une note sont des identifiants universels qui n'ont pas de possibilité réelle de collision même entre instances différentes. Ils ont l'avantage d'avoir des longueurs fixes et différentes (32, 21 et 20 caractères).
 >Seul l'identifiant d'une note est porteur de deux informations (immuable / versionnée et date-heure de création).
 
 ## Logique de cryptage
@@ -771,12 +825,11 @@ On distingue deux niveaux de protection par cryptage :
 - le second couple permet une signature / vérification.
 
 ### Clés d'une note
-Chaque version d'une note a sa clé tirée au hasard à sa constitution. Un compte qui aurait eu accès à une note d'une version 1 et aurait été résiliée, ne pourrait pas lire les versions postérieures à sa résiliation même sur une base détournée.
+Chaque version d'une note a sa clé tirée au hasard à sa constitution. Un compte qui aurait eu accès à une note d'une version 1 et aurait été résilié, ne pourrait pas lire les versions postérieures à sa résiliation même sur une base détournée.
 
 ### Clés d'un forum
-Un forum a :
-- une clé dite I disponible aux invités au forum. Ceux-ci pouvant refuser ou être exclu, peuvent avoir conserver cette clé obtenu du temps où ils étaient invités. Les notes cryptées par la clé I sont donc de protection de niveau 2 (décryptable depuis une base détournée par un compte ayant eu un jour un accès licite comme invité).
-- une clé dite F disponible pour les participants au forum. Les notes du forum sont cryptées par cette clé (ou la clé I). C'est une protection de niveau 2. (à étudier : changement de clé F à chaque exclusion ? Il faut réencrypter la nouvelle par toutes les clés publiques de tous les participants ce qui est faisable si elles sont stockées dans le Forum et non dans le compte). Les notes nouvelles utilisent la nouvelle clé F (pour la I c'est moins grave mais ça pourrait se faire aussi).
+La **clé complète** d'un forum est générée aléatoirement à sa création.  
+La **clé réduite** est la clé complète où un octet sur 2 a été remplacé par `0`.
 
 # Purgatoire
 
