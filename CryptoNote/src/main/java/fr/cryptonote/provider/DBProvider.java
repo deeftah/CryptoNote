@@ -38,7 +38,12 @@ public interface DBProvider {
 	public BlobProvider blobProvider() throws AppException;
 	
 	public void shutdwon();
-		
+
+	/***********************************************************************************************************/
+	public void setConst(String key, String alias, String content) throws AppException ;
+	public String getConstByKey(String key) throws AppException ;
+	public String getConstByAlias(String alias) throws AppException ;
+	
 	/***********************************************************************************************************/
 	public Collection<DeltaDocument> listDoc(String BEGINclid, long AFTERversion) throws AppException;
 

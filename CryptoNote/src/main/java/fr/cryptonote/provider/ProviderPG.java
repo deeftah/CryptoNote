@@ -1439,4 +1439,68 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 	
+	/*** consts ***********************************************************/	
+	private static final String INSERTCONST = " (key, alias, content) values (?,?,?);";
+	private static final String WKCONST = " where key = ?;";
+	private static final String WACONST = " where alias = ?;";
+	
+	@Override public void setConst(String key, String alias, String content) throws AppException{
+		PreparedStatement preparedStatement = null;
+		try {
+			sql = "delete from consts_" + ns + WKCONST;
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, key);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+			int j = 1;
+			sql = "insert into consts_" + ns + INSERTCONST;
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(j++, key);
+			preparedStatement.setString(j++, alias);
+			preparedStatement.setString(j++, content);
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch(Exception e){
+			throw err(preparedStatement, null, e, "setConst");
+		}
+	}
+	
+	@Override public String getConstByKey(String key) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		sql = "select content from consts_" + ns + WKCONST;
+		String ct = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, key);
+			rs = preparedStatement.executeQuery();
+			if (rs.next())
+				ct = rs.getString("content");
+			rs.close();
+			preparedStatement.close();
+			return ct;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "getConstByKey");
+		}
+	}
+
+	@Override public String getConstByAlias(String alias) throws AppException {
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		sql = "select content from consts_" + ns + WACONST;
+		String ct = null;
+		try {
+			preparedStatement = conn().prepareStatement(sql);
+			preparedStatement.setString(1, alias);
+			rs = preparedStatement.executeQuery();
+			if (rs.next())
+				ct = rs.getString("content");
+			rs.close();
+			preparedStatement.close();
+			return ct;
+		} catch(Exception e){
+			throw err(preparedStatement, rs, e, "getConstByAlias");
+		}
+	}
+
 }

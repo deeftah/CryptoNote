@@ -226,13 +226,9 @@ C'est un enregistrement accessible au titulaire du compte qui donne :
 - la liste des comptes qu'il a certifiés.
 - quelques phrases de contact. Une **phrases de contact** est garantie unique dans l'instance durant sa période de validité fixée par le compte a sa déclaration. Le compte peut ajouter des phrases, détruire ses phrases ou les prolonger.
 
-##### Phrase secrète d'administration et comptes auto-certifiés
+##### Certificats d'administration et comptes auto-certifiés
 Comme au départ il n'y a pas de compte dans l'instance, le premier compte à s'inscrire ne peut pas passer par la procédure normale puisque personne ne peut certifier son identité.  
-Il est possible de créer ou ou quelques comptes **auto-certifiés** qui connaissent la **phrase secrète d'administration**.
-
-Cette phrase se transmet humainement hors de l'application : un brouillage de cette phrase donne une clé de cryptage qui est mémorisée (hachée) dans le configuration de l'instance : le serveur peut vérifier qu'un détenteur présumé de cette phrase l'est réellement sans que cette clé ne soit physiquement écrite quelque part.
-
-Une personne connaissant la phrase secrète d'administration peut créer un compte **auto-certifié** en fournissant un brouillage de cette phrase après l'avoir saisie sur son terminal :
+Il est possible de créer ou ou quelques comptes **auto-certifiés** à condition de disposer dans son navigateur d'un certificat dont le DN est l'un de ceux enregistrés dans la configuration de l'instance. En mode auto-certifié,
 - la création du compte est immédiate.
 - elle ne requiert pas qu'un autre compte certifie l'identité du compte créé.
 - un crédit fixé dans la configuration est donné *gratuitement*.
@@ -446,8 +442,14 @@ L’État français ne signe pas de certificat d'état civil.
 
 Les autorités de certifications reconnues en signent à toute personne qui peut payer (et même gratuitement parfois).
 
-**Un serveur central pourrait techniquement exiger que les requêtes de création de comptes auto-certifiées soit faites en utilisant un certificat** signé par une ou des autorités de certification enregistrées à la configuration du serveur.  
-Les autres requêtes n'utilisent que l'authentification par phrase secrète, largement aussi fiable que le mot de passe demandé pour obtenir son certificat sur son poste. Encore faut-il avoir confiance dans la distribution de ces certificats qui n'est guère envisageable que dans une organisation ayant intégré cet objectif.
+**Les requêtes de création de comptes auto-certifiées soit faites en utilisant un certificat** signé par une autorité de certification enregistrée à la configuration du serveur frontal HTTPS et ayant pour DN l'un de ceux cités comme d'administration pour l'instance. Le nom du compte créé n'est toutefois pas issu du DN.  
+Les autres requêtes n'utilisent que l'authentification par phrase secrète, largement aussi fiable que le mot de passe demandé pour obtenir son certificat sur son poste. 
+
+Il est techniquement simple de configurer une instance pour qu'elle exige un certificat reconnu par l'autorité de certification de l'organisation pour s'y connecter. Il est simple également à la création du compte d'utiliser son DN (ou une partie du DN) comme nom.  
+- encore faut-il avoir confiance dans la distribution de ces certificats qui n'est guère envisageable que dans une organisation ayant intégré cet objectif.
+- la liste des noms autorisés est dans ce cas connu de l'organisme de certification, ce qui peut être souhaitable ou non.
+- se passer de phrase secrète suppose d'utiliser le DN comme base de génération de la clé mère : à tout le moins il faudrait a minima exiger un code supplémentaire ajouté au DN pour générer cette clé puisque le browser n'en réclame pas quand on y désigne un certificat.
+- installer un certificat sur un poste *incognito*, est-ce une bonne idée ? (et ajouter le certificat du CA comme CA de confiance, et ne pas oublier de les enlever en partant).
 
 >Mais la question centrale est : le *vrai* nom est-il souhaitable ?
 >- cela dépend de chaque instance et de son objet.

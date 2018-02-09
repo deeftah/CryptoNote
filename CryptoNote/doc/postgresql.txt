@@ -84,6 +84,16 @@ CREATE TABLE s2cleanup (
 );
 ALTER TABLE s2cleanup OWNER TO "docdb";
 
+DROP TABLE IF EXISTS consts;
+CREATE TABLE consts (
+  	key varchar(256) NOT NULL,
+  	alias varchar(256) NOT NULL,
+  	content text,
+	CONSTRAINT consts_pk PRIMARY KEY (key)
+);
+ALTER TABLE consts OWNER TO "docdb";
+CREATE UNIQUE INDEX consts_alias ON consts (alias);
+
 DROP TABLE IF EXISTS doc;
 CREATE TABLE doc (
 	clid varchar(255) NOT NULL,
@@ -109,6 +119,26 @@ ALTER TABLE item OWNER TO "docdb";
 DROP TABLE IF EXISTS s2cleanup_NS;
 CREATE TABLE s2cleanup_NS (CONSTRAINT s2cleanup_NS_pk PRIMARY KEY (clid, hour)) INHERITS (s2cleanup);
 ALTER TABLE s2cleanup_NS OWNER TO "docdb";
+
+DROP TABLE IF EXISTS consts_NS;
+CREATE TABLE consts_NS (
+  	key varchar(256) NOT NULL,
+  	alias varchar(256) NOT NULL,
+  	content text,
+	CONSTRAINT consts_NS_pk PRIMARY KEY (key)
+);
+ALTER TABLE consts_NS OWNER TO "docdb";
+CREATE UNIQUE INDEX consts_NS_alias ON consts_NS (alias);
+
+DROP TABLE IF EXISTS consts_test;
+CREATE TABLE consts_test (
+  	key varchar(256) NOT NULL,
+  	alias varchar(256) NOT NULL,
+  	content text,
+	CONSTRAINT consts_test_pk PRIMARY KEY (key)
+);
+ALTER TABLE consts_test OWNER TO "docdb";
+CREATE UNIQUE INDEX consts_test_alias ON consts_test (alias);
 
 DROP TABLE IF EXISTS doc_NS;
 CREATE TABLE doc_NS (CONSTRAINT doc_NS_pk PRIMARY KEY (clid)) INHERITS (doc);

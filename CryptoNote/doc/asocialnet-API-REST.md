@@ -18,7 +18,7 @@ Une **session cliente associée à un compte** se déclare dans un terminal en d
 - `psrB` : BCRYPT de la phrase réduite. **Cette forme s'échange sur le réseau** (cachée par le HTTPS).
 - `psrBD` : SHA-256 de `psr`. **Cette forme est stockée en base**.
 
-La requête **non authentifiée** `Xauth` demande au serveur l'entête `EnC` (dont `c0S` la clé 0 du compte cryptée par la clé S) du compte ayant pour propriétés `psrBD` le SHA-256 de l'argument de la requête `psrB` et la constante TPC correspondant à ce numéro de compte: 
+La requête **non authentifiée** `Xauth` demande au serveur l'entête `EnC` (dont `c0S` la clé 0 du compte cryptée par la clé S) du compte ayant pour propriétés `psrBD` le SHA-256 de l'argument de la requête `psrB` et la constante TPU correspondant à ce numéro de compte: 
 - si le serveur trouve ce compte, cela prouve que le titulaire a bien saisi la bonne phrase secrète.
 - si la session peut décrypter `c0S` par la clé S détenue dans sa mémoire :
     - elle conserve la clé 0 qui permet de décrypter toutes les autres et les données du compte.
@@ -38,9 +38,9 @@ Une requête peut être invoquée en spécifiant un compte *authentifié* en fou
 
 La requête porte deux paramètres identifiant et authentifiant le compte de la requête :
 - `account` : le numéro du compte.
-- `key` : le `prB` (BCRYPT de la phrase secrète réduite du compte).
+- `key` : le `psrB` (BCRYPT de la phrase secrète réduite du compte).
 
-Dans le serveur le dossier du compte est obtenu depuis `account` : dans son singleton `EnD` la propriété `prBD` est censée être le SHA-256 de `prB` passé en `key` sur la requête (ce que l'opération vérifie).
+Dans le serveur le dossier du compte est obtenu depuis `account` : dans son singleton `EnC` la propriété `psrBD` est censée être le SHA-256 de `psrB` passé en `key` sur la requête (ce que l'opération vérifie).
 
 ### Opérations sous privilège d'administrateur
 L'argument `sudo` de la requête contient le BCRYPT de la phrase secrète réduite d'administration dont le SHA-256 est enregistré en configuration des serveurs. Ce privilège peut être :
@@ -116,16 +116,16 @@ La clé est le numéro de compte et n'a que trois propriétés destinées à év
 - **alias** : `nomrBD` : BCRYPT du nom réduit.
 
 # Dossier `Compte`
-La clé d'accès `docid` est le numéro de compte nc.
+La clé d'accès `docid` est le numéro de compte `nc`.
 
 ## Singleton : *Entête du compte* `EnC`
 Ce singleton est déclaré à la création du compte et n'est modifié qu'à quelques rares occasions :
-- mise à jour de la phrase secrète du compte : son ticket privé valide change.
+- mise à jour de la phrase secrète du compte.
 - lors des changements d'état : *début d'activité, passages zombie / retour à l'état actif, destruction physique*.
 
 **Propriétés :**
-- `prBD` : propriété indexée. SHA-256 du BCRYPT de la phrase secrète réduite. Permet de ne pas tolérer que des phrases secrètes soient trop ressemblantes dans l'instance.
-- `c0S` : clé 0 du compte cryptée par le SHA-256 du BCRYPT de la phrase secrète. Cette cl ouvre toutes les autres clé mères du compte présentes dans son `TPC`.
+- `psrBD` : *propriété indexée*. SHA-256 du BCRYPT de la phrase secrète réduite. Permet de ne pas tolérer que des phrases secrètes soient trop ressemblantes dans l'instance.
+- `c0S` : clé 0 du compte cryptée par le SHA-256 du BCRYPT de la phrase secrète. Cette clé ouvre toutes les autres clé mères du compte présentes dans son `TPU`.
 - `dha` : date-heure de début d'activité.
 - `dhzm` : date-heure de passage en zombie posée par la modération de l'instance.
 - `dhzc` : date-heure de passage en zombie posée par le compte lui-même.
@@ -156,7 +156,7 @@ L'opération de certification ou suppression de certification par A du compte C 
 
 L'opération ne peut pas vérifier les noms ni leur cryptages dans `Cid` et `Crt`.
 
-Etant signées dans leur globalité, les certificats ou liste de certifications sont garanties complètes ou complètement détruites par piratage.
+Étant signées dans leur globalité, les certificats ou liste de certifications sont garanties complètes ou complètement détruites par piratage.
 
 La création d'un compte a signé des `Cid` `Crt` vides (mais bel et bien signées par A).
 
@@ -180,11 +180,16 @@ C peut avoir A comme contact : `Rep(C)` a une entrée A.  `aDansC`.
 **Propriétés** :
 - `dh` : date heure de la dernière opération.
 - `nom0P` : nom du contact crypté par la clé 0 du compte ou sa clé publique (quand c'est le contact qui l'a donné et que le compte ne l'a pas encore ré-encrypté par sa clé 0).
-- `c10P` : clé 1 du compte cryptée par la clé 0 du compte ou sa clé publique (quand c'est le contact qui l'a donné et que le compte ne l'a pas encore ré-encrypté par sa clé 0).
+- `c10P` : clé 1 du compte cryptée par la clé 0 du compte ou sa clé publique (quand c'est le contact qui l'a donnée et que le compte ne l'a pas encore ré-encrypté par sa clé 0).
 - `memo0` : un court texte de commentaire du compte à propos de son contact (crypté par la clé 0).
 - `photo0` : une photo d'identité du contact qui a pu être récupérée dans une note reçue ou sur un forum (crypté par la clé 0).
 - `dhi` : date-heure d'inscription du contact dans le répertoire.
 - `dhr` : date-heure de résiliation du contact.
+- cf : confiance mutuelle entre le compte et son contact :
+    - 0 : aucune 
+    - 1 : le compte a accordé sa confiance au contact mais l'inverse n'est pas vrai.
+    - 2 : le contact a accordé sa confiance au compte mais l'inverse n'est pas vrai.
+    - 1 : confiance mutuelle.
 - `dhdc` : date-heure de demande au contact de certification émise par le compte. Effacée quand le contact a certifié l'identité du compte ou que le compte a renoncé à sa demande.
 - `fav` : 1:contact favori (affiché en tête), 0:normal, 2:caché.
 
@@ -194,18 +199,14 @@ Le compte A peut inscrire un contact C en fournissant a minima son numéro de co
 Il peut simultanément ou ultérieurement fournir :
 - `memo0` : un court texte de commentaire personnel à propos du contact.
 - `photo0` : une photo d'identité du contact qui a pu être récupérée dans une note reçue ou sur un forum
-- `nom0` : son nom s'il l'a obtenu par ailleurs dans l'application (co-participant à un forum, certificateur d'un de ses contacts ou d'un co-participant à un forum).
-- `c10` : sa clé 1 s'il l'a obtenu par ailleurs dans l'application (co-participant à un forum).
-- demande de certification / renoncement à cette demande : cette demande suppose que le compte ait donné au contact sa clé 1 et son nom. Dans ce cas il donne également les paramètres :
-
-##### Information du contact : nom / clé 1
-Un compte peut informer un contact qui a lui a demandé par une note à avoir son nom et/ou sa clé 1 pour lire son certificat d'identité. Il fournit en paramètre :
-- `c10P` : sa clé 1 cryptée par la clé publique de son contact.
-- `nom0P` : son nom crypté par la clé publique de son contact.
+- `nom0` : le nom du contact s'il l'a obtenu par ailleurs dans l'application (coparticipant à un forum, certificateur d'un de ses contacts ou d'un coparticipant à un forum).
+- `c10` : la clé 1 du contact s'il l'a obtenue par ailleurs dans l'application (coparticipant à un forum).
+- `cf` : 0:inchangée -1:retrait de sa confiance 1:confiance accordée. Dans ce cas il donne également les paramètres nom0P c10P (ses nom et clé 1 cryptés par la clé publique du contact) quand ces données sont inconnues du contact dans `ADansC`.
+- demande de certification / renoncement à cette demande : cette demande suppose que le compte ait donné au contact sa clé 1 et son nom. Dans ce cas il donne également les paramètres : nom0P c10P
 
 ##### Certification d'identité
 Le compte peut certifier l'identité d'un contact à condition :
-- que le contact l'ait demandé (`dhdc` présente dans son entrée ADansC).
+- que le contact l'ait demandé (`dhdc` présente dans son entrée `ADansC`).
 - que le contact ait donné sa clé 1.
 
 Les certifications d'identité (que A a accordé à C ou que C a accordé à A) peuvent être radiés par A.
@@ -214,24 +215,23 @@ Les certifications d'identité (que A a accordé à C ou que C a accordé à A) 
 
 ### Note
 Une note est un enregistrement horodaté, signé avec des contenus cryptés par une clé (non incluse dans la note) comportant :
-- `a` : le numéro de compte de son auteur.
-- `dh` :sa date-heure d'écriture.
-- `s` : son sujet crypté : c'est un texte court sans formatage qui peut contenir des hashtags (#truc ...).
-- `t` : son texte crypté : il peut être relativement long et son format MD autorise à la fois une lecture / écriture textuelle et un aspect plus plaisant (titres, liste à puces, gras / souligné ...). Au delà d'une certaine taille le texte est compressé.
+- `au` : le numéro de compte de son auteur.
+- `dh` : sa date-heure d'écriture.
+- `sj` : son sujet crypté : c'est un texte court sans formatage qui peut contenir des hashtags (#truc ...).
+- `tx` : son texte crypté : il peut être relativement long et son format MD autorise à la fois une lecture / écriture textuelle et un aspect plus plaisant (titres, liste à puces, gras / souligné ...). Au delà d'une certaine taille le texte est compressé.
 - `gz` : indicateur de compression du texte.
 - `ic` : une vignette / icône cryptée : elle est de faible définition (32x32).
-- `pj` : une pièce jointe cryptée : n'importe quel fichier dont le type MIME et la taille figure ci-après. La pièce jointe peut être un ZIP de plusieurs fichiers de types différents. Quand la pièce jointe est une image la vignette est en général une réduction de cette image.
+- `pj` : référence de la pièce jointe cryptée (le SHA-256 de son contenu crypté).
 - `mt` : type MIME de la pièce jointe.
 - `lg` : taille de la pièce jointe : c'est sa taille cryptée, le volume occupé en stockage et celui qui transitera par le réseau lors de son téléchargement (bref la taille du fichier crypté).
+- `cp` : clé de la pièce jointe cryptée par la clé de la note. Une note révisable peut avoir son sujet / texte / icône qui évolue sans que sa pièce jointe ne change. Ré-encrypter consisterait à un download / réencryptage / upload, ce qui est absurde juste pour corriger une ligne de commentaire ou un hashtag.
 - `hs` : SHA-256 du sujet en clair.
 - `ht` : SHA-256 du texte en clair.
 - `hi` : SHA-256 de l'icône / vignette en clair.
 - `hp` : SHA-256 de la pièce jointe en clair.
-- `sig` : signature de `dh hs ht hi hp` séparés par un espace, l'absence (null) d'un argument est noté par 0. Cette signature a été faite par la clé privée de signature de son auteur (voir son TPC).
+- `sg` : signature de `dh hs ht hi hp` séparés par un espace, l'absence d'un argument est noté par 0. Cette signature a été faite par la clé privée de signature de son auteur (voir son TPU).
 
-En pratique l'enregistrement d'une note est toujours double :
-- l'enregistrement ci-dessus **sauf** le texte de la pièce jointe qui est remplacé par le SHA-256 de son texte crypté.
-- le texte crypté de la pièce jointe à part et dont le stockage secondaire peut fournir une copie depuis son SHA-256 en guise d'identifiant.
+
 
 En ne disposant que de l'enregistrement d'une note il est juste possible de vérifier qu'elle est correctement signée :
 - obtention du ticket public du compte depuis le numéro de compte de l'auteur. La validité de ce ticket est vérifiable en elle-même. Le nom de l'auteur,

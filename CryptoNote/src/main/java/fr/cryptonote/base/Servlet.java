@@ -144,6 +144,7 @@ public class Servlet extends HttpServlet {
 		String origUri;
 		String uri;
 		String shortcut;
+		String sslDN;
 		int build;
 		Nsqm nsqm;
 		boolean fini = false;
@@ -169,6 +170,8 @@ public class Servlet extends HttpServlet {
 
 			this.lang = BConfig.lang(BConfig.lang(customHeader != null && customHeader.lang != null ? customHeader.lang : lg));
 			exec.setLang(this.lang);
+			
+			this.sslDN = req.getHeader("X-SSL-CLIENT-DN");
 			
 			this.req = req; 
 			this.resp = resp; 
@@ -527,6 +530,7 @@ public class Servlet extends HttpServlet {
 			}
 			
 			inp.uri = r.uri.substring(3);
+			inp.sslDN = r.sslDN;
 			String op = inp.args.get("op");
 			inp.operationName = op != null ? op  : "Default";			
 			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("OFF"));	
@@ -707,6 +711,7 @@ public class Servlet extends HttpServlet {
 		private boolean isGet;
 		private boolean isTask;
 		private String uri;
+		private String sslDN;
 		private Hashtable<String, String> args = new Hashtable<String, String>();
 		private Hashtable<String, Attachment> attachments = new Hashtable<String, Attachment>();		
 
@@ -715,6 +720,7 @@ public class Servlet extends HttpServlet {
 		public String operationName() {return operationName; }	
 		public TaskInfo taskInfo() { return taskInfo; }
 		public String uri() { return uri;}
+		public String sslDN() { return sslDN;}
 		public Hashtable<String, String> args() { return args; };
 		public Hashtable<String, Attachment> attachments() { return attachments; };		
 	}
