@@ -1,0 +1,1864 @@
+<html>
+<head>
+	<title>Markdown Edit Preview</title>
+	<!-- Must have base tag with id of "base-tag-id" -->
+	<base id="base-tag-id">
+	<!-- Don't delete this X-UA tag. The browser control behaves like IE8 otherwise -->
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<style type="text/css">
+		body { font-family: arial, 'segoe ui', sans-serif; line-height: 1.4; padding-left: 12pt; font-size: 12pt; }
+		code { white-space: pre }
+		ul, ol { padding: 8pt; }
+		h1, h2, h3, h4, h5, h6 { font-family: arial, cambria, serif; }
+		blockquote { padding: 0 12pt; color: #777; border-left: 3pt solid #ddd;  }
+		table{ display: block; width: 100%; overflow: auto; word-break: normal; word-break: keep-all; border-collapse: collapse;  }
+		table th{ font-weight: bold; background-color: #f8f8f8; }
+		table th, #content table td{ padding: 6px 13px; border: 1px solid #ddd; }
+		table tr{ background-color: #fff; border-top: 1px solid #ccc; page-break-inside: avoid; }
+	</style>
+	<style type="text/css">
+		._sprite{ background-image: url('emoji-sprite.png'); } 
+		._sprite{ background-color: transparent; background-repeat: no-repeat; display: inline-block; zoom:0.39; vertical-align: middle; }
+		._shipit{ width: 75px; height: 75px; background-position: 0 -27520px; }
+		._0023-20e3{ width: 64px; height: 64px; background-position: 0 -27456px; }
+		._0030-20e3{ width: 64px; height: 64px; background-position: -64px 0; }
+		._0031-20e3{ width: 64px; height: 64px; background-position: -64px -64px; }
+		._0032-20e3{ width: 64px; height: 64px; background-position: 0 -27392px; }
+		._0033-20e3{ width: 64px; height: 64px; background-position: -64px -128px; }
+		._0034-20e3{ width: 64px; height: 64px; background-position: 0 -27328px; }
+		._0035-20e3{ width: 64px; height: 64px; background-position: -64px -192px; }
+		._0036-20e3{ width: 64px; height: 64px; background-position: 0 -27264px; }
+		._0037-20e3{ width: 64px; height: 64px; background-position: -64px -256px; }
+		._0038-20e3{ width: 64px; height: 64px; background-position: 0 -27200px; }
+		._0039-20e3{ width: 64px; height: 64px; background-position: -64px -320px; }
+		._00a9{ width: 64px; height: 64px; background-position: 0 -27136px; }
+		._00ae{ width: 64px; height: 64px; background-position: -64px -384px; }
+		._1f004{ width: 64px; height: 64px; background-position: 0 -27072px; }
+		._1f0cf{ width: 64px; height: 64px; background-position: -64px -448px; }
+		._1f170{ width: 64px; height: 64px; background-position: 0 -27008px; }
+		._1f171{ width: 64px; height: 64px; background-position: -64px -512px; }
+		._1f17e{ width: 64px; height: 64px; background-position: 0 -26944px; }
+		._1f17f{ width: 64px; height: 64px; background-position: -64px -576px; }
+		._1f18e{ width: 64px; height: 64px; background-position: 0 -26880px; }
+		._1f191{ width: 64px; height: 64px; background-position: -64px -640px; }
+		._1f192{ width: 64px; height: 64px; background-position: 0 -26816px; }
+		._1f193{ width: 64px; height: 64px; background-position: -64px -704px; }
+		._1f194{ width: 64px; height: 64px; background-position: 0 -26752px; }
+		._1f195{ width: 64px; height: 64px; background-position: -64px -768px; }
+		._1f196{ width: 64px; height: 64px; background-position: 0 -26688px; }
+		._1f197{ width: 64px; height: 64px; background-position: -64px -832px; }
+		._1f198{ width: 64px; height: 64px; background-position: 0 -26624px; }
+		._1f199{ width: 64px; height: 64px; background-position: -64px -896px; }
+		._1f19a{ width: 64px; height: 64px; background-position: 0 -26560px; }
+		._1f1e8-1f1f3{ width: 64px; height: 64px; background-position: -64px -960px; }
+		._1f1e9-1f1ea{ width: 64px; height: 64px; background-position: 0 -26496px; }
+		._1f1ea-1f1f8{ width: 64px; height: 64px; background-position: -64px -1024px; }
+		._1f1eb-1f1f7{ width: 64px; height: 64px; background-position: 0 -26432px; }
+		._1f1ec-1f1e7{ width: 64px; height: 64px; background-position: -64px -1088px; }
+		._1f1ee-1f1f9{ width: 64px; height: 64px; background-position: 0 -26368px; }
+		._1f1ef-1f1f5{ width: 64px; height: 64px; background-position: -64px -1152px; }
+		._1f1f0-1f1f7{ width: 64px; height: 64px; background-position: 0 -26304px; }
+		._1f1f7-1f1fa{ width: 64px; height: 64px; background-position: -64px -1216px; }
+		._1f1fa-1f1f8{ width: 64px; height: 64px; background-position: 0 -26240px; }
+		._1f201{ width: 64px; height: 64px; background-position: -64px -1280px; }
+		._1f202{ width: 64px; height: 64px; background-position: 0 -26176px; }
+		._1f21a{ width: 64px; height: 64px; background-position: -64px -1344px; }
+		._1f22f{ width: 64px; height: 64px; background-position: 0 -26112px; }
+		._1f232{ width: 64px; height: 64px; background-position: -64px -1408px; }
+		._1f233{ width: 64px; height: 64px; background-position: 0 -26048px; }
+		._1f234{ width: 64px; height: 64px; background-position: -64px -1472px; }
+		._1f235{ width: 64px; height: 64px; background-position: 0 -25984px; }
+		._1f236{ width: 64px; height: 64px; background-position: -64px -1536px; }
+		._1f237{ width: 64px; height: 64px; background-position: 0 -25920px; }
+		._1f238{ width: 64px; height: 64px; background-position: -64px -1600px; }
+		._1f239{ width: 64px; height: 64px; background-position: 0 -25856px; }
+		._1f23a{ width: 64px; height: 64px; background-position: -64px -1664px; }
+		._1f250{ width: 64px; height: 64px; background-position: 0 -25792px; }
+		._1f251{ width: 64px; height: 64px; background-position: -64px -1728px; }
+		._1f300{ width: 64px; height: 64px; background-position: 0 -25728px; }
+		._1f301{ width: 64px; height: 64px; background-position: -64px -1792px; }
+		._1f302{ width: 64px; height: 64px; background-position: 0 -25664px; }
+		._1f303{ width: 64px; height: 64px; background-position: -64px -1856px; }
+		._1f304{ width: 64px; height: 64px; background-position: 0 -25600px; }
+		._1f305{ width: 64px; height: 64px; background-position: -64px -1920px; }
+		._1f306{ width: 64px; height: 64px; background-position: 0 -25536px; }
+		._1f307{ width: 64px; height: 64px; background-position: -64px -1984px; }
+		._1f308{ width: 64px; height: 64px; background-position: 0 -25472px; }
+		._1f309{ width: 64px; height: 64px; background-position: -64px -2048px; }
+		._1f30a{ width: 64px; height: 64px; background-position: 0 -25408px; }
+		._1f30b{ width: 64px; height: 64px; background-position: -64px -2112px; }
+		._1f30c{ width: 64px; height: 64px; background-position: 0 -25344px; }
+		._1f30d{ width: 64px; height: 64px; background-position: -64px -2176px; }
+		._1f30e{ width: 64px; height: 64px; background-position: 0 -25280px; }
+		._1f30f{ width: 64px; height: 64px; background-position: -64px -2240px; }
+		._1f310{ width: 64px; height: 64px; background-position: 0 -25216px; }
+		._1f311{ width: 64px; height: 64px; background-position: -64px -2304px; }
+		._1f312{ width: 64px; height: 64px; background-position: 0 -25152px; }
+		._1f313{ width: 64px; height: 64px; background-position: -64px -2368px; }
+		._1f314{ width: 64px; height: 64px; background-position: 0 -25088px; }
+		._1f315{ width: 64px; height: 64px; background-position: -64px -2432px; }
+		._1f316{ width: 64px; height: 64px; background-position: 0 -25024px; }
+		._1f317{ width: 64px; height: 64px; background-position: -64px -2496px; }
+		._1f318{ width: 64px; height: 64px; background-position: 0 -24960px; }
+		._1f319{ width: 64px; height: 64px; background-position: -64px -2560px; }
+		._1f31a{ width: 64px; height: 64px; background-position: 0 -24896px; }
+		._1f31b{ width: 64px; height: 64px; background-position: -64px -2624px; }
+		._1f31c{ width: 64px; height: 64px; background-position: 0 -24832px; }
+		._1f31d{ width: 64px; height: 64px; background-position: -64px -2688px; }
+		._1f31e{ width: 64px; height: 64px; background-position: 0 -24768px; }
+		._1f31f{ width: 64px; height: 64px; background-position: -64px -2752px; }
+		._1f320{ width: 64px; height: 64px; background-position: 0 -24704px; }
+		._1f330{ width: 64px; height: 64px; background-position: -64px -2816px; }
+		._1f331{ width: 64px; height: 64px; background-position: 0 -24640px; }
+		._1f332{ width: 64px; height: 64px; background-position: -64px -2880px; }
+		._1f333{ width: 64px; height: 64px; background-position: 0 -24576px; }
+		._1f334{ width: 64px; height: 64px; background-position: -64px -2944px; }
+		._1f335{ width: 64px; height: 64px; background-position: 0 -24512px; }
+		._1f337{ width: 64px; height: 64px; background-position: -64px -3008px; }
+		._1f338{ width: 64px; height: 64px; background-position: 0 -24448px; }
+		._1f339{ width: 64px; height: 64px; background-position: -64px -3072px; }
+		._1f33a{ width: 64px; height: 64px; background-position: 0 -24384px; }
+		._1f33b{ width: 64px; height: 64px; background-position: -64px -3136px; }
+		._1f33c{ width: 64px; height: 64px; background-position: 0 -24320px; }
+		._1f33d{ width: 64px; height: 64px; background-position: -64px -3200px; }
+		._1f33e{ width: 64px; height: 64px; background-position: 0 -24256px; }
+		._1f33f{ width: 64px; height: 64px; background-position: -64px -3264px; }
+		._1f340{ width: 64px; height: 64px; background-position: 0 -24192px; }
+		._1f341{ width: 64px; height: 64px; background-position: -64px -3328px; }
+		._1f342{ width: 64px; height: 64px; background-position: 0 -24128px; }
+		._1f343{ width: 64px; height: 64px; background-position: -64px -3392px; }
+		._1f344{ width: 64px; height: 64px; background-position: 0 -24064px; }
+		._1f345{ width: 64px; height: 64px; background-position: -64px -3456px; }
+		._1f346{ width: 64px; height: 64px; background-position: 0 -24000px; }
+		._1f347{ width: 64px; height: 64px; background-position: -64px -3520px; }
+		._1f348{ width: 64px; height: 64px; background-position: 0 -23936px; }
+		._1f349{ width: 64px; height: 64px; background-position: -64px -3584px; }
+		._1f34a{ width: 64px; height: 64px; background-position: 0 -23872px; }
+		._1f34b{ width: 64px; height: 64px; background-position: -64px -3648px; }
+		._1f34c{ width: 64px; height: 64px; background-position: 0 -23808px; }
+		._1f34d{ width: 64px; height: 64px; background-position: -64px -3712px; }
+		._1f34e{ width: 64px; height: 64px; background-position: 0 -23744px; }
+		._1f34f{ width: 64px; height: 64px; background-position: -64px -3776px; }
+		._1f350{ width: 64px; height: 64px; background-position: 0 -23680px; }
+		._1f351{ width: 64px; height: 64px; background-position: -64px -3840px; }
+		._1f352{ width: 64px; height: 64px; background-position: 0 -23616px; }
+		._1f353{ width: 64px; height: 64px; background-position: -64px -3904px; }
+		._1f354{ width: 64px; height: 64px; background-position: 0 -23552px; }
+		._1f355{ width: 64px; height: 64px; background-position: -64px -3968px; }
+		._1f356{ width: 64px; height: 64px; background-position: 0 -23488px; }
+		._1f357{ width: 64px; height: 64px; background-position: -64px -4032px; }
+		._1f358{ width: 64px; height: 64px; background-position: 0 -23424px; }
+		._1f359{ width: 64px; height: 64px; background-position: -64px -4096px; }
+		._1f35a{ width: 64px; height: 64px; background-position: 0 -23360px; }
+		._1f35b{ width: 64px; height: 64px; background-position: -64px -4160px; }
+		._1f35c{ width: 64px; height: 64px; background-position: 0 -23296px; }
+		._1f35d{ width: 64px; height: 64px; background-position: -64px -4224px; }
+		._1f35e{ width: 64px; height: 64px; background-position: 0 -23232px; }
+		._1f35f{ width: 64px; height: 64px; background-position: -64px -4288px; }
+		._1f360{ width: 64px; height: 64px; background-position: 0 -23168px; }
+		._1f361{ width: 64px; height: 64px; background-position: -64px -4352px; }
+		._1f362{ width: 64px; height: 64px; background-position: 0 -23104px; }
+		._1f363{ width: 64px; height: 64px; background-position: -64px -4416px; }
+		._1f364{ width: 64px; height: 64px; background-position: 0 -23040px; }
+		._1f365{ width: 64px; height: 64px; background-position: -64px -4480px; }
+		._1f366{ width: 64px; height: 64px; background-position: 0 -22976px; }
+		._1f367{ width: 64px; height: 64px; background-position: -64px -4544px; }
+		._1f368{ width: 64px; height: 64px; background-position: 0 -22912px; }
+		._1f369{ width: 64px; height: 64px; background-position: -64px -4608px; }
+		._1f36a{ width: 64px; height: 64px; background-position: 0 -22848px; }
+		._1f36b{ width: 64px; height: 64px; background-position: -64px -4672px; }
+		._1f36c{ width: 64px; height: 64px; background-position: 0 -22784px; }
+		._1f36d{ width: 64px; height: 64px; background-position: -64px -4736px; }
+		._1f36e{ width: 64px; height: 64px; background-position: 0 -22720px; }
+		._1f36f{ width: 64px; height: 64px; background-position: -64px -4800px; }
+		._1f370{ width: 64px; height: 64px; background-position: 0 -22656px; }
+		._1f371{ width: 64px; height: 64px; background-position: -64px -4864px; }
+		._1f372{ width: 64px; height: 64px; background-position: 0 -22592px; }
+		._1f373{ width: 64px; height: 64px; background-position: -64px -4928px; }
+		._1f374{ width: 64px; height: 64px; background-position: 0 -22528px; }
+		._1f375{ width: 64px; height: 64px; background-position: -64px -4992px; }
+		._1f376{ width: 64px; height: 64px; background-position: 0 -22464px; }
+		._1f377{ width: 64px; height: 64px; background-position: -64px -5056px; }
+		._1f378{ width: 64px; height: 64px; background-position: 0 -22400px; }
+		._1f379{ width: 64px; height: 64px; background-position: -64px -5120px; }
+		._1f37a{ width: 64px; height: 64px; background-position: 0 -22336px; }
+		._1f37b{ width: 64px; height: 64px; background-position: -64px -5184px; }
+		._1f37c{ width: 64px; height: 64px; background-position: 0 -22272px; }
+		._1f380{ width: 64px; height: 64px; background-position: -64px -5248px; }
+		._1f381{ width: 64px; height: 64px; background-position: 0 -22208px; }
+		._1f382{ width: 64px; height: 64px; background-position: -64px -5312px; }
+		._1f383{ width: 64px; height: 64px; background-position: 0 -22144px; }
+		._1f384{ width: 64px; height: 64px; background-position: -64px -5376px; }
+		._1f385{ width: 64px; height: 64px; background-position: 0 -22080px; }
+		._1f386{ width: 64px; height: 64px; background-position: -64px -5440px; }
+		._1f387{ width: 64px; height: 64px; background-position: 0 -22016px; }
+		._1f388{ width: 64px; height: 64px; background-position: -64px -5504px; }
+		._1f389{ width: 64px; height: 64px; background-position: 0 -21952px; }
+		._1f38a{ width: 64px; height: 64px; background-position: -64px -5568px; }
+		._1f38b{ width: 64px; height: 64px; background-position: 0 -21888px; }
+		._1f38c{ width: 64px; height: 64px; background-position: -64px -5632px; }
+		._1f38d{ width: 64px; height: 64px; background-position: 0 -21824px; }
+		._1f38e{ width: 64px; height: 64px; background-position: -64px -5696px; }
+		._1f38f{ width: 64px; height: 64px; background-position: 0 -21760px; }
+		._1f390{ width: 64px; height: 64px; background-position: -64px -5760px; }
+		._1f391{ width: 64px; height: 64px; background-position: 0 -21696px; }
+		._1f392{ width: 64px; height: 64px; background-position: -64px -5824px; }
+		._1f393{ width: 64px; height: 64px; background-position: 0 -21632px; }
+		._1f3a0{ width: 64px; height: 64px; background-position: -64px -5888px; }
+		._1f3a1{ width: 64px; height: 64px; background-position: 0 -21568px; }
+		._1f3a2{ width: 64px; height: 64px; background-position: -64px -5952px; }
+		._1f3a3{ width: 64px; height: 64px; background-position: 0 -21504px; }
+		._1f3a4{ width: 64px; height: 64px; background-position: -64px -6016px; }
+		._1f3a5{ width: 64px; height: 64px; background-position: 0 -21440px; }
+		._1f3a6{ width: 64px; height: 64px; background-position: -64px -6080px; }
+		._1f3a7{ width: 64px; height: 64px; background-position: 0 -21376px; }
+		._1f3a8{ width: 64px; height: 64px; background-position: -64px -6144px; }
+		._1f3a9{ width: 64px; height: 64px; background-position: 0 -21312px; }
+		._1f3aa{ width: 64px; height: 64px; background-position: -64px -6208px; }
+		._1f3ab{ width: 64px; height: 64px; background-position: 0 -21248px; }
+		._1f3ac{ width: 64px; height: 64px; background-position: -64px -6272px; }
+		._1f3ad{ width: 64px; height: 64px; background-position: 0 -21184px; }
+		._1f3ae{ width: 64px; height: 64px; background-position: -64px -6336px; }
+		._1f3af{ width: 64px; height: 64px; background-position: 0 -21120px; }
+		._1f3b0{ width: 64px; height: 64px; background-position: -64px -6400px; }
+		._1f3b1{ width: 64px; height: 64px; background-position: 0 -21056px; }
+		._1f3b2{ width: 64px; height: 64px; background-position: -64px -6464px; }
+		._1f3b3{ width: 64px; height: 64px; background-position: 0 -20992px; }
+		._1f3b4{ width: 64px; height: 64px; background-position: -64px -6528px; }
+		._1f3b5{ width: 64px; height: 64px; background-position: 0 -20928px; }
+		._1f3b6{ width: 64px; height: 64px; background-position: -64px -6592px; }
+		._1f3b7{ width: 64px; height: 64px; background-position: 0 -20864px; }
+		._1f3b8{ width: 64px; height: 64px; background-position: -64px -6656px; }
+		._1f3b9{ width: 64px; height: 64px; background-position: 0 -20800px; }
+		._1f3ba{ width: 64px; height: 64px; background-position: -64px -6720px; }
+		._1f3bb{ width: 64px; height: 64px; background-position: 0 -20736px; }
+		._1f3bc{ width: 64px; height: 64px; background-position: -64px -6784px; }
+		._1f3bd{ width: 64px; height: 64px; background-position: 0 -20672px; }
+		._1f3be{ width: 64px; height: 64px; background-position: -64px -6848px; }
+		._1f3bf{ width: 64px; height: 64px; background-position: 0 -20608px; }
+		._1f3c0{ width: 64px; height: 64px; background-position: -64px -6912px; }
+		._1f3c1{ width: 64px; height: 64px; background-position: 0 -20544px; }
+		._1f3c2{ width: 64px; height: 64px; background-position: -64px -6976px; }
+		._1f3c3{ width: 64px; height: 64px; background-position: 0 -20480px; }
+		._1f3c4{ width: 64px; height: 64px; background-position: -64px -7040px; }
+		._1f3c6{ width: 64px; height: 64px; background-position: 0 -20416px; }
+		._1f3c7{ width: 64px; height: 64px; background-position: -64px -7104px; }
+		._1f3c8{ width: 64px; height: 64px; background-position: 0 -20352px; }
+		._1f3c9{ width: 64px; height: 64px; background-position: -64px -7168px; }
+		._1f3ca{ width: 64px; height: 64px; background-position: 0 -20288px; }
+		._1f3e0{ width: 64px; height: 64px; background-position: -64px -7232px; }
+		._1f3e1{ width: 64px; height: 64px; background-position: 0 -20224px; }
+		._1f3e2{ width: 64px; height: 64px; background-position: -64px -7296px; }
+		._1f3e3{ width: 64px; height: 64px; background-position: 0 -20160px; }
+		._1f3e4{ width: 64px; height: 64px; background-position: -64px -7360px; }
+		._1f3e5{ width: 64px; height: 64px; background-position: 0 -20096px; }
+		._1f3e6{ width: 64px; height: 64px; background-position: -64px -7424px; }
+		._1f3e7{ width: 64px; height: 64px; background-position: 0 -20032px; }
+		._1f3e8{ width: 64px; height: 64px; background-position: -64px -7488px; }
+		._1f3e9{ width: 64px; height: 64px; background-position: 0 -19968px; }
+		._1f3ea{ width: 64px; height: 64px; background-position: -64px -7552px; }
+		._1f3eb{ width: 64px; height: 64px; background-position: 0 -19904px; }
+		._1f3ec{ width: 64px; height: 64px; background-position: -64px -7616px; }
+		._1f3ed{ width: 64px; height: 64px; background-position: 0 -19840px; }
+		._1f3ee{ width: 64px; height: 64px; background-position: -64px -7680px; }
+		._1f3ef{ width: 64px; height: 64px; background-position: 0 -19776px; }
+		._1f3f0{ width: 64px; height: 64px; background-position: -64px -7744px; }
+		._1f400{ width: 64px; height: 64px; background-position: 0 -19712px; }
+		._1f401{ width: 64px; height: 64px; background-position: -64px -7808px; }
+		._1f402{ width: 64px; height: 64px; background-position: 0 -19648px; }
+		._1f403{ width: 64px; height: 64px; background-position: -64px -7872px; }
+		._1f404{ width: 64px; height: 64px; background-position: 0 -19584px; }
+		._1f405{ width: 64px; height: 64px; background-position: -64px -7936px; }
+		._1f406{ width: 64px; height: 64px; background-position: 0 -19520px; }
+		._1f407{ width: 64px; height: 64px; background-position: -64px -8000px; }
+		._1f408{ width: 64px; height: 64px; background-position: 0 -19456px; }
+		._1f409{ width: 64px; height: 64px; background-position: -64px -8064px; }
+		._1f40a{ width: 64px; height: 64px; background-position: 0 -19392px; }
+		._1f40b{ width: 64px; height: 64px; background-position: -64px -8128px; }
+		._1f40c{ width: 64px; height: 64px; background-position: 0 -19328px; }
+		._1f40d{ width: 64px; height: 64px; background-position: -64px -8192px; }
+		._1f40e{ width: 64px; height: 64px; background-position: 0 -19264px; }
+		._1f40f{ width: 64px; height: 64px; background-position: -64px -8256px; }
+		._1f410{ width: 64px; height: 64px; background-position: 0 -19200px; }
+		._1f411{ width: 64px; height: 64px; background-position: -64px -8320px; }
+		._1f412{ width: 64px; height: 64px; background-position: 0 -19136px; }
+		._1f413{ width: 64px; height: 64px; background-position: -64px -8384px; }
+		._1f414{ width: 64px; height: 64px; background-position: 0 -19072px; }
+		._1f415{ width: 64px; height: 64px; background-position: -64px -8448px; }
+		._1f416{ width: 64px; height: 64px; background-position: 0 -19008px; }
+		._1f417{ width: 64px; height: 64px; background-position: -64px -8512px; }
+		._1f418{ width: 64px; height: 64px; background-position: 0 -18944px; }
+		._1f419{ width: 64px; height: 64px; background-position: -64px -8576px; }
+		._1f41a{ width: 64px; height: 64px; background-position: 0 -18880px; }
+		._1f41b{ width: 64px; height: 64px; background-position: -64px -8640px; }
+		._1f41c{ width: 64px; height: 64px; background-position: 0 -18816px; }
+		._1f41d{ width: 64px; height: 64px; background-position: -64px -8704px; }
+		._1f41e{ width: 64px; height: 64px; background-position: 0 -18752px; }
+		._1f41f{ width: 64px; height: 64px; background-position: -64px -8768px; }
+		._1f420{ width: 64px; height: 64px; background-position: 0 -18688px; }
+		._1f421{ width: 64px; height: 64px; background-position: -64px -8832px; }
+		._1f422{ width: 64px; height: 64px; background-position: 0 -18624px; }
+		._1f423{ width: 64px; height: 64px; background-position: -64px -8896px; }
+		._1f424{ width: 64px; height: 64px; background-position: 0 -18560px; }
+		._1f425{ width: 64px; height: 64px; background-position: -64px -8960px; }
+		._1f426{ width: 64px; height: 64px; background-position: 0 -18496px; }
+		._1f427{ width: 64px; height: 64px; background-position: -64px -9024px; }
+		._1f428{ width: 64px; height: 64px; background-position: 0 -18432px; }
+		._1f429{ width: 64px; height: 64px; background-position: -64px -9088px; }
+		._1f42a{ width: 64px; height: 64px; background-position: 0 -18368px; }
+		._1f42b{ width: 64px; height: 64px; background-position: -64px -9152px; }
+		._1f42c{ width: 64px; height: 64px; background-position: 0 -18304px; }
+		._1f42d{ width: 64px; height: 64px; background-position: -64px -9216px; }
+		._1f42e{ width: 64px; height: 64px; background-position: 0 -18240px; }
+		._1f42f{ width: 64px; height: 64px; background-position: -64px -9280px; }
+		._1f430{ width: 64px; height: 64px; background-position: 0 -18176px; }
+		._1f431{ width: 64px; height: 64px; background-position: -64px -9344px; }
+		._1f432{ width: 64px; height: 64px; background-position: 0 -18112px; }
+		._1f433{ width: 64px; height: 64px; background-position: -64px -9408px; }
+		._1f434{ width: 64px; height: 64px; background-position: 0 -18048px; }
+		._1f435{ width: 64px; height: 64px; background-position: -64px -9472px; }
+		._1f436{ width: 64px; height: 64px; background-position: 0 -17984px; }
+		._1f437{ width: 64px; height: 64px; background-position: -64px -9536px; }
+		._1f438{ width: 64px; height: 64px; background-position: 0 -17920px; }
+		._1f439{ width: 64px; height: 64px; background-position: -64px -9600px; }
+		._1f43a{ width: 64px; height: 64px; background-position: 0 -17856px; }
+		._1f43b{ width: 64px; height: 64px; background-position: -64px -9664px; }
+		._1f43c{ width: 64px; height: 64px; background-position: 0 -17792px; }
+		._1f43d{ width: 64px; height: 64px; background-position: -64px -9728px; }
+		._1f43e{ width: 64px; height: 64px; background-position: 0 -17728px; }
+		._1f440{ width: 64px; height: 64px; background-position: -64px -9792px; }
+		._1f442{ width: 64px; height: 64px; background-position: 0 -17664px; }
+		._1f443{ width: 64px; height: 64px; background-position: -64px -9856px; }
+		._1f444{ width: 64px; height: 64px; background-position: 0 -17600px; }
+		._1f445{ width: 64px; height: 64px; background-position: -64px -9920px; }
+		._1f446{ width: 64px; height: 64px; background-position: 0 -17536px; }
+		._1f447{ width: 64px; height: 64px; background-position: -64px -9984px; }
+		._1f448{ width: 64px; height: 64px; background-position: 0 -17472px; }
+		._1f449{ width: 64px; height: 64px; background-position: -64px -10048px; }
+		._1f44a{ width: 64px; height: 64px; background-position: 0 -17408px; }
+		._1f44b{ width: 64px; height: 64px; background-position: -64px -10112px; }
+		._1f44c{ width: 64px; height: 64px; background-position: 0 -17344px; }
+		._1f44d{ width: 64px; height: 64px; background-position: -64px -10176px; }
+		._1f44e{ width: 64px; height: 64px; background-position: 0 -17280px; }
+		._1f44f{ width: 64px; height: 64px; background-position: -64px -10240px; }
+		._1f450{ width: 64px; height: 64px; background-position: 0 -17216px; }
+		._1f451{ width: 64px; height: 64px; background-position: -64px -10304px; }
+		._1f452{ width: 64px; height: 64px; background-position: 0 -17152px; }
+		._1f453{ width: 64px; height: 64px; background-position: -64px -10368px; }
+		._1f454{ width: 64px; height: 64px; background-position: 0 -17088px; }
+		._1f455{ width: 64px; height: 64px; background-position: -64px -10432px; }
+		._1f456{ width: 64px; height: 64px; background-position: 0 -17024px; }
+		._1f457{ width: 64px; height: 64px; background-position: -64px -10496px; }
+		._1f458{ width: 64px; height: 64px; background-position: 0 -16960px; }
+		._1f459{ width: 64px; height: 64px; background-position: -64px -10560px; }
+		._1f45a{ width: 64px; height: 64px; background-position: 0 -16896px; }
+		._1f45b{ width: 64px; height: 64px; background-position: -64px -10624px; }
+		._1f45c{ width: 64px; height: 64px; background-position: 0 -16832px; }
+		._1f45d{ width: 64px; height: 64px; background-position: -64px -10688px; }
+		._1f45e{ width: 64px; height: 64px; background-position: 0 -16768px; }
+		._1f45f{ width: 64px; height: 64px; background-position: -64px -10752px; }
+		._1f460{ width: 64px; height: 64px; background-position: 0 -16704px; }
+		._1f461{ width: 64px; height: 64px; background-position: -64px -10816px; }
+		._1f462{ width: 64px; height: 64px; background-position: 0 -16640px; }
+		._1f463{ width: 64px; height: 64px; background-position: -64px -10880px; }
+		._1f464{ width: 64px; height: 64px; background-position: 0 -16576px; }
+		._1f465{ width: 64px; height: 64px; background-position: -64px -10944px; }
+		._1f466{ width: 64px; height: 64px; background-position: 0 -16512px; }
+		._1f467{ width: 64px; height: 64px; background-position: -64px -11008px; }
+		._1f468{ width: 64px; height: 64px; background-position: 0 -16448px; }
+		._1f469{ width: 64px; height: 64px; background-position: -64px -11072px; }
+		._1f46a{ width: 64px; height: 64px; background-position: 0 -16384px; }
+		._1f46b{ width: 64px; height: 64px; background-position: -64px -11136px; }
+		._1f46c{ width: 64px; height: 64px; background-position: 0 -16320px; }
+		._1f46d{ width: 64px; height: 64px; background-position: -64px -11200px; }
+		._1f46e{ width: 64px; height: 64px; background-position: 0 -16256px; }
+		._1f46f{ width: 64px; height: 64px; background-position: -64px -11264px; }
+		._1f470{ width: 64px; height: 64px; background-position: 0 -16192px; }
+		._1f471{ width: 64px; height: 64px; background-position: -64px -11328px; }
+		._1f472{ width: 64px; height: 64px; background-position: 0 -16128px; }
+		._1f473{ width: 64px; height: 64px; background-position: -64px -11392px; }
+		._1f474{ width: 64px; height: 64px; background-position: 0 -16064px; }
+		._1f475{ width: 64px; height: 64px; background-position: -64px -11456px; }
+		._1f476{ width: 64px; height: 64px; background-position: 0 -16000px; }
+		._1f477{ width: 64px; height: 64px; background-position: -64px -11520px; }
+		._1f478{ width: 64px; height: 64px; background-position: 0 -15936px; }
+		._1f479{ width: 64px; height: 64px; background-position: -64px -11584px; }
+		._1f47a{ width: 64px; height: 64px; background-position: 0 -15872px; }
+		._1f47b{ width: 64px; height: 64px; background-position: -64px -11648px; }
+		._1f47c{ width: 64px; height: 64px; background-position: 0 -15808px; }
+		._1f47d{ width: 64px; height: 64px; background-position: -64px -11712px; }
+		._1f47e{ width: 64px; height: 64px; background-position: 0 -15744px; }
+		._1f47f{ width: 64px; height: 64px; background-position: -64px -11776px; }
+		._1f480{ width: 64px; height: 64px; background-position: 0 -15680px; }
+		._1f481{ width: 64px; height: 64px; background-position: -64px -11840px; }
+		._1f482{ width: 64px; height: 64px; background-position: 0 -15616px; }
+		._1f483{ width: 64px; height: 64px; background-position: -64px -11904px; }
+		._1f484{ width: 64px; height: 64px; background-position: 0 -15552px; }
+		._1f485{ width: 64px; height: 64px; background-position: -64px -11968px; }
+		._1f486{ width: 64px; height: 64px; background-position: 0 -15488px; }
+		._1f487{ width: 64px; height: 64px; background-position: -64px -12032px; }
+		._1f488{ width: 64px; height: 64px; background-position: 0 -15424px; }
+		._1f489{ width: 64px; height: 64px; background-position: -64px -12096px; }
+		._1f48a{ width: 64px; height: 64px; background-position: 0 -15360px; }
+		._1f48b{ width: 64px; height: 64px; background-position: -64px -12160px; }
+		._1f48c{ width: 64px; height: 64px; background-position: 0 -15296px; }
+		._1f48d{ width: 64px; height: 64px; background-position: -64px -12224px; }
+		._1f48e{ width: 64px; height: 64px; background-position: 0 -15232px; }
+		._1f48f{ width: 64px; height: 64px; background-position: -64px -12288px; }
+		._1f490{ width: 64px; height: 64px; background-position: 0 -15168px; }
+		._1f491{ width: 64px; height: 64px; background-position: -64px -12352px; }
+		._1f492{ width: 64px; height: 64px; background-position: 0 -15104px; }
+		._1f493{ width: 64px; height: 64px; background-position: -64px -12416px; }
+		._1f494{ width: 64px; height: 64px; background-position: 0 -15040px; }
+		._1f495{ width: 64px; height: 64px; background-position: -64px -12480px; }
+		._1f496{ width: 64px; height: 64px; background-position: 0 -14976px; }
+		._1f497{ width: 64px; height: 64px; background-position: -64px -12544px; }
+		._1f498{ width: 64px; height: 64px; background-position: 0 -14912px; }
+		._1f499{ width: 64px; height: 64px; background-position: -64px -12608px; }
+		._1f49a{ width: 64px; height: 64px; background-position: 0 -14848px; }
+		._1f49b{ width: 64px; height: 64px; background-position: -64px -12672px; }
+		._1f49c{ width: 64px; height: 64px; background-position: 0 -14784px; }
+		._1f49d{ width: 64px; height: 64px; background-position: -64px -12736px; }
+		._1f49e{ width: 64px; height: 64px; background-position: 0 -14720px; }
+		._1f49f{ width: 64px; height: 64px; background-position: -64px -12800px; }
+		._1f4a0{ width: 64px; height: 64px; background-position: 0 -14656px; }
+		._1f4a1{ width: 64px; height: 64px; background-position: -64px -12864px; }
+		._1f4a2{ width: 64px; height: 64px; background-position: 0 -14592px; }
+		._1f4a3{ width: 64px; height: 64px; background-position: -64px -12928px; }
+		._1f4a4{ width: 64px; height: 64px; background-position: 0 -14528px; }
+		._1f4a5{ width: 64px; height: 64px; background-position: -64px -12992px; }
+		._1f4a6{ width: 64px; height: 64px; background-position: 0 -14464px; }
+		._1f4a7{ width: 64px; height: 64px; background-position: -64px -13056px; }
+		._1f4a8{ width: 64px; height: 64px; background-position: 0 -14400px; }
+		._1f4a9{ width: 64px; height: 64px; background-position: -64px -13120px; }
+		._1f4aa{ width: 64px; height: 64px; background-position: 0 -14336px; }
+		._1f4ab{ width: 64px; height: 64px; background-position: -64px -13184px; }
+		._1f4ac{ width: 64px; height: 64px; background-position: 0 -14272px; }
+		._1f4ad{ width: 64px; height: 64px; background-position: -64px -13248px; }
+		._1f4ae{ width: 64px; height: 64px; background-position: 0 -14208px; }
+		._1f4af{ width: 64px; height: 64px; background-position: -64px -13312px; }
+		._1f4b0{ width: 64px; height: 64px; background-position: 0 -14144px; }
+		._1f4b1{ width: 64px; height: 64px; background-position: -64px -13376px; }
+		._1f4b2{ width: 64px; height: 64px; background-position: 0 -14080px; }
+		._1f4b3{ width: 64px; height: 64px; background-position: -64px -13440px; }
+		._1f4b4{ width: 64px; height: 64px; background-position: 0 -14016px; }
+		._1f4b5{ width: 64px; height: 64px; background-position: -64px -13504px; }
+		._1f4b6{ width: 64px; height: 64px; background-position: 0 -13952px; }
+		._1f4b7{ width: 64px; height: 64px; background-position: -64px -13568px; }
+		._1f4b8{ width: 64px; height: 64px; background-position: 0 -13888px; }
+		._1f4b9{ width: 64px; height: 64px; background-position: -64px -13632px; }
+		._1f4ba{ width: 64px; height: 64px; background-position: 0 -13824px; }
+		._1f4bb{ width: 64px; height: 64px; background-position: -64px -13696px; }
+		._1f4bc{ width: 64px; height: 64px; background-position: 0 -13760px; }
+		._1f4bd{ width: 64px; height: 64px; background-position: -64px -13760px; }
+		._1f4be{ width: 64px; height: 64px; background-position: 0 -13696px; }
+		._1f4bf{ width: 64px; height: 64px; background-position: -64px -13824px; }
+		._1f4c0{ width: 64px; height: 64px; background-position: 0 -13632px; }
+		._1f4c1{ width: 64px; height: 64px; background-position: -64px -13888px; }
+		._1f4c2{ width: 64px; height: 64px; background-position: 0 -13568px; }
+		._1f4c3{ width: 64px; height: 64px; background-position: -64px -13952px; }
+		._1f4c4{ width: 64px; height: 64px; background-position: 0 -13504px; }
+		._1f4c5{ width: 64px; height: 64px; background-position: -64px -14016px; }
+		._1f4c6{ width: 64px; height: 64px; background-position: 0 -13440px; }
+		._1f4c7{ width: 64px; height: 64px; background-position: -64px -14080px; }
+		._1f4c8{ width: 64px; height: 64px; background-position: 0 -13376px; }
+		._1f4c9{ width: 64px; height: 64px; background-position: -64px -14144px; }
+		._1f4ca{ width: 64px; height: 64px; background-position: 0 -13312px; }
+		._1f4cb{ width: 64px; height: 64px; background-position: -64px -14208px; }
+		._1f4cc{ width: 64px; height: 64px; background-position: 0 -13248px; }
+		._1f4cd{ width: 64px; height: 64px; background-position: -64px -14272px; }
+		._1f4ce{ width: 64px; height: 64px; background-position: 0 -13184px; }
+		._1f4cf{ width: 64px; height: 64px; background-position: -64px -14336px; }
+		._1f4d0{ width: 64px; height: 64px; background-position: 0 -13120px; }
+		._1f4d1{ width: 64px; height: 64px; background-position: -64px -14400px; }
+		._1f4d2{ width: 64px; height: 64px; background-position: 0 -13056px; }
+		._1f4d3{ width: 64px; height: 64px; background-position: -64px -14464px; }
+		._1f4d4{ width: 64px; height: 64px; background-position: 0 -12992px; }
+		._1f4d5{ width: 64px; height: 64px; background-position: -64px -14528px; }
+		._1f4d6{ width: 64px; height: 64px; background-position: 0 -12928px; }
+		._1f4d7{ width: 64px; height: 64px; background-position: -64px -14592px; }
+		._1f4d8{ width: 64px; height: 64px; background-position: 0 -12864px; }
+		._1f4d9{ width: 64px; height: 64px; background-position: -64px -14656px; }
+		._1f4da{ width: 64px; height: 64px; background-position: 0 -12800px; }
+		._1f4db{ width: 64px; height: 64px; background-position: -64px -14720px; }
+		._1f4dc{ width: 64px; height: 64px; background-position: 0 -12736px; }
+		._1f4dd{ width: 64px; height: 64px; background-position: -64px -14784px; }
+		._1f4de{ width: 64px; height: 64px; background-position: 0 -12672px; }
+		._1f4df{ width: 64px; height: 64px; background-position: -64px -14848px; }
+		._1f4e0{ width: 64px; height: 64px; background-position: 0 -12608px; }
+		._1f4e1{ width: 64px; height: 64px; background-position: -64px -14912px; }
+		._1f4e2{ width: 64px; height: 64px; background-position: 0 -12544px; }
+		._1f4e3{ width: 64px; height: 64px; background-position: -64px -14976px; }
+		._1f4e4{ width: 64px; height: 64px; background-position: 0 -12480px; }
+		._1f4e5{ width: 64px; height: 64px; background-position: -64px -15040px; }
+		._1f4e6{ width: 64px; height: 64px; background-position: 0 -12416px; }
+		._1f4e7{ width: 64px; height: 64px; background-position: -64px -15104px; }
+		._1f4e8{ width: 64px; height: 64px; background-position: 0 -12352px; }
+		._1f4e9{ width: 64px; height: 64px; background-position: -64px -15168px; }
+		._1f4ea{ width: 64px; height: 64px; background-position: 0 -12288px; }
+		._1f4eb{ width: 64px; height: 64px; background-position: -64px -15232px; }
+		._1f4ec{ width: 64px; height: 64px; background-position: 0 -12224px; }
+		._1f4ed{ width: 64px; height: 64px; background-position: -64px -15296px; }
+		._1f4ee{ width: 64px; height: 64px; background-position: 0 -12160px; }
+		._1f4ef{ width: 64px; height: 64px; background-position: -64px -15360px; }
+		._1f4f0{ width: 64px; height: 64px; background-position: 0 -12096px; }
+		._1f4f1{ width: 64px; height: 64px; background-position: -64px -15424px; }
+		._1f4f2{ width: 64px; height: 64px; background-position: 0 -12032px; }
+		._1f4f3{ width: 64px; height: 64px; background-position: -64px -15488px; }
+		._1f4f4{ width: 64px; height: 64px; background-position: 0 -11968px; }
+		._1f4f5{ width: 64px; height: 64px; background-position: -64px -15552px; }
+		._1f4f6{ width: 64px; height: 64px; background-position: 0 -11904px; }
+		._1f4f7{ width: 64px; height: 64px; background-position: -64px -15616px; }
+		._1f4f9{ width: 64px; height: 64px; background-position: 0 -11840px; }
+		._1f4fa{ width: 64px; height: 64px; background-position: -64px -15680px; }
+		._1f4fb{ width: 64px; height: 64px; background-position: 0 -11776px; }
+		._1f4fc{ width: 64px; height: 64px; background-position: -64px -15744px; }
+		._1f500{ width: 64px; height: 64px; background-position: 0 -11712px; }
+		._1f501{ width: 64px; height: 64px; background-position: -64px -15808px; }
+		._1f502{ width: 64px; height: 64px; background-position: 0 -11648px; }
+		._1f503{ width: 64px; height: 64px; background-position: -64px -15872px; }
+		._1f504{ width: 64px; height: 64px; background-position: 0 -11584px; }
+		._1f505{ width: 64px; height: 64px; background-position: -64px -15936px; }
+		._1f506{ width: 64px; height: 64px; background-position: 0 -11520px; }
+		._1f507{ width: 64px; height: 64px; background-position: -64px -16000px; }
+		._1f508{ width: 64px; height: 64px; background-position: 0 -11456px; }
+		._1f509{ width: 64px; height: 64px; background-position: -64px -16064px; }
+		._1f50a{ width: 64px; height: 64px; background-position: 0 -11392px; }
+		._1f50b{ width: 64px; height: 64px; background-position: -64px -16128px; }
+		._1f50c{ width: 64px; height: 64px; background-position: 0 -11328px; }
+		._1f50d{ width: 64px; height: 64px; background-position: -64px -16192px; }
+		._1f50e{ width: 64px; height: 64px; background-position: 0 -11264px; }
+		._1f50f{ width: 64px; height: 64px; background-position: -64px -16256px; }
+		._1f510{ width: 64px; height: 64px; background-position: 0 -11200px; }
+		._1f511{ width: 64px; height: 64px; background-position: -64px -16320px; }
+		._1f512{ width: 64px; height: 64px; background-position: 0 -11136px; }
+		._1f513{ width: 64px; height: 64px; background-position: -64px -16384px; }
+		._1f514{ width: 64px; height: 64px; background-position: 0 -11072px; }
+		._1f515{ width: 64px; height: 64px; background-position: -64px -16448px; }
+		._1f516{ width: 64px; height: 64px; background-position: 0 -11008px; }
+		._1f517{ width: 64px; height: 64px; background-position: -64px -16512px; }
+		._1f518{ width: 64px; height: 64px; background-position: 0 -10944px; }
+		._1f519{ width: 64px; height: 64px; background-position: -64px -16576px; }
+		._1f51a{ width: 64px; height: 64px; background-position: 0 -10880px; }
+		._1f51b{ width: 64px; height: 64px; background-position: -64px -16640px; }
+		._1f51c{ width: 64px; height: 64px; background-position: 0 -10816px; }
+		._1f51d{ width: 64px; height: 64px; background-position: -64px -16704px; }
+		._1f51e{ width: 64px; height: 64px; background-position: 0 -10752px; }
+		._1f51f{ width: 64px; height: 64px; background-position: -64px -16768px; }
+		._1f520{ width: 64px; height: 64px; background-position: 0 -10688px; }
+		._1f521{ width: 64px; height: 64px; background-position: -64px -16832px; }
+		._1f522{ width: 64px; height: 64px; background-position: 0 -10624px; }
+		._1f523{ width: 64px; height: 64px; background-position: -64px -16896px; }
+		._1f524{ width: 64px; height: 64px; background-position: 0 -10560px; }
+		._1f525{ width: 64px; height: 64px; background-position: -64px -16960px; }
+		._1f526{ width: 64px; height: 64px; background-position: 0 -10496px; }
+		._1f527{ width: 64px; height: 64px; background-position: -64px -17024px; }
+		._1f528{ width: 64px; height: 64px; background-position: 0 -10432px; }
+		._1f529{ width: 64px; height: 64px; background-position: -64px -17088px; }
+		._1f52a{ width: 64px; height: 64px; background-position: 0 -10368px; }
+		._1f52b{ width: 64px; height: 64px; background-position: -64px -17152px; }
+		._1f52c{ width: 64px; height: 64px; background-position: 0 -10304px; }
+		._1f52d{ width: 64px; height: 64px; background-position: -64px -17216px; }
+		._1f52e{ width: 64px; height: 64px; background-position: 0 -10240px; }
+		._1f52f{ width: 64px; height: 64px; background-position: -64px -17280px; }
+		._1f530{ width: 64px; height: 64px; background-position: 0 -10176px; }
+		._1f531{ width: 64px; height: 64px; background-position: -64px -17344px; }
+		._1f532{ width: 64px; height: 64px; background-position: 0 -10112px; }
+		._1f533{ width: 64px; height: 64px; background-position: -64px -17408px; }
+		._1f534{ width: 64px; height: 64px; background-position: 0 -10048px; }
+		._1f535{ width: 64px; height: 64px; background-position: -64px -17472px; }
+		._1f536{ width: 64px; height: 64px; background-position: 0 -9984px; }
+		._1f537{ width: 64px; height: 64px; background-position: -64px -17536px; }
+		._1f538{ width: 64px; height: 64px; background-position: 0 -9920px; }
+		._1f539{ width: 64px; height: 64px; background-position: -64px -17600px; }
+		._1f53a{ width: 64px; height: 64px; background-position: 0 -9856px; }
+		._1f53b{ width: 64px; height: 64px; background-position: -64px -17664px; }
+		._1f53c{ width: 64px; height: 64px; background-position: 0 -9792px; }
+		._1f53d{ width: 64px; height: 64px; background-position: -64px -17728px; }
+		._1f550{ width: 64px; height: 64px; background-position: 0 -9728px; }
+		._1f551{ width: 64px; height: 64px; background-position: -64px -17792px; }
+		._1f552{ width: 64px; height: 64px; background-position: 0 -9664px; }
+		._1f553{ width: 64px; height: 64px; background-position: -64px -17856px; }
+		._1f554{ width: 64px; height: 64px; background-position: 0 -9600px; }
+		._1f555{ width: 64px; height: 64px; background-position: -64px -17920px; }
+		._1f556{ width: 64px; height: 64px; background-position: 0 -9536px; }
+		._1f557{ width: 64px; height: 64px; background-position: -64px -17984px; }
+		._1f558{ width: 64px; height: 64px; background-position: 0 -9472px; }
+		._1f559{ width: 64px; height: 64px; background-position: -64px -18048px; }
+		._1f55a{ width: 64px; height: 64px; background-position: 0 -9408px; }
+		._1f55b{ width: 64px; height: 64px; background-position: -64px -18112px; }
+		._1f55c{ width: 64px; height: 64px; background-position: 0 -9344px; }
+		._1f55d{ width: 64px; height: 64px; background-position: -64px -18176px; }
+		._1f55e{ width: 64px; height: 64px; background-position: 0 -9280px; }
+		._1f55f{ width: 64px; height: 64px; background-position: -64px -18240px; }
+		._1f560{ width: 64px; height: 64px; background-position: 0 -9216px; }
+		._1f561{ width: 64px; height: 64px; background-position: -64px -18304px; }
+		._1f562{ width: 64px; height: 64px; background-position: 0 -9152px; }
+		._1f563{ width: 64px; height: 64px; background-position: -64px -18368px; }
+		._1f564{ width: 64px; height: 64px; background-position: 0 -9088px; }
+		._1f565{ width: 64px; height: 64px; background-position: -64px -18432px; }
+		._1f566{ width: 64px; height: 64px; background-position: 0 -9024px; }
+		._1f567{ width: 64px; height: 64px; background-position: -64px -18496px; }
+		._1f5fb{ width: 64px; height: 64px; background-position: 0 -8960px; }
+		._1f5fc{ width: 64px; height: 64px; background-position: -64px -18560px; }
+		._1f5fd{ width: 64px; height: 64px; background-position: 0 -8896px; }
+		._1f5fe{ width: 64px; height: 64px; background-position: -64px -18624px; }
+		._1f5ff{ width: 64px; height: 64px; background-position: 0 -8832px; }
+		._1f600{ width: 64px; height: 64px; background-position: -64px -18688px; }
+		._1f601{ width: 64px; height: 64px; background-position: 0 -8768px; }
+		._1f602{ width: 64px; height: 64px; background-position: -64px -18752px; }
+		._1f603{ width: 64px; height: 64px; background-position: 0 -8704px; }
+		._1f604{ width: 64px; height: 64px; background-position: -64px -18816px; }
+		._1f605{ width: 64px; height: 64px; background-position: 0 -8640px; }
+		._1f606{ width: 64px; height: 64px; background-position: -64px -18880px; }
+		._1f607{ width: 64px; height: 64px; background-position: 0 -8576px; }
+		._1f608{ width: 64px; height: 64px; background-position: -64px -18944px; }
+		._1f609{ width: 64px; height: 64px; background-position: 0 -8512px; }
+		._1f60a{ width: 64px; height: 64px; background-position: -64px -19008px; }
+		._1f60b{ width: 64px; height: 64px; background-position: 0 -8448px; }
+		._1f60c{ width: 64px; height: 64px; background-position: -64px -19072px; }
+		._1f60d{ width: 64px; height: 64px; background-position: 0 -8384px; }
+		._1f60e{ width: 64px; height: 64px; background-position: -64px -19136px; }
+		._1f60f{ width: 64px; height: 64px; background-position: 0 -8320px; }
+		._1f610{ width: 64px; height: 64px; background-position: -64px -19200px; }
+		._1f611{ width: 64px; height: 64px; background-position: 0 -8256px; }
+		._1f612{ width: 64px; height: 64px; background-position: -64px -19264px; }
+		._1f613{ width: 64px; height: 64px; background-position: 0 -8192px; }
+		._1f614{ width: 64px; height: 64px; background-position: -64px -19328px; }
+		._1f615{ width: 64px; height: 64px; background-position: 0 -8128px; }
+		._1f616{ width: 64px; height: 64px; background-position: -64px -19392px; }
+		._1f617{ width: 64px; height: 64px; background-position: 0 -8064px; }
+		._1f618{ width: 64px; height: 64px; background-position: -64px -19456px; }
+		._1f619{ width: 64px; height: 64px; background-position: 0 -8000px; }
+		._1f61a{ width: 64px; height: 64px; background-position: -64px -19520px; }
+		._1f61b{ width: 64px; height: 64px; background-position: 0 -7936px; }
+		._1f61c{ width: 64px; height: 64px; background-position: -64px -19584px; }
+		._1f61d{ width: 64px; height: 64px; background-position: 0 -7872px; }
+		._1f61e{ width: 64px; height: 64px; background-position: -64px -19648px; }
+		._1f61f{ width: 64px; height: 64px; background-position: 0 -7808px; }
+		._1f620{ width: 64px; height: 64px; background-position: -64px -19712px; }
+		._1f621{ width: 64px; height: 64px; background-position: 0 -7744px; }
+		._1f622{ width: 64px; height: 64px; background-position: -64px -19776px; }
+		._1f623{ width: 64px; height: 64px; background-position: 0 -7680px; }
+		._1f624{ width: 64px; height: 64px; background-position: -64px -19840px; }
+		._1f625{ width: 64px; height: 64px; background-position: 0 -7616px; }
+		._1f626{ width: 64px; height: 64px; background-position: -64px -19904px; }
+		._1f627{ width: 64px; height: 64px; background-position: 0 -7552px; }
+		._1f628{ width: 64px; height: 64px; background-position: -64px -19968px; }
+		._1f629{ width: 64px; height: 64px; background-position: 0 -7488px; }
+		._1f62a{ width: 64px; height: 64px; background-position: -64px -20032px; }
+		._1f62b{ width: 64px; height: 64px; background-position: 0 -7424px; }
+		._1f62c{ width: 64px; height: 64px; background-position: -64px -20096px; }
+		._1f62d{ width: 64px; height: 64px; background-position: 0 -7360px; }
+		._1f62e{ width: 64px; height: 64px; background-position: -64px -20160px; }
+		._1f62f{ width: 64px; height: 64px; background-position: 0 -7296px; }
+		._1f630{ width: 64px; height: 64px; background-position: -64px -20224px; }
+		._1f631{ width: 64px; height: 64px; background-position: 0 -7232px; }
+		._1f632{ width: 64px; height: 64px; background-position: -64px -20288px; }
+		._1f633{ width: 64px; height: 64px; background-position: 0 -7168px; }
+		._1f634{ width: 64px; height: 64px; background-position: -64px -20352px; }
+		._1f635{ width: 64px; height: 64px; background-position: 0 -7104px; }
+		._1f636{ width: 64px; height: 64px; background-position: -64px -20416px; }
+		._1f637{ width: 64px; height: 64px; background-position: 0 -7040px; }
+		._1f638{ width: 64px; height: 64px; background-position: -64px -20480px; }
+		._1f639{ width: 64px; height: 64px; background-position: 0 -6976px; }
+		._1f63a{ width: 64px; height: 64px; background-position: -64px -20544px; }
+		._1f63b{ width: 64px; height: 64px; background-position: 0 -6912px; }
+		._1f63c{ width: 64px; height: 64px; background-position: -64px -20608px; }
+		._1f63d{ width: 64px; height: 64px; background-position: 0 -6848px; }
+		._1f63e{ width: 64px; height: 64px; background-position: -64px -20672px; }
+		._1f63f{ width: 64px; height: 64px; background-position: 0 -6784px; }
+		._1f640{ width: 64px; height: 64px; background-position: -64px -20736px; }
+		._1f645{ width: 64px; height: 64px; background-position: 0 -6720px; }
+		._1f646{ width: 64px; height: 64px; background-position: -64px -20800px; }
+		._1f647{ width: 64px; height: 64px; background-position: 0 -6656px; }
+		._1f648{ width: 64px; height: 64px; background-position: -64px -20864px; }
+		._1f649{ width: 64px; height: 64px; background-position: 0 -6592px; }
+		._1f64a{ width: 64px; height: 64px; background-position: -64px -20928px; }
+		._1f64b{ width: 64px; height: 64px; background-position: 0 -6528px; }
+		._1f64c{ width: 64px; height: 64px; background-position: -64px -20992px; }
+		._1f64d{ width: 64px; height: 64px; background-position: 0 -6464px; }
+		._1f64e{ width: 64px; height: 64px; background-position: -64px -21056px; }
+		._1f64f{ width: 64px; height: 64px; background-position: 0 -6400px; }
+		._1f680{ width: 64px; height: 64px; background-position: -64px -21120px; }
+		._1f681{ width: 64px; height: 64px; background-position: 0 -6336px; }
+		._1f682{ width: 64px; height: 64px; background-position: -64px -21184px; }
+		._1f683{ width: 64px; height: 64px; background-position: 0 -6272px; }
+		._1f684{ width: 64px; height: 64px; background-position: -64px -21248px; }
+		._1f685{ width: 64px; height: 64px; background-position: 0 -6208px; }
+		._1f686{ width: 64px; height: 64px; background-position: -64px -21312px; }
+		._1f687{ width: 64px; height: 64px; background-position: 0 -6144px; }
+		._1f688{ width: 64px; height: 64px; background-position: -64px -21376px; }
+		._1f689{ width: 64px; height: 64px; background-position: 0 -6080px; }
+		._1f68a{ width: 64px; height: 64px; background-position: -64px -21440px; }
+		._1f68b{ width: 64px; height: 64px; background-position: 0 -6016px; }
+		._1f68c{ width: 64px; height: 64px; background-position: -64px -21504px; }
+		._1f68d{ width: 64px; height: 64px; background-position: 0 -5952px; }
+		._1f68e{ width: 64px; height: 64px; background-position: -64px -21568px; }
+		._1f68f{ width: 64px; height: 64px; background-position: 0 -5888px; }
+		._1f690{ width: 64px; height: 64px; background-position: -64px -21632px; }
+		._1f691{ width: 64px; height: 64px; background-position: 0 -5824px; }
+		._1f692{ width: 64px; height: 64px; background-position: -64px -21696px; }
+		._1f693{ width: 64px; height: 64px; background-position: 0 -5760px; }
+		._1f694{ width: 64px; height: 64px; background-position: -64px -21760px; }
+		._1f695{ width: 64px; height: 64px; background-position: 0 -5696px; }
+		._1f696{ width: 64px; height: 64px; background-position: -64px -21824px; }
+		._1f697{ width: 64px; height: 64px; background-position: 0 -5632px; }
+		._1f698{ width: 64px; height: 64px; background-position: -64px -21888px; }
+		._1f699{ width: 64px; height: 64px; background-position: 0 -5568px; }
+		._1f69a{ width: 64px; height: 64px; background-position: -64px -21952px; }
+		._1f69b{ width: 64px; height: 64px; background-position: 0 -5504px; }
+		._1f69c{ width: 64px; height: 64px; background-position: -64px -22016px; }
+		._1f69d{ width: 64px; height: 64px; background-position: 0 -5440px; }
+		._1f69e{ width: 64px; height: 64px; background-position: -64px -22080px; }
+		._1f69f{ width: 64px; height: 64px; background-position: 0 -5376px; }
+		._1f6a0{ width: 64px; height: 64px; background-position: -64px -22144px; }
+		._1f6a1{ width: 64px; height: 64px; background-position: 0 -5312px; }
+		._1f6a2{ width: 64px; height: 64px; background-position: -64px -22208px; }
+		._1f6a3{ width: 64px; height: 64px; background-position: 0 -5248px; }
+		._1f6a4{ width: 64px; height: 64px; background-position: -64px -22272px; }
+		._1f6a5{ width: 64px; height: 64px; background-position: 0 -5184px; }
+		._1f6a6{ width: 64px; height: 64px; background-position: -64px -22336px; }
+		._1f6a7{ width: 64px; height: 64px; background-position: 0 -5120px; }
+		._1f6a8{ width: 64px; height: 64px; background-position: -64px -22400px; }
+		._1f6a9{ width: 64px; height: 64px; background-position: 0 -5056px; }
+		._1f6aa{ width: 64px; height: 64px; background-position: -64px -22464px; }
+		._1f6ab{ width: 64px; height: 64px; background-position: 0 -4992px; }
+		._1f6ac{ width: 64px; height: 64px; background-position: -64px -22528px; }
+		._1f6ad{ width: 64px; height: 64px; background-position: 0 -4928px; }
+		._1f6ae{ width: 64px; height: 64px; background-position: -64px -22592px; }
+		._1f6af{ width: 64px; height: 64px; background-position: 0 -4864px; }
+		._1f6b0{ width: 64px; height: 64px; background-position: -64px -22656px; }
+		._1f6b1{ width: 64px; height: 64px; background-position: 0 -4800px; }
+		._1f6b2{ width: 64px; height: 64px; background-position: -64px -22720px; }
+		._1f6b3{ width: 64px; height: 64px; background-position: 0 -4736px; }
+		._1f6b4{ width: 64px; height: 64px; background-position: -64px -22784px; }
+		._1f6b5{ width: 64px; height: 64px; background-position: 0 -4672px; }
+		._1f6b6{ width: 64px; height: 64px; background-position: -64px -22848px; }
+		._1f6b7{ width: 64px; height: 64px; background-position: 0 -4608px; }
+		._1f6b8{ width: 64px; height: 64px; background-position: -64px -22912px; }
+		._1f6b9{ width: 64px; height: 64px; background-position: 0 -4544px; }
+		._1f6ba{ width: 64px; height: 64px; background-position: -64px -22976px; }
+		._1f6bb{ width: 64px; height: 64px; background-position: 0 -4480px; }
+		._1f6bc{ width: 64px; height: 64px; background-position: -64px -23040px; }
+		._1f6bd{ width: 64px; height: 64px; background-position: 0 -4416px; }
+		._1f6be{ width: 64px; height: 64px; background-position: -64px -23104px; }
+		._1f6bf{ width: 64px; height: 64px; background-position: 0 -4352px; }
+		._1f6c0{ width: 64px; height: 64px; background-position: -64px -23168px; }
+		._1f6c1{ width: 64px; height: 64px; background-position: 0 -4288px; }
+		._1f6c2{ width: 64px; height: 64px; background-position: -64px -23232px; }
+		._1f6c3{ width: 64px; height: 64px; background-position: 0 -4224px; }
+		._1f6c4{ width: 64px; height: 64px; background-position: -64px -23296px; }
+		._1f6c5{ width: 64px; height: 64px; background-position: 0 -4160px; }
+		._203c{ width: 64px; height: 64px; background-position: -64px -23360px; }
+		._2049{ width: 64px; height: 64px; background-position: 0 -4096px; }
+		._2122{ width: 64px; height: 64px; background-position: -64px -23424px; }
+		._2139{ width: 64px; height: 64px; background-position: 0 -4032px; }
+		._2194{ width: 64px; height: 64px; background-position: -64px -23488px; }
+		._2195{ width: 64px; height: 64px; background-position: 0 -3968px; }
+		._2196{ width: 64px; height: 64px; background-position: -64px -23552px; }
+		._2197{ width: 64px; height: 64px; background-position: 0 -3904px; }
+		._2198{ width: 64px; height: 64px; background-position: -64px -23616px; }
+		._2199{ width: 64px; height: 64px; background-position: 0 -3840px; }
+		._21a9{ width: 64px; height: 64px; background-position: -64px -23680px; }
+		._21aa{ width: 64px; height: 64px; background-position: 0 -3776px; }
+		._231a{ width: 64px; height: 64px; background-position: -64px -23744px; }
+		._231b{ width: 64px; height: 64px; background-position: 0 -3712px; }
+		._23e9{ width: 64px; height: 64px; background-position: -64px -23808px; }
+		._23ea{ width: 64px; height: 64px; background-position: 0 -3648px; }
+		._23eb{ width: 64px; height: 64px; background-position: -64px -23872px; }
+		._23ec{ width: 64px; height: 64px; background-position: 0 -3584px; }
+		._23f0{ width: 64px; height: 64px; background-position: -64px -23936px; }
+		._23f3{ width: 64px; height: 64px; background-position: 0 -3520px; }
+		._24c2{ width: 64px; height: 64px; background-position: -64px -24000px; }
+		._25aa{ width: 64px; height: 64px; background-position: 0 -3456px; }
+		._25ab{ width: 64px; height: 64px; background-position: -64px -24064px; }
+		._25b6{ width: 64px; height: 64px; background-position: 0 -3392px; }
+		._25c0{ width: 64px; height: 64px; background-position: -64px -24128px; }
+		._25fb{ width: 64px; height: 64px; background-position: 0 -3328px; }
+		._25fc{ width: 64px; height: 64px; background-position: -64px -24192px; }
+		._25fd{ width: 64px; height: 64px; background-position: 0 -3264px; }
+		._25fe{ width: 64px; height: 64px; background-position: -64px -24256px; }
+		._2600{ width: 64px; height: 64px; background-position: 0 -3200px; }
+		._2601{ width: 64px; height: 64px; background-position: -64px -24320px; }
+		._260e{ width: 64px; height: 64px; background-position: 0 -3136px; }
+		._2611{ width: 64px; height: 64px; background-position: -64px -24384px; }
+		._2614{ width: 64px; height: 64px; background-position: 0 -3072px; }
+		._2615{ width: 64px; height: 64px; background-position: -64px -24448px; }
+		._261d{ width: 64px; height: 64px; background-position: 0 -3008px; }
+		._263a{ width: 64px; height: 64px; background-position: -64px -24512px; }
+		._2648{ width: 64px; height: 64px; background-position: 0 -2944px; }
+		._2649{ width: 64px; height: 64px; background-position: -64px -24576px; }
+		._264a{ width: 64px; height: 64px; background-position: 0 -2880px; }
+		._264b{ width: 64px; height: 64px; background-position: -64px -24640px; }
+		._264c{ width: 64px; height: 64px; background-position: 0 -2816px; }
+		._264d{ width: 64px; height: 64px; background-position: -64px -24704px; }
+		._264e{ width: 64px; height: 64px; background-position: 0 -2752px; }
+		._264f{ width: 64px; height: 64px; background-position: -64px -24768px; }
+		._2650{ width: 64px; height: 64px; background-position: 0 -2688px; }
+		._2651{ width: 64px; height: 64px; background-position: -64px -24832px; }
+		._2652{ width: 64px; height: 64px; background-position: 0 -2624px; }
+		._2653{ width: 64px; height: 64px; background-position: -64px -24896px; }
+		._2660{ width: 64px; height: 64px; background-position: 0 -2560px; }
+		._2663{ width: 64px; height: 64px; background-position: -64px -24960px; }
+		._2665{ width: 64px; height: 64px; background-position: 0 -2496px; }
+		._2666{ width: 64px; height: 64px; background-position: -64px -25024px; }
+		._2668{ width: 64px; height: 64px; background-position: 0 -2432px; }
+		._267b{ width: 64px; height: 64px; background-position: -64px -25088px; }
+		._267f{ width: 64px; height: 64px; background-position: 0 -2368px; }
+		._2693{ width: 64px; height: 64px; background-position: -64px -25152px; }
+		._26a0{ width: 64px; height: 64px; background-position: 0 -2304px; }
+		._26a1{ width: 64px; height: 64px; background-position: -64px -25216px; }
+		._26aa{ width: 64px; height: 64px; background-position: 0 -2240px; }
+		._26ab{ width: 64px; height: 64px; background-position: -64px -25280px; }
+		._26bd{ width: 64px; height: 64px; background-position: 0 -2176px; }
+		._26be{ width: 64px; height: 64px; background-position: -64px -25344px; }
+		._26c4{ width: 64px; height: 64px; background-position: 0 -2112px; }
+		._26c5{ width: 64px; height: 64px; background-position: -64px -25408px; }
+		._26ce{ width: 64px; height: 64px; background-position: 0 -2048px; }
+		._26d4{ width: 64px; height: 64px; background-position: -64px -25472px; }
+		._26ea{ width: 64px; height: 64px; background-position: 0 -1984px; }
+		._26f2{ width: 64px; height: 64px; background-position: -64px -25536px; }
+		._26f3{ width: 64px; height: 64px; background-position: 0 -1920px; }
+		._26f5{ width: 64px; height: 64px; background-position: -64px -25600px; }
+		._26fa{ width: 64px; height: 64px; background-position: 0 -1856px; }
+		._26fd{ width: 64px; height: 64px; background-position: -64px -25664px; }
+		._2702{ width: 64px; height: 64px; background-position: 0 -1792px; }
+		._2705{ width: 64px; height: 64px; background-position: -64px -25728px; }
+		._2708{ width: 64px; height: 64px; background-position: 0 -1728px; }
+		._2709{ width: 64px; height: 64px; background-position: -64px -25792px; }
+		._270a{ width: 64px; height: 64px; background-position: 0 -1664px; }
+		._270b{ width: 64px; height: 64px; background-position: -64px -25856px; }
+		._270c{ width: 64px; height: 64px; background-position: 0 -1600px; }
+		._270f{ width: 64px; height: 64px; background-position: -64px -25920px; }
+		._2712{ width: 64px; height: 64px; background-position: 0 -1536px; }
+		._2714{ width: 64px; height: 64px; background-position: -64px -25984px; }
+		._2716{ width: 64px; height: 64px; background-position: 0 -1472px; }
+		._2728{ width: 64px; height: 64px; background-position: -64px -26048px; }
+		._2733{ width: 64px; height: 64px; background-position: 0 -1408px; }
+		._2734{ width: 64px; height: 64px; background-position: -64px -26112px; }
+		._2744{ width: 64px; height: 64px; background-position: 0 -1344px; }
+		._2747{ width: 64px; height: 64px; background-position: -64px -26176px; }
+		._274c{ width: 64px; height: 64px; background-position: 0 -1280px; }
+		._274e{ width: 64px; height: 64px; background-position: -64px -26240px; }
+		._2753{ width: 64px; height: 64px; background-position: 0 -1216px; }
+		._2754{ width: 64px; height: 64px; background-position: -64px -26304px; }
+		._2755{ width: 64px; height: 64px; background-position: 0 -1152px; }
+		._2757{ width: 64px; height: 64px; background-position: -64px -26368px; }
+		._2764{ width: 64px; height: 64px; background-position: 0 -1088px; }
+		._2795{ width: 64px; height: 64px; background-position: -64px -26432px; }
+		._2796{ width: 64px; height: 64px; background-position: 0 -1024px; }
+		._2797{ width: 64px; height: 64px; background-position: -64px -26496px; }
+		._27a1{ width: 64px; height: 64px; background-position: 0 -960px; }
+		._27b0{ width: 64px; height: 64px; background-position: -64px -26560px; }
+		._27bf{ width: 64px; height: 64px; background-position: 0 -896px; }
+		._2934{ width: 64px; height: 64px; background-position: -64px -26624px; }
+		._2935{ width: 64px; height: 64px; background-position: 0 -832px; }
+		._2b05{ width: 64px; height: 64px; background-position: -64px -26688px; }
+		._2b06{ width: 64px; height: 64px; background-position: 0 -768px; }
+		._2b07{ width: 64px; height: 64px; background-position: -64px -26752px; }
+		._2b1b{ width: 64px; height: 64px; background-position: 0 -704px; }
+		._2b1c{ width: 64px; height: 64px; background-position: -64px -26816px; }
+		._2b50{ width: 64px; height: 64px; background-position: 0 -640px; }
+		._2b55{ width: 64px; height: 64px; background-position: -64px -26880px; }
+		._3030{ width: 64px; height: 64px; background-position: 0 -576px; }
+		._303d{ width: 64px; height: 64px; background-position: -64px -26944px; }
+		._3297{ width: 64px; height: 64px; background-position: 0 -512px; }
+		._3299{ width: 64px; height: 64px; background-position: -64px -27008px; }
+		._bowtie{ width: 64px; height: 64px; background-position: 0 -448px; }
+		._feelsgood{ width: 64px; height: 64px; background-position: -64px -27072px; }
+		._finnadie{ width: 64px; height: 64px; background-position: 0 -384px; }
+		._fu{ width: 64px; height: 64px; background-position: -64px -27136px; }
+		._goberserk{ width: 64px; height: 64px; background-position: 0 -320px; }
+		._godmode{ width: 64px; height: 64px; background-position: -64px -27200px; }
+		._hurtrealbad{ width: 64px; height: 64px; background-position: 0 -256px; }
+		._metal{ width: 64px; height: 64px; background-position: -64px -27264px; }
+		._neckbeard{ width: 64px; height: 64px; background-position: 0 -192px; }
+		._octocat{ width: 64px; height: 64px; background-position: -64px -27328px; }
+		._rage1{ width: 64px; height: 64px; background-position: 0 -128px; }
+		._rage2{ width: 64px; height: 64px; background-position: -64px -27392px; }
+		._rage3{ width: 64px; height: 64px; background-position: 0 -64px; }
+		._rage4{ width: 64px; height: 64px; background-position: -64px -27456px; }
+		._suspect{ width: 64px; height: 64px; background-position: 0 0; }
+		._trollface{ width: 64px; height: 64px; background-position: -75px -27520px; }
+	</style>
+	
+	<!-- 
+    Change code block syntax highlighting styles by commenting out the 
+	  default MDE sytle and uncommenting one of the styles below.
+	  Works only with GitHub Markdown engine
+	-->
+	
+	<!-- Default MDE syntax style -->
+	<style type="text/css">
+		code { font-family: consolas, monospace; background-color: #f7f7f7; padding: .2pt; border-radius: 2pt; line-height: 1.3; }
+		pre { background-color: transparent; }
+		pre code { font-size: 95%; padding: 12pt; display: block; border-radius: 2pt; }
+	</style>
+	
+	<!-- pygments -->
+	<!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code > span.dt { color: #902000; } /* DataType */
+    code > span.dv { color: #40a070; } /* DecVal */
+    code > span.bn { color: #40a070; } /* BaseN */
+    code > span.fl { color: #40a070; } /* Float */
+    code > span.ch { color: #4070a0; } /* Char */
+    code > span.st { color: #4070a0; } /* String */
+    code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code > span.ot { color: #007020; } /* Other */
+    code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code > span.fu { color: #06287e; } /* Function */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    code > span.cn { color: #880000; } /* Constant */
+    code > span.sc { color: #4070a0; } /* SpecialChar */
+    code > span.vs { color: #4070a0; } /* VerbatimString */
+    code > span.ss { color: #bb6688; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { color: #19177c; } /* Variable */
+    code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code > span.op { color: #666666; } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #bc7a00; } /* Preprocessor */
+    code > span.at { color: #7d9029; } /* Attribute */
+    code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- kate -->
+  <!--
+    <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #dddddd; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { font-weight: bold; } /* Keyword */
+    code > span.dt { color: #800000; } /* DataType */
+    code > span.dv { color: #0000ff; } /* DecVal */
+    code > span.bn { color: #0000ff; } /* BaseN */
+    code > span.fl { color: #800080; } /* Float */
+    code > span.ch { color: #ff00ff; } /* Char */
+    code > span.st { color: #dd0000; } /* String */
+    code > span.co { color: #808080; font-style: italic; } /* Comment */
+    code > span.al { color: #00ff00; font-weight: bold; } /* Alert */
+    code > span.fu { color: #000080; } /* Function */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #ff0000; font-weight: bold; } /* Warning */
+    code > span.cn { color: #000000; } /* Constant */
+    code > span.sc { color: #ff00ff; } /* SpecialChar */
+    code > span.vs { color: #dd0000; } /* VerbatimString */
+    code > span.ss { color: #dd0000; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #808080; font-style: italic; } /* Documentation */
+    code > span.an { color: #808080; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #808080; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #808080; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- monochrome -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { font-weight: bold; } /* Keyword */
+    code > span.dt { text-decoration: underline; } /* DataType */
+    code > span.co { font-style: italic; } /* Comment */
+    code > span.al { font-weight: bold; } /* Alert */
+    code > span.er { font-weight: bold; } /* Error */
+    code > span.wa { font-style: italic; } /* Warning */
+    code > span.cf { font-weight: bold; } /* ControlFlow */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.do { font-style: italic; } /* Documentation */
+    code > span.an { font-style: italic; } /* Annotation */
+    code > span.cv { font-style: italic; } /* CommentVar */
+    code > span.in { font-style: italic; } /* Information */
+  </style>
+  -->
+  
+  <!-- expresso -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #2a211c; color: #bdae9d; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #2a211c; color: #bdae9d; border-right: 1px solid #bdae9d; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { color: #bdae9d; background-color: #2a211c; }
+    code > span.kw { color: #43a8ed; font-weight: bold; } /* Keyword */
+    code > span.dt { text-decoration: underline; } /* DataType */
+    code > span.dv { color: #44aa43; } /* DecVal */
+    code > span.bn { color: #44aa43; } /* BaseN */
+    code > span.fl { color: #44aa43; } /* Float */
+    code > span.ch { color: #049b0a; } /* Char */
+    code > span.st { color: #049b0a; } /* String */
+    code > span.co { color: #0066ff; font-style: italic; } /* Comment */
+    code > span.al { color: #ffff00; } /* Alert */
+    code > span.fu { color: #ff9358; font-weight: bold; } /* Function */
+    code > span.er { color: #ffff00; font-weight: bold; } /* Error */
+    code > span.wa { color: #ffff00; font-weight: bold; } /* Warning */
+    code > span.cn { } /* Constant */
+    code > span.sc { color: #049b0a; } /* SpecialChar */
+    code > span.vs { color: #049b0a; } /* VerbatimString */
+    code > span.ss { color: #049b0a; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #43a8ed; font-weight: bold; } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #0066ff; font-style: italic; } /* Documentation */
+    code > span.an { color: #0066ff; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.co { color: #0066ff; font-weight: bold; font-style: italic; } /* Comment */
+    code > span.in { color: #0066ff; font-weight: bold; font-style: italic; } /* Information */
+  </style>  
+  -->
+  
+  <!-- zenburn -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #303030; color: #cccccc; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { color: #cccccc; background-color: #303030; }
+    code > span.kw { color: #f0dfaf; } /* Keyword */
+    code > span.dt { color: #dfdfbf; } /* DataType */
+    code > span.dv { color: #dcdccc; } /* DecVal */
+    code > span.bn { color: #dca3a3; } /* BaseN */
+    code > span.fl { color: #c0bed1; } /* Float */
+    code > span.ch { color: #dca3a3; } /* Char */
+    code > span.st { color: #cc9393; } /* String */
+    code > span.co { color: #7f9f7f; } /* Comment */
+    code > span.ot { color: #efef8f; } /* Other */
+    code > span.al { color: #ffcfaf; } /* Alert */
+    code > span.fu { color: #efef8f; } /* Function */
+    code > span.er { color: #c3bf9f; } /* Error */
+    code > span.wa { color: #7f9f7f; font-weight: bold; } /* Warning */
+    code > span.cn { color: #dca3a3; font-weight: bold; } /* Constant */
+    code > span.sc { color: #dca3a3; } /* SpecialChar */
+    code > span.vs { color: #cc9393; } /* VerbatimString */
+    code > span.ss { color: #cc9393; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #f0dfaf; } /* ControlFlow */
+    code > span.op { color: #f0efd0; } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #ffcfaf; font-weight: bold; } /* Preprocessor */
+    code > span.at { } /* Attribute */
+    code > span.do { color: #7f9f7f; } /* Documentation */
+    code > span.an { color: #7f9f7f; font-weight: bold; } /* Annotation */
+    code > span.cv { color: #7f9f7f; font-weight: bold; } /* CommentVar */
+    code > span.in { color: #7f9f7f; font-weight: bold; } /* Information */
+  </style>
+  -->
+  
+  <!-- haddock -->
+  <!--
+   <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    code > span.kw { color: #0000ff; } /* Keyword */
+    code > span.ch { color: #008080; } /* Char */
+    code > span.st { color: #008080; } /* String */
+    code > span.co { color: #008000; } /* Comment */
+    code > span.ot { color: #ff4000; } /* Other */
+    code > span.al { color: #ff0000; } /* Alert */
+    code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code > span.wa { color: #008000; font-weight: bold; } /* Warning */
+    code > span.cn { } /* Constant */
+    code > span.sc { color: #008080; } /* SpecialChar */
+    code > span.vs { color: #008080; } /* VerbatimString */
+    code > span.ss { color: #008080; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { } /* Variable */
+    code > span.cf { color: #0000ff; } /* ControlFlow */
+    code > span.op { } /* Operator */
+    code > span.bu { } /* BuiltIn */
+    code > span.ex { } /* Extension */
+    code > span.pp { color: #ff4000; } /* Preprocessor */
+    code > span.do { color: #008000; } /* Documentation */
+    code > span.an { color: #008000; } /* Annotation */
+    code > span.cv { color: #008000; } /* CommentVar */
+    code > span.at { } /* Attribute */
+    code > span.in { color: #008000; } /* Information */
+  </style>
+  -->
+  
+  <!-- tango -->
+  <!--
+  <style type="text/css">
+    div.sourceCode { overflow-x: auto; }
+    table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+      margin: 0; padding: 0; vertical-align: baseline; border: none; }
+    table.sourceCode { width: 100%; line-height: 100%; background-color: #f8f8f8; }
+    td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+    td.sourceCode { padding-left: 5px; }
+    pre, code { background-color: #f8f8f8; }
+    code > span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+    code > span.dt { color: #204a87; } /* DataType */
+    code > span.dv { color: #0000cf; } /* DecVal */
+    code > span.bn { color: #0000cf; } /* BaseN */
+    code > span.fl { color: #0000cf; } /* Float */
+    code > span.ch { color: #4e9a06; } /* Char */
+    code > span.st { color: #4e9a06; } /* String */
+    code > span.co { color: #8f5902; font-style: italic; } /* Comment */
+    code > span.ot { color: #8f5902; } /* Other */
+    code > span.al { color: #ef2929; } /* Alert */
+    code > span.fu { color: #000000; } /* Function */
+    code > span.er { color: #a40000; font-weight: bold; } /* Error */
+    code > span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+    code > span.cn { color: #000000; } /* Constant */
+    code > span.sc { color: #000000; } /* SpecialChar */
+    code > span.vs { color: #4e9a06; } /* VerbatimString */
+    code > span.ss { color: #4e9a06; } /* SpecialString */
+    code > span.im { } /* Import */
+    code > span.va { color: #000000; } /* Variable */
+    code > span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+    code > span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+    code > span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+    code > span.ex { } /* Extension */
+    code > span.at { color: #c4a000; } /* Attribute */
+    code > span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+    code > span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+    code > span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+    code > span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+  </style>  
+  -->
+<style>
+ #content {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      color: black;
+      font-family: "Roboto", Arial, sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.3rem;
+      word-wrap: break-word;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+ h1,h2,h3,h4,h5,h6 {
+      font-family: "Roboto", Arial, sans-serif;
+      font-weight: bold;
+      color: #777;
+    }
+
+ h1 {
+      margin: 1.6em -0.5rem 0.5rem -0.5rem;
+      padding: 0.3rem 0.5em;
+      font-size: 1.6em;
+      background-color: rgb(240,240,240);
+      border-top: 3px solid rgb(200,200,200);
+    }
+
+ h2 {
+      margin: 1.5em -0.5rem 0.5rem -0.5em;
+      padding: 0.3rem 0.5em;
+      background-color: rgb(240,240,240);
+      font-size: 1.5em;
+    }
+
+ h3 {
+      margin-top: 1.3em;
+      margin-bottom: 0.3em;
+      padding-top: 0.2em;
+      padding-bottom: 0.2em;
+      font-size: 1.3em;
+    }
+
+ h4 {
+      margin-top: 1.2em;
+      margin-bottom: 0.2em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1.2em;
+    }
+
+ h5 {
+      margin-top: 1.1em;
+      margin-bottom: 0.1em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1.1em;
+    }
+
+ h6 {
+      margin-top: 1.1em;
+      margin-bottom: 0.1em;
+      padding-top: 0.1em;
+      padding-bottom: 0.1em;
+      font-size: 1em;
+    }
+
+ ul, ol {
+      padding: 0;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+ ol ol, ul ol {
+      list-style-type: lower-roman;
+    }
+
+ ul ul ol, ul ol ol, ol ul ol, ol ol ol {
+      list-style-type: lower-alpha;
+    }
+
+ blockquote, ul, ol, dl, table, pre {
+      margin-top: 0;
+      margin-bottom: 0.5em;
+    }
+
+ hr {
+      height: 4px;
+      padding: 0;
+      margin: 16px 0;
+      background-color: #e7e7e7;
+      border: 0 none;
+    }
+
+ ul, ol {
+      padding-left: 2em;
+    }
+
+ ul ul, ul ol, ol ol, ol ul {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+ li>p {
+      margin-top: 16px;
+    }
+
+ blockquote { background-color: rgb(240,240,240); margin: 1em 0; padding: 0.2em 0.5em; border-left:0.4em solid rgb(180,180,180); }
+ 
+ code { background-color: rgb(240,240,240); padding: 0 3px; font-family: "Roboto Mono", "Courier new", monospace; font-size:1em;}
+
+ table, th, td { border: 1px solid rgb(200,200,200); border-collapse: collapse; padding:0.5em; }
+
+ p {font-size:1em; margin:0.5em 0;}
+
+ em {color:#cc0000!important; }
+</style>
+  </head>
+<body>
+<!-- Content goes here. The div must have an id of "content" -->
+<div id="content"><h1>Notes Secrètes - API-REST</h1>
+<p>L'API est de type REST : chaque requête est indépendante des précédentes et peut être traitée par n'importe quel serveur du pool.</p>
+<h2>Opérations</h2>
+<p>L'exécution d'une requête correspond à une opération :</p>
+<ul>
+<li><strong>non authentifiée</strong>, associée à aucun compte.</li>
+<li><strong>authentifiée</strong> associée à un compte : la session terminale ayant émis la requête  fournit la preuve que le titulaire du compte en a délivré la phrase secrète.</li>
+</ul>
+<h3>Opérations NON authentifiées</h3>
+<p>N'importe quelle application n'importe où dans le monde peut lancer une telle opération.<br>
+Une opération de simple consultation n'a, en général, pas strictement besoin d'être authentifiée : les données retournées sont cryptées et illisibles par la session cliente si elle ne dispose pas des clés issues de la phrase secrète.<br>
+L'opération de synchronisation est authentifiée afin de se faire délivrer des contenus qui, même cryptés, ne sont retournés qu'à des comptes cités dans les dossiers.</p>
+<h3>Session <em>cliente</em> associée à un compte</h3>
+<p>Une <strong>session cliente associée à un compte</strong> se déclare dans un terminal en demandant la frappe de la phrase secrète du compte. Cette saisie enregistre dans la session cliente,</p>
+<ul>
+<li><code>cleS</code> : SHA-256 du BCRYPT de la phase complète. <strong>Cette forme ne sort jamais de la session</strong>.</li>
+<li><code>psrB</code> : BCRYPT de la phrase réduite. <strong>Cette forme s'échange sur le réseau</strong> (cachée par le HTTPS).</li>
+<li><code>psrBD</code> : SHA-256 de <code>psr</code>. <strong>Cette forme est stockée en base</strong>.</li>
+</ul>
+<p>La requête <strong>non authentifiée</strong> <code>Xauth</code> demande au serveur l'entête <code>EnC</code> (dont <code>c0S</code> la clé 0 du compte cryptée par la clé S) du compte ayant pour propriétés <code>psrBD</code> le SHA-256 de l'argument de la requête <code>psrB</code> et la constante TPU correspondant à ce numéro de compte:</p>
+<ul>
+<li>si le serveur trouve ce compte, cela prouve que le titulaire a bien saisi la bonne phrase secrète.</li>
+<li>si la session peut décrypter <code>c0S</code> par la clé S détenue dans sa mémoire :
+<ul>
+<li>elle conserve la clé 0 qui permet de décrypter toutes les autres et les données du compte.</li>
+<li>elle pourra effectuer des requêtes authentifiées sur ce compte en transmettant sur chacune (<code>nc-&gt;account</code> <code>psrB-&gt;key</code>).</li>
+</ul>
+</li>
+<li>si la session ne peut pas décrypter <code>c0S</code> par sa clé S,
+<ul>
+<li>soit le compte a été créé par une session de logiciel non officiel.</li>
+<li>soit la phrase secrète du compte a été changée par une session de logiciel non officiel.</li>
+<li>soit elle-même s'exécute avec un logiciel non officiel.</li>
+<li><em>si le problème persiste</em>, le compte est définitivement corrompu et ses données inutilisables. Le titulaire du compte sera invité à se résilier lui-même pour cause de compte corrompu.</li>
+</ul>
+</li>
+</ul>
+<h3>Opérations sur un compte authentifié</h3>
+<p>Une requête peut être invoquée en spécifiant un compte <em>authentifié</em> en fournissant la preuve que la session terminale est bien contrôlée par le titulaire de ce compte en ayant fourni la phrase secrète.</p>
+<ul>
+<li>pour une opération de mise à jour ceci permet de se protéger contre des requêtes de pure nuisance qui transmettraient des données fausses ou mal cryptées en paramètre.</li>
+<li>pour une consultation / synchronisation, des données peuvent être retournées ou non selon l'état du compte correspondant vis à vis des données souhaitées.</li>
+</ul>
+<p>La requête porte deux paramètres identifiant et authentifiant le compte de la requête :</p>
+<ul>
+<li><code>account</code> : le numéro du compte.</li>
+<li><code>key</code> : le <code>psrB</code> (BCRYPT de la phrase secrète réduite du compte).</li>
+</ul>
+<p>Dans le serveur le dossier du compte est obtenu depuis <code>account</code> : dans son singleton <code>EnC</code> la propriété <code>psrBD</code> est censée être le SHA-256 de <code>psrB</code> passé en <code>key</code> sur la requête (ce que l'opération vérifie).</p>
+<h3>Opérations sous privilège d'administrateur</h3>
+<p>L'argument <code>sudo</code> de la requête contient le BCRYPT de la phrase secrète réduite d'administration dont le SHA-256 est enregistré en configuration des serveurs. Ce privilège peut être :</p>
+<ul>
+<li>celui toutes instances confondues qui permet de les mettre on / off et d'inspecter les queues / traces des tâches pour des besoins techniques.</li>
+<li>celui de chaque instance déclaré à la configuration pour chaque instance séparément.</li>
+</ul>
+<p>La clé AES tirée de la phrase secrète complète crypte certaines données (des disques virtuels par exemple).</p>
+<h1>Comptabilité</h1>
+<p>La comptabilité est gérée par deux tables indépendantes des dossiers.</p>
+<h3>Table <code>LCR</code> : ligne de crédit.</h3>
+<p>Chaque item est une ligne de crédit :</p>
+<ul>
+<li><code>psBD</code> : SHA-256 de la phrase secrète brouillée d'inscription de la ligne de crédit.</li>
+<li><code>psrB</code> : propriété indexée. Phase secrète réduite brouillée afin d'éviter que la même phrase secrète ne soit utilisée par deux lignes de crédit.</li>
+<li><code>cr</code> : montant du crédit porté par la ligne.</li>
+<li><code>dh</code> : date-heure à laquelle la ligne a été enregistrée.</li>
+</ul>
+<p>L'opération de transfert d'une ligne de crédit sur un compte ou un forum requiert que la session fournisse le BCRYPT de la phrase secrète donnée par le payeur (dont le SHA-256 est le <code>docid</code> de la ligne de crédit).</p>
+<h3>Table <code>CRE</code> : crédit courant</h3>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>id</code> : numéro de compte ou de forum.</li>
+<li><code>cr</code> : montant du crédit courant en unités de compte. Il peut être négatif.</li>
+<li><code>v1 v2</code> : volumes occupés lors du dernier calcul du crédit restant.</li>
+<li><code>dh</code> : date-heure de dernier calcul du crédit restant.</li>
+</ul>
+<p>L'opération de crédit verse tout le crédit d'une ligne authentifiée sur le cr du compte et détruit cette ligne.<br>
+Le crédit est réduit :</p>
+<ul>
+<li>à chaque fin d'opération :
+<ul>
+<li>le coût de l'occupation du volume depuis le dernier calcul est calculé.</li>
+<li>le nouveau niveau d'occupation du volume est calculé.</li>
+<li>le crédit est réduit de ce  montant et de celui de l'opération (dont le volume d'entrée / sortie).</li>
+</ul>
+</li>
+<li>périodiquement, par exemple toutes les semaines, pour calculer les coûts d'occupation d'espace en l'absence d'opérations.</li>
+</ul>
+<h1>Constantes</h1>
+<p>Ces données ont :</p>
+<ul>
+<li>une clé primaire.</li>
+<li><code>dh</code> : une date-heure de création de la constante.</li>
+<li><code>alias</code> : un alias éventuel (unique).</li>
+<li><code>value</code> : une valeur qui reste constante depuis la création de la constante.</li>
+</ul>
+<p>Une constante est créée, peut être purgée mais jamais mise à jour.</p>
+<h2>Constante : <code>TPU</code> : ticket public d'un compte</h2>
+<p>Ce ticket a été généré par la session créatrice du compte et comporte les propriétés suivantes :</p>
+<ul>
+<li><code>dh</code> : date-heure de génération.</li>
+<li><strong>alias</strong> : <code>nomrBD</code> : SHA-256 du BCRYPT du nom réduit utilisé pour détecter et interdire l'usage de noms trop proches.</li>
+<li><code>c1O</code> : clé 1 du compte cryptée par la clé 0. Elle crypte le nom du compte dans son ticket public et ceux des comptes certifiant son identité.</li>
+<li><code>nom1</code> : nom crypté par sa clé 1.</li>
+<li><code>pub</code> : clé RSA publique de cryptage.</li>
+<li><code>verif</code> : clé RSA publique de vérification.</li>
+<li><code>priv0</code> : clé privée RSA de décryptage cryptée par la clé 0.</li>
+<li><code>sign0</code> : clé privée RSA de signature cryptée par la clé 0.</li>
+</ul>
+<p><strong>La clé de la constante</strong> est le SHA-256 des champ <code>nom1 pub verif</code> et est le numéro de compte.</p>
+<p>Toute session disposant du numéro de compte peut en obtenir le ticket public qui permet :</p>
+<ul>
+<li>d'obtenir les clés de cryptage et de vérification de signature,</li>
+<li>de s'assurer de sa validité en recalculant le SHA-256 des champs <code>nom1 pub verif</code> et en le comparant au numéro de compte.</li>
+<li>s'il connaît la clé 1 -clé des noms- d'obtenir le nom.</li>
+</ul>
+<p>Après destruction du compte, la constante est inutile et détruite.</p>
+<h4>Clés privées d'accès d'un compte</h4>
+<p>Un compte <code>nc</code> donné peut avoir, successivement dans l'application, plusieurs clés privées, autant que de phrases secrètes successivement choisies par son titulaire.<br>
+Cette clé est cryptée par la phrase secrète du compte : c'est elle qui permet au titulaire d'accéder aux clé privées et clé 1 (donc nom) du <code>TPC</code>.</p>
+<h2>Constante : <code>TCR</code> : trace d'un compte résilié</h2>
+<p>La clé est le numéro de compte et n'a que trois propriétés destinées à éviter le réemploi dans l'instance d'un nom proche à celui d'un compte ayant existé dans l'instance.</p>
+<ul>
+<li><code>dh</code> : date-heure de destruction.</li>
+<li><code>dhc</code> : date-heure de création.</li>
+<li><strong>alias</strong> : <code>nomrBD</code> : BCRYPT du nom réduit.</li>
+</ul>
+<h1>Dossier <code>Compte</code></h1>
+<p>La clé d'accès <code>docid</code> est le numéro de compte <code>nc</code>.</p>
+<h2>Singleton : <em>Entête du compte</em> <code>EnC</code></h2>
+<p>Ce singleton est déclaré à la création du compte et n'est modifié qu'à quelques rares occasions :</p>
+<ul>
+<li>mise à jour de la phrase secrète du compte.</li>
+<li>lors des changements d'état : <em>début d'activité, passages zombie / retour à l'état actif, destruction physique</em>.</li>
+</ul>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>psrBD</code> : <em>propriété indexée</em>. SHA-256 du BCRYPT de la phrase secrète réduite. Permet de ne pas tolérer que des phrases secrètes soient trop ressemblantes dans l'instance.</li>
+<li><code>c0S</code> : clé 0 du compte cryptée par le SHA-256 du BCRYPT de la phrase secrète. Cette clé ouvre toutes les autres clé mères du compte présentes dans son <code>TPU</code>.</li>
+<li><code>dha</code> : date-heure de début d'activité.</li>
+<li><code>dhzm</code> : date-heure de passage en zombie posée par la modération de l'instance.</li>
+<li><code>dhzc</code> : date-heure de passage en zombie en raison d'un défaut de crédit.</li>
+<li><code>dhza</code> : date-heure de passage en zombie posée par le compte lui-même.</li>
+<li><code>dhx</code> : <em>propriété indexée</em> date-heure de destruction prévue (s = 2) : la plus proche résultante des <code>dhz?</code> et <code>dha</code> quand le compte est en création (s == 0 / <code>dha</code> absente), NC jours ou NZ jours après ces dates.</li>
+</ul>
+<p>Le statut courant s est calculé depuis les dates <code>dha dhzm dhzc dhza</code>.</p>
+<ul>
+<li>0 : en création.</li>
+<li>1 : actif.</li>
+<li>2 : zombie, destruction imminente.</li>
+</ul>
+<h3>Singletons : <em>certificat d'identité</em> : <code>Cid</code> et <em>certifications</em> : <code>Crt</code></h3>
+<p>Le certificat d'identité <code>Cid</code> comporte une liste et sa signature :</p>
+<ul>
+<li><code>lst</code> : une liste de triplets <code>dh nc nomc1A</code> ou <code>dh nc dhf</code> ordonnés par <code>dh</code>, chacun correspond à la certification du nom de A par un compte C du numéro <code>nc</code> à la date-heure <code>dh</code> en fournissant <code>nomc1A</code> son nom crypté par la clé 1 du compte A. Si la certification est résiliée, <code>dhf</code> est la date-heure de fin de certification (précédée de $) et remplace <code>nomc1A</code>.</li>
+<li><code>nc</code> : le numéro du dernier compte ayant mis à jour le certificat,</li>
+<li><code>sign</code> : sa signature de la liste.</li>
+<li><code>dh</code> : la date-heure de l'opération.</li>
+</ul>
+<p><code>Crt</code> la liste des comptes certifiés par A et comporte comporte une liste et sa signature :</p>
+<ul>
+<li><code>lst</code> : une liste de triplets <code>dh nc nomc1C</code> ordonnés par <code>dh</code>, chacun correspond à la signature d'un compte C du numéro <code>nc</code> à la date-heure <code>dh</code> en fournissant <code>nomc0</code> le nom de C crypté par la clé 0 du compte A. <code>nomc1A</code> peut être remplacé par <code>dhf</code> (date-heure de fin précédée de $), signifiant l'effacement d'une certification.</li>
+<li><code>nc</code> : le numéro du dernier compte ayant mis à jour la liste des certifications,</li>
+<li><code>sign</code> sa signature de la liste.</li>
+<li><code>dh</code> : la date-heure de l'opération.</li>
+</ul>
+<p>L'opération de certification ou suppression de certification par A du compte C opère en symétrique sur le <code>Crt</code> de A et le <code>Cid</code> de C. Elle vérifie :</p>
+<ul>
+<li>que A a bien signé les deux listes.</li>
+<li>que A n'a pas altéré dans le <code>Cid</code> des triplets qui ne sont pas le sien : il peut mettre à jour le sien mais pas les autres et s'il ajoute le sien que c'est bien à la fin.</li>
+<li>que dans la liste <code>Crt</code> seul le triplet de C est ajouté / supprimé.</li>
+</ul>
+<p>L'opération ne peut pas vérifier les noms ni leur cryptages dans <code>Cid</code> et <code>Crt</code>.</p>
+<p>Étant signées dans leur globalité, les certificats ou liste de certifications sont garanties complètes ou complètement détruites par piratage.</p>
+<p>La création d'un compte a signé des <code>Cid</code> <code>Crt</code> vides (mais bel et bien signées par A).</p>
+<h3>Items <em>phrase de contact</em> <code>Phc</code></h3>
+<p>Un compte A peut déclarer à un instant donné jusqu'à 4 phrases de contact permettant d'être contacté par un compte C n'ayant pas A dans ses cercles de connaissance. Chaque phrase est garantie unique.</p>
+<blockquote>
+<p>Une phrase réduite est elle-même garantie unique afin d'éviter de tomber par hasard (ou en utilisant un robot) lors de la déclaration d'une phrase sur une déjà enregistrée et d'en déduire qu'un compte peut être contacté par cette phrase.</p>
+</blockquote>
+<p><strong>Clé</strong> : index de 1 à 4.</p>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>pcrBD</code> : <em>propriété indexée unique</em>. SHA-256 du BCRYPT de la phrase réduite pour bloquer les phrases trop proches d'une phrase déjà déclarée.</li>
+<li><code>pc0</code> : phrase de contact cryptée par la clé 0 du compte.</li>
+</ul>
+<h3>Items <em>contact du répertoire</em> <code>Rep</code></h3>
+<p>A peut avoir C comme contact : <code>Rep(A)</code> a une entrée C : <code>cDansA</code>.<br>
+C peut avoir A comme contact : <code>Rep(C)</code> a une entrée A.  <code>aDansC</code>.</p>
+<p><strong>Clé</strong> : numéro de compte du contact C.</p>
+<p><strong>Propriétés</strong> :</p>
+<ul>
+<li><code>dh</code> : date heure de la dernière opération.</li>
+<li><code>nom0</code> : nom du contact crypté par la clé 0 du compte.</li>
+<li><code>c10</code> : clé 1 du contact cryptée par la clé 0 du compte.</li>
+<li><code>nc1P</code> : couple du nom du compte et de sa clé 1 crypté par la clé publique du compte et déposé par le contact lorsqu'il les dévoile au compte. A la première occasion, cette propriétés est ré-encryptée en nom0 c10 par le compte (plus court et plus rapide à interpréter).</li>
+<li><code>memo0</code> : un court texte de commentaire du compte à propos de son contact (crypté par la clé 0).</li>
+<li><code>photo0</code> : une photo d'identité du contact qui a pu être récupérée dans une note reçue ou sur un forum (crypté par la clé 0).</li>
+<li><code>dhi</code> : date-heure d'inscription du contact dans le répertoire.</li>
+<li><code>dhr</code> : date-heure de résiliation du contact.</li>
+<li><code>cf</code> : confiance mutuelle entre le compte et son contact :
+<ul>
+<li>0 : aucune</li>
+<li>1 : le compte a accordé sa confiance au contact mais l'inverse n'est pas vrai.</li>
+<li>2 : le contact a accordé sa confiance au compte mais l'inverse n'est pas vrai.</li>
+<li>1 : confiance mutuelle.</li>
+</ul>
+</li>
+<li><code>dhdc</code> : date-heure de demande au contact de certification émise par le compte. Effacée quand le contact a certifié l'identité du compte ou que le compte a renoncé à sa demande.</li>
+<li><code>fav</code> : 1:contact favori (affiché en tête), 0:normal.</li>
+</ul>
+<h4>Opérations</h4>
+<h5>Inscription d'un contact / mise à jour</h5>
+<p>Le compte A peut inscrire un contact C en fournissant a minima son numéro de compte.<br>
+Il peut simultanément ou ultérieurement fournir :</p>
+<ul>
+<li><code>memo0</code> : un court texte de commentaire personnel à propos du contact.</li>
+<li><code>photo0</code> : une photo d'identité du contact qui a pu être récupérée dans une note reçue ou sur un forum</li>
+<li><code>nom0</code> : le nom du contact s'il l'a obtenu par ailleurs dans l'application (coparticipant à un forum, certificateur d'un de ses contacts ou d'un coparticipant à un forum).</li>
+<li><code>c10</code> : la clé 1 du contact s'il l'a obtenue par ailleurs dans l'application (coparticipant à un forum).</li>
+<li><code>cf</code> : 0:inchangée -1:retrait de sa confiance 1:confiance accordée. Dans ce dernier cas il donne également le paramètre <code>nc1P</code> quand <code>nom0 c10</code> sont absents dans <code>ADansC</code>.</li>
+<li>demande de certification / renoncement à cette demande : cette demande suppose que le compte ait donné au contact sa clé 1 et son nom (<code>nc1P</code>).</li>
+</ul>
+<h5>Certification d'identité</h5>
+<p>Le compte peut certifier l'identité d'un contact à condition :</p>
+<ul>
+<li>que le contact l'ait demandé (<code>dhdc</code> présente dans son entrée <code>ADansC</code>).</li>
+<li>que le contact ait donné sa clé 1.</li>
+</ul>
+<p>Les certifications d'identité (que A a accordé à C ou que C a accordé à A) peuvent être radiés par A.</p>
+<h5>Suppression d'un contact</h5>
+<h2>Items <em>version d'une note</em> <code>Vno</code></h2>
+<p>La clé est le couple :</p>
+<ul>
+<li><code>nn</code> : numéro de la note générée à la création de sa première version.</li>
+<li><code>dh</code> : date-heure de sa version.</li>
+</ul>
+<p>Le numéro de la note est :</p>
+<ul>
+<li><code>m</code> : 0 pour une note immuable, 1 pour une note révisable.</li>
+<li><code>dhc</code> : date-heure de création : 6 bytes, 8 base 64.</li>
+<li><code>rnd</code> : random sur 9 bytes, 12 base 64.</li>
+</ul>
+<p>La version d'une note est immuable.</p>
+<p><strong><em>Propriétés</em></strong></p>
+<ul>
+<li><code>au</code> : le numéro de compte de son auteur.</li>
+<li><code>sj</code> : son sujet crypté : c'est un texte court sans formatage.</li>
+<li><code>mc</code> : liste des mots clés cryptée.</li>
+<li><code>tx</code> : son texte crypté : il peut être relativement long et son format MD autorise à la fois une lecture / écriture textuelle et un aspect plus plaisant (titres, liste à puces, gras / souligné ...). Au delà d'une certaine taille le texte est compressé.</li>
+<li><code>gz</code> : indicateur de compression du texte.</li>
+<li><code>ic</code> : une vignette / icône cryptée : elle est de faible définition (32x32).</li>
+<li><code>hs</code> : SHA-256 du sujet en clair.</li>
+<li><code>ht</code> : SHA-256 du texte en clair.</li>
+<li><code>hi</code> : SHA-256 de l'icône / vignette en clair.</li>
+<li><code>pj</code> : liste des références des pièces jointes : triplets :
+<ul>
+<li>SHA-256 du contenu en clair (clé de la pièce jointe).</li>
+<li>nom local dans la note.</li>
+<li>clé de cryptage cryptée par la clé de la note.</li>
+</ul>
+</li>
+<li><code>sg</code> : signature de <code>dh hs ht hi SHA des pj</code> séparés par un espace, l'absence d'un argument est noté par 0. Cette signature a été faite par la clé privée de signature de son auteur (voir son TPU).</li>
+</ul>
+<p>En ne disposant que de l'enregistrement d'une note il est juste possible de vérifier qu'elle est correctement signée :</p>
+<ul>
+<li>obtention du ticket public du compte depuis le numéro de compte de l'auteur. La validité de ce ticket est vérifiable en elle-même. Le nom de l'auteur,
+<ul>
+<li>peut être obtenu du ticket si sa clé 1 est connue.</li>
+<li>peut être confirmé s'il est supposé connu.</li>
+</ul>
+</li>
+<li>en obtenant de ce ticket la clé publique de vérification de signature et en vérifiant que la signature par ce compte a bien signé <code>dh hs ht hi hp</code>.</li>
+</ul>
+<p>En disposant de plus de la clé de cryptage de la note :</p>
+<ul>
+<li>les textes peuvent être obtenus en clair.</li>
+<li>il est possible de s'assurer que l'auteur n'a pas signé un faux en recalculant les (<code>hs ht hi sha des pj</code>).</li>
+</ul>
+<h2>Items <em>pièce jointe</em> <code>P</code></h2>
+<p>La clé d'une pièce jointe est le SHA-256 de son texte en clair.<br>
+Une pièce jointe est immuable.</p>
+<p><strong><em>Propriétés</em></strong></p>
+<ul>
+<li><code>dh</code> : date-heure de son enregistrement.</li>
+<li><code>tm</code> : son type MIME précédé de # si le texte est gzippé.</li>
+<li><code>lg</code> : taille du texte compressé et crypté (sur disque).</li>
+<li><code>vg</code> : vignette 32px (facultative) en base 64 cryptée par la clé de cryptage de la pièce jointe.</li>
+<li><code>au</code> : numéro de compte de l'auteur.</li>
+<li><code>sg</code> : signature de <code>sha dh mt lg</code> par son auteur.</li>
+</ul>
+<p>Le texte lui-même est enregistré sur le volume 2 : son texte est encrypté par sa clé et son identifiant est le <code>sha</code> de son texte en clair.</p>
+<h2>Items <em>paths de note</em> <code>Pth</code></h2>
+<p>Le compte mémorise l'ensemble des notes écrites par lui-même ou qu'il a obtenues.<br>
+La clé d'accès est :</p>
+<ul>
+<li><code>nn</code> : numéro de la note.</li>
+<li><code>dh</code> : version de la note.</li>
+</ul>
+<p><strong><em>Propriétés :</em></strong></p>
+<ul>
+<li><code>cn0</code> : clé de cryptage de la version de la note cryptée par la clé 0 du compte.</li>
+<li><code>paths</code> : liste des paths de rangement de la note dans l'arborescence. La racine de chaque path est :
+<ul>
+<li>soit <code>home</code>.</li>
+<li>soit le numéro du forum.</li>
+</ul>
+</li>
+<li><code>lp</code> : liste des participants auteurs autorisés (seulement pour <code>Pth</code> dans un Forum).</li>
+<li><code>dht</code> : date-heure de mise à la corbeille.</li>
+</ul>
+<h4>Pièces jointes à la corbeille</h4>
+<p>La liste des pièces jointes mises en corbeille se calcule :</p>
+<ul>
+<li>la liste des pièces jointes référencées et par quelles versions de note s'obtient par browsing des items <code>Vno</code>.</li>
+<li>sont marquées à détruire toutes celles qui ne sont plus référencées ou par seulement des versions de notes obsolètes : ceci donne un volume v2 libérable.</li>
+<li>celles qui ne sont pas à détruire sont celles utiles.</li>
+</ul>
+<p>On peut ainsi obtenir par calcul libérable en vidant la corbeille des notes jetées depuis au moins N jours :</p>
+<ul>
+<li>volume v1 des notes.</li>
+<li>volume v2 des pièces jointes.</li>
+<li>la liste des pièces jointes à conserver en v2, ce qui permettra de nettoyer les autres dont celles parasites créées dans une transaction et mal supprimées à la fin (le v2 n'étant pas strictement protégé par le commit du v1, il peut en avoir trop).</li>
+</ul>
+<h4>Opérations</h4>
+<h5>Création / mise à jour d'une note</h5>
+<h4>Mise à la corbeille d'une note</h4>
+<h5>Sortie de corbeille d'une note</h5>
+<h4>Vider la corbeille</h4>
+<h2>Items <em>partage de note</em> <code>Pno</code></h2>
+<p><strong><em>Clé</em></strong> :</p>
+<ul>
+<li><code>er</code> : 0:export 1:reçu</li>
+<li><code>nc</code> : vers / de compte</li>
+<li><code>nn.dh</code> : version de note</li>
+<li><code>dhp</code> : date-heure de partage.</li>
+</ul>
+<p><strong><em>Propriétés</em></strong></p>
+<ul>
+<li><code>cn0P</code> : (r) clé de la note cryptée par la clé 0 ou P.</li>
+<li><code>sj</code> : (r) sujet de la note.</li>
+<li><code>mc</code> : (r) mots clés de la note.</li>
+<li>Pour une note exportée c'est le statut de la réception de l'autre côté.
+<ul>
+<li><code>dhv</code> : date-heure de vue et laissée en attente.</li>
+<li><code>dhc</code> : date-heure de copie locale.</li>
+<li><code>dhs</code> : date-heure de suppression (e) uniquement.</li>
+</ul>
+</li>
+</ul>
+<h4>Opérations</h4>
+<h5>Partage d'une note vers un autre compte</h5>
+<p>Ce compte doit être :</p>
+<ul>
+<li>contact de confiance.</li>
+<li>coparticipant à un même forum.</li>
+</ul>
+<h5>Vu une note proposée par un autre compte</h5>
+<h5>Copie locale d'une note proposée par un autre compte</h5>
+<h5>Suppression de l'avis de partage</h5>
+<h2>Items <em>Forum accessibles</em> <code>Fac</code></h2>
+<p><strong>Clé</strong> : <code>nf</code>. Identifiant du forum.</p>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>dhop</code> : date-heure de la dernière opération.</li>
+<li><code>memo0</code> : nom du forum sur la première ligne, commentaires ensuite (crypté par sa clé 0).</li>
+<li><code>fav</code> : 0:normal, 1:favori</li>
+<li><code>st</code> : statut vis à vis du forum.</li>
+</ul>
+<h2>Items <em>flags du forum</em> <code>Flg</code></h2>
+<p><strong>Clé</strong> : <code>nf</code>. Identifiant du forum.</p>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>dhop</code> : date-heure de la dernière opération.</li>
+<li><code>flags</code> : duplication asynchrone de <code>Flg</code> dans <code>Forum</code>.</li>
+</ul>
+<h2>Opérations non authentifiées</h2>
+<h4><code>Xauth</code> : Opération non authentifiée <em>authentification d'un compte</em></h4>
+<p>Retourne <code>EnC</code> du compte ayant une phrase réduite brouillée <code>psRB</code>.<br>
+Le serveur accède au compte dont <code>psRB</code> (clé indexée unique) est le <code>psRB</code> passé en argument et vérifie que <code>psBD</code> du compte est bien égal au SHA-256 de <code>psB</code> passé en argument.<br>
+La session cliente dispose ainsi au retour <em>du numéro et du nom du compte</em> et des <em>clés de cryptage nécessaires</em> à la lecture des autres données du dossier compte, du moins si le SHA-256 de la phrase secrète décrypte bien la clé 0 (<code>c0S</code>) sinon c'est que le compte a été corrompu.<br>
+La <strong>date-heure de dernière visite</strong> n'est enregistrée dans <code>EnD</code> que si le compte n'est pas <em>résilié</em> (ou tâche de clôture en cours), que la reconnaissance de <code>psB</code> a été un succès et que la date-heure passée en paramètre est supérieure à celle déjà enregistrée.</p>
+<p>Paramètres :</p>
+<ul>
+<li><code>dhop</code> : date-heure d'opération (devient la date-heure de dernière visite).</li>
+<li><code>psRB</code> : phrase secrète réduite brouillée du compte.</li>
+<li><code>psB</code> : phrase secrète brouillée du compte.</li>
+</ul>
+<p>Retourne : <code>EnC</code>du compte.</p>
+<h4><code>Xcre</code> : Opération non authentifiée <em>création d'un compte</em></h4>
+<p>La création d'un nouveau compte retourne comme <code>Xauth</code> le singleton <code>EnC</code>du compte qui vient d'être créé. La session cliente dispose ainsi au retour du numéro et du nom du compte et des clés de cryptage nécessaires à la lecture des autres données du dossier compte.</p>
+<ul>
+<li>si un compte existe déjà avec la même clé secrète (SHA-256 de <code>psB</code>) et le même nom réduit (<code>nomRB</code>), on considère que le compte a déjà été créé et <code>EnC</code> est retourné comme si c'était une opération <code>Xauth</code>.</li>
+<li>si ce n'est pas un compte premier, une conversation <code>contact</code> est ouverte avec demande de certification au compte pressenti comme parrain certificateur.</li>
+<li>le CV à destination du parrain est enregistrée.</li>
+<li>la date-heure de dernière visite est enregistrée dans <code>EnD</code>.</li>
+</ul>
+<p>Paramètres :</p>
+<ul>
+<li><code>nc</code> : numéro du compte.</li>
+<li><code>psRB</code> : BCRYPT de la phrase secrète réduite.</li>
+<li><code>psB</code> : BCRYPT de la phrase secrète.</li>
+<li><code>c0S</code> : clé 0 générée cryptée par le SHA-256 de la phrase secrète.</li>
+<li><code>c10</code> : clé 1 du certificat d'identité crypté par la clé 0.</li>
+<li><code>pub</code> : partie publique en clair de la clé asymétrique.</li>
+<li><code>priv0</code> : partie privée cryptée par la clé 0 de la clé asymétrique.</li>
+<li><code>nom1</code> : nom suffixé du compte crypté par la clé 1.</li>
+<li><code>nomRB</code> : BCRYPT du nom réduit.</li>
+<li><code>ins</code> : inscription au répertoire du compte certificateur pressenti. (compte standard seulement)
+<ul>
+<li><code>cmma0</code> : clé M cryptée par la clé 0 du compte.</li>
+<li><code>cmsa0P</code> : clé M cryptée par la clé publique de C.</li>
+<li><code>ntf</code> : numéro du dialogue à utiliser.</li>
+<li><code>txtM</code> : message de courtoisie à transmettre à C crypté par la clé M.</li>
+<li><code>monnomM</code> : nom suffixé du compte crypté par la clé M.</li>
+<li><code>cvcM</code> : clé du CV #1 crypté par la clé M.</li>
+<li><code>c1M</code> : clé de certification 1 cryptée par la clé M.</li>
+<li><code>bpRB</code> : code de boîte postale réduite.</li>
+</ul>
+</li>
+<li><code>cv</code> : CV numéro 1. (compte standard seulement).
+<ul>
+<li><code>c0</code> : clé C de cryptage du CV cryptée par la clé 0.</li>
+<li><code>l0</code> : court libellé identifiant le CV #1 crypté par la clé 0.</li>
+<li><code>tC</code> : texte du CV crypté par la clé générée.</li>
+<li><code>pC</code> : texte de la photo crypté par la clé générée.</li>
+<li><code>c1C</code> : clé de certification 1 cryptée par la clé C.</li>
+</ul>
+</li>
+<li><code>jeton</code> : jeton de création donné par l'administrateur. (compte premier seulement).</li>
+</ul>
+<p>Retour :</p>
+<ul>
+<li><code>EnC</code> comme pour <code>Xauth</code>.</li>
+</ul>
+<h4><code>Xanc</code> : Opération <em>annulation de demande de clôture du compte</em></h4>
+<p>Invoquée par le titulaire du compte. Comme une <code>Xauth</code> mais vérifiant que le compte est bien sous la menace d'une demande de clôture par le compte. Celle-ci est supprimée et de plus un avis est émis.</p>
+<p>Paramètres :</p>
+<ul>
+<li><code>dhop</code> : date-heure d'opération (devient la date-heure de dernière visite).</li>
+<li><code>psRB</code> : phrase secrète réduite brouillée du compte.</li>
+<li><code>psB</code> : phrase secrète brouillée du compte.</li>
+</ul>
+<p>Retour :</p>
+<ul>
+<li><code>EnC</code> comme pour <code>Xauth</code>.</li>
+</ul>
+<h1>Forum</h1>
+<p>Le <code>docid</code> est un identifiant universel <code>nf</code> tiré au hasard à la création du forum.</p>
+<p>Il possède les items <code>Vno Pth P</code> comme Compte.</p>
+<ul>
+<li><code>Pth</code> a une propriété supplémentaire : liste des auteurs autorisés.</li>
+</ul>
+<p>L'item <code>Flg</code> est le symétrique de <code>Flg</code> de Compte avec le numéro de compte comme clé.</p>
+<h3>Singleton <em>entête du forum</em> <code>EnF</code></h3>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>dhop</code> : date-heure de la dernière opération.</li>
+<li><code>nbs</code> : nombre de scrutins de changement de gouvernance déjà organisés.</li>
+<li><code>basegv</code> : nom du schéma de gouvernance de base.</li>
+<li><code>exgv</code> : map des types de dialogue dérogeant au schéma de vote donné par la gouvernance par défaut. Valeur : schéma de vote.</li>
+</ul>
+<p><strong>Schéma de vote</strong> :</p>
+<ul>
+<li><code>p</code> : pourcentage requis (défaut 30).</li>
+<li><code>m</code> : minimum de votes pour requis (défaut 1).</li>
+<li><code>v</code> : vrai si veto pris en compte (défaut faux).</li>
+<li><code>i</code> : vrai si décompte basé sur les inscrits et non les votants (défaut faux).</li>
+<li><code>h</code> : nombre d'heures minimal d'ouverture (défaut 0).</li>
+</ul>
+<h2>Items <em>participant au forum</em> <code>Paf</code></h2>
+<p><strong><em>Clé</em></strong> : numéro de compte.</p>
+<p><strong><em>Propriétés</em></strong></p>
+<ul>
+<li><code>cf0P</code> : clé du forum (complète ou réduite selon le statut) cryptée par la clé 0 ou P du participant.</li>
+<li><code>nomFR</code> : nom du participant crypté par la clé réduite du forum.</li>
+<li><code>c1FR</code> : clé 1 du participant crypté par la clé réduite du forum.</li>
+<li><code>pdhc</code> : toute première date-heure de début de confirmation.</li>
+<li><code>ddhc</code> : toute dernière date-heure de fin de confirmation.</li>
+<li><code>acnf</code> : auto confirmé dès l'acceptation de l'invitation.</li>
+<li>date-heures du dernier cycle d'invitation :
+<ul>
+<li><code>dhi</code> : invitation</li>
+<li><code>dha</code> : acceptation de l'invitation.</li>
+<li><code>dhc</code> : confirmation</li>
+<li><code>dhr</code> : résiliation</li>
+</ul>
+</li>
+<li><code>elu</code> : est un élu.</li>
+<li><code>mc</code> : liste des mots clés d'intérêt cryptés par la clé réduite du forum.</li>
+</ul>
+<h3>Option : multi clés du forum</h3>
+<p>Les pièces jointes ont leurs clés transmises par la ou les notes qui y font référence. Elles sont immuables.<br>
+Une note change de clé à chaque version : elle peut être cryptée par la dernière clé du forum. Pour accéder aux notes antérieures il faut avoir les clés antérieures du forum, on ne peut pas ré-encrypter toutes les notes.</p>
+<p>Pour lire une note il faut utiliser non plus <strong>la</strong> clé du forum mais le vecteur <code>[[dh1,c1], [dh2,c2] ...]</code> et pour écrire prendre la plus récente.</p>
+<p>L'opération de changement de clés n'est pas gratuite sans être outrageusement complexe : il suffit de générer une nouvelle clé et de la crypter par la clé P de chaque participant et de mettre ce dernier terme à la fin du vecteur.</p>
+<h3>Opérations soumise à vote</h3>
+<p><strong>Autour d'un participant</strong> :</p>
+<ul>
+<li>invitation d'un nouveau participant ?</li>
+<li>confirmation d'un nouveau participant</li>
+<li>exclusion d'un participant</li>
+</ul>
+<p><strong>Redistribution de crédits excédentaires</strong> aux participants</p>
+<p><strong>Clôture du forum</strong></p>
+<p>Ajout de nouveaux auteurs à une note dont tous les auteurs sont résiliés (ou ne répondent plus) ? OU <strong>Purge de notes dont les auteurs</strong> ...</p>
+<ul>
+<li>on peut toujours copier une note. Changer la liste d'auteurs ne sert pas à grand chose.</li>
+</ul>
+<p><strong>Changement de gouvernance / élection de délégués</strong></p>
+<h3>Une note en plus de versions doit-elle avoir des branches ?</h3>
+<h3>Items <em>scrutin de gouvernance du groupe</em> <code>Sgg</code></h3>
+<p><strong>Clé</strong> : numéro du scrutin.</p>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>dem</code> : index du demandeur.</li>
+<li><code>txtG</code> : texte d'argumentaire crypté par la clé G.</li>
+<li><code>dho</code> : date-heure d'ouverture du scrutin.</li>
+<li><code>dhc</code> : date-heure de clôture du scrutin (absente s'il est ouvert).</li>
+<li><code>bureau</code> : liste des index des membres du nouveau bureau proposé (absent si inchangé).</li>
+<li><code>votants</code> : liste des index des votants, membres du groupe à l'ouverture du scrutin.</li>
+<li><code>basegv</code> : nom du schéma de gouvernance de base. <code>null</code> si inchangé.</li>
+<li><code>exgv</code> : map des types de dialogue dérogeant au schéma de vote donné par la gouvernance par défaut. Valeur : schéma de vote.</li>
+<li><code>sv</code> : schéma de vote applicable.</li>
+<li><code>st</code> : état du scrutin :
+<ul>
+<li>0 : en cours.</li>
+<li>1 : clos par renoncement du demandeur.</li>
+<li>2 : clos sur approbation.</li>
+<li>3 : clos sur rejet.</li>
+</ul>
+</li>
+<li><code>votes</code> : liste des compteurs des votes <em>pour contre blanc veto</em>.</li>
+<li><code>dhdp</code> : date-heure du dernier dépouillement</li>
+<li><code>dp</code> : résultat du dernier dépouillement</li>
+<li><code>dphl</code> : vrai si le dernier dépouillement a été calculé après l'heure limite (est valide)</li>
+</ul>
+<p>Une gouvernance est une map avec :</p>
+<ul>
+<li>pour clé : le code d'une action qui ne suit pas le schéma de vote par défaut,</li>
+<li>pour valeur : le schéma de vote applicable.</li>
+</ul>
+<h3>Item <em>Vote sur un scrutin</em> <code>Vot</code></h3>
+<p><strong>Clé</strong> : numéro du scrutin + &quot;.&quot; + index de l'auteur.</p>
+<p><strong>Propriétés :</strong></p>
+<ul>
+<li><code>dh</code> : date-heure du vote.</li>
+<li><code>txtG</code> : texte du commentaire crypté par la clé G du groupe.</li>
+<li><code>vote</code> : 0:abstention 1:pour 2:contre 3:blanc 4:veto.</li>
+</ul>
+<h5><code>CPclc</code> : Opération <em>demande de clôture d'un compte</em></h5>
+<p>Paramètres :</p>
+<ul>
+<li><code>dhop</code> : date-heure de l'opération.</li>
+<li><code>nc</code> : numéro du compte C.</li>
+</ul>
+<p>Retour : 0 (clôture demandée), 1 (clôture déjà demandée).</p>
+<h5><code>CPacc</code> : Opération <em>annulation de demande de clôture d'un compte</em></h5>
+<p>Paramètres :</p>
+<ul>
+<li><code>dhop</code> : date-heure de l'opération.</li>
+<li><code>nc</code> : numéro du compte C.</li>
+<li><code>st</code> : 0:lecture / écriture 1:lecture seule 2:bloqué</li>
+<li><code>txtN</code> : texte de courtoisie pour C crypté par la clé N.</li>
+<li><code>cn0</code> : clé N cryptée par la clé 0.</li>
+<li><code>cnP</code> : clé N crypté par la clé publique de C.</li>
+</ul>
+<p>Retour : 0 (annulation  de la demande faite), 1 (pas de demande en cours).</p>
+<p>Avis <code>cpacc</code> :</p>
+<ul>
+<li>compte 0 : compte premier du compte C. Clé N cryptée par la clé 0.</li>
+<li>compte 1 : compte C. Clé N cryptée par la clé publique de C.</li>
+<li><code>prop st</code> : valeur de <code>st</code>.</li>
+</ul>
+
+</div>
+<!-- Adds some scroll space to the bottom of the doucment -->
+<div style="height: 1pc">&nbsp;</div>
+<!-- Scripts to handle MathJax -->
+<script async="" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script async="" src="http://markdownedit.com/assets/js/mathjax-scripts.js"></script>
+</body>
+</html>

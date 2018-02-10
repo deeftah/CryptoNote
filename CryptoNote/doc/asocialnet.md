@@ -1,40 +1,43 @@
 # Un réseau a-social
 
 
-Une personne ayant un **compte** dans une *instance* de cette application la perçoit d'abord comme *un espace de stockage hiérarchique classique* où les feuilles sont des **notes** (et non exactement des fichiers).  
-En tête de ce stockage apparaissent des *répertoires racines* :
-- un répertoire **home** : strictement personnel, ce répertoire est totalement invisible aux autres comptes, seul le compte titulaire y a accès.
-- des répertoires **forums** : ils sont partagés avec d'autres comptes et sont dénommés *forum* précisément parce que plusieurs comptes s'y retrouvent pour partager des notes.
+Une personne ayant un **compte** dans une *instance* de cette application la perçoit d'abord comme *un espace de stockage arborescente classique* où les feuilles sont des **notes** (au lieu d'être exactement des fichiers).  
+Les *répertoires racines* qui lui apparaissent sont :
+- son répertoire **home** : strictement personnel, il est totalement invisible et inaccessible aux autres comptes.
+- des répertoires **forums** sur lesquels il partage des notes avec d'autres comptes.
 
 ##### Note
 Le contenu d'une **note** est constitué,
-- **d'un sujet / résumé** textuel court (sans formatage), contenant éventuellement des hashtags permettant de retrouver les notes par centres d'intérêt.
+- **d'un sujet / résumé** textuel court (sans formatage).
+- **d'une liste de mots clés** symbolisant les sujets généraux auxquels la note se rapporte.
 - **d'une vignette** facultative, aperçu d'une photo ou d'un clip joint, photo d'identité de l'auteur, icône...
 - **d'un texte** facultatif pouvant comporter jusqu'à quelques milliers de caractères lisible sous une présentation simple agréable (niveaux de titre, gras / italique, liste à puces ...).
-- **d'une pièce jointe** facultative de n'importe quel type : photo, clip vidéo, etc. et qui peut être le ZIP de plusieurs fichiers.
+- **de pièces jointes** facultatives de n'importe quel type : photo, clip vidéo, etc. Chaque pièce y porte un nom court spécifique de la note et peut avoir une vignette.
 
 Une note possède un *identifiant unique universel* et peut avoir selon l'option choisie à sa création, a) une version unique (comme un e-mail, un SMS ...), b) plusieurs versions successives (comme tout document révisable).
 
-Chaque version (première et suivantes) a 
+Chaque version (première et suivantes) a :
 - sa **date-heure**, 
 - son **auteur**,
-- son **contenu** (sujet / texte / vignette / pièce jointe) propre.
+- son **contenu** propre : sujet, mots clés, texte, vignette et liste de pièces jointes.
 - sa **clé de cryptage** : sans cette clé le contenu n'est pas lisible.
 - sa **signature par son auteur** (un compte) : un procédé cryptographique permet à un lecteur (ou qu'il soit dans le monde, même non connecté) de vérifier à partir de la signature :
     - que le contenu de la note a bien été signé par l'auteur déclaré.
     - quand il dispose de la clé de cryptage, que le contenu n'a pas été falsifié et est bien celui écrit par son auteur.
 
+Plusieurs notes, et plusieurs versions d'une note, peuvent référencer des pièces jointes communes. Chaque pièce jointe est également signée par son auteur.
+
 ***Paths* d'une note**  
-Une note est disponible dans l'arbre de stockage d'un répertoire home ou d'un forum, son path est le nom d'accès dans ce répertoire racine, par exemple :  
+Une note est disponible dans l'arbre de stockage d'un répertoire **home** ou d'un *forum*, son path est le nom d'accès dans ce répertoire racine, par exemple :  
 `/Banques/Relevés-2017/janvier`  
 Une note donnée peut être rangée à plus d'un endroit différent, avoir plus d'un path, désignant toutefois la même note. La note ci-dessus pourrait avoir un second path :  
 `/A vérifier/relevé banque-2018-01`  
-Ceci concerne en fait *une version d'une note*, en général quand elle est révisable la dernière. Mais chaque version peut avoir *son* path et être le cas échéant rangée à des endroits différents (par exemple les versions antérieures dans un sous-répertoire `../Historique/...`.
+Quand une note est révisable on ne garde généralement que la dernière version. Mais chaque version peut avoir *son* path et être le cas échéant rangée dans un répertoire différent des autres versions conservées : par exemple les versions antérieures peuvent être gardées dans un sous-répertoire `../Historique/...`.
 
->**Remarque** : les *répertoires* comme `/Banques/Relevés-2017 `n'ont pas vraiment d'existence. Ils ne sont que des éléments de regroupements graphiques et si aucune note n'a un path commençant par `/Banques/Relevés-2017` ce répertoire ne peut pas apparaître
+>**Remarque** : les *répertoires* comme `/Banques/Relevés-2017 `n'ont pas vraiment d'existence. Ils ne sont que des éléments de regroupements graphiques et si aucune note n'a un path commençant par `/Banques/Relevés-2017` ce répertoire n'apparaît pas.
 
->Une note copiée d'un forum à un autre est bel et bien stockées en deux exemplaires, occupe deux fois du volume, mais a le même identifiant universel et sa version de date-heure `d1` y est strictement identique dans les deux forums. Elle peut être détruite dans l'un sans impact sur l'autre.  
->D'ailleurs une version d'une note exportée à l'autre bout de la planète dans un fichier local d'un poste portable déconnecté, aura sous le même identifiant exactement le même contenu (pour autant qu'on ait vérifié sa non falsification, ce que la signature et la connaissance de sa clé permet).
+>Une note copiée d'un forum à un autre est stockée en deux exemplaires, occupe deux fois du volume, mais a le même identifiant universel et sa version de date-heure `d1` y est strictement identique dans les deux forums. Elle peut être détruite dans l'un sans impact sur l'autre.  
+>Une version d'une note exportée à l'autre bout de la planète dans un fichier local d'un poste portable déconnecté, aura le même identifiant universel et le même contenu, sauf s'il a été falsifié volontairement, ce que la signature et la connaissance de sa clé permet de détecter.
 
 #### Forum
 Le répertoire **home** ne pose guère de problème de confidentialité : seul le compte y a accès, il est crypté et seul le compte titulaire en possède la clé.  
@@ -113,7 +116,7 @@ En présence de l'aperçu d'une note proposée par un de ses contacts, le titula
 - **effacer l'aperçu** qui ne l'intéresse pas ou plus.
 - ne rien faire : l'aperçu reste en attente.
 
->L'objectif est que cet espace d'échanges ne soit pas saturé par des volumes importants de notes pas toujours souhaitées : ainsi l'espace d'un compte reste maîtrisable par son titulaire.
+>Cet espace d'échanges ne sera ainsi pas saturé par des volumes importants de notes pas toujours souhaitées, l'espace d'un compte reste maîtrisable par son titulaire.
 
 L'aperçu d'une note proposée par A à C est double : chez A il figure comme une note proposée à C et chez C celui d'une note proposée par A. Les deux sont strictement synchronisés à la création, mais plus tard,
 - A a pu détruire la note proposée à C : si C ne l'a pas obtenu avant, il ne l'obtiendra plus. Une date-heure minimale de conservation est spécifiée pour palier, en général, à cette difficulté.
@@ -253,7 +256,7 @@ Un compte A peut partager une note N avec un autre compte C (voir les restrictio
 - C voit apparaître dans sa liste des notes un aperçu de la note nouvellement partagée :
     - qui la partage,
     - l'identifiant de la note,
-    - son sujet (donc ses hashtags),
+    - son sujet et ses mots clés,
     - quelques informations comme la date-heure et si la note contient un texte (et de quelle taille) et une pièce jointe (quel type / quel taille).
 - C peut décider :
     - de jeter cette note.
@@ -338,7 +341,7 @@ La vie du forum est pour l'essentiel marquée par :
 - **la lecture et l'écriture de notes** et de leurs pièces jointes.
 - **des actes de gestion** :
     - invitation / confirmation / résiliation d'un participant et attribution / retrait de *privilège* (selon le schéma de gouvernance retenu).
-    - suppression de notes obsolètes en l'absence d'action de ses auteurs (qui ont pu quitter le forum).
+    - mise à la poubelle de notes obsolètes en l'absence d'action de ses auteurs (qui ont pu quitter le forum).
     - débit / crédit du forum.
     - clôture du forum.
 - **des votes sur les sondages organisés** :
@@ -356,105 +359,28 @@ La destruction effective supprime physiquement les données.
 
 >**Remarque** : dans le cas le plus simple un forum s'ouvre instantanément sur demande d'un compte qui y invite immédiatement les contacts qu'il souhaite avec approbation par défaut. Une gouvernance par défaut s'installe, et les participants peuvent sur l'instant accepter l'invitation et participer à une conversation et s'échanger des notes.
 
-# Confiance dans l'application
-Ces données passent par deux applications (une terminale, l'autre dans le serveur), circulent sur internet et sont stockées dans une base de données. Tous ces niveaux techniques sont susceptibles d'être attaqués et déroutés.  
-Les techniques de cryptographie employées offrent certaines garanties en elles-mêmes, mais pas toutes les garanties et le niveau de confiance à accorder à l'application n'est pas un sujet trivial et s'étudie en fonction des niveaux de confiance qu'on peut accorder à chacun de ces éléments.
+# Notifications d'événements sur un compte ou des forum
+#### Sur son home
+Quand un compte ouvre son **home**, il voit des fanions sur toutes les notes que d'autres comptes lui ont proposé de partager récemment.  
+Après avoir regardé spécifiquement ceux-ci, le compte peut **effacer les fanions**. Ceux-ci réapparaîtront au fil des nouveaux partages.
 
-Il est impossible de garantir que toutes les données seront toujours présentes et inviolées mais il est possible de garantir que pour certaines données :
-- si elles ont été trouvées elles sont fiables et inviolées, c'est à dire effectivement produites par qui prétend l'avoir fait et que le contenu n'en a pas été altéré.
-- plus exactement il est possible de détecter si une telle donnée a été corrompue, donc si elle est fiable ou non. En règle générale les hackers ne se fatiguent pas à corrompre des données dont la corruption est détectable : ça ne fait que rendre l'application inutilisable (au même titre que des suppressions aveugles).
+#### Sur chacun des forums auxquels il participe
+En ouvrant un des forums auquel il a accès, le compte peut voir trois types de **fanions** :
+- sur toutes **les notes qui l'intéressent** qui ont changé récemment.
+- sur tous **les votes**,
+    - soit en cours et sur lesquels il n'a pas donné encore son opinion, alors qu'elle est sollicitée.
+    - soit terminés et dont il peut voir le résultat définitif.
 
->**Se focaliser principalement sur la confiance envers l'environnement technique n'est pas une bonne idée. Un bon agent infiltré au bon endroit peut être beaucoup plus efficace.**
+Après avoir regardé spécifiquement ceux-ci, le compte peut **effacer les fanions**. Ceux-ci réapparaîtront au fil des événements censés leur donner naissance.
 
-#### Confiance dans l'application terminale et le réseau Internet
-C'est l'application terminale qui crypte, signe, décrypte et vérifie les signatures. Si l'application terminale, dans son ensemble, n'est pas de confiance, aucune confiance ne peut être accordée à l'application.
-- son logiciel est open source et lisible en clair dans n'importe quel terminal. Il est vérifiable par tout lecteur ayant le minimum requis de compétence technique.
-- il peut être rendu disponible depuis des serveurs divers, et en particulier des serveurs de confiance distincts des serveurs d'instance qui hébergent les données et l'application centrale.
-- l'application s'exécute dans un environnement technique de l'appareil dans lequel, usuellement et à juste titre, on a confiance : *navigateur, système d'exploitation, matériel*. On a toutefois relevé par exemple :
-    - un fournisseur de matériel de haute renommée qui détournait les frappes au clavier de l'utilisateur.
-    - des CPU de haute renommée également mais pas complètement étanches aux inspections indésirables des autres programmes.
-    - des navigateurs dont l'éditeur offre des primes à ceux qui y trouvent une faille de sécurité, preuve qu'il y en a.
+#### Notes intéressantes pour un compte
+L'intérêt d'un compte est marqué en enregistrant la liste des mots clés qui l'intéressent : toute note modifiée ayant l'un de ses mots clés, ou acquérant l'un de ces mots clés, est considérée comme intéressante pour le compte.  
+Un fanion sera levé sur création, mise à jour ou mise à la poubelle.
 
-**La transmission avec le serveur utilise le protocole chiffré d'internet HTTPS**, dont pour l'instant il n'existe pas de preuve de fragilité.
+#### Rappel synthétique central
+Cette vue sur les fanions sur les votes et les notes nécessite d'ouvrir le forum : si le compte accède à quelques dizaines de forum, c'est une tâche vite fastidieuse.
 
->Ce niveau technique est supposé de confiance, sinon l'application n'est pas pertinente (ni la quasi totalité des autres d'ailleurs).
-
-Dans ce contexte :
-- les clés de cryptographie requises sont générées aléatoirement à la création du compte dans l'application terminale :
-    - le nom du compte est crypté et les diverses clés (sauf la clé 0) sont scellés dans ***un ticket public immuable et inviolable portant le numéro du compte***.
-    - la clé 0 *mère* est enregistrée cryptée par la phrase secrète utilisée à la création.
-- aucun autre compte ne peut être créé (dans aucune instance d'ailleurs) et présenter le même numéro de compte avec un ticket public valide différent (un *fake*): c'est détectable.
-- si l'application mémorise pour chaque numéro de compte son **ticket public immuable et scellé**, n'importe quel terminal de la planète peut aussi en conserver des copies sur n'importe quels supports. Depuis ce ticket n'importe quel terminal, avec ou sans le logiciel de l'application :
-    - **peut obtenir le nom du compte** à condition de disposer de la clé 1 qui le crypte. Une tentative de recherche du nom scellé par force brute en essayant toutes les combinaisons est vouée à l'échec.
-    - **peut s'adresser au compte en cryptant des données de telle sorte que seul le détenteur du compte puisse les décrypter**.
-    - **principe d'inviolabilité et de non répudiation** : il peut vérifier qu'une note qui prétend avoir été horodatée et signée par un compte, l'a véritablement été en utilisant les clés ad hoc que nul ne peut avoir inventé. S'il possède la clé de cryptage d'une note, la signature lui indiquera si le contenu est un faux ou non.
-
-A la création du compte, la clé 0 mère est cryptée par la première phrase secrète.  
-Ultérieurement, à condition de disposer pour un compte donné de la clé 0 cryptée par l'ancienne phrase secrète, une session peut ré-encrypter la clé 0 par une nouvelle phrase secrète.
-
->**Remarque** : il existe des moyens non techniques pour demander, et souvent finir par obtenir de son titulaire, la phrase secrète d'un compte. La violence certes, mais aussi plus fréquemment la persuasion couplée à l'imprudence du titulaire, sont les moyens les plus usuels.
-
->**Synthèse** : le système cryptographique garantit, même à un terminal indépendant de l'application, que muni du ticket public d'un compte identifié par son numéro :
->- il peut vérifier techniquement que le ticket n'est pas un fake,
->- que tout message envoyé à ce compte en utilisant la clé qui s'y trouve ne pourra être décrypté que par une application détenant au moins un ticket privé du compte et la phrase secrète associé.
->- que toute note prétendue horodatée et signée par ce ticket l'a vraiment été.
->- que la note n'a pas été altérée (après l'avoir décryptée par sa clé de cryptage).
-
-### Confiance dans le serveur et la base de données
-Les tickets et contenus sont générés, cryptés et scellés dans les applications terminales.  
-Le serveur ne reçoit jamais aucun élément qui lui permette de décrypter ou crypter ces contenus : au plus peut-il vérifier que les signatures des contenus signent bien ce qu'elles prétendent signer, mais ce contrôle est juste destiné à décourager un éventuel hacker maladroit qui tenterait de pervertir les données à distance : la vraie et seule vérification crédible est celle refaite dans la session terminale lectrice des notes.
-
-Une note stockée dans la base de données ne peut pas être décryptée sans disposer de sa clé de cryptage. Le ticket public de son auteur est nécessaire pour vérifier la signature.  
-Le détournement / copie de la base de données ne peut fournir aucune note sans disposer de leurs clés, c'est à dire **sans la complicité d'un compte disposant d'un accès régulier**.  
-Détourner une base ne servirait qu'à en obtenir les notes que le complice peut avoir régulièrement.
-
-#### Destruction d'informations
-Techniquement une *application serveur pirate* peut intercepter les opérations demandées au serveur régulier et effectuer son propre traitement :
-- son action ne peut être que destructrice : suppression de comptes, de notes, de participants à des forums, de contacts dans les répertoires des comptes.
-- il ne peut pas créer des notes fake, ni de faux certificats d'identité, ni de faux participants à un forum : tout cela est détecté à la lecture dans les applications terminales.
-
-De même une intervention directe sur la base de données ne que miter les données mais pas pervertir silencieusement celles restantes.
-
->**Synthèse** : rendre une application inutilisable et non crédible en raison des *attaques destructives de ses données* n'est pas un aspect secondaire.
->- en revanche tout ce qui s'y trouve peut être considéré comme crédible, non altéré.
->- il est possible de détecter que des données ont été détruites *quand leur liste peut être scellée et signée* (par exemple, un certificat d'identité, la liste des participants d'un forum ... ) mais pas dans le cas général (la liste des notes d'un forum n'est pas scellée : un hacker pourrait parvenir à en détruire silencieusement).
-
-### URLs d'une note et de sa pièce jointe
-Un peu paradoxalement un compte peut obtenir pour toute note une URL qui comporte l'identification de la note et sa clé de cryptage (à condition qu'il l'ait) et une URL pour sa pièce jointe.  
-Il peut transmettre cette URL à n'importe qui, la publier dans un blog ...
-
-**Choquant pour une application a-sociale cryptée ?**
-En fait non, c'est normal. Si un compte a un accès *licite et authentifié* à une note, il peut bien la lire en clair. L'objectif de l'application est de partager des notes avec qui on veut et si on a décidé que C pouvait lire une note, c'est bien que C en verra le contenu en clair, pièce jointe comprise. Dès lors cette note en clair peut se retrouver sur un fichier et il peut (*can* en anglais) bien la diffuser où il veut : c'est le risque pour toute information confidentielle. Dès lors qu'elle est connue de quelqu'un, il faut avoir confiance dans cette personne pour qu'elle reste non publiée, si tel était l'intention de son auteur.
-
->Pierre Dac avait soulevé il y a longtemps ce problème en publiant une petite annonce : *recherche personne ayant une belle écriture et ne sachant pas lire pour recopier des documents secrets*.
-
-Bref rien de nouveau sous le soleil : la seule information qui ne pourra jamais être publiée hors de la volonté de son auteur est celle qu'il n'a pas écrite ou du moins n'a jamais fait lire à personne. C'est exactement la cas d'une note du **home** d'un compte qui n'a jamais été partagée. Seul son auteur la connaît et il ne faut pas qu'il l'imprime (ou qu'il broie le papier sans l'avoir perdu de vue).
-
-Dès lors fournir une URL contenant la clé de cryptage d'une note ne pose pas plus de problème que de transmettre une copie par fichier de la note ou d'avoir laissé traîner une impression sur une imprimante.
-
-Il est aussi possible d'obtenir l'URL d'une note sans sa clé de cryptage et de l'envoyer par e-mail : elle ne sera lisible que quand le destinataire aura reçu, peut-être par un autre canal (un SMS par exemple), la clé de cryptage.
-
-### De l'usage des vrais noms ou des pseudos
-Qu'est ce qu'un vrai nom ? En droit français un *nom / prénoms date et lieu de naissance* vérifiable dans un registre d'état civil. L'absence d'un tel registre informatisé et les approximations orthographiques que contiennent les registres rend ce concept techniquement malaisé à utiliser.  
-Comment vérifier qu'une personne physique derrière un terminal distant n'usurpe pas l'état civil d'une autre ? Les données biométriques ne sont, à ce jour, que partiellement fiables et non vérifiables facilement à la création d'un compte.
-
-L’État français ne signe pas de certificat d'état civil.
-
-Les autorités de certifications reconnues en signent à toute personne qui peut payer (et même gratuitement parfois).
-
-**Les requêtes de création de comptes auto-certifiées soit faites en utilisant un certificat** signé par une autorité de certification enregistrée à la configuration du serveur frontal HTTPS et ayant pour DN l'un de ceux cités comme d'administration pour l'instance. Le nom du compte créé n'est toutefois pas issu du DN.  
-Les autres requêtes n'utilisent que l'authentification par phrase secrète, largement aussi fiable que le mot de passe demandé pour obtenir son certificat sur son poste. 
-
-Il est techniquement simple de configurer une instance pour qu'elle exige un certificat reconnu par l'autorité de certification de l'organisation pour s'y connecter. Il est simple également à la création du compte d'utiliser son DN (ou une partie du DN) comme nom.  
-- encore faut-il avoir confiance dans la distribution de ces certificats qui n'est guère envisageable que dans une organisation ayant intégré cet objectif.
-- la liste des noms autorisés est dans ce cas connu de l'organisme de certification, ce qui peut être souhaitable ou non.
-- se passer de phrase secrète suppose d'utiliser le DN comme base de génération de la clé mère : à tout le moins il faudrait a minima exiger un code supplémentaire ajouté au DN pour générer cette clé puisque le browser n'en réclame pas quand on y désigne un certificat.
-- installer un certificat sur un poste *incognito*, est-ce une bonne idée ? (et ajouter le certificat du CA comme CA de confiance, et ne pas oublier de les enlever en partant).
-
->Mais la question centrale est : le *vrai* nom est-il souhaitable ?
->- cela dépend de chaque instance et de son objet.
->- des organisations de résistance, certains services secrets ... peuvent définitivement répondre NON.
->- le plus simple est d'utiliser ... la convention prévue dans la charte éthique de l'instance utilisée et accessible sur la page d'accueil.
+Pour éviter cette visite systématique de forums dont le compte découvrirai qu'ils n'ont pas de fanions levés, chaque compte voit au niveau racine de son arborescence (pour chaque forum) des fanions synthétiques : il sait ainsi, sans avoir à ouvrir un forum, si oui ou non il y aura dedans des fanions levés.
 
 # Comptabilisation des consommations de ressources
 Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :
@@ -631,41 +557,105 @@ Le scrutin par défaut pour changer de gouvernance est :
 Chaque participant a 10 bulletins et les affectent sur les participants au forum (le cas échéant plusieurs pour un participant).  
 A l'issue du scrutin les N participants ayant reçu le plus de votes sont élus délégués.
 
-# Traces d'activités sur les comptes et forum
-Il n'est pas naturel de savoir si un compte ou un forum est *actif* : 
-- les opérations de mise à jour modifient la date-heure du dossier correspondant. On peut savoir quand s'est opéré la dernière mise à jour technique. Toutefois un échange par exemple écrit par C pour A, ne signifie pas pour autant que A est actif / vivant et pourtant le dossier a eu sa date-heure modifiée.
-- la pure consultation ne laisse aucune trace dans les dossiers, elle est pourtant la marque d'une indéniable activité.
+# Confiance dans l'application
+Ces données passent par deux applications (une terminale, l'autre dans le serveur), circulent sur internet et sont stockées dans une base de données. Tous ces niveaux techniques sont susceptibles d'être attaqués et déroutés.  
+Les techniques de cryptographie employées offrent certaines garanties en elles-mêmes, mais pas toutes les garanties et le niveau de confiance à accorder à l'application n'est pas un sujet trivial et s'étudie en fonction des niveaux de confiance qu'on peut accorder à chacun de ces éléments.
 
-Des opérations techniques arbitraires sont définies pour signer une activité :
-- **ouverture d'une session sur un compte** : ça a un sens indéniable dans l'application terminale (c'est du superflu pour les dossiers sur le serveur). Cette consultation est transformée en opération rien que pour signer la *date-heure de dernière visite d'un compte* par son titulaire.
-- **accès à un forum** : sur l'application terminale c'est plus ou moins le moment ou l'onglet / page du forum est accédée.
+Il est impossible de garantir que toutes les données seront toujours présentes et inviolées mais il est possible de garantir que pour certaines données :
+- si elles ont été trouvées elles sont fiables et inviolées, c'est à dire effectivement produites par qui prétend l'avoir fait et que le contenu n'en a pas été altéré.
+- plus exactement il est possible de détecter si une telle donnée a été corrompue, donc si elle est fiable ou non. En règle générale les hackers ne se fatiguent pas à corrompre des données dont la corruption est détectable : ça ne fait que rendre l'application inutilisable (au même titre que des suppressions aveugles).
 
-L'application terminale a toujours facilement un concept *d'ouverture de session*: il est rare de laisser une page ouverte sur une application des jours entiers, elle est en général ouverte, puis fermée au plus quelques heures après, et rien n'empêche la session terminale de se considérer elle-même comme ré-ouverte si elle dure plus d'un temps raisonnable.
+>**Se focaliser principalement sur la confiance envers l'environnement technique n'est pas une bonne idée. Un bon agent infiltré au bon endroit peut être beaucoup plus efficace.**
 
-### Date-heures de dernières visites
-Dès lors l'application terminale est conviée à invoquer des opérations :
-- première visite d'un compte dans la session,
-- première visite d'un forum dans la session.
+#### Confiance dans l'application terminale et le réseau Internet
+C'est l'application terminale qui crypte, signe, décrypte et vérifie les signatures. Si l'application terminale, dans son ensemble, n'est pas de confiance, aucune confiance ne peut être accordée à l'application.
+- son logiciel est open source et lisible en clair dans n'importe quel terminal. Il est vérifiable par tout lecteur ayant le minimum requis de compétence technique.
+- il peut être rendu disponible depuis des serveurs divers, et en particulier des serveurs de confiance distincts des serveurs d'instance qui hébergent les données et l'application centrale.
+- l'application s'exécute dans un environnement technique de l'appareil dans lequel, usuellement et à juste titre, on a confiance : *navigateur, système d'exploitation, matériel*. On a toutefois relevé par exemple :
+    - un fournisseur de matériel de haute renommée qui détournait les frappes au clavier de l'utilisateur.
+    - des CPU de haute renommée également mais pas complètement étanches aux inspections indésirables des autres programmes.
+    - des navigateurs dont l'éditeur offre des primes à ceux qui y trouvent une faille de sécurité, preuve qu'il y en a.
 
-Ceci permet d'enregistrer la date-heure de la session la plus récente ayant *visité* un compte ou un forum.
+**La transmission avec le serveur utilise le protocole chiffré d'internet HTTPS**, dont pour l'instant il n'existe pas de preuve de fragilité.
 
-Ceci fournit :
-- à un compte les date-heure de **sa** dernière visite,
-    - à son compte, 
-    - à chacun des forums dont il est participant.
-- à un compte contrôleur,
-   - la date de dernière visite d'un compte.
-   - la date de dernière visite d'un forum (encore que ce ne soit guère utile).
+>Ce niveau technique est supposé de confiance, sinon l'application n'est pas pertinente (ni la quasi totalité des autres d'ailleurs).
 
-## Notifications
-L'objectif est d'allumer pour une session des signaux en face des conversations, notes, forums ... sur lesquels il s'est passé quelque chose d'intéressant pour la session depuis sa dernière visite.
+Dans ce contexte :
+- les clés de cryptographie requises sont générées aléatoirement à la création du compte dans l'application terminale :
+    - le nom du compte est crypté et les diverses clés (sauf la clé 0) sont scellés dans ***un ticket public immuable et inviolable portant le numéro du compte***.
+    - la clé 0 *mère* est enregistrée cryptée par la phrase secrète utilisée à la création.
+- aucun autre compte ne peut être créé (dans aucune instance d'ailleurs) et présenter le même numéro de compte avec un ticket public valide différent (un *fake*): c'est détectable.
+- si l'application mémorise pour chaque numéro de compte son **ticket public immuable et scellé**, n'importe quel terminal de la planète peut aussi en conserver des copies sur n'importe quels supports. Depuis ce ticket n'importe quel terminal, avec ou sans le logiciel de l'application :
+    - **peut obtenir le nom du compte** à condition de disposer de la clé 1 qui le crypte. Une tentative de recherche du nom scellé par force brute en essayant toutes les combinaisons est vouée à l'échec.
+    - **peut s'adresser au compte en cryptant des données de telle sorte que seul le détenteur du compte puisse les décrypter**.
+    - **principe d'inviolabilité et de non répudiation** : il peut vérifier qu'une note qui prétend avoir été horodatée et signée par un compte, l'a véritablement été en utilisant les clés ad hoc que nul ne peut avoir inventé. S'il possède la clé de cryptage d'une note, la signature lui indiquera si le contenu est un faux ou non.
 
-Il faut,
-- caractériser les événements intéressants pour un compte,
-- savoir identifier quels comptes sont intéressés pour un forum,
-- savoir remonter cette donnée en synthèse sur le dossier du compte.
+A la création du compte, la clé 0 mère est cryptée par la première phrase secrète.  
+Ultérieurement, à condition de disposer pour un compte donné de la clé 0 cryptée par l'ancienne phrase secrète, une session peut ré-encrypter la clé 0 par une nouvelle phrase secrète.
 
-A suivre.
+>**Remarque** : il existe des moyens non techniques pour demander, et souvent finir par obtenir de son titulaire, la phrase secrète d'un compte. La violence certes, mais aussi plus fréquemment la persuasion couplée à l'imprudence du titulaire, sont les moyens les plus usuels.
+
+>**Synthèse** : le système cryptographique garantit, même à un terminal indépendant de l'application, que muni du ticket public d'un compte identifié par son numéro :
+>- il peut vérifier techniquement que le ticket n'est pas un fake,
+>- que tout message envoyé à ce compte en utilisant la clé qui s'y trouve ne pourra être décrypté que par une application détenant au moins un ticket privé du compte et la phrase secrète associé.
+>- que toute note prétendue horodatée et signée par ce ticket l'a vraiment été.
+>- que la note n'a pas été altérée (après l'avoir décryptée par sa clé de cryptage).
+
+### Confiance dans le serveur et la base de données
+Les tickets et contenus sont générés, cryptés et scellés dans les applications terminales.  
+Le serveur ne reçoit jamais aucun élément qui lui permette de décrypter ou crypter ces contenus : au plus peut-il vérifier que les signatures des contenus signent bien ce qu'elles prétendent signer, mais ce contrôle est juste destiné à décourager un éventuel hacker maladroit qui tenterait de pervertir les données à distance : la vraie et seule vérification crédible est celle refaite dans la session terminale lectrice des notes.
+
+Une note stockée dans la base de données ne peut pas être décryptée sans disposer de sa clé de cryptage. Le ticket public de son auteur est nécessaire pour vérifier la signature.  
+Le détournement / copie de la base de données ne peut fournir aucune note sans disposer de leurs clés, c'est à dire **sans la complicité d'un compte disposant d'un accès régulier**.  
+Détourner une base ne servirait qu'à en obtenir les notes que le complice peut avoir régulièrement.
+
+#### Destruction d'informations
+Techniquement une *application serveur pirate* peut intercepter les opérations demandées au serveur régulier et effectuer son propre traitement :
+- son action ne peut être que destructrice : suppression de comptes, de notes, de participants à des forums, de contacts dans les répertoires des comptes.
+- il ne peut pas créer des notes fake, ni de faux certificats d'identité, ni de faux participants à un forum : tout cela est détecté à la lecture dans les applications terminales.
+
+De même une intervention directe sur la base de données ne que miter les données mais pas pervertir silencieusement celles restantes.
+
+>**Synthèse** : rendre une application inutilisable et non crédible en raison des *attaques destructives de ses données* n'est pas un aspect secondaire.
+>- en revanche tout ce qui s'y trouve peut être considéré comme crédible, non altéré.
+>- il est possible de détecter que des données ont été détruites *quand leur liste peut être scellée et signée* (par exemple, un certificat d'identité, la liste des participants d'un forum ... ) mais pas dans le cas général (la liste des notes d'un forum n'est pas scellée : un hacker pourrait parvenir à en détruire silencieusement).
+
+### URLs d'une note et de sa pièce jointe
+Un peu paradoxalement un compte peut obtenir pour toute note une URL qui comporte l'identification de la note et sa clé de cryptage (à condition qu'il l'ait) et une URL pour sa pièce jointe.  
+Il peut transmettre cette URL à n'importe qui, la publier dans un blog ...
+
+**Choquant pour une application a-sociale cryptée ?**
+En fait non, c'est normal. Si un compte a un accès *licite et authentifié* à une note, il peut bien la lire en clair. L'objectif de l'application est de partager des notes avec qui on veut et si on a décidé que C pouvait lire une note, c'est bien que C en verra le contenu en clair, pièce jointe comprise. Dès lors cette note en clair peut se retrouver sur un fichier et il peut (*can* en anglais) bien la diffuser où il veut : c'est le risque pour toute information confidentielle. Dès lors qu'elle est connue de quelqu'un, il faut avoir confiance dans cette personne pour qu'elle reste non publiée, si tel était l'intention de son auteur.
+
+>Pierre Dac avait soulevé il y a longtemps ce problème en publiant une petite annonce : *recherche personne ayant une belle écriture et ne sachant pas lire pour recopier des documents secrets*.
+
+Bref rien de nouveau sous le soleil : la seule information qui ne pourra jamais être publiée hors de la volonté de son auteur est celle qu'il n'a pas écrite ou du moins n'a jamais fait lire à personne. C'est exactement la cas d'une note du **home** d'un compte qui n'a jamais été partagée. Seul son auteur la connaît et il ne faut pas qu'il l'imprime (ou qu'il broie le papier sans l'avoir perdu de vue).
+
+Dès lors fournir une URL contenant la clé de cryptage d'une note ne pose pas plus de problème que de transmettre une copie par fichier de la note ou d'avoir laissé traîner une impression sur une imprimante.
+
+Il est aussi possible d'obtenir l'URL d'une note sans sa clé de cryptage et de l'envoyer par e-mail : elle ne sera lisible que quand le destinataire aura reçu, peut-être par un autre canal (un SMS par exemple), la clé de cryptage.
+
+### De l'usage des vrais noms ou des pseudos
+Qu'est ce qu'un vrai nom ? En droit français un *nom / prénoms date et lieu de naissance* vérifiable dans un registre d'état civil. L'absence d'un tel registre informatisé et les approximations orthographiques que contiennent les registres rend ce concept techniquement malaisé à utiliser.  
+Comment vérifier qu'une personne physique derrière un terminal distant n'usurpe pas l'état civil d'une autre ? Les données biométriques ne sont, à ce jour, que partiellement fiables et non vérifiables facilement à la création d'un compte.
+
+L’État français ne signe pas de certificat d'état civil.
+
+Les autorités de certifications reconnues en signent à toute personne qui peut payer (et même gratuitement parfois).
+
+**Les requêtes de création de comptes auto-certifiées soit faites en utilisant un certificat** signé par une autorité de certification enregistrée à la configuration du serveur frontal HTTPS et ayant pour DN l'un de ceux cités comme d'administration pour l'instance. Le nom du compte créé n'est toutefois pas issu du DN.  
+Les autres requêtes n'utilisent que l'authentification par phrase secrète, largement aussi fiable que le mot de passe demandé pour obtenir son certificat sur son poste. 
+
+Il est techniquement simple de configurer une instance pour qu'elle exige un certificat reconnu par l'autorité de certification de l'organisation pour s'y connecter. Il est simple également à la création du compte d'utiliser son DN (ou une partie du DN) comme nom.  
+- encore faut-il avoir confiance dans la distribution de ces certificats qui n'est guère envisageable que dans une organisation ayant intégré cet objectif.
+- la liste des noms autorisés est dans ce cas connu de l'organisme de certification, ce qui peut être souhaitable ou non.
+- se passer de phrase secrète suppose d'utiliser le DN comme base de génération de la clé mère : à tout le moins il faudrait a minima exiger un code supplémentaire ajouté au DN pour générer cette clé puisque le browser n'en réclame pas quand on y désigne un certificat.
+- installer un certificat sur un poste *incognito*, est-ce une bonne idée ? (et ajouter le certificat du CA comme CA de confiance, et ne pas oublier de les enlever en partant).
+
+>Mais la question centrale est : le *vrai* nom est-il souhaitable ?
+>- cela dépend de chaque instance et de son objet.
+>- des organisations de résistance, certains services secrets ... peuvent définitivement répondre NON.
+>- le plus simple est d'utiliser ... la convention prévue dans la charte éthique de l'instance utilisée et accessible sur la page d'accueil.
 
 # Cryptographie
 
