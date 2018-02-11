@@ -65,14 +65,18 @@ L'opération de transfert d'une ligne de crédit sur un compte ou un forum requi
 - `cr` : montant du crédit courant en unités de compte. Il peut être négatif.
 - `v1 v2` : volumes occupés lors du dernier calcul du crédit restant.
 - `dh` : date-heure de dernier calcul du crédit restant.
+- `dho` : date-heure de signalement du franchissement de la zone orange.
+- `dhr` : date-heure de signalement du franchissement de la zone rouge : blocage des opérations (sauf crédit).
+- `dhz` : date-heure de passage en zombie.
 
-L'opération de crédit verse tout le crédit d'une ligne authentifiée sur le cr du compte et détruit cette ligne.  
+L'opération de crédit verse tout le crédit d'une ligne authentifiée sur le `CRE` du compte et détruit cette ligne.
+
 Le crédit est réduit :
-- à chaque fin d'opération :
-    - le coût de l'occupation du volume depuis le dernier calcul est calculé.
-    - le nouveau niveau d'occupation du volume est calculé.
-    - le crédit est réduit de ce  montant et de celui de l'opération (dont le volume d'entrée / sortie).
-- périodiquement, par exemple toutes les semaines, pour calculer les coûts d'occupation d'espace en l'absence d'opérations. 
+- *à chaque fin d'opération* :
+    - le coût `cv` de l'occupation du volume depuis le dernier calcul est calculé.
+    - le nouveau volume est mémorisé.
+    - le crédit est réduit de `cv` et de celui de l'opération (dont le volume d'entrée / sortie).
+- *périodiquement*, par exemple toutes les semaines, pour calculer les coûts d'occupation d'espace en l'absence d'opérations. 
 
 # Constantes
 Ces données ont :
@@ -115,6 +119,25 @@ La clé est le numéro de compte et n'a que trois propriétés destinées à év
 
 # Dossier `Compte`
 La clé d'accès `docid` est le numéro de compte `nc`.
+
+**Singleton :** 
+- `EnC` : entête du compte.
+- `Cid` : certificat d'identité.
+- `Crt` : comptes certifiés.
+
+**Items :**
+- `Phc` : phrases de contact.
+- `Pho` : photos d'identité.
+- `Rep` : entrée du répertoire de contacts.
+- `Vno` : version d'une note.
+- `Pth` : paths d'une note.
+- `P` : pièce jointe (standard).
+- `Flg` : flags d'un forum accédé.
+- `Fac` : forum accédé.
+
+Le *profil* d'un compte est constitué de : 
+- la constante `TPU`,
+- les singletons et items `EnC Cid Crt Phc Pho`.
 
 ## Singleton : *Entête du compte* `EnC`
 Ce singleton est déclaré à la création du compte et n'est modifié qu'à quelques rares occasions :
@@ -310,6 +333,10 @@ On peut ainsi obtenir par calcul libérable en vidant la corbeille des notes jet
 - `cn0P` : (r) clé de la note cryptée par la clé 0 ou P.
 - `sj` : (r) sujet de la note.
 - `mc` : (r) mots clés de la note.
+- 'forum' : (r) si la note est celle d'un forum et,
+    - qu'elle est accessible aux invités et que le réceptionnaire est invité du forum. 
+    - que le réceptionnaire est participant au forum.
+    - dans ces cas `cn0P` est absente.
 - Pour une note exportée c'est le statut de la réception de l'autre côté.
     - `dhv` : date-heure de vue et laissée en attente.
     - `dhc` : date-heure de copie locale.
@@ -333,8 +360,14 @@ Ce compte doit être :
 **Propriétés :**
 - `dhop` : date-heure de la dernière opération.
 - `memo0` : nom du forum sur la première ligne, commentaires ensuite (crypté par sa clé 0).
-- `fav` : 0:normal, 1:favori 
-- `st` : statut vis à vis du forum.
+- date-heures du dernier cycle d'invitation (copie de `Paf`):
+    - `dh1` : invitation.
+    - `dh2` : acceptation de l'invitation. Début du vote sur la confirmation.
+    - `dh3` : confirmation.
+    - `dh4` : résiliation en discussion. Début du vote sur la résiliation.
+    - `dh5` : résiliation effective.
+- `bureau` : est membre du bureau.
+
 
 ## Items *flags du forum* `Flg`
 **Clé** : `nf`. Identifiant du forum.
@@ -409,103 +442,125 @@ Retour :
 # Forum
 Le `docid` est un identifiant universel `nf` tiré au hasard à la création du forum.
 
-Il possède les items `Vno Pth P` comme Compte.
-- `Pth` a une propriété supplémentaire : liste des auteurs autorisés.
+**Singleton :** 
+- `EnF` : entête du forum.
+
+**Items :**
+- `Vno` : version d'une note.
+- `Pth` : paths d'une note.
+- `P` : pièce jointe (standard).
+- `Flg` : flags d'un participant.
+- `Paf` : participant au forum.
+- `Fnw` : fil de nouvelles.
+- `Snd` : sondage.
+
+Il possède les items `Vno Pth P` comme Compte.  
+`Pth` a deux propriétés supplémentaires : 
+- liste des index des signataires.
+- document accessible aux invités (la clé est fixe) ou réservé aux confirmés (la clé peut avoir plusieurs valeurs au cours du temps).
 
 L'item `Flg` est le symétrique de `Flg` de Compte avec le numéro de compte comme clé.
+- un vote de changement de gouvernance est en cours
+- une élection de délégués est en cours.
+- une invitation est en cours.
+- une résiliation est en cours.
+- une note ayant un des mots clés référencés par le compte a été écrite / mise à la corbeille.
 
 ### Singleton *entête du forum* `EnF`
 **Propriétés :**
 - `dhop` : date-heure de la dernière opération.
-- `nbs` : nombre de scrutins de changement de gouvernance déjà organisés.
-- `basegv` : nom du schéma de gouvernance de base.
-- `exgv` : map des types de dialogue dérogeant au schéma de vote donné par la gouvernance par défaut. Valeur : schéma de vote.
-
-**Schéma de vote** :
-- `p` : pourcentage requis (défaut 30).
-- `m` : minimum de votes pour requis (défaut 1).
-- `v` : vrai si veto pris en compte (défaut faux).
-- `i` : vrai si décompte basé sur les inscrits et non les votants (défaut faux).
-- `h` : nombre d'heures minimal d'ouverture (défaut 0).
-
+- `dhcc` : date-heure du dernier changement de clé.
+- `nbp` : nombre de participants ayant été invités.
+- `basegv` : schéma de gouvernance.
+    - `b` : liste des membres du bureau.
+    - `p c a g` : 4 chaînes donnant les schémas de vote applicables aux quatre groupes de décision (participants, clôture du forum, autres décisions, changement de gouvernance).
 
 ## Items *participant au forum* `Paf`
 ***Clé*** : numéro de compte.
 
 ***Propriétés***
-- `cf0P` : clé du forum (complète ou réduite selon le statut) cryptée par la clé 0 ou P du participant.
-- `nomFR` : nom du participant crypté par la clé réduite du forum.
-- `c1FR` : clé 1 du participant crypté par la clé réduite du forum.
-- `pdhc` : toute première date-heure de début de confirmation.
-- `ddhc` : toute dernière date-heure de fin de confirmation.
+- `idx` : index du participant dans le forum.
+- `cif0P` : clé d'invitation du forum cryptée par la clé 0 ou P du participant.
+- `hcf0P` : historique des clés du forum cryptée par la clé 0 ou P du participant.
+- `nomI` : nom du participant crypté par la clé d'invitation du forum.
+- `c1I` : clé 1 du participant crypté par la clé d'invitation du forum.
+- `phI` : photo d'identité du participant crypté par la clé d'invitation du forum.
+- `pdhc` : date-heure de début de la première phase confirmée.
+- `ddhc` : date-heure de fin de la dernière phase confirmée (absente si encore confirmé).
 - `acnf` : auto confirmé dès l'acceptation de l'invitation.
 - date-heures du dernier cycle d'invitation :
-    - `dhi` : invitation
-    - `dha` : acceptation de l'invitation.
-    - `dhc` : confirmation
-    - `dhr` : résiliation
-- `elu` : est un élu.
-- `mc` : liste des mots clés d'intérêt cryptés par la clé réduite du forum.
+    - `dh1` : invitation.
+    - `dh2` : acceptation de l'invitation. Début du vote sur la confirmation.
+    - `dh3` : confirmation.
+    - `dh4` : résiliation en discussion. Début du vote sur la résiliation.
+    - `dh5` : résiliation effective.
+- `bureau` : est membre du bureau.
+- `dhef` : date-heure du dernier effacement des fanions sur les fils d'actualité.
+- `news` : liste des indices des news intéressantes pour le participant.
 
-### Option : multi clés du forum
-Les pièces jointes ont leurs clés transmises par la ou les notes qui y font référence. Elles sont immuables.  
-Une note change de clé à chaque version : elle peut être cryptée par la dernière clé du forum. Pour accéder aux notes antérieures il faut avoir les clés antérieures du forum, on ne peut pas ré-encrypter toutes les notes.
+### Historique des clés du forum
+La clé d'invitation n'est pas historisée.  
+Les pièces jointes ont leurs clés transmises par la ou les notes qui y font référence. Elles sont immuables et ne sont pas directement liées aux clés du forum.  
+Une note change de clé à chaque version : à l'écriture elle est cryptée par la dernière clé. Pour accéder à une version d'une note il faut regarder sa date-heure et prendre la clé de l'historique qui était valide dans le vecteur `[[dh1,c1], [dh2,c2] ...]`.
 
-Pour lire une note il faut utiliser non plus **la** clé du forum mais le vecteur `[[dh1,c1], [dh2,c2] ...]` et pour écrire prendre la plus récente.
+L'opération de changement de clés a quelques contraintes :
+- la session doit encoder la nouvelle clé générée avec la clé P de chacun des participants, opération qui en soit peut prendre du temps en session.
+- la mise à jour dans le serveur vérifie que tous les participants *confirmés* sont bien listés dans le paramètre de l'opération donnant la nouvelle clé.
 
-L'opération de changement de clés n'est pas gratuite sans être outrageusement complexe : il suffit de générer une nouvelle clé et de la crypter par la clé P de chaque participant et de mettre ce dernier terme à la fin du vecteur.
+### Items *fil de nouvelles* `Fnw`
+***Clé :***
+- numéro de fil.
+- date-heure.
+- numéro de note ou de sondage
+- code de l'événement.
+    - Pour une note :
+        - c : création.
+        - m : mise à jour.
+        - p : mise à la poubelle.
+        - s : sortie de poubelle.
+    - Pour un sondage :
+        - c : création (ouverture de discussion éventuelle à propos de ses paramètres).
+        - o : ouverture du sondage.
+        - 0-3 : fin du sondage (son résultat).
 
-### Opérations soumise à vote 
-**Autour d'un participant** :
-- invitation d'un nouveau participant ?
-- confirmation d'un nouveau participant
-- exclusion d'un participant
+### Items *sondage* `Snd`
+Un sondage / vote peut avoir selon les cas et les règles de gouvernance en cours :
+- une valeur décisionnelle vis à vis d'une opération à réaliser qui ne peut être engagée que suite à un vote positif.
+- une valeur indicative sans impact d'autorisation / blocage d'une quelconque opération.
 
-**Redistribution de crédits excédentaires** aux participants
-
-**Clôture du forum**
-
-Ajout de nouveaux auteurs à une note dont tous les auteurs sont résiliés (ou ne répondent plus) ? OU **Purge de notes dont les auteurs** ...
-- on peut toujours copier une note. Changer la liste d'auteurs ne sert pas à grand chose.
-
-**Changement de gouvernance / élection de délégués**
-
-### Une note en plus de versions doit-elle avoir des branches ?
-
-### Items *scrutin de gouvernance du groupe* `Sgg`
-**Clé** : numéro du scrutin.
+**Clé** :
+- `obj` : objet du sondage `c r x t p g n`:
+    - (c) confirmation d'invitation de l'invité `nc`.
+    - (r) confirmation de la résiliation de l'invité `nc`.
+    - (x) clôture du forum.
+    - (t) transfert de crédit `{c1:m1, c2:m2, f1:m3 ...}` à des comptes / forums.
+    - (p) mise à la corbeille de notes obsolètes : `[n1, n2 ...]`
+    - (g) changement de mode de gouvernance avec éventuellement liste du bureau : voir plus avant les paramètres.
+    - (n) sondage sur la note elle-même.
+- `dhc` : date-heure de création (ouverture de la discussion à propos de ses paramètres éventuels).
 
 **Propriétés :**
-- `dem` : index du demandeur.
-- `txtG` : texte d'argumentaire crypté par la clé G.
-- `dho` : date-heure d'ouverture du scrutin.
-- `dhc` : date-heure de clôture du scrutin (absente s'il est ouvert).
-- `bureau` : liste des index des membres du nouveau bureau proposé (absent si inchangé).
-- `votants` : liste des index des votants, membres du groupe à l'ouverture du scrutin.
-- `basegv` : nom du schéma de gouvernance de base. `null` si inchangé.
-- `exgv` : map des types de dialogue dérogeant au schéma de vote donné par la gouvernance par défaut. Valeur : schéma de vote.
+- `idx` : index de l'initiateur du sondage.
+- `dho` : date-heure d'ouverture du sondage.
+- `dhf` : date-heure de fermeture.
+- `note` : note d'explication du sondage.
 - `sv` : schéma de vote applicable.
 - `st` : état du scrutin :
     - 0 : en cours.
     - 1 : clos par renoncement du demandeur.
     - 2 : clos sur approbation.
     - 3 : clos sur rejet.
-- `votes` : liste des compteurs des votes *pour contre blanc veto*.
-- `dhdp` : date-heure du dernier dépouillement
-- `dp` : résultat du dernier dépouillement
-- `dphl` : vrai si le dernier dépouillement a été calculé après l'heure limite (est valide)
+- `votes` : vote de chaque participant : *pour contre blanc veto*.
+- `rsdv` : résultat après le dernier vote. En général comme les votes de chaque participant peuvent changer jusqu'à la clôture du scrutin, ce résultat n'a de valeur qu'une fois la date-heure de fermeture du scrutin passée. Mais certains schémas de vote peuvent spécifier pour gagner du temps que dès qu'un résultat positif a été acquis, le scrutin peut être clos et la décision applicable.
+- `param` : paramètre du sondage :
+    - (c r) `nc` du participant.
+    - (t) transfert de crédit `{c1:m1, c2:m2, f1:m3 ...}` à des comptes / forums.
+    - (p) mise à la corbeille de notes obsolètes : `[n1, n2 ...]`
+    - (g) changement de mode de gouvernance avec éventuellement liste du bureau :
+    `{b:[...] p:"B...", c:..., a:..., g:...}`
 
-Une gouvernance est une map avec :
-- pour clé : le code d'une action qui ne suit pas le schéma de vote par défaut,
-- pour valeur : le schéma de vote applicable.
-
-### Item *Vote sur un scrutin* `Vot`
-**Clé** : numéro du scrutin + "." + index de l'auteur.
-
-**Propriétés :**
-- `dh` : date-heure du vote.
-- `txtG` : texte du commentaire crypté par la clé G du groupe.
-- `vote` : 0:abstention 1:pour 2:contre 3:blanc 4:veto.
+Les règles de gouvernance en cours fixent le *schéma de vote* en fonction de l'objet du sondage, sauf pour une note (n) où il est libre et peut changer avant ouverture du vote.  
+L'objet du sondage est fixé à sa création mais ses paramètres peuvent changer avant ouverture du vote (pendant la *campagne*).
 
 
 ##### `CPclc` : Opération *demande de clôture d'un compte*
@@ -531,3 +586,6 @@ Avis `cpacc` :
 - compte 1 : compte C. Clé N cryptée par la clé publique de C.
 - `prop st` : valeur de `st`.
 
+
+# TODO
+Rappel des zones orange / rouge / zombie dans les comptes et forums.

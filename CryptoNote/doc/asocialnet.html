@@ -1343,8 +1343,6 @@ A la racine de l'espace d'un forum, figure un répertoire <strong>Participants</
 </ul>
 <p>Dans le répertoire d'un participant on va en général trouver une courte <em>note d'auto-présentation</em> qu'il a eu la courtoisie de montrer lorsqu'il a été invité sur ce forum.<br>
 D'autres notes peuvent aussi être rangées à cet endroit, typiquement celles directement relatives à ce compte dans ce forum : le choix du classement des notes est libre et dépend des conventions librement consenties dans le forum.</p>
-<p><strong>A propos</strong><br>
-Toujours à la racine de l'espace d'un forum, un autre répertoire standard <strong>A propos</strong> est réservé à héberger des notes expliquant l'objet du forum, ses règles éthiques, ses conventions d'organisation du rangement des notes ...</p>
 <p><strong>Confiance entre les participants</strong><br>
 Inviter un nouveau participant à partager l'espace d'un forum pose deux problèmes de confiance :</p>
 <ul>
@@ -1356,31 +1354,74 @@ Inviter un nouveau participant à partager l'espace d'un forum pose deux problè
 <li><strong>l'invitation</strong> : l'invité reçoit une clé qui lui permet de lire les répertoires <strong>Participants</strong> et <strong>A propos</strong> et ainsi de prendre connaissance de ce qu'est le forum et qui sont ses participants. L'invité peut déposer dans son répertoire dans <strong>Participants</strong> une ou des notes d'auto-présentation (que nul autre ne peut ni altérer ni détruire). L'invité peut également renoncer et disparaître du forum.</li>
 <li><strong>la confirmation</strong> par les autres participants : au vu de cette information apportée par l'invité, de son certificat d'identité et des avis des uns et des autres, le nouvel invité peut être confirmé (ou refusé et disparaître).</li>
 </ul>
-<p>Un chapitre particulier <strong>Gouvernance des forums</strong> traite des questions sous-jacentes à ce bref aperçu :</p>
+<p><strong>Notes accessibles aux invités et aux participants</strong><br>
+Par défaut les notes ne sont accessibles qu'aux participants confirmés qui seuls en ont la clé de cryptage.<br>
+Mais certaines notes ont besoin d'être consultées par les invités non confirmés :</p>
 <ul>
-<li>comment se prennent les décisions dans le forum à propos des invitations / exclusions, etc.</li>
-<li>certains participants peuvent-ils avoir des rôles délégués particulier dans la gestion quotidienne : suppression des notes obsolètes, attribution / réduction de crédit de fonctionnement ?</li>
-<li>comment se décide la clôture et la destruction du forum.</li>
+<li>les notes de présentation et d'auto-présentation des participants, justement pour que les invités se fassent une idée de avec qui ils vont partager des notes.</li>
+<li>les notes expliquant l'objet du forum, ses règles éthiques, ses conventions d'organisation du rangement des notes ...</li>
 </ul>
-<p><strong><em>La gouvernance d'un forum</em></strong> peut être de l'une catégories suivantes :</p>
-<ul>
-<li><strong>autoritaire unique ou multiple</strong> : chaque participant dirigeant a tout pouvoir de gestion (invitations / résiliations, clôture du forum, etc.), y compris celui de muter la gouvernance du forum dans l'une des catégories ci-après.</li>
-<li><strong>démocratique par délégation</strong> : les décisions de gestion sont prises par consentement (absence d'opposition formelle) ou vote majoritaire des participants ayant un statut d'élu. Des scrutins peuvent être organiser avec l'ensemble des participants pour :
-<ul>
-<li>changer les élus.</li>
-<li>changer le mode de gouvernance.</li>
-</ul>
-</li>
-<li><strong>démocratique directe</strong> : toutes les décisions de gestion sont prises par consentement (absence d'opposition formelle) ou vote majoritaire des participants, y compris le changement de mode de gouvernance.</li>
-</ul>
-<p><strong>Accès à une note dans un forum</strong><br>
-<em>Les invités</em> n'ont accès en lecture qu'aux notes des répertoires <strong>Participants</strong> et <strong>A propos</strong>.<br>
-Ils ne peuvent écrire des notes que dans leur propre répertoire sous Participants.</p>
+<p>Ces notes portent un indicateur particulier dans le forum qui précise qu'étant cryptées par la clé d'invitation du forum, elles sont lisibles par les invités non confirmés.</p>
+<blockquote>
+<p><em>Les invités</em> ne peuvent écrire des notes que dans leur propre répertoire sous <strong>Participants</strong>.</p>
+</blockquote>
 <p>Une note est :</p>
 <ul>
 <li>lisible par tous les participants.</li>
-<li>si elle est révisable, par défaut elle ne peut l'être que par son créateur. Celui-ci a toutefois la possibilité <em>d'ajouter</em> des participants à la liste des auteurs autorisés et qui dès lors ont même niveau de droit sur la note.</li>
-<li>une note peut être détruite par son auteur, ou l'un de ses auteurs listés.</li>
+<li>si elle est révisable, par défaut elle ne peut l'être que par son créateur. Celui-ci a toutefois la possibilité <em>d'ajouter</em> des participants à la liste des auteurs autorisés et qui dès lors ont droit de création d'une nouvelle version de la note.</li>
+<li>par défaut quand une note est révisable, sa nouvelle version se substitue à la précédente, mais des options sont possibles comme :
+<ul>
+<li>garder la version antérieure.</li>
+<li>mettre à la poubelle la version antérieure (ce qui permet de l'en ressortir).</li>
+</ul>
+</li>
+<li>une note peut être mise à la poubelle par son auteur, ou l'un de ses auteurs listés et peut en être ressortie pendant un certain temps. La poubelle est vidée périodiquement de ses éléments les plus anciens.</li>
+</ul>
+<p><strong>Fils d'actualité</strong>
+Chaque forum a de un à 10 fils d'actualité :</p>
+<ul>
+<li>quand une note est mise à jour / créée / mise à la poubelle / ressorti de la poubelle elle peut être signalée dans un des fils (ce n'est pas obligatoire).</li>
+<li>chaque est simplement une liste de chronologique d'événements relatif à une note.</li>
+<li>un fil d'actualité ne conserve que des événements récents (1 mois) et au plus 50.</li>
+<li>vis à vis d'une même note, l'événement le plus récent est conservé dans le fil (plusieurs mises à jour se confondent en la plus récente).</li>
+</ul>
+<p><strong>Décisions importantes dans un forum</strong>
+On peut classer les décisions importantes en plusieurs catégories :</p>
+<ul>
+<li>(p) à propos d'un participant :
+<ul>
+<li>confirmation de son invitation.</li>
+<li>confirmation de sa résiliation.</li>
+</ul>
+</li>
+<li>(c) à propos de l'existence même du forum : décision de clore ou non le forum.</li>
+<li>(g) à propos de la gouvernance du forum : changer son mode de gouvernance.</li>
+<li>(q) à propos de gestion quotidienne :
+<ul>
+<li>acquisition d'un crédit / transfert de crédit vers un autre forum ou un compte.</li>
+<li>mise à la corbeille de notes obsolètes dont le ou les auteurs sont résiliés ou inactifs.</li>
+</ul>
+</li>
+<li>(n) approbation ou non d'une note (sans opération associée).</li>
+</ul>
+<p>Le chapitre <strong>Gouvernance des forums</strong> traite de comment ces décisions sont prises selon le profil de gouvernance en cours :</p>
+<ul>
+<li><strong>autoritaire unique ou multiple</strong> : chaque membre du bureau a pouvoir de décision.</li>
+<li><strong>démocratique par délégation</strong> : les décisions de gestion sont prises par consentement (absence d'opposition formelle) ou vote majoritaire des membres du bureau.</li>
+<li><strong>démocratique directe</strong> : les décisions de gestion sont prises par consentement (absence d'opposition formelle) ou vote majoritaire des participants.</li>
+</ul>
+<p><strong>Sondages</strong><br>
+Il peut être intéressant de procéder à un sondage sur une décision à prendre ou le contenu d'une note. Selon les règles de gouvernance en cours, certaines opérations sont soumises à l'obligation de suivre l'avis d'un sondage à propos de la décision.<br>
+Les sondages sont listés pour un forum.</p>
+<ul>
+<li>un sondage peut passer par une phase d'ajustement de son objet. Par exemple un sondage de modification de la gouvernance peut nécessiter d'ajuster certains paramètres, la composition du bureau proposé, etc.</li>
+<li>le sondage est ouvert.</li>
+<li>le sondage est clos, soit parce qu'une décision s'est dégagée avant sa limite, soit parce que son initiateur y renonce, soit parce qu'il a dépassé sa limite. Son résultat est proclamé.</li>
+</ul>
+<p>Le passage d'un sondage a l'une de ces phases à une autre est un événement qui est notifié dans un des fils d'actualité au choix de l'initiateur du sondage avec toutefois des contraintes :</p>
+<ul>
+<li>les sondages à propos de la gouvernance, des invitations / résiliations des participants et de la clôture du forum sont toujours du fil principal (0).</li>
+<li>les autres sont laissés ouverts.</li>
 </ul>
 <h4>Compte</h4>
 <p>Chaque compte organise son espace de stockage de notes comme il l'entend. Un seul répertoire racine spécifique y apparaît toujours : <strong>Contacts</strong>.</p>
@@ -1539,6 +1580,7 @@ Ceci ne signifie rien en termes d'amitié ou de convergence de vue, seulement un
 <ul>
 <li>son numéro de compte.</li>
 <li>son nom.</li>
+<li>d'une ou de quelques photos d'identité préférées qu'il aura l'occasion d'afficher à ses contacts ou sur les forums auxquels il participe.</li>
 <li>la liste des certifications dont il a fait l'objet.</li>
 <li>la liste des comptes qu'il a certifiés.</li>
 <li>quelques phrases de contact. Une <strong>phrases de contact</strong> est garantie unique dans l'instance durant sa période de validité fixée par le compte a sa déclaration. Le compte peut ajouter des phrases, détruire ses phrases ou les prolonger.</li>
@@ -1557,14 +1599,11 @@ Il est possible de créer ou ou quelques comptes <strong>auto-certifiés</strong
 <ul>
 <li>par son seul numéro de compte.</li>
 <li>par son numéro de compte et son nom.</li>
-<li>par son numéro de compte, son nom et accès à son certificat d'identité. C'est le cas pour :
-<ul>
-<li>tous les comptes inscrits sur au moins un même forum. Cette situation n'est pas pérenne si le compte quitte le forum ou que le forum est dissous.</li>
-<li>les <strong>contacts de confiance</strong> : la confiance est mutuelle, s'exprime explicitement  et cesse dès lors que l'un des deux décide d'y mettre fin.</li>
+<li>par son numéro de compte, son nom et accès à son certificat d'identité.</li>
 </ul>
-</li>
-</ul>
-<p>Quand deux comptes sont <strong>contacts de confiance</strong>, de plus,</p>
+<p>Un compte peut inscrire comme contact un coparticipant à un forum et ceci lui permet d'enregistrer son nom et son certificat d'identité.</p>
+<p>Un compte peut déclarer sa confiance à un autre : si ce dernier n'a ni son nom, ni accès à son certificat d'identité, cette déclaration lui donne ces informations. La confiance n'est pas forcément réciproque.</p>
+<p>Quand deux comptes sont <strong>contacts de confiance réciproques</strong> :</p>
 <ul>
 <li>l'un peut certifier l'identité de l'autre à condition qu'il le lui ait demandé.</li>
 <li>les deux peuvent se certifier leur identité mutuellement.</li>
@@ -1594,19 +1633,15 @@ Il est possible de créer ou ou quelques comptes <strong>auto-certifiés</strong
 A peut avoir un remord d'avoir partagé une note avec C :</p>
 <ul>
 <li>il peut tenter d'effacer l'aperçu reçu de C : mais ceci est sans effet si C a déjà obtenu la note (l'a déjà copiée dans son compte).</li>
-<li>il peut effacer la note dans son propre compte : c'est aussi sans effet si C a déjà obtenu la note, mais ceci supprime aussi la pièce jointe et C ne l'a peut-être pas encore obtenue.</li>
+<li>il peut effacer la note dans son propre compte : c'est aussi sans effet si C a déjà obtenu la note, mais ceci supprime aussi ses pièces jointes et C ne les a peut-être pas encore obtenues.</li>
 </ul>
 <h4>Restriction au partage de notes</h4>
 <p>N'importe qui ne peut pas partager une note avec qui il veut, ni inviter n'importe qui à un forum en partageant une note d'invitation.<br>
-Le réseau est a-social : un compte A ne peut partager une note avec un compte C que :</p>
+Le réseau est a-social : un compte A ne peut partager une note avec un compte C ou inviter C à un forum que :</p>
 <ul>
-<li>soit il en connaît le certificat d'identité C (donc son nom) :
-<ul>
-<li>soit que A et C se soient réciproquement acceptés comme <em>contact de confiance</em>.</li>
-<li>soit que A et C participent à un même forum.</li>
-</ul>
-</li>
-<li>soit il en connaît une phrase de contact en cours de validité,
+<li>soit <strong>A et C participent à un même forum</strong>.</li>
+<li>soit <strong>C a accordé sa confiance à A</strong> : à noter que si la réciproque n'est pas vrai, A peut partager une note avec C mais C ne peut pas déclarer un partage de note avec A.</li>
+<li>soit <strong>A connaît une phrase de contact de C</strong> en cours de validité,
 <ul>
 <li>soit confiée par C hors de l'application après un contact direct.</li>
 <li>soit transmise par un compte tiers, de confiance de A et de C, ayant accepté de relayer la phrase de contact que C lui a fourni pour A.</li>
@@ -1628,61 +1663,61 @@ Le réseau est a-social : un compte A ne peut partager une note avec un compte C
 <p>Un compte peut créer un forum dès qu'il souhaite partager des notes avec plusieurs autres comptes sur un espace commun.</p>
 <ul>
 <li>le forum ainsi créé a un identifiant universel unique tiré au hasard à sa création.</li>
-<li><strong>le créateur devient le premier participant</strong>, avec selon le type de gouvernance un privilège dirigeant / élu (ou simple membre dans une gouvernance démocratique directe).</li>
-<li><strong>il peut y inviter des comptes</strong> : tous ceux avec qui il peut partager une note (d'invitation).</li>
+<li><strong>le créateur devient le premier participant</strong> et membre du bureau du forum. Le type de gouvernance peut reconnaître un rôle de gestion privilégié aux membres du bureau ou rien du tout.</li>
+<li><strong>il peut y inviter des comptes</strong> : tous ceux avec qui il peut partager une note.</li>
 </ul>
 <p>Ultérieurement tout participant peut aussi lancer des invitations qui selon les règles de gouvernance du forum, seront ou non soumises à sondage / approbation des autres participants.</p>
 <p>Partager des informations privées à plusieurs suppose d'avoir confiance en ceux avec qui ce partage s'établit. Cette acquisition de confiance joue autant pour les <strong>invitants</strong> (<em>puis-je avoir confiance dans cet invité ?</em>) que pour <strong>l'invité</strong> (<em>avec qui vais-je partager des informations ?</em>).</p>
-<p>A sa création un forum a généré aléatoirement une <strong>clé complète</strong> et en a dérivé par réduction simple une seconde dite <strong>clé réduite</strong> :</p>
+<p>A sa création un forum a généré aléatoirement, a) une clé dite <em>d'invitation</em>, b) une première <strong>clé F</strong> :</p>
 <ul>
-<li>la <strong>clé réduite</strong> est transmise aux invités avant qu'ils ne soient acceptés en tant que participants confirmés.</li>
-<li>la <strong>clé complète</strong> est transmise à un invité lors de sa confirmation comme participant.</li>
+<li>la <strong>clé d'invitation</strong> est transmise aux invités avant qu'ils ne soient acceptés en tant que participants confirmés.</li>
+<li>la <strong>clé F</strong> est transmise à un invité lors de sa confirmation comme participant.</li>
 </ul>
+<p>Une opération peu usuelle permet de générer une nouvelle clé F qui va être utilisée pour crypter toutes les versions de notes déclarées postérieurement à cet ajout. Les anciennes ne sont pas ré-encryptées et sont lisibles en utilisant la clé F qui était en vigueur lors de leur création.</p>
+<blockquote>
+<p>Il peut arriver qu'un participant soit résilié pour être suspecté de divulgation inopportune de notes et/ou de nuisance sur les notes auxquels il a droit d'écriture. Si cet exclu a les moyens techniques de détourner la base centrale et si la clé F ne changeait jamais, il pourrait continuer de lire les contenus écrits postérieurement à son exclusion. L'ajout d'une nouvelle clé annihile cette possibilité.</p>
+</blockquote>
 <h4>Espace hiérarchique de stockage des notes</h4>
 <p>Une note d'un forum est inscrite dans son répertoire en un ou plusieurs endroits selon son / ses <em>paths</em>. Sa clé de cryptage y est cryptée,</p>
 <ul>
-<li>soit par la clé réduite : elle est lisible par les <strong>invités</strong> et les <strong>participants confirmés</strong>.</li>
-<li>soit par la clé complète du forum : elle n'est lisible que par les <strong>participants confirmés</strong>.</li>
+<li>soit par la clé d'invitation : elle est lisible par les <strong>invités</strong> et les <strong>participants confirmés</strong>.</li>
+<li>soit par la clé F du forum : elle n'est lisible que par les <strong>participants confirmés</strong>.</li>
 </ul>
 <h4>Participants</h4>
 <p>Ce répertoire liste les invités / participants avec un sous répertoire pour chacun :</p>
 <ul>
-<li>son <strong>nom</strong> et son <strong>certificat d'identité</strong> cryptés par la clé réduite du forum.</li>
+<li>son <strong>nom</strong>, son <strong>certificat d'identité</strong>, sa photo d'identité éventuelle, cryptés par la clé d'invitation du forum.</li>
 <li>son <strong>statut</strong> :
 <ul>
 <li><em>invité en attente d'acceptation</em> : son certificat d'identité et son nom peuvent ne pas figurer encore s'il a été invité par une note accompagnée d'une phrase de contact.</li>
 <li><em>invité ayant accepté mais n'ayant pas encore été confirmé</em>. L'invité peut écrire des notes avec la seule clé transmise aux invités et c'est par ce moyen qu'il s'est auto-présenté aux autres participants.</li>
-<li><em>participant confirmé</em> :
-<ul>
-<li><em>simple</em>.</li>
-<li><em>privilégié</em> selon le modèle de gouvernance retenu.</li>
-</ul>
-</li>
-<li><em>résilié</em> :
-<ul>
-<li><em>avant confirmation</em>.</li>
-<li><em>après confirmation</em>.</li>
+<li><em>participant confirmé</em>.</li>
+<li><em>résiliation en discussion</em> : il retrouve les droits d'écriture restreint d'un invité mais continue d'avoir droit de lecture.</li>
+<li><em>résiliation</em>.</li>
 </ul>
 </li>
 </ul>
-</li>
-</ul>
-<p>Un invité qui est notifié par une note d'invitation partagée par un participant invitant du forum, y dispose de la clé réduite qui lui permet :</p>
+<p>Le participant invitant du forum a enregistré l'invité comme participant avec la clé d'invitation qui lui permet :</p>
 <ul>
 <li><strong>de lire la liste des participants</strong> avec leurs certificats d'identité (qui les certifient).</li>
 <li><strong>de lire la ou les notes lisibles aux invités</strong> qui présentent l'objet du forum, ses règles internes : certaines de ces notes sont associées aux participants et présentent qui ils sont.</li>
 </ul>
+<p><strong>L'invité découvre son invitation :</strong></p>
+<ul>
+<li>parce qu'à l'écran il apparaît un forum qu'il n'avait pas avant avec une icône de statut d'invité.</li>
+<li>éventuellement parce que l'invitant a partagé avec lui une note de bienvenue.</li>
+</ul>
 <p>Ainsi un invité peut se forger une opinion sur le forum sur lequel il est invité et il peut choisir d'accepter cette invitation ou de la décliner.</p>
 <ul>
-<li><strong>s'il refuse l'invitation</strong> il est marqué comme résilié avant confirmation.</li>
-<li><strong>S'il l'accepte</strong>, sa note d'acceptation fait enregistrer son nom et son certificat d'identité (s'ils n'étaient pas déjà connus) pour que les autres participants sachent si oui ou non il est souhaitable de confirmer cette participation.
+<li><strong>s'il refuse l'invitation</strong> il est marqué comme résilié.</li>
+<li><strong>S'il l'accepte</strong>, son acceptation enregistre son nom et son certificat d'identité (s'ils n'étaient pas déjà connus) pour que les autres participants sachent si oui ou non il est souhaitable de confirmer cette participation.
 <ul>
-<li><strong>si oui</strong> l'invité devenu <em>participant confirmé</em> dispose dès lors de la clés de cryptage lui permet de lire aussi les notes cryptées pour les participants.</li>
+<li><strong>si oui</strong> l'invité devenu <em>participant confirmé</em> dispose des clés F de cryptage lui permettant de lire aussi les notes cryptées pour les participants.</li>
 <li><strong>si non</strong>, l'invité est recalé. Il aura eu le temps de lire la liste des participants et la ou les quelques notes de présentation mais rien d'autre.</li>
 </ul>
 </li>
 </ul>
-<p>Dans les cas simples ou un invité est particulièrement et favorablement bien connu, <em>son invitation peut se faire avec approbation implicite</em> pour raccourcir le délai. Il reçoit dès l'invitation la clé complète permettant d'accéder à tout le forum, le serveur ne lui donnant effectivement accès qu'aux notes réservées aux invités tant que l'invitation n'a pas été acceptée par l'invité.</p>
+<p>Dans les cas simples ou un invité est particulièrement et favorablement bien connu, <em>son invitation peut se faire avec approbation implicite</em> pour raccourcir le délai. Il reçoit dès l'invitation la clé d'invitation et les clés F permettant d'accéder à tout le forum, le serveur ne lui donnant effectivement accès qu'aux notes réservées aux invités tant que l'invitation n'a pas été acceptée par l'invité.</p>
 <h4>Restrictions d'accès d'une note d'un forum</h4>
 <p>Toute note a par défaut pour seul auteur, son créateur. Un auteur peut ajouter d'autres participants à la liste des auteurs, tous de même rang.<br>
 Une note ne peut être détruite que par l'un de ses auteurs enregistrés et selon la gouvernance du forum par décision de gestion.</p>
@@ -1692,16 +1727,17 @@ Une note ne peut être détruite que par l'un de ses auteurs enregistrés et sel
 <li><strong>la lecture et l'écriture de notes</strong> et de leurs pièces jointes.</li>
 <li><strong>des actes de gestion</strong> :
 <ul>
-<li>invitation / confirmation / résiliation d'un participant et attribution / retrait de <em>privilège</em> (selon le schéma de gouvernance retenu).</li>
+<li>invitation / confirmation / résiliation d'un participant.</li>
 <li>mise à la poubelle de notes obsolètes en l'absence d'action de ses auteurs (qui ont pu quitter le forum).</li>
-<li>débit / crédit du forum.</li>
+<li>transfert de crédits du forum.</li>
 <li>clôture du forum.</li>
 </ul>
 </li>
-<li><strong>des votes sur les sondages organisés</strong> :
+<li><strong>des sondages organisés</strong> :
 <ul>
 <li>à propos de ces actes de gestion.</li>
-<li>à propos du changement de mode de gouvernance et d'élection des participants ayant un <em>privilège</em>.</li>
+<li>à propos du changement de mode de gouvernance.</li>
+<li>à propos d'une note (sans conséquence directe d'une exécution d'opération).</li>
 </ul>
 </li>
 </ul>
@@ -1716,28 +1752,72 @@ Une note ne peut être détruite que par l'un de ses auteurs enregistrés et sel
 <blockquote>
 <p><strong>Remarque</strong> : dans le cas le plus simple un forum s'ouvre instantanément sur demande d'un compte qui y invite immédiatement les contacts qu'il souhaite avec approbation par défaut. Une gouvernance par défaut s'installe, et les participants peuvent sur l'instant accepter l'invitation et participer à une conversation et s'échanger des notes.</p>
 </blockquote>
-<h1>Notifications d'événements sur un compte ou des forum</h1>
-<h4>Sur son home</h4>
-<p>Quand un compte ouvre son <strong>home</strong>, il voit des fanions sur toutes les notes que d'autres comptes lui ont proposé de partager récemment.<br>
-Après avoir regardé spécifiquement ceux-ci, le compte peut <strong>effacer les fanions</strong>. Ceux-ci réapparaîtront au fil des nouveaux partages.</p>
-<h4>Sur chacun des forums auxquels il participe</h4>
-<p>En ouvrant un des forums auquel il a accès, le compte peut voir trois types de <strong>fanions</strong> :</p>
+<h3>Schémas de gouvernance d'un forum</h3>
+<p>On distingue deux <strong>options de gouvernance</strong> :</p>
 <ul>
-<li>sur toutes <strong>les notes qui l'intéressent</strong> qui ont changé récemment.</li>
-<li>sur tous <strong>les votes</strong>,
+<li>il existe <strong>un bureau de N membres</strong>, certaines décisions ne relevant que du bureau.</li>
+<li>il n'existe pas de bureau : N = 0, toutes les décisions dépendantes de l'ensemble des participants.</li>
+</ul>
+<p>On définit <strong>quatre groupes de décisions</strong> :</p>
 <ul>
-<li>soit en cours et sur lesquels il n'a pas donné encore son opinion, alors qu'elle est sollicitée.</li>
-<li>soit terminés et dont il peut voir le résultat définitif.</li>
+<li>(p) : gestion des participants invitation / confirmation / résiliation.</li>
+<li>(c) : clôture du forum.</li>
+<li>(a) : autres opérations de gestion : distribution de crédit excédentaire (ou restant à la clôture), mise à la corbeille de notes abandonnées.</li>
+<li>(g) : changement de gouvernance. Le changement de gouvernance est à la fois :
+<ul>
+<li><em>constituant</em> : proposition de nouvelles règles.</li>
+<li><em>électif</em> : nomination d'un bureau (s'il y en un) avec une liste de membres.</li>
+<li>il est bien entendu possible de proposer un changement de gouvernance de schéma identique au précédent et dont la liste des membres du bureau n'a qu'un membre en plus ou en moins.</li>
 </ul>
 </li>
 </ul>
-<p>Après avoir regardé spécifiquement ceux-ci, le compte peut <strong>effacer les fanions</strong>. Ceux-ci réapparaîtront au fil des événements censés leur donner naissance.</p>
-<h4>Notes intéressantes pour un compte</h4>
-<p>L'intérêt d'un compte est marqué en enregistrant la liste des mots clés qui l'intéressent : toute note modifiée ayant l'un de ses mots clés, ou acquérant l'un de ces mots clés, est considérée comme intéressante pour le compte.<br>
-Un fanion sera levé sur création, mise à jour ou mise à la poubelle.</p>
+<p><strong>Le schéma de gouvernance consiste à définir les règles de décomptes des votes pour chacun des 4 groupes de décisions.</strong></p>
+<ul>
+<li>les règles de décompte sont codifiées comme décrit ci-après.</li>
+<li>pour chaque instance la configuration de l'instance déclare une liste restreinte de règles autorisées et les groupes de décisions auxquels elles peuvent s'appliquer.</li>
+</ul>
+<p>Une instance peut ainsi spécifier par exemple que le changement de gouvernance d'un forum ne peut relever que d'un <em>scrutin universel majoritaire des votants avec quorum de moitié des inscrits au moins</em>.</p>
+<ul>
+<li>un forum n'aurait ainsi pas la possibilité de se définir des conditions dictatoriales de changement de gouvernance spécifiant qu'il n'est possible que sur décision du membre unique du bureau.</li>
+<li>à la limite une instance peut figer dans le marbre un choix unique pour chaque groupe de décision : un forum n'aurait plus que le loisir d'élire son bureau (si au moins un schéma de vote en prévoit un).</li>
+</ul>
+<p><strong>Décomptes des voix :</strong></p>
+<ul>
+<li><code>B U</code> : B des seuls membres du bureau, U universel (tous participants).</li>
+<li><code>Q Q%</code> : quorum requis, Q (nombre absolu), Q% (pourcentage du nombre d'inscrits). Par défaut 0.</li>
+<li><code>N I% V%</code>: nombre de voix pour requises, N (nombre absolu), N%I (pourcentage des inscrits), N%V (pourcentage des votants). Par défaut 50%V.</li>
+<li><code>N1,N2</code> : la durée du scrutin de N1 heures, prolongeable une fois N2 heures. Par défaut 24,0.</li>
+<li><code>C</code> : mode consensuel. Un seul vote <em>contre</em> vaut opposition à la décision. Par défaut non.</li>
+<li><code>A</code> : clôture anticipée possible dès qu'un résultat de vote positif s'est dégagé sans attendre la fin du scrutin. Comme chacun peut changer son vote jusqu'au dernier moment, un scrutin acquis 5 minutes avant la clôture ne présume rien du résultat final. Avec l'option A, la décision favorable constatée avant la fin du scrutin clôt le scrutin : ceci permet des votes simples et rapides du genre il suffit que 2 membres du bureau soient d'accord. Par défaut non.</li>
+</ul>
+<p>Exemples :</p>
+<ul>
+<li><em>dictature</em> : bureau d'un membre et schéma de vote pour toutes les décisions : <code>B,1,1, 0,0,,A</code>. Un seul votant, décision acquise quand il voté <em>pour</em>.</li>
+<li><em>deux membres du bureau (sauf avis contraire)</em>: applicables typiquement pour les opérations de gestion courantes (a) : <code>B,2,2,24,24,C,A</code>.</li>
+<li><em>majoritaire classique</em> : applicables par exemple pour l'invitation de nouveaux participants (p): <code>U,25%,50%V,48,0</code></li>
+<li><em>majoritaire lourde</em> : applicables par exemple à la clôture d'un forum (c): <code>U,50%,66%V,96,0</code></li>
+</ul>
+<p>Le schéma de gouvernance est en conséquence constitué de :</p>
+<ul>
+<li>N : le nombre de membres du bureau.</li>
+<li>4 schémas de décomptes des votes, applicables aux décision de type <code>p c a g</code>.</li>
+</ul>
+<blockquote>
+<p>Un forum est quand-même un lieu de partage / construction / confrontation d'idées  <em>fair</em> entre <em>gentlemen</em> (au féminin ça se dit comment <em>gentlewomen</em> ?) et toutes les décisions n'y ont pas la gravité de celles d'une cour d'assise.</p>
+</blockquote>
+<h1>Notifications d'événements sur un compte ou des forum</h1>
+<h4>Sur son home</h4>
+<p>Quand un compte ouvre son répertoire de <strong>Contacts</strong>, il voit des fanions sur tous les contacts qui lui ont proposé de partager des notes qu'il n'a pas marquées comme <em>vues</em>.</p>
+<h4>Sur chacun des forums auxquels il participe</h4>
+<p>En ouvrant un des forums auquel il a accès, le compte peut lire les <strong>fils d'actualité</strong> avec un fanion sur tous les événements survenus après son dernier effacement des fanions.</p>
+<ul>
+<li>événement survenu sur une note,</li>
+<li>sondage passant d'une phase à l'autre.</li>
+</ul>
+<p>Après avoir regardé ceux-ci, le compte peut <strong>effacer les fanions</strong> sur le forum. D'autres réapparaîtront au fil des événements censés leur donner naissance.</p>
 <h4>Rappel synthétique central</h4>
-<p>Cette vue sur les fanions sur les votes et les notes nécessite d'ouvrir le forum : si le compte accède à quelques dizaines de forum, c'est une tâche vite fastidieuse.</p>
-<p>Pour éviter cette visite systématique de forums dont le compte découvrirai qu'ils n'ont pas de fanions levés, chaque compte voit au niveau racine de son arborescence (pour chaque forum) des fanions synthétiques : il sait ainsi, sans avoir à ouvrir un forum, si oui ou non il y aura dedans des fanions levés.</p>
+<p>Cette vue sur les fanions sur les sondages et les notes nécessite d'ouvrir le forum : si le compte accède à quelques dizaines de forum, c'est une tâche vite fastidieuse.</p>
+<p>Pour éviter cette visite systématique de forums dont le compte découvrirai qu'ils n'ont pas de fanions levés, chaque compte voit au niveau racine de son arborescence (pour chaque forum) un fanion de synthèse pour chaque fil d'actualité du forum auquel il s'est abonné.</p>
 <h1>Comptabilisation des consommations de ressources</h1>
 <p>Les données stockées pour un compte ou un forum, surtout celles correspondant aux notes, peuvent occuper un volume significatif. Ce volume est divisé en deux parts :</p>
 <ul>
@@ -1879,70 +1959,6 @@ D'autres instances peuvent faire le choix inverse : tout dépend de l'engagement
 <blockquote>
 <p><strong>Remarque</strong> : dans un cas comme dans l'autre la notion d'appréciation ne peut pas être technique mais uniquement humaine et partiale. La preuve technique n'est qu'une preuve de publication de contenu sous contrôle d'une phrase secrète, réputée théoriquement devoir le rester sauf pour une personne : c'est certes un élément troublant mais l'ADN de l'auteur n'est pas capté par le système (et d'ailleurs le serait-il que c'est seulement le fichier le contenant qui le serait).</p>
 </blockquote>
-<h1>Schémas de gouvernance d'un forum</h1>
-<p>La gouvernance d'un forum concerne :</p>
-<ul>
-<li><strong>comment certains actes de gestion peuvent être décidés</strong> :
-<ul>
-<li>invitation / confirmation / résiliation d'un participant et changement de statut entre <em>participant simple</em> et <em>dirigeant / élu</em>.</li>
-<li>suppression de notes obsolètes, transfert de propriété d'une ou de plusieurs note.</li>
-<li>débit / crédit du forum.</li>
-<li>clôture du forum.</li>
-</ul>
-</li>
-<li><strong>comment changer de mode de gouvernance</strong> et élire des élus / dirigeants.</li>
-</ul>
-<h3>Les trois modes de gouvernance</h3>
-<p>Tous les scrutins sont publics, le vote de chacun est public / connu / vérifiable.</p>
-<h5><em>Autoritaire</em></h5>
-<p>Tout dirigeant a tout pouvoir de gestion, seul, même s'il y a plusieurs dirigeants.</p>
-<p>Le changement de mode de gouvernance ne peut venir que des dirigeants :</p>
-<ul>
-<li>sur décision de l'un d'entre eux.</li>
-<li>quand il n'a plus de dirigeant, a) soit que le dernier se soit auto exclu, b) soit qu'il ait lui-même décidé de renoncer à son statut de dirigeant et qu'il était le dernier.</li>
-</ul>
-<p>le forum bascule en <strong>démocratie directe</strong> avec <strong>scrutin constituant ouvert</strong>.</p>
-<h5>Démocratie <em>représentative</em></h5>
-<p>Un collège de délégués élus assument les décisions de gestion :</p>
-<ul>
-<li>sur un mode consensuel :
-<ul>
-<li>un délai maximal est défini pour prendre une décision.</li>
-<li>si au bout de ce délai personne n'a voté <em>contre</em> la décision est actée.</li>
-<li>si avant ce délai tout le monde a voté <em>pour</em> ou <em>blanc</em>, la décision est actée.</li>
-</ul>
-</li>
-<li>sur vote majoritaire :
-<ul>
-<li>un délai maximal est défini pour prendre une décision.</li>
-<li>un quorum est exprimé en absolu ou pourcentage.</li>
-<li>le vote est acquis s'il y a plus de <em>pour</em> que la somme des votes <em>blanc</em> et <em>contre</em>, a) soit dès que le quorum est atteint, b) soit au bout du délai maximal. A noter qu'avec un quorum de 2, si les deux premiers votes sont <em>pour</em>, la décision est actée : c'est un moyen pour rendre les décisions <em>un peu</em> collégiales.</li>
-</ul>
-</li>
-</ul>
-<h5>Démocratie <em>directe</em></h5>
-<p>Même procédé qu'avec la démocratie représentative, tous les participants étant délégués.</p>
-<h4>Changement de mode de gouvernance</h4>
-<p>Un scrutin peut être ouvert par n'importe qui n'importe quand (sauf en mode autoritaire) en présentant une nouvelle gouvernance fixant :</p>
-<ul>
-<li>le mode choisi.</li>
-<li>dans le cas des démocraties :
-<ul>
-<li>si la gestion en consensuelle ou vote majoritaire (et dans ce cas quel est le quorum -absolu ou en pourcentage du nombre de participants).</li>
-<li>le nombre d'élus dans le cas de démocratie représentative.</li>
-<li>la durée des scrutins.</li>
-</ul>
-</li>
-</ul>
-<p>Le scrutin par défaut pour changer de gouvernance est :</p>
-<ul>
-<li>un durée de scrutin de 5 jours.</li>
-<li>pas de quorum.</li>
-<li>majorité simple.</li>
-</ul>
-<h5>Élection des N délégués</h5>
-<p>Chaque participant a 10 bulletins et les affectent sur les participants au forum (le cas échéant plusieurs pour un participant).<br>
-A l'issue du scrutin les N participants ayant reçu le plus de votes sont élus délégués.</p>
 <h1>Confiance dans l'application</h1>
 <p>Ces données passent par deux applications (une terminale, l'autre dans le serveur), circulent sur internet et sont stockées dans une base de données. Tous ces niveaux techniques sont susceptibles d'être attaqués et déroutés.<br>
 Les techniques de cryptographie employées offrent certaines garanties en elles-mêmes, mais pas toutes les garanties et le niveau de confiance à accorder à l'application n'est pas un sujet trivial et s'étudie en fonction des niveaux de confiance qu'on peut accorder à chacun de ces éléments.</p>

@@ -1354,18 +1354,21 @@ L'opération de synchronisation est authentifiée afin de se faire délivrer des
 <li><code>cr</code> : montant du crédit courant en unités de compte. Il peut être négatif.</li>
 <li><code>v1 v2</code> : volumes occupés lors du dernier calcul du crédit restant.</li>
 <li><code>dh</code> : date-heure de dernier calcul du crédit restant.</li>
+<li><code>dho</code> : date-heure de signalement du franchissement de la zone orange.</li>
+<li><code>dhr</code> : date-heure de signalement du franchissement de la zone rouge : blocage des opérations (sauf crédit).</li>
+<li><code>dhz</code> : date-heure de passage en zombie.</li>
 </ul>
-<p>L'opération de crédit verse tout le crédit d'une ligne authentifiée sur le cr du compte et détruit cette ligne.<br>
-Le crédit est réduit :</p>
+<p>L'opération de crédit verse tout le crédit d'une ligne authentifiée sur le <code>CRE</code> du compte et détruit cette ligne.</p>
+<p>Le crédit est réduit :</p>
 <ul>
-<li>à chaque fin d'opération :
+<li><em>à chaque fin d'opération</em> :
 <ul>
-<li>le coût de l'occupation du volume depuis le dernier calcul est calculé.</li>
-<li>le nouveau niveau d'occupation du volume est calculé.</li>
-<li>le crédit est réduit de ce  montant et de celui de l'opération (dont le volume d'entrée / sortie).</li>
+<li>le coût <code>cv</code> de l'occupation du volume depuis le dernier calcul est calculé.</li>
+<li>le nouveau volume est mémorisé.</li>
+<li>le crédit est réduit de <code>cv</code> et de celui de l'opération (dont le volume d'entrée / sortie).</li>
 </ul>
 </li>
-<li>périodiquement, par exemple toutes les semaines, pour calculer les coûts d'occupation d'espace en l'absence d'opérations.</li>
+<li><em>périodiquement</em>, par exemple toutes les semaines, pour calculer les coûts d'occupation d'espace en l'absence d'opérations.</li>
 </ul>
 <h1>Constantes</h1>
 <p>Ces données ont :</p>
@@ -1408,6 +1411,28 @@ Cette clé est cryptée par la phrase secrète du compte : c'est elle qui permet
 </ul>
 <h1>Dossier <code>Compte</code></h1>
 <p>La clé d'accès <code>docid</code> est le numéro de compte <code>nc</code>.</p>
+<p><strong>Singleton :</strong></p>
+<ul>
+<li><code>EnC</code> : entête du compte.</li>
+<li><code>Cid</code> : certificat d'identité.</li>
+<li><code>Crt</code> : comptes certifiés.</li>
+</ul>
+<p><strong>Items :</strong></p>
+<ul>
+<li><code>Phc</code> : phrases de contact.</li>
+<li><code>Pho</code> : photos d'identité.</li>
+<li><code>Rep</code> : entrée du répertoire de contacts.</li>
+<li><code>Vno</code> : version d'une note.</li>
+<li><code>Pth</code> : paths d'une note.</li>
+<li><code>P</code> : pièce jointe (standard).</li>
+<li><code>Flg</code> : flags d'un forum accédé.</li>
+<li><code>Fac</code> : forum accédé.</li>
+</ul>
+<p>Le <em>profil</em> d'un compte est constitué de :</p>
+<ul>
+<li>la constante <code>TPU</code>,</li>
+<li>les singletons et items <code>EnC Cid Crt Phc Pho</code>.</li>
+</ul>
 <h2>Singleton : <em>Entête du compte</em> <code>EnC</code></h2>
 <p>Ce singleton est déclaré à la création du compte et n'est modifié qu'à quelques rares occasions :</p>
 <ul>
@@ -1621,6 +1646,13 @@ La clé d'accès est :</p>
 <li><code>cn0P</code> : (r) clé de la note cryptée par la clé 0 ou P.</li>
 <li><code>sj</code> : (r) sujet de la note.</li>
 <li><code>mc</code> : (r) mots clés de la note.</li>
+<li>'forum' : (r) si la note est celle d'un forum et,
+<ul>
+<li>qu'elle est accessible aux invités et que le réceptionnaire est invité du forum.</li>
+<li>que le réceptionnaire est participant au forum.</li>
+<li>dans ces cas <code>cn0P</code> est absente.</li>
+</ul>
+</li>
 <li>Pour une note exportée c'est le statut de la réception de l'autre côté.
 <ul>
 <li><code>dhv</code> : date-heure de vue et laissée en attente.</li>
@@ -1645,8 +1677,16 @@ La clé d'accès est :</p>
 <ul>
 <li><code>dhop</code> : date-heure de la dernière opération.</li>
 <li><code>memo0</code> : nom du forum sur la première ligne, commentaires ensuite (crypté par sa clé 0).</li>
-<li><code>fav</code> : 0:normal, 1:favori</li>
-<li><code>st</code> : statut vis à vis du forum.</li>
+<li>date-heures du dernier cycle d'invitation (copie de <code>Paf</code>):
+<ul>
+<li><code>dh1</code> : invitation.</li>
+<li><code>dh2</code> : acceptation de l'invitation. Début du vote sur la confirmation.</li>
+<li><code>dh3</code> : confirmation.</li>
+<li><code>dh4</code> : résiliation en discussion. Début du vote sur la résiliation.</li>
+<li><code>dh5</code> : résiliation effective.</li>
+</ul>
+</li>
+<li><code>bureau</code> : est membre du bureau.</li>
 </ul>
 <h2>Items <em>flags du forum</em> <code>Flg</code></h2>
 <p><strong>Clé</strong> : <code>nf</code>. Identifiant du forum.</p>
@@ -1728,80 +1768,135 @@ La <strong>date-heure de dernière visite</strong> n'est enregistrée dans <code
 </ul>
 <h1>Forum</h1>
 <p>Le <code>docid</code> est un identifiant universel <code>nf</code> tiré au hasard à la création du forum.</p>
-<p>Il possède les items <code>Vno Pth P</code> comme Compte.</p>
+<p><strong>Singleton :</strong></p>
 <ul>
-<li><code>Pth</code> a une propriété supplémentaire : liste des auteurs autorisés.</li>
+<li><code>EnF</code> : entête du forum.</li>
+</ul>
+<p><strong>Items :</strong></p>
+<ul>
+<li><code>Vno</code> : version d'une note.</li>
+<li><code>Pth</code> : paths d'une note.</li>
+<li><code>P</code> : pièce jointe (standard).</li>
+<li><code>Flg</code> : flags d'un participant.</li>
+<li><code>Paf</code> : participant au forum.</li>
+<li><code>Fnw</code> : fil de nouvelles.</li>
+<li><code>Snd</code> : sondage.</li>
+</ul>
+<p>Il possède les items <code>Vno Pth P</code> comme Compte.<br>
+<code>Pth</code> a deux propriétés supplémentaires :</p>
+<ul>
+<li>liste des index des signataires.</li>
+<li>document accessible aux invités (la clé est fixe) ou réservé aux confirmés (la clé peut avoir plusieurs valeurs au cours du temps).</li>
 </ul>
 <p>L'item <code>Flg</code> est le symétrique de <code>Flg</code> de Compte avec le numéro de compte comme clé.</p>
+<ul>
+<li>un vote de changement de gouvernance est en cours</li>
+<li>une élection de délégués est en cours.</li>
+<li>une invitation est en cours.</li>
+<li>une résiliation est en cours.</li>
+<li>une note ayant un des mots clés référencés par le compte a été écrite / mise à la corbeille.</li>
+</ul>
 <h3>Singleton <em>entête du forum</em> <code>EnF</code></h3>
 <p><strong>Propriétés :</strong></p>
 <ul>
 <li><code>dhop</code> : date-heure de la dernière opération.</li>
-<li><code>nbs</code> : nombre de scrutins de changement de gouvernance déjà organisés.</li>
-<li><code>basegv</code> : nom du schéma de gouvernance de base.</li>
-<li><code>exgv</code> : map des types de dialogue dérogeant au schéma de vote donné par la gouvernance par défaut. Valeur : schéma de vote.</li>
-</ul>
-<p><strong>Schéma de vote</strong> :</p>
+<li><code>dhcc</code> : date-heure du dernier changement de clé.</li>
+<li><code>nbp</code> : nombre de participants ayant été invités.</li>
+<li><code>basegv</code> : schéma de gouvernance.
 <ul>
-<li><code>p</code> : pourcentage requis (défaut 30).</li>
-<li><code>m</code> : minimum de votes pour requis (défaut 1).</li>
-<li><code>v</code> : vrai si veto pris en compte (défaut faux).</li>
-<li><code>i</code> : vrai si décompte basé sur les inscrits et non les votants (défaut faux).</li>
-<li><code>h</code> : nombre d'heures minimal d'ouverture (défaut 0).</li>
+<li><code>b</code> : liste des membres du bureau.</li>
+<li><code>p c a g</code> : 4 chaînes donnant les schémas de vote applicables aux quatre groupes de décision (participants, clôture du forum, autres décisions, changement de gouvernance).</li>
+</ul>
+</li>
 </ul>
 <h2>Items <em>participant au forum</em> <code>Paf</code></h2>
 <p><strong><em>Clé</em></strong> : numéro de compte.</p>
 <p><strong><em>Propriétés</em></strong></p>
 <ul>
-<li><code>cf0P</code> : clé du forum (complète ou réduite selon le statut) cryptée par la clé 0 ou P du participant.</li>
-<li><code>nomFR</code> : nom du participant crypté par la clé réduite du forum.</li>
-<li><code>c1FR</code> : clé 1 du participant crypté par la clé réduite du forum.</li>
-<li><code>pdhc</code> : toute première date-heure de début de confirmation.</li>
-<li><code>ddhc</code> : toute dernière date-heure de fin de confirmation.</li>
+<li><code>idx</code> : index du participant dans le forum.</li>
+<li><code>cif0P</code> : clé d'invitation du forum cryptée par la clé 0 ou P du participant.</li>
+<li><code>hcf0P</code> : historique des clés du forum cryptée par la clé 0 ou P du participant.</li>
+<li><code>nomI</code> : nom du participant crypté par la clé d'invitation du forum.</li>
+<li><code>c1I</code> : clé 1 du participant crypté par la clé d'invitation du forum.</li>
+<li><code>phI</code> : photo d'identité du participant crypté par la clé d'invitation du forum.</li>
+<li><code>pdhc</code> : date-heure de début de la première phase confirmée.</li>
+<li><code>ddhc</code> : date-heure de fin de la dernière phase confirmée (absente si encore confirmé).</li>
 <li><code>acnf</code> : auto confirmé dès l'acceptation de l'invitation.</li>
 <li>date-heures du dernier cycle d'invitation :
 <ul>
-<li><code>dhi</code> : invitation</li>
-<li><code>dha</code> : acceptation de l'invitation.</li>
-<li><code>dhc</code> : confirmation</li>
-<li><code>dhr</code> : résiliation</li>
+<li><code>dh1</code> : invitation.</li>
+<li><code>dh2</code> : acceptation de l'invitation. Début du vote sur la confirmation.</li>
+<li><code>dh3</code> : confirmation.</li>
+<li><code>dh4</code> : résiliation en discussion. Début du vote sur la résiliation.</li>
+<li><code>dh5</code> : résiliation effective.</li>
 </ul>
 </li>
-<li><code>elu</code> : est un élu.</li>
-<li><code>mc</code> : liste des mots clés d'intérêt cryptés par la clé réduite du forum.</li>
+<li><code>bureau</code> : est membre du bureau.</li>
+<li><code>dhef</code> : date-heure du dernier effacement des fanions sur les fils d'actualité.</li>
+<li><code>news</code> : liste des indices des news intéressantes pour le participant.</li>
 </ul>
-<h3>Option : multi clés du forum</h3>
-<p>Les pièces jointes ont leurs clés transmises par la ou les notes qui y font référence. Elles sont immuables.<br>
-Une note change de clé à chaque version : elle peut être cryptée par la dernière clé du forum. Pour accéder aux notes antérieures il faut avoir les clés antérieures du forum, on ne peut pas ré-encrypter toutes les notes.</p>
-<p>Pour lire une note il faut utiliser non plus <strong>la</strong> clé du forum mais le vecteur <code>[[dh1,c1], [dh2,c2] ...]</code> et pour écrire prendre la plus récente.</p>
-<p>L'opération de changement de clés n'est pas gratuite sans être outrageusement complexe : il suffit de générer une nouvelle clé et de la crypter par la clé P de chaque participant et de mettre ce dernier terme à la fin du vecteur.</p>
-<h3>Opérations soumise à vote</h3>
-<p><strong>Autour d'un participant</strong> :</p>
+<h3>Historique des clés du forum</h3>
+<p>La clé d'invitation n'est pas historisée.<br>
+Les pièces jointes ont leurs clés transmises par la ou les notes qui y font référence. Elles sont immuables et ne sont pas directement liées aux clés du forum.<br>
+Une note change de clé à chaque version : à l'écriture elle est cryptée par la dernière clé. Pour accéder à une version d'une note il faut regarder sa date-heure et prendre la clé de l'historique qui était valide dans le vecteur <code>[[dh1,c1], [dh2,c2] ...]</code>.</p>
+<p>L'opération de changement de clés a quelques contraintes :</p>
 <ul>
-<li>invitation d'un nouveau participant ?</li>
-<li>confirmation d'un nouveau participant</li>
-<li>exclusion d'un participant</li>
+<li>la session doit encoder la nouvelle clé générée avec la clé P de chacun des participants, opération qui en soit peut prendre du temps en session.</li>
+<li>la mise à jour dans le serveur vérifie que tous les participants <em>confirmés</em> sont bien listés dans le paramètre de l'opération donnant la nouvelle clé.</li>
 </ul>
-<p><strong>Redistribution de crédits excédentaires</strong> aux participants</p>
-<p><strong>Clôture du forum</strong></p>
-<p>Ajout de nouveaux auteurs à une note dont tous les auteurs sont résiliés (ou ne répondent plus) ? OU <strong>Purge de notes dont les auteurs</strong> ...</p>
+<h3>Items <em>fil de nouvelles</em> <code>Fnw</code></h3>
+<p><strong><em>Clé :</em></strong></p>
 <ul>
-<li>on peut toujours copier une note. Changer la liste d'auteurs ne sert pas à grand chose.</li>
+<li>numéro de fil.</li>
+<li>date-heure.</li>
+<li>numéro de note ou de sondage</li>
+<li>code de l'événement.
+<ul>
+<li>Pour une note :
+<ul>
+<li>c : création.</li>
+<li>m : mise à jour.</li>
+<li>p : mise à la poubelle.</li>
+<li>s : sortie de poubelle.</li>
 </ul>
-<p><strong>Changement de gouvernance / élection de délégués</strong></p>
-<h3>Une note en plus de versions doit-elle avoir des branches ?</h3>
-<h3>Items <em>scrutin de gouvernance du groupe</em> <code>Sgg</code></h3>
-<p><strong>Clé</strong> : numéro du scrutin.</p>
+</li>
+<li>Pour un sondage :
+<ul>
+<li>c : création (ouverture de discussion éventuelle à propos de ses paramètres).</li>
+<li>o : ouverture du sondage.</li>
+<li>0-3 : fin du sondage (son résultat).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Items <em>sondage</em> <code>Snd</code></h3>
+<p>Un sondage / vote peut avoir selon les cas et les règles de gouvernance en cours :</p>
+<ul>
+<li>une valeur décisionnelle vis à vis d'une opération à réaliser qui ne peut être engagée que suite à un vote positif.</li>
+<li>une valeur indicative sans impact d'autorisation / blocage d'une quelconque opération.</li>
+</ul>
+<p><strong>Clé</strong> :</p>
+<ul>
+<li><code>obj</code> : objet du sondage <code>c r x t p g n</code>:
+<ul>
+<li>(c) confirmation d'invitation de l'invité <code>nc</code>.</li>
+<li>(r) confirmation de la résiliation de l'invité <code>nc</code>.</li>
+<li>(x) clôture du forum.</li>
+<li>(t) transfert de crédit <code>{c1:m1, c2:m2, f1:m3 ...}</code> à des comptes / forums.</li>
+<li>(p) mise à la corbeille de notes obsolètes : <code>[n1, n2 ...]</code></li>
+<li>(g) changement de mode de gouvernance avec éventuellement liste du bureau : voir plus avant les paramètres.</li>
+<li>(n) sondage sur la note elle-même.</li>
+</ul>
+</li>
+<li><code>dhc</code> : date-heure de création (ouverture de la discussion à propos de ses paramètres éventuels).</li>
+</ul>
 <p><strong>Propriétés :</strong></p>
 <ul>
-<li><code>dem</code> : index du demandeur.</li>
-<li><code>txtG</code> : texte d'argumentaire crypté par la clé G.</li>
-<li><code>dho</code> : date-heure d'ouverture du scrutin.</li>
-<li><code>dhc</code> : date-heure de clôture du scrutin (absente s'il est ouvert).</li>
-<li><code>bureau</code> : liste des index des membres du nouveau bureau proposé (absent si inchangé).</li>
-<li><code>votants</code> : liste des index des votants, membres du groupe à l'ouverture du scrutin.</li>
-<li><code>basegv</code> : nom du schéma de gouvernance de base. <code>null</code> si inchangé.</li>
-<li><code>exgv</code> : map des types de dialogue dérogeant au schéma de vote donné par la gouvernance par défaut. Valeur : schéma de vote.</li>
+<li><code>idx</code> : index de l'initiateur du sondage.</li>
+<li><code>dho</code> : date-heure d'ouverture du sondage.</li>
+<li><code>dhf</code> : date-heure de fermeture.</li>
+<li><code>note</code> : note d'explication du sondage.</li>
 <li><code>sv</code> : schéma de vote applicable.</li>
 <li><code>st</code> : état du scrutin :
 <ul>
@@ -1811,24 +1906,20 @@ Une note change de clé à chaque version : elle peut être cryptée par la dern
 <li>3 : clos sur rejet.</li>
 </ul>
 </li>
-<li><code>votes</code> : liste des compteurs des votes <em>pour contre blanc veto</em>.</li>
-<li><code>dhdp</code> : date-heure du dernier dépouillement</li>
-<li><code>dp</code> : résultat du dernier dépouillement</li>
-<li><code>dphl</code> : vrai si le dernier dépouillement a été calculé après l'heure limite (est valide)</li>
-</ul>
-<p>Une gouvernance est une map avec :</p>
+<li><code>votes</code> : vote de chaque participant : <em>pour contre blanc veto</em>.</li>
+<li><code>rsdv</code> : résultat après le dernier vote. En général comme les votes de chaque participant peuvent changer jusqu'à la clôture du scrutin, ce résultat n'a de valeur qu'une fois la date-heure de fermeture du scrutin passée. Mais certains schémas de vote peuvent spécifier pour gagner du temps que dès qu'un résultat positif a été acquis, le scrutin peut être clos et la décision applicable.</li>
+<li><code>param</code> : paramètre du sondage :
 <ul>
-<li>pour clé : le code d'une action qui ne suit pas le schéma de vote par défaut,</li>
-<li>pour valeur : le schéma de vote applicable.</li>
+<li>(c r) <code>nc</code> du participant.</li>
+<li>(t) transfert de crédit <code>{c1:m1, c2:m2, f1:m3 ...}</code> à des comptes / forums.</li>
+<li>(p) mise à la corbeille de notes obsolètes : <code>[n1, n2 ...]</code></li>
+<li>(g) changement de mode de gouvernance avec éventuellement liste du bureau :
+<code>{b:[...] p:&quot;B...&quot;, c:..., a:..., g:...}</code></li>
 </ul>
-<h3>Item <em>Vote sur un scrutin</em> <code>Vot</code></h3>
-<p><strong>Clé</strong> : numéro du scrutin + &quot;.&quot; + index de l'auteur.</p>
-<p><strong>Propriétés :</strong></p>
-<ul>
-<li><code>dh</code> : date-heure du vote.</li>
-<li><code>txtG</code> : texte du commentaire crypté par la clé G du groupe.</li>
-<li><code>vote</code> : 0:abstention 1:pour 2:contre 3:blanc 4:veto.</li>
+</li>
 </ul>
+<p>Les règles de gouvernance en cours fixent le <em>schéma de vote</em> en fonction de l'objet du sondage, sauf pour une note (n) où il est libre et peut changer avant ouverture du vote.<br>
+L'objet du sondage est fixé à sa création mais ses paramètres peuvent changer avant ouverture du vote (pendant la <em>campagne</em>).</p>
 <h5><code>CPclc</code> : Opération <em>demande de clôture d'un compte</em></h5>
 <p>Paramètres :</p>
 <ul>
@@ -1853,6 +1944,8 @@ Une note change de clé à chaque version : elle peut être cryptée par la dern
 <li>compte 1 : compte C. Clé N cryptée par la clé publique de C.</li>
 <li><code>prop st</code> : valeur de <code>st</code>.</li>
 </ul>
+<h1>TODO</h1>
+<p>Rappel des zones orange / rouge / zombie dans les comptes et forums.</p>
 
 </div>
 <!-- Adds some scroll space to the bottom of the doucment -->
