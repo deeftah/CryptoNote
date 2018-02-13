@@ -3,6 +3,7 @@
 <link rel="import" 	href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" 	href="../bower_components/paper-input/paper-input.html">
 <link rel="import" 	href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/polymer/lib/mixins/gesture-event-listeners.html">
 
 <link rel="import"  href="spinner-box.html">
 <link rel="import"  href="help-button.html">
@@ -20,9 +21,42 @@
 	  	:host .ic1 {height:3rem; width:3rem; color:red; }
 	  	:host .logolang { @apply --flag-gen; width:3rem; height: 3rem; display:inline-block; background-image:var(--bg-imglg);}
 	  	:host #photo { display:inline-block; width:12rem; margin:0; }
+	  	
+	  	:host #ghost { position:absolute; display:none; height:var(--font-xxl); width:4rem; 
+	  		font-size:var(--font-xxl); overflow:hidden; text-align:center; vertical-align:middle;
+	  		background-color:rgba(240,240,240,0.8); color:red;
+	  	}
+	  	
+		:host .column {
+		    height: 70px;
+		    width: 70px;
+		    display: inline-block;
+		    border: 2px solid #666666;
+		    background-color: #ccc;
+		    border-radius: 10px;
+		    box-shadow: inset 0 0 3px #000;
+		    text-align: center;
+		    margin:0;
+		    cursor: move;
+		}
+	    :host .column header {
+	        color: #fff;
+	        background: radial-gradient(ellipse at center, #000000 0%,#7c7c7c 100%);
+	        text-shadow: #000 0 1px;
+	        box-shadow: 5px;
+	        padding: 5px;
+	        border-bottom: 1px solid #ddd;
+	        border-top-left-radius: 10px;
+	        border-top-right-radius: 10px;
+	        pointer-events: none;
+	    }
+	    :host .column.over {
+	        border: 2px dashed #000;
+			cursor: alias;
+		}
 	</style>
 	
-	<div class="top">
+	<div id="top" class="top">
 		<div class="cf">[[bonjour]] <b>[[owner]] [[build]]</b> [[lib('application',lang)]] [[lib('ns_test',lang)]]</div>
 		<div>
 			<help-button help="p12"></help-button><help-button help="p13" iv="true"></help-button>
@@ -76,7 +110,17 @@
 			</div>
 		</div>
 		<file-input id="photo" w="32" h="32" radius="16" rw="true" lang="[[lang]]" photo-icon="social:person" on-file-loaded="onFileLoaded"></file-input>
-	</div>
+
+		<div id="ghost"></div>
+
+	    <div id="columns">
+            <div id="c1" class="column" on-track="handleTrack" drop-target="true" ><header>A</header></div>
+            <div id="c2" class="column" on-track="handleTrack" drop-target="true"><header>B</header></div>
+            <div id="c3" class="column" on-track="handleTrack" drop-target="true"><header>C</header></div>
+            <div id="c4" class="column" on-track="handleTrack" drop-target="true"><header>X</header></div>
+        </div>
+
+	</div>	
 </template>
 <script src="home2-home.js"></script>
 </dom-module>
