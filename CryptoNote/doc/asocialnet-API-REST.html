@@ -1447,6 +1447,7 @@ Cette clé est cryptée par la phrase secrète du compte : c'est elle qui permet
 <li><code>dhzm</code> : date-heure de passage en zombie posée par la modération de l'instance.</li>
 <li><code>dhzc</code> : date-heure de passage en zombie en raison d'un défaut de crédit.</li>
 <li><code>dhza</code> : date-heure de passage en zombie posée par le compte lui-même.</li>
+<li><code>dho</code> : date-heure de franchissement de la ligne orange du crédit.</li>
 <li><code>dhx</code> : <em>propriété indexée</em> date-heure de destruction prévue (s = 2) : la plus proche résultante des <code>dhz?</code> et <code>dha</code> quand le compte est en création (s == 0 / <code>dha</code> absente), NC jours ou NZ jours après ces dates.</li>
 </ul>
 <p>Le statut courant s est calculé depuis les dates <code>dha dhzm dhzc dhza</code>.</p>
@@ -1693,7 +1694,13 @@ La clé d'accès est :</p>
 <p><strong>Propriétés :</strong></p>
 <ul>
 <li><code>dhop</code> : date-heure de la dernière opération.</li>
-<li><code>flags</code> : duplication asynchrone de <code>Flg</code> dans <code>Forum</code>.</li>
+<li><code>flags</code> : duplication asynchrone de <code>Flg</code> dans <code>Forum</code>.
+<ul>
+<li>oc : le forum est en zone orange de crédit</li>
+<li>zc : le forum est zombie, lecture seule pour crédit.</li>
+<li>zf : le forum est zombie, fermeture imminente.</li>
+</ul>
+</li>
 </ul>
 <h2>Opérations non authentifiées</h2>
 <h4><code>Xauth</code> : Opération non authentifiée <em>authentification d'un compte</em></h4>
@@ -1705,9 +1712,8 @@ La <strong>date-heure de dernière visite</strong> n'est enregistrée dans <code
 <ul>
 <li><code>dhop</code> : date-heure d'opération (devient la date-heure de dernière visite).</li>
 <li><code>psRB</code> : phrase secrète réduite brouillée du compte.</li>
-<li><code>psB</code> : phrase secrète brouillée du compte.</li>
 </ul>
-<p>Retourne : <code>EnC</code>du compte.</p>
+<p>Retourne : <code>EnC</code> et <code>TPU</code> du compte.</p>
 <h4><code>Xcre</code> : Opération non authentifiée <em>création d'un compte</em></h4>
 <p>La création d'un nouveau compte retourne comme <code>Xauth</code> le singleton <code>EnC</code>du compte qui vient d'être créé. La session cliente dispose ainsi au retour du numéro et du nom du compte et des clés de cryptage nécessaires à la lecture des autres données du dossier compte.</p>
 <ul>
@@ -1752,7 +1758,7 @@ La <strong>date-heure de dernière visite</strong> n'est enregistrée dans <code
 </ul>
 <p>Retour :</p>
 <ul>
-<li><code>EnC</code> comme pour <code>Xauth</code>.</li>
+<li><code>EnC</code> et <code>TPU</code> comme pour <code>Xauth</code>.</li>
 </ul>
 <h4><code>Xanc</code> : Opération <em>annulation de demande de clôture du compte</em></h4>
 <p>Invoquée par le titulaire du compte. Comme une <code>Xauth</code> mais vérifiant que le compte est bien sous la menace d'une demande de clôture par le compte. Celle-ci est supprimée et de plus un avis est émis.</p>
@@ -1790,19 +1796,21 @@ La <strong>date-heure de dernière visite</strong> n'est enregistrée dans <code
 </ul>
 <p>L'item <code>Flg</code> est le symétrique de <code>Flg</code> de Compte avec le numéro de compte comme clé.</p>
 <ul>
-<li>un vote de changement de gouvernance est en cours</li>
-<li>une élection de délégués est en cours.</li>
-<li>une invitation est en cours.</li>
-<li>une résiliation est en cours.</li>
-<li>une note ayant un des mots clés référencés par le compte a été écrite / mise à la corbeille.</li>
+<li>oc : orange pour famine de crédit.</li>
+<li>zc : zombie pour famine de crédit.</li>
+<li>zf : zombie pour fermeture imminente.</li>
+<li>f0 à f9 : quelque chose de nouveau sur les fils d'actualité de 0 à 9.</li>
 </ul>
 <h3>Singleton <em>entête du forum</em> <code>EnF</code></h3>
 <p><strong>Propriétés :</strong></p>
 <ul>
 <li><code>dhop</code> : date-heure de la dernière opération.</li>
 <li><code>dhcc</code> : date-heure du dernier changement de clé.</li>
+<li><code>dho</code> : date-heure de passage orange pour défaut de crédit.</li>
+<li><code>dhzc</code> : date-heure de passage zombie, lecture seule, pour défaut de crédit.</li>
+<li><code>dhzf</code> : date-heure de passage zombie pour fermeture imminente.</li>
 <li><code>nbp</code> : nombre de participants ayant été invités.</li>
-<li><code>basegv</code> : schéma de gouvernance.
+<li><code>gouv</code> : schéma de gouvernance.
 <ul>
 <li><code>b</code> : liste des membres du bureau.</li>
 <li><code>p c a g</code> : 4 chaînes donnant les schémas de vote applicables aux quatre groupes de décision (participants, clôture du forum, autres décisions, changement de gouvernance).</li>
@@ -1833,7 +1841,7 @@ La <strong>date-heure de dernière visite</strong> n'est enregistrée dans <code
 </li>
 <li><code>bureau</code> : est membre du bureau.</li>
 <li><code>dhef</code> : date-heure du dernier effacement des fanions sur les fils d'actualité.</li>
-<li><code>news</code> : liste des indices des news intéressantes pour le participant.</li>
+<li><code>news</code> : liste des indices des fils d'activité intéressants pour le participant.</li>
 </ul>
 <h3>Historique des clés du forum</h3>
 <p>La clé d'invitation n'est pas historisée.<br>
@@ -1906,7 +1914,7 @@ Une note change de clé à chaque version : à l'écriture elle est cryptée par
 <li>3 : clos sur rejet.</li>
 </ul>
 </li>
-<li><code>votes</code> : vote de chaque participant : <em>pour contre blanc veto</em>.</li>
+<li><code>votes</code> : vote de chaque participant : <em>pour contre blanc</em>.</li>
 <li><code>rsdv</code> : résultat après le dernier vote. En général comme les votes de chaque participant peuvent changer jusqu'à la clôture du scrutin, ce résultat n'a de valeur qu'une fois la date-heure de fermeture du scrutin passée. Mais certains schémas de vote peuvent spécifier pour gagner du temps que dès qu'un résultat positif a été acquis, le scrutin peut être clos et la décision applicable.</li>
 <li><code>param</code> : paramètre du sondage :
 <ul>
@@ -1944,8 +1952,6 @@ L'objet du sondage est fixé à sa création mais ses paramètres peuvent change
 <li>compte 1 : compte C. Clé N cryptée par la clé publique de C.</li>
 <li><code>prop st</code> : valeur de <code>st</code>.</li>
 </ul>
-<h1>TODO</h1>
-<p>Rappel des zones orange / rouge / zombie dans les comptes et forums.</p>
 
 </div>
 <!-- Adds some scroll space to the bottom of the doucment -->

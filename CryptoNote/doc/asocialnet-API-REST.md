@@ -151,6 +151,7 @@ Ce singleton est déclaré à la création du compte et n'est modifié qu'à que
 - `dhzm` : date-heure de passage en zombie posée par la modération de l'instance.
 - `dhzc` : date-heure de passage en zombie en raison d'un défaut de crédit.
 - `dhza` : date-heure de passage en zombie posée par le compte lui-même.
+- `dho` : date-heure de franchissement de la ligne orange du crédit.
 - `dhx` : *propriété indexée* date-heure de destruction prévue (s = 2) : la plus proche résultante des `dhz?` et `dha` quand le compte est en création (s == 0 / `dha` absente), NC jours ou NZ jours après ces dates.
 
 Le statut courant s est calculé depuis les dates `dha dhzm dhzc dhza`.
@@ -375,6 +376,9 @@ Ce compte doit être :
 **Propriétés :**
 - `dhop` : date-heure de la dernière opération.
 - `flags` : duplication asynchrone de `Flg` dans `Forum`.
+    - oc : le forum est en zone orange de crédit
+    - zc : le forum est zombie, lecture seule pour crédit.
+    - zf : le forum est zombie, fermeture imminente.
 
 ## Opérations non authentifiées
 #### `Xauth` : Opération non authentifiée *authentification d'un compte*
@@ -386,9 +390,8 @@ La **date-heure de dernière visite** n'est enregistrée dans `EnD` que si le co
 Paramètres :
 - `dhop` : date-heure d'opération (devient la date-heure de dernière visite).
 - `psRB` : phrase secrète réduite brouillée du compte.
-- `psB` : phrase secrète brouillée du compte.
 
-Retourne : `EnC`du compte.
+Retourne : `EnC` et `TPU` du compte.
 
 #### `Xcre` : Opération non authentifiée *création d'un compte*
 La création d'un nouveau compte retourne comme `Xauth` le singleton `EnC`du compte qui vient d'être créé. La session cliente dispose ainsi au retour du numéro et du nom du compte et des clés de cryptage nécessaires à la lecture des autres données du dossier compte.
@@ -425,7 +428,7 @@ Paramètres :
 - `jeton` : jeton de création donné par l'administrateur. (compte premier seulement).
 
 Retour :
-- `EnC` comme pour `Xauth`.
+- `EnC` et `TPU` comme pour `Xauth`.
 
 #### `Xanc` : Opération *annulation de demande de clôture du compte*
 Invoquée par le titulaire du compte. Comme une `Xauth` mais vérifiant que le compte est bien sous la menace d'une demande de clôture par le compte. Celle-ci est supprimée et de plus un avis est émis.
@@ -460,18 +463,20 @@ Il possède les items `Vno Pth P` comme Compte.
 - document accessible aux invités (la clé est fixe) ou réservé aux confirmés (la clé peut avoir plusieurs valeurs au cours du temps).
 
 L'item `Flg` est le symétrique de `Flg` de Compte avec le numéro de compte comme clé.
-- un vote de changement de gouvernance est en cours
-- une élection de délégués est en cours.
-- une invitation est en cours.
-- une résiliation est en cours.
-- une note ayant un des mots clés référencés par le compte a été écrite / mise à la corbeille.
+- oc : orange pour famine de crédit.
+- zc : zombie pour famine de crédit.
+- zf : zombie pour fermeture imminente.
+- f0 à f9 : quelque chose de nouveau sur les fils d'actualité de 0 à 9.
 
 ### Singleton *entête du forum* `EnF`
 **Propriétés :**
 - `dhop` : date-heure de la dernière opération.
 - `dhcc` : date-heure du dernier changement de clé.
+- `dho` : date-heure de passage orange pour défaut de crédit.
+- `dhzc` : date-heure de passage zombie, lecture seule, pour défaut de crédit.
+- `dhzf` : date-heure de passage zombie pour fermeture imminente.
 - `nbp` : nombre de participants ayant été invités.
-- `basegv` : schéma de gouvernance.
+- `gouv` : schéma de gouvernance.
     - `b` : liste des membres du bureau.
     - `p c a g` : 4 chaînes donnant les schémas de vote applicables aux quatre groupes de décision (participants, clôture du forum, autres décisions, changement de gouvernance).
 
@@ -496,7 +501,7 @@ L'item `Flg` est le symétrique de `Flg` de Compte avec le numéro de compte com
     - `dh5` : résiliation effective.
 - `bureau` : est membre du bureau.
 - `dhef` : date-heure du dernier effacement des fanions sur les fils d'actualité.
-- `news` : liste des indices des news intéressantes pour le participant.
+- `news` : liste des indices des fils d'activité intéressants pour le participant.
 
 ### Historique des clés du forum
 La clé d'invitation n'est pas historisée.  
@@ -550,7 +555,7 @@ Un sondage / vote peut avoir selon les cas et les règles de gouvernance en cour
     - 1 : clos par renoncement du demandeur.
     - 2 : clos sur approbation.
     - 3 : clos sur rejet.
-- `votes` : vote de chaque participant : *pour contre blanc veto*.
+- `votes` : vote de chaque participant : *pour contre blanc*.
 - `rsdv` : résultat après le dernier vote. En général comme les votes de chaque participant peuvent changer jusqu'à la clôture du scrutin, ce résultat n'a de valeur qu'une fois la date-heure de fermeture du scrutin passée. Mais certains schémas de vote peuvent spécifier pour gagner du temps que dès qu'un résultat positif a été acquis, le scrutin peut être clos et la décision applicable.
 - `param` : paramètre du sondage :
     - (c r) `nc` du participant.
@@ -587,5 +592,3 @@ Avis `cpacc` :
 - `prop st` : valeur de `st`.
 
 
-# TODO
-Rappel des zones orange / rouge / zombie dans les comptes et forums.
