@@ -77,13 +77,6 @@ CREATE INDEX taskqueue_tostartat on taskqueue (tostartat, ns, taskid) where tost
 DROP INDEX IF EXISTS taskqueue_starttime;
 CREATE INDEX taskqueue_starttime on taskqueue (starttime, ns, taskid) where starttime is not null;
 
-DROP TABLE IF EXISTS s2cleanup;
-CREATE TABLE s2cleanup (
-  	clid varchar(255) NOT NULL,
-  	hour int
-);
-ALTER TABLE s2cleanup OWNER TO "docdb";
-
 DROP TABLE IF EXISTS doc;
 CREATE TABLE doc (
 	clid varchar(255) NOT NULL,
@@ -120,16 +113,6 @@ CREATE TABLE consts_NS (
 ALTER TABLE consts_NS OWNER TO "docdb";
 CREATE UNIQUE INDEX consts_NS_alias ON consts_NS (alias);
 
-DROP TABLE IF EXISTS consts_test;
-CREATE TABLE consts_test (
-  	key varchar(256) NOT NULL,
-  	alias varchar(256) NOT NULL,
-  	content text,
-	CONSTRAINT consts_test_pk PRIMARY KEY (key)
-);
-ALTER TABLE consts_test OWNER TO "docdb";
-CREATE UNIQUE INDEX consts_test_alias ON consts_test (alias);
-
 DROP TABLE IF EXISTS doc_NS;
 CREATE TABLE doc_NS (CONSTRAINT doc_NS_pk PRIMARY KEY (clid)) INHERITS (doc);
 ALTER TABLE doc_namespace OWNER TO "docdb";
@@ -150,9 +133,15 @@ ALTER TABLE item_NS_DC_IT OWNER TO "docdb";
 CREATE INDEX item_NS_DC_IT_toto on item_NS_DC_IT (toto, docid, clkey);
 
 /*********************************************************/
-DROP TABLE IF EXISTS s2cleanup_test;
-CREATE TABLE s2cleanup_test (CONSTRAINT s2cleanup_test_pk PRIMARY KEY (clid, hour)) INHERITS (s2cleanup);
-ALTER TABLE s2cleanup_test OWNER TO "docdb";
+DROP TABLE IF EXISTS consts_test;
+CREATE TABLE consts_test (
+  	key varchar(256) NOT NULL,
+  	alias varchar(256) NOT NULL,
+  	content text,
+	CONSTRAINT consts_test_pk PRIMARY KEY (key)
+);
+ALTER TABLE consts_test OWNER TO "docdb";
+CREATE UNIQUE INDEX consts_test_alias ON consts_test (alias);
 
 DROP TABLE IF EXISTS doc_test;
 CREATE TABLE doc_test () INHERITS (doc);
