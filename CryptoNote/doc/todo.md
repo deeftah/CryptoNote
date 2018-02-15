@@ -34,3 +34,8 @@ TaskQueue - opérations
 - revisiter cron avec distinction date-heure réelle et date-heure fonctionnelle
 
 Document DB - API : à revoir à partir de ExecContext
+Suppression des items P, mais v2 continue d'exister. Gestion de corbeille pour les blobs à mentionner (+ API blob)
+
+Opération POST : sans URL[]
+Opération GET (sans auth) avec URL[] : TPU, URL avec clé de crypt etc.
+Notion d'URL avec compte d'imputation ?

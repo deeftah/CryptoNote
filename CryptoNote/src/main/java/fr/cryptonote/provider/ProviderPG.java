@@ -28,7 +28,6 @@ import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.base.ExecContext.ExecCollect;
 import fr.cryptonote.base.ExecContext.ItemIUD;
 import fr.cryptonote.base.ExecContext.IuCDoc;
-import fr.cryptonote.base.S2Cleanup;
 import fr.cryptonote.base.Stamp;
 import fr.cryptonote.base.TaskInfo;
 import fr.cryptonote.base.TaskInfo.TaskMin;
@@ -361,7 +360,7 @@ public class ProviderPG implements DBProvider {
 		}
 	}
 	
-	private static final String SELITEMS1 = "select clkey, version, vop, sha, contentt, contentb from item_";
+	private static final String SELITEMS1 = "select clkey, version, vop, v2, contentt, contentb from item_";
 	private static final String SELITEMS2 = "where docid = ? ";
 	
 	private void addCItem(ResultSet rs, DeltaDocument dd) throws SQLException {
@@ -369,9 +368,9 @@ public class ProviderPG implements DBProvider {
 		if (i.descr() == null) return;
 		long _version = rs.getLong("version");
 		long _vop = rs.getLong("vop");
-		String _sha = rs.getString("sha");
+		int _v2 = rs.getInt("v2");
 		String _t = getContent(rs);
-		dd.items.put(i.toString(), new CItem(i, _version, _vop, _sha, _t));		
+		dd.items.put(i.toString(), new CItem(i, _version, _vop, _v2, _t));		
 	}
 	
 	// copie complète simple - items : tous les items existants  +  tous les items détruits
@@ -803,7 +802,6 @@ public class ProviderPG implements DBProvider {
 
 			if (collect.s2Purge != null) for(String clid : collect.s2Purge) blobProvider().blobDeleteAll(clid);
 			if (collect.tq != null) for(TaskInfo ti : collect.tq) newTask(ti);
-			if (collect.s2Cleanup != null) for(String clid : collect.s2Cleanup) S2Cleanup.startCleanup(clid);
 			
 			commitTransaction();
 			

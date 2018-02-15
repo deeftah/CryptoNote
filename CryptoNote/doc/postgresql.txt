@@ -92,7 +92,7 @@ CREATE TABLE item (
   	clkey varchar(255) NOT NULL,
   	version bigint NOT NULL,
   	vop bigint NOT NULL,
-  	sha varchar(255),
+  	v2 int NOT NULL,
   	contentt text,
 	contentb bytea
 );

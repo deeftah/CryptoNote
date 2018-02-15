@@ -33,14 +33,6 @@ public class DocumentDescr {
 			if (indexClasses[i] == clazz) return FieldType.values()[i];
 		return null;
 	}
-
-	private static ItemDescr pDescr;
-
-	static {
-		pDescr = new ItemDescr();
-		pDescr.clazz = Document.P.class;
-		pDescr.name = "P";
-	}
 	
 	private String name;
 	private Class<?> clazz;
@@ -96,8 +88,6 @@ public class DocumentDescr {
 		public DocumentDescr docDescr() { return docDescr; };
 		public String name() { return name; }
 		public Class<?> clazz() { return clazz; }
-		
-		public boolean isP() { return this == pDescr; }
 		public boolean isRaw() { return isRaw; }
 		public boolean isSingleton() { return isSingleton; }
 		
@@ -192,9 +182,6 @@ public class DocumentDescr {
 		} catch (Exception e) {	
 			throw new AppException(e, "BDOCUMENTCLASS10", dd.name);
 		}
-
-		dd.itemDescrs1.put(pDescr.clazz, pDescr);
-		dd.itemDescrs2.put(pDescr.name, pDescr);
 
 		Class<?>[] classes = clazz.getDeclaredClasses();
 		for(Class<?> cl : classes){

@@ -32,18 +32,17 @@ public class BlobProvider {
 	String ns;
 	Nsqm nsqm;
 
-	public void blobDeleteAll(String clid) throws AppException {}
+	public void blobDeleteAll(String docid) throws AppException {}
 	
-	public void blobStore(String clid, String sha, byte[] bytes) throws AppException {}
+	public void blobStore(String docid, String sha, byte[] bytes) throws AppException {}
 
-	public byte[] blobGet(String clid, String sha) throws AppException { return new byte[0]; }
+	public byte[] blobGet(String docid, String sha) throws AppException { return new byte[0]; }
 
 	/**
 	 * Vide la corbeille, ne conserve que les shas utiles et met les autres à la corbeille. 
-	 * @param clid : identifiant du documment (classe.docid)
-	 * @param uids liste des uid encore référencés
-	 * @return true si la corbeille est vide après cleanup, sinon elle contient des fichiers à supprimer plus tard.
+	 * @param docid : identifiant du documment (docid)
+	 * @param shas liste des shas encore référencés
 	 * @throws AppException
 	 */
-	 public boolean cleanup(String clid, HashSet<String> shas) throws AppException { return true; }
+	 public void cleanup(String docid, HashSet<String> shas) throws AppException { return; }
 }

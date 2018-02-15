@@ -398,12 +398,6 @@ public class ExecContext {
 				iud = 4;
 			else
 				iud = ci.created() ? 1 : (ci.toDelete() ? 3 : (ci.toSave() ? 2 : 0));
-			if (ci.descr().isP()) {
-				if (iud == 2)
-					sha = ci.nsha();
-				if (iud == 2 || iud == 3)
-					s2Cleanup.add(ci.id().toString());
-			}
 			if (iud == 1 || iud == 2){
 				cvalue = ci.cvalue();
 				exportedFields = ci.exportedFields();

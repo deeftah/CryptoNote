@@ -1,12 +1,11 @@
 package fr.cryptonote.provider;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 
 import fr.cryptonote.base.AppException;
@@ -38,86 +37,45 @@ public class BlobProviderPG extends BlobProvider {
 		}
 	}
 
-	@Override public void blobDeleteAll(String clid) throws AppException { deleteDirectory(path(clid, null).toFile()); }
+	@Override public void blobDeleteAll(String docid) throws AppException { deleteDirectory(path(docid, null).toFile()); }
 
-	public void blobDelete(String clid, String sha) throws AppException {
-		File file = path(clid, sha).toFile();
+	public void blobDelete(String docid, String sha) throws AppException {
+		File file = path(docid, sha).toFile();
 		if (file.exists() && file.isFile()) file.delete();
 	}
 		
-	@Override public void blobStore(String clid, String sha, byte[] bytes)  throws AppException {
-		// TODO
-		/*
-		 * Pour les fichiers au-dessus de 4K, créer un temp et le renommer
-		 * Dans tous les cas tester l'existence du fichier avant de le réécrire
-		 */
-		Path path = path(clid, sha);
+	@Override public void blobStore(String docid, String sha, byte[] bytes)  throws AppException {
 		try {
-			Files.createDirectories(path(clid, null));
-			Files.write(path, bytes);
+			Path path = path(docid, sha);
+			Path tmp = path(docid, sha + ".tmp");
+			Files.createDirectories(path(docid, null));
+			File f = path.toFile();
+			if (f.exists()) 
+				f.delete();
+			File t = tmp.toFile();
+			if (t.exists()) 
+				t.delete();
+			Files.write(tmp, bytes);
+			Files.move(tmp,  path, StandardCopyOption.ATOMIC_MOVE);
 		} catch (IOException e) {
-			throw new AppException(e, "XFILE0", path.toString());
+			throw new AppException(e, "XFILE0", docid + "/" + sha);
 		}
 	}
 
-	@Override public byte[] blobGet(String clid, String sha) throws AppException {
-		Path path = path(clid, sha);
+	@Override public byte[] blobGet(String docid, String sha) throws AppException {
+		Path path = path(docid, sha);
 		File file = path.toFile();
 		if (!file.exists() || !file.isFile()) return null;
 		try { return Files.readAllBytes(path); } catch (IOException e) { throw new AppException(e, "XFILE0", path.toString()); }
 	}
-	
-	private String[] linesGet(String clid) throws AppException {
-		try {
-			byte[] x = blobGet(clid, basketPath);
-			return x == null || x.length == 0 ? null : new String(x, "UTF-8").split("\n");
-		} catch (UnsupportedEncodingException e) { return null; }
+				
+	@Override public void cleanup(String docid, HashSet<String> shas) throws AppException { 
+		File[] files = path(docid, null).toFile().listFiles();
+        for(File f : files)
+        	if (f.isFile() && !shas.contains(f.getName())) f.delete();
 	}
-	
-	/*
-	 * Supprime physiquement tous les fichiers dont le nom ne figure pas dans la liste des fichiers utiles.
-	 */
-	private void emptyBasket(String clid, HashSet<String> shas) throws AppException {
-		String[] lst = linesGet(clid);
-		if (lst != null) {
-			for(String p : lst) if (shas == null || !shas.contains(p)) blobDelete(clid, p);
-			blobDelete(clid, basketPath);
-		}
-	}
-	
-	/* Retourne la liste des shas dans le directory clid, en excluant ceux utiles (shas) et la basket elle-même.
-	 * Bref liste les shas inutiles.
-	 */
-	private byte[] blobToBasket(String clid, HashSet<String> shas) throws AppException {
-		String n = "";
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-	    try {
-			File[] files = path(clid, null).toFile().listFiles();
-	        for(File f : files)
-	        	if (f.isFile()) {
-	        		n = f.getName();
-	        		if (!basketPath.equals(n) && !shas.contains(n)) bos.write((n + "\n").getBytes(UTF8));
-	        	}
-	    	byte[] bytes = bos.toByteArray();
-	    	bos.close();
-	    	return bytes;
-		} catch (IOException e) { throw new AppException(e, "XFILE0", clid + "/" + n); }
-	}
-	
-	/*
-	 * A chaque tour de cleanup, 
-	 * a) la basket est vidée : les fichiers dont les noms y figuraient sont détruits et le fichier basket lui-même l'est.
-	 * b) la basket contient la liste des fichiers inutiles qu'il faudra purger au tour cleanup suivant (purgatoire)
-	 */
-	@Override public boolean cleanup(String clid, HashSet<String> shas) throws AppException { 
-		// TODO Nettoyer aussi les temp
-		emptyBasket(clid, shas);		
-		byte[] bk = blobToBasket(clid, shas);
-		if (bk.length == 0)	return false;
-		blobStore(clid, basketPath, bk); // stocke basket (non vide)
-		return true;
-	}
-	
+
+		
 	public static void main(String[] args) {
 		try {
 			S2Storage s2 = new S2Storage("/tmp/blobsroot", "bk1");
@@ -131,8 +89,7 @@ public class BlobProviderPG extends BlobProvider {
 			h.add("abc");
 			h.add("abcde");
 			
-			boolean basket = bp.cleanup("g1", h);
-			System.out.println("basket: " + basket);
+			bp.cleanup("g1", h);
 			
 		} catch (Throwable t) {
 			t.printStackTrace();

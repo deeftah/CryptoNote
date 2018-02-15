@@ -244,8 +244,7 @@ public class Document {
 		public void delete() throws AppException{ _checkro(true); _citem().delete(); }
 		
 		public String cvalue() throws AppException { return _citem().cvalue(); }
-		public String sha() throws AppException { return _citem().sha(); }
-		public String nsha() throws AppException { return  _citem().nsha(); }
+		public int nv2() throws AppException { return  _citem().nv2(); }
 		public String clkey() throws AppException { return descr().name() + (descr().isSingleton() ? "" : "." + key()); }
 		public boolean deleted() throws AppException { return  _citem().deleted(); }				// item non existant
 		public boolean toDelete() throws AppException { return  _citem().toDelete(); } 				// item à supprimer
@@ -274,46 +273,9 @@ public class Document {
 	}
 	
 	/********************************************************************************/
-	public static final class P extends BItem {
-		private String mime;
-		private int size;
-		@AExportedField private String sha;
-				
-		public String mime() { return mime; }
-		public String sha() { return sha; }
-		public int size() { return size; }
-		public void delete() throws AppException{ _checkro(true); _citem().delete(); }
-		public String serializedValue() { return JSON.toJson(this); }
-		public ExportedFields exportFields() { return null; }
-		
-		public byte[] blobGet() throws AppException {
-			_citem();
-			return ExecContext.current().dbProvider().blobProvider().blobGet(_document().id().toString(), sha);
-		}
-	}
-	
-	public P blobStore(String key, String mime, byte[] bytes) throws AppException {
-		if (key == null || key.length() == 0) throw new AppException("BKEYBLOB", id().toString());
-		if (mime == null || mime.length() == 0) throw new AppException("BMIMEBLOB", id().toString(), key);
-		if (bytes == null || bytes.length == 0) throw new AppException("BEMPTYBLOB", id().toString(), key);
-		String sha = Util.bytesToB64u(Util.SHA256(bytes));
-		P p = (P)bitem(P.class, true, key);
-		p.mime = mime;
-		p.size = bytes.length;
-		if (sha.equals(p.sha)) {
-			String clid = id().toString();
-			S2Cleanup.startCleanup(clid);
-			ExecContext.current().dbProvider().blobProvider().blobStore(clid, sha, bytes);
-			p.sha = sha;
-		}
-		p._citem().commitP(p, sha);
-		return p;
-	}
-
-	/********************************************************************************/
 	public static abstract class ItemSingleton extends BItem {
 		public String serializedValue() { return JSON.toJson(this); }
-		public void commit() throws AppException{ _checkro(false); _citem().commit(serializedValue(), exportFields()); }
+		public void commit(int v2) throws AppException{ _checkro(false); _citem().commit(serializedValue(), v2, exportFields()); }
 		public BItem getCopy() throws AppException { return descr().newItem(_citem().cvalue(), _citem().toString()); }
 
 		public final ExportedFields exportFields() {
@@ -363,10 +325,6 @@ public class Document {
 	public static abstract class RawItem extends RawItemSingleton {	}
 	
 	/********************************************************************************/
-
-	public P p(String key) throws AppException { return (P)bitem(P.class, false, key); }
-
-	public String[] getPKeys() { return cdoc.itemids(P.class); }
 
 	public Singleton singleton(Class<?> itemClass) throws AppException { return (Singleton)bitem(itemClass, false, null); }
 

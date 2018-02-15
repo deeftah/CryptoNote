@@ -74,7 +74,7 @@ public class Repertoire extends Document {
 				c.code = "" + i;
 				c.nom = "Paulo-" + i;
 				c.codePostal = "" + (94200 + i);
-				c.commit();
+				c.commit(0);
 			}
 			return Result.empty();
 		}
@@ -96,7 +96,7 @@ public class Repertoire extends Document {
 			for(int i = param.n1; i < param.n2; i++){
 				Contact c = r.contact("c" + i);
 				c.nom = param.nom + i;
-				c.commit();
+				c.commit(0);
 			}
 			return Result.empty();
 		}
