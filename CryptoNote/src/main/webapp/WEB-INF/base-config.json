@@ -30,7 +30,6 @@
 		"test":{
 			"base":"cna", 
 			"pwd":"test", 
-			"qm":"qm1",
 			"theme":"a",
 			"homes": {"index":0, "admin":0, "home1":2, "home2":2},
 			"lang":"fr",
@@ -45,7 +44,7 @@
 	
 	"queueManagers":{
 		"qm1":{
-			"base":"cna",
+			"bases":["cna"],
 			"pwd":"qm",
 			"threads": [2,1],
 			"scanlapseinseconds":60

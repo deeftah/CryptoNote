@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TimeZone;
@@ -162,10 +163,10 @@ public class BConfig {
 
 		String 	code;
 		boolean isQM;
-		String 	base;
 		String 	pwd;
 		
-		String 	qm;
+//		String 	qm;
+		String 	base;
 		String 	theme;
 		String 	lang;
 		HashMap<String,String> options;
@@ -173,11 +174,12 @@ public class BConfig {
 		HashMap<String,HelpPage> help;
 		MFDic[] mfDics;
 		
+		String[] bases;
 		int[] 	threads;
 		int 	scanlapseinseconds;
 		
 		public boolean isQM() { return isQM; }
-		public String base() { return base != null && base.length() != 0 ? base : g.defaultBase; }
+		public String base() { return base; }
 		public String lang() { return g.langs[BConfig.lang(lang)]; }
 		public String url() { return normUrl(code); }
 		public String pwd() {
@@ -186,7 +188,7 @@ public class BConfig {
 			return px != null ? px : pwd;
 		}
 		
-		public String qm() { return qm; }
+		public String[] bases() { return bases; }
 		public String theme() { return theme != null || theme.length() != 0 ? theme : "a"; }
 		public int onoff() { return onoff; }
 		public String[] options() { return options == null || options.size() == 0 ? new String[0] : options.keySet().toArray(new String[options.size()]); }
@@ -360,7 +362,6 @@ public class BConfig {
 	private static BaseConfig g = new BaseConfig();
 	private static HashMap<String,String> p;
 	private static HashMap<String,ArrayList<Nsqm>> namespacesByDB = new HashMap<String,ArrayList<Nsqm>>();
-	private static HashMap<String,ArrayList<Nsqm>> namespacesByQM = new HashMap<String,ArrayList<Nsqm>>();
 	private static HashSet<String> databases = new HashSet<String>();
 	private static String dbProviderName;
 	private static Method dbProviderFactory;
@@ -431,38 +432,54 @@ public class BConfig {
 	private static void checkNsqm() throws ServletException {
 		if (g.namespaces == null || g.namespaces.size() == 0)
 			throw Servlet.exc(null, _format(0, "XNAMESPACENO"));
+		
 		for(String ns : g.namespaces.keySet()) {
 			Nsqm x = g.namespaces.get(ns);
-			x.isQM = false;
 			x.code = ns;
 			if (x.pwd == null || x.pwd.length() == 0) throw Servlet.exc(null, _format(0, "XNAMESPACEPWD", ns));
-			if (x.base != null && x.base.length() != 0) {
-				databases.add(x.base);
-				ArrayList<Nsqm> al = namespacesByDB.get(x.base);
-				if (al == null) {
-					al = new ArrayList<Nsqm>();
-					namespacesByDB.put(x.base, al);
-				}
-				al.add(x);
+			if (x.base == null || x.base.length() == 0) x.base = g.defaultBase;
+			x.base = x.base.trim();
+			if (x.base.length() == 0) throw Servlet.exc(null, _format(0, "XNAMESPACEBASE1", ns));	
+			x.isQM = false;
+			databases.add(x.base);
+			ArrayList<Nsqm> al = namespacesByDB.get(x.base);
+			if (al == null) {
+				al = new ArrayList<Nsqm>();
+				namespacesByDB.put(x.base, al);
 			}
-			ArrayList<Nsqm> al2 = namespacesByQM.get(x.qm);
-			if (al2 == null) {
-				al2 = new ArrayList<Nsqm>();
-				namespacesByQM.put(x.qm, al2);
-			}
-			al2.add(x);
+			al.add(x);
 		}
+		
 		for(String qm : g.queueManagers.keySet()) {
 			Nsqm x = g.queueManagers.get(qm);
 			x.isQM = true;
 			x.code = qm;
 			if (x.pwd == null || x.pwd.length() == 0) throw Servlet.exc(null, _format(0, "XQMPWD", qm));			
-			if (x.base != null && x.base.length() != 0) databases.add(x.base);
+			if (x.bases == null || x.bases.length == 0) {
+				x.bases = new String[1];
+				x.bases[0] = g.defaultBase;
+			}
+			for(int i = 0; i < x.bases.length; i++) {
+				String b = x.bases[i];
+				x.bases[i] = b == null ? "" : b.trim();
+				b = x.bases[i];
+				if (b.length() == 0) throw Servlet.exc(null, _format(0, "XNAMESPACEBASES3", qm, ""+i));
+				if (!databases.contains(b)) throw Servlet.exc(null, _format(0, "XNAMESPACEBASES4", qm, b));
+			}
+			Arrays.sort(x.bases);
+			for(int i = 0; i < x.bases.length - 1; i++) {
+				String b = x.bases[i];
+				if (b.equals(x.bases[i+1])) throw Servlet.exc(null, _format(0, "XNAMESPACEBASES5", qm, b));
+				Nsqm qx = qmByDB.get(b);
+				if (qx != null) throw Servlet.exc(null, _format(0, "XNAMESPACEBASES6", b, qx.code, qm));
+				qmByDB.put(b, x);
+			}
 		}
 	}
 	
 	/****************************************************/
-	public static ArrayList<Nsqm> namespacesByQM(String qm) { return namespacesByQM.get(qm); }
+	public static Nsqm qmOfDB(String db) { return qmByDB.get(db); }
+	public static HashMap<String,Nsqm> qmByDB = new HashMap<String,Nsqm>();
 	public static ArrayList<Nsqm> namespacesByDB(String db) { return namespacesByDB.get(db); }
 	public static String dbProviderName() { return dbProviderName; }
 	public static String[] databases() { return databases.toArray(new String[databases.size()]); }

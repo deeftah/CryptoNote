@@ -1,40 +1,63 @@
 # Document DB
 
-La base du stockage persistant est de considérer des documents ayant une identification et une version.  
+La stockage persistant enregistre les types d'éléments : 
+- des **documents** ayant une identification et une version.
+- des **constantes** ayant un identifiant et un alias unique. Après sa création une constante peut être détruite mais n'est jamais mise à jour.
+- des *items de comptabilité* :
+    - consommation de ressources par compte.
+    - lignes de crédit.
+- des *items statistiques* sur les opérations invoquées.
+
 La mise en œuvre est considérée sous deux environnements :
 - DS/GAE : Google App Engine (servlets Java) et son datastore.
-- PG/SQL : serveurs de servlets Java avec une base de données SQL, en l'occurrence PostgreSQL (PG).
+- PG/SQL : serveurs de servlets Java avec une base de données SQL (en l'occurrence PostgreSQL).
 
 # Instances internes
-Pour un serveur (ou un pool de serveurs) identifié par son URL, l'application apparaît comme N instances **de logiciel identique** travaillant chacune sur **son propre espace de données** indépendant des autres et identifié par un nom court. C'est un moyen pour héberger plusieurs organisations au sein du même serveur ou pool de serveurs, et de mutualiser les ressources.
+L'URL d'accès donne ordinairement accès à un pool de serveurs qui héberge N **instances**  travaillant chacune sur **son propre espace de données** indépendant des autres et identifié par un nom court. Plusieurs organisations peuvent ainsi mutualiser des ressources et bénéficier chacune ponctuellement de pics de charge pendant le creux des autres ainsi que d'une administration technique commune.
 
-Une instance spécifique, `admin` est dédiée à la mise on/off des instances et à l'administration surveillance centralisée des tâches différées en attente (ou archivées).
+Chaque instance peut être mise **on/off** :
+- ponctuellement par instance.
+- globalement pour toutes les instances dans le cas d'une maintenance technique globale.
+- c'est la fonction principale d'une instance spécifique `admin`, son autre fonction étant l'administration / surveillance centralisée des tâches différées en attente (ou archivées).
 
-Le fichier de configuration général comporte, en plus de paramètres généraux, une entrée spécifique par instance. Une instance peut avoir une customisation spécifique partielle :
+Le fichier de configuration générale comporte, en plus de paramètres généraux, une entrée spécifique par instance qui exprime ses choix de customisation spécifique portant sur :
 - des thèmes graphiques spécifiques.
 - des libellés / traductions spécifiques pouvant se substituer à ceux généraux.
 - des dictionnaires et langues spécifiques.
 - quelques options, principalement de session terminale spécifiques.
 - des pages d'accueil spécifiques, voire quelques pages internes spécifiques.
 
-#### Déploiement sur R-DBMS 
-Les données de chaque instance sont stockées dans des tables portant le code de l'instance. Il peut exister **plusieurs bases de données**, chacune hébergeant donc les tables d'une ou plusieurs instances.  
-`admin` ne comporte qu'une toute petite table et est hébergé par la base d'une instance.  
-Chaque instance peut avoir des tâches différées : une table `TaskQueue` de celles-ci permet à Queue Manager de lancer les tâches à l'heure prévue. Il n'existe au plus qu'une table `TaskQueue` par base : la configuration indique quel QueueManager gère sa `TaskQueue`, le cas échéant aggrégée à des TaskQueue d'autres instances gérée sur une autre base.
+#### Déploiement sur R-DBMS
+Plusieurs serveurs peuvent héberger un Queue Manager :
+- le code du Queue Manager hébergé figure sur la ligne de commande qui lance le serveur (`-Dqueuemanager=qm7`).
+- le *front end* qui route les requêtes sur le pool de serveurs redirige les URLS `http://pool/qm7/..` vers le serveur du pool qui héberge `qm7`.
+- un Queue Manager gère les tâches différées d'une ou de plusieurs bases de données.
+
+Il *peut* exister **plusieurs bases de données** :
+- chacune héberge les tables **d'une ou de plusieurs instances**. Le nom des tables contient le code de l'instance.
+- chacune a une table `TaskQueue` qui permet au serveur Queue Manager assigné à cette base de gérer les tâches différées de toutes les instances hébergées par cette base.
+
+L'instance `admin` ne comporte qu'une petite table technique et est hébergé par la base d'une instance.
 
 >Synthèse :
 >- chaque instance a son URL qui aboutit sur le *front end* (nginx)  joue un rôle de load balancing vers les hosts du pool de serveurs. Si on souhaite spécialiser des hosts pour des instances, le load balancing redirige les URLs des instances sur le sous pool correspondant.
->- un ou quelques hosts hébergent chacun UN Queue Manager ayant une URL locale dans le pool. Chaque QM a un nom et la configuration du *front end* renvoie exactement cette URL sur LE host unique hébergeant CE QM.
->- chaque instance spécifie :
->    - sur quelle base ses données sont hébergées, y compris la table `TaskQueue` qui gère ses tâches différées.
->    - quel QM gère ses tâches différées.
->- en conséquence un QM peut gérer les tâches de N instances et réparties sur P tables `TaskQueue` de P bases différentes (P <= N).
+>- chaque host *peut* héberger un Queue Manager dont le code apparaît alors dans l'URL locale du host. Ce QM gère les tâches différées d'une ou plusieurs bases.
+>- chaque instance spécifie sur quelle base ses données sont hébergées, la table `TaskQueue` de la base contenant ses tâches différées.
 
 ##### Déploiement GAE Datastore
-Chaque instance correspond à un `namespace`.  
-Le Datastore a son lanceur de tâches mais la table `TaskQueue` (entity TaskQueue) existe  avec les mêmes données : elle réside sous le même namespace que l'instance. Il n'y a pas de Queue Manager.
+Chaque instance correspond à un `namespace`.
 
-Chaque instance étant étanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de `TaskQueue` (une table par base) et OnOff (une table pour toutes les instances dans une base) qui peuvent être relatives à plusieurs instances. 
+Le Datastore a son lanceur de tâches mais l'entity `TaskQueue` existe  avec les mêmes données : elle réside sous le même namespace que l'instance. Il n'y a pas de Queue Manager.
+
+Chaque instance étant étanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de `TaskQueue` (une table par base) et `OnOff` (une table pour toutes les instances dans une des bases) qui peuvent être relatives à plusieurs instances. 
+
+# Constantes
+Chaque instance peut avoir des constantes. Une constante :
+- a une clé primaire String (256 caractères au plus).
+- un alias éventuel, unique, String (256 caractères au plus).
+- un contenu String (en général un JSON).
+
+Une constante peut être **créée**, *détruite* mais **pas mise à jour** ce qui optimise la gestion de cache. Du fait du phénomène de cache la destruction d'une constante ne doit pas avoir de conséquence fonctionnelle et ne doit correspondre qu'à une purge de données obsolètes inutiles.
 
 # Documents et items
 Le stockage de données apparaît comme un ensemble de ***documents*** :
@@ -66,16 +89,24 @@ Leurs propriétés peuvent être :
 **Sérialisation en JSON** : les propriétés `transient` ne sont pas sérialisées et les propriétés ayant une valeur `null` non plus (sauf en tant que valeurs à l'intérieur d'une `Map` ou `Collection`).
 
 ##### Pièces jointes attachées à un document
-Il est possible d'attacher à un document des pièces jointes par des items de classe prédéfinie `Document.P` mémorisant pour chaque pièce jointe (une suite d'octets) :
-- `key` : sa clé d'accès (comme pour tout item) ;
-- `mime` : son type mime (qui n'est pas contrôlé) le cas échéant comportant une extension quand le fichier a été gzippé / crypté (`.g` `.c` `.g` `.gc` ou rien);
-- `size` : sa taille en octets ;
-- `sha` : son digest `SHA 256`.
+Il est possible d'attacher à un document des pièces jointes *immuables*.
+- **une pièce jointe a une clé d'accès relative à son document**, typiquement le SHA de son contenu (en clair ou crypté).
+- une pièce jointe a un **contenu binaire**.
+- les clés des pièces jointes sont gérées comme des propriétés usuelles dans les items, avec en conséquence la cohérence inhérente à son document.
+- un item à deux volumes :
+    - `v1` est le volume de son texte + sa clé.
+    - `v2` est le volume de la ou des pièces jointes éventuelles gérées par l'item. C'est la logique applicative qui sait calculer ce volume.
 
-Le stockage des pièces jointes bénéficie de la même cohérence temporelle que les items avec les détails suivants :
-- le volume des fichiers eux-mêmes est décompté en tant que `v2` (secondaire) et non `v1`. Selon les fournisseurs d'infrastructure le coût du stockage peut être bien inférieur en espace secondaire qu'en espace primaire.;
-- quand des documents ont des pièces jointes ayant le même contenu (même `sha`) elles ne sont stockées qu'une fois mais décomptés en v2 autant de fois que cités dans les items P;
-- une pièce jointe ayant été modifiée (donc ayant désormais un `sha` différent) reste accessible *un certain temps* sous son ancien `sha` (s'il est demandé par son `sha` et non sa clé).  Ceci facilite l'exportation cohérente à une version donnée d'un document et de ses pièces jointes, même quand elle est volumineuse en raison de la taille des pièces jointes. Des exportations incrémentales de documents peuvent être effectuées à coût réseau minimal en évitant le re-transfert de pièces jointes déjà détenues à distance.
+Le contenu d'une pièce jointe doit être stocké avant l'enregistrement de sa référence dans son document. En conséquence il peut arriver qu'un contenu de pièce jointe soit stocké puis que finalement l'opération qui l'enregistre échoue : bref il peut exister des contenus fantômes, en trop, dans le stockage secondaire.
+
+Il est préférable de gérer la disparition des pièces jointes par un mécanisme de corbeille qui permet de disposer du contenu a minima un certain temps après sa suppression fonctionnelle :
+- ça permet de ressortir des pièces jointes de la corbeille ce qui est souvent utile.
+- ça permet de prendre un cliché instantané et cohérent d'un document tout en laissant un certain délai pour en récupérer les contenus, qui peuvent être lourds, des pièces jointes.
+
+Le stockage secondaire des pièces jointes offre trois fonctions instantanées (non couvertes par la cohérence de leur document) :
+- **stockage** du contenu.
+- **lecture** du contenu.
+- **nettoyage du document** en ne conservant que les pièces jointes citées : typiquement ce qui se passe au cours d'une opération *Vider la corbeille*.
 
 ### Mémoires persistante de référence et cache
 Il n'existe qu'une **mémoire persistante de référence** (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.

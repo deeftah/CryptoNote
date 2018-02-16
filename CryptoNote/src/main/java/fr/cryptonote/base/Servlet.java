@@ -150,6 +150,7 @@ public class Servlet extends HttpServlet {
 		boolean fini = false;
 		boolean isGet;
 		boolean isTask;
+		boolean isOpGet;
 		boolean isSW;
 		boolean isIncognito;
 		int mode; // navigation ... // 0:privée(incognito) 1:normale(cache+net) 2:locale(cache seulement)
@@ -177,8 +178,9 @@ public class Servlet extends HttpServlet {
 			this.resp = resp; 
 			this.isGet = isGet;
 			String s =  req.getRequestURI();
-			// /contextPath/namespace/... /contextPath/namespace/s/...
-			origUri = s.substring(contextPath.length() + 2);
+			// /contextPath/ping  ou  /contextPath/namespace/... ou /ping ou /namespace/...
+			int l = contextPath.length();
+			origUri = s.substring(l == 0 ? 1 : l + 2); // ping ou namespace/...
 			build = BConfig.build();
 			if ("ping".equals(origUri)) {
 				String x = "{\"t\":" + Stamp.fromNow(0).stamp() + ", \"b\":" + build + "}";
@@ -190,14 +192,14 @@ public class Servlet extends HttpServlet {
 		}
 				
 		void checkNsqm() throws IOException {
-			// namespace/... pu namespace/s/...
+			// origUri : namespace/xxx... 
 			int i = origUri.indexOf('/');
 			if (i == -1 || i == origUri.length() - 1) {
 				sendText(500, BConfig.format("500URLMF1" + (hasCP() ? "cp" : ""), origUri), resp);
 				fini = true;
 				return;
 			}
-			uri = origUri.substring(i + 1);
+			uri = origUri.substring(i + 1); // uri : xxx...
 			String ns = origUri.substring(0, i);
 			nsqm = BConfig.nsqm(ns, true);
 			if (nsqm == null) {
@@ -205,12 +207,13 @@ public class Servlet extends HttpServlet {
 				return;			
 			}
 
-			// si namespace est suivi de $ : navigation privée/incognito
+			// si uri commence par suivi de s/ : navigation privée/incognito
 			isIncognito = !uri.startsWith(SYNC2);
 			if (!isIncognito) {
 				mode = 1;
 				uri = uri.substring(SYNC2.length());
 			}
+			// uri : ce qui suit le namespace une fois débarassé de l'indicateur incognito
 			if (nsqm.isQM) {
 				if (nsqm.code.equals(BConfig.QM())) {
 					sendText(500, BConfig.format("500HQM", nsqm.code), resp);	
@@ -465,7 +468,8 @@ public class Servlet extends HttpServlet {
 		if (r.uri.endsWith("sw.js")) { r.swjs(); return;	}
 		
 		r.isTask = r.uri.startsWith("od/");
-		if (r.uri.startsWith("op/") || r.isTask){
+		r.isOpGet = r.uri.startsWith("og/");
+		if (r.uri.startsWith("op/") || r.isTask || r.isOpGet){
 			doGetPost(r);
 			return;
 		}
@@ -486,7 +490,8 @@ public class Servlet extends HttpServlet {
 		if (r.fini) return;
 				
 		r.isTask = r.uri.startsWith("od/");
-		if (r.uri.startsWith("op/") || r.isTask){
+		r.isOpGet = r.uri.startsWith("og/");
+		if (r.uri.startsWith("op/") || r.isTask || r.isOpGet){
 			doGetPost(r);
 			return;
 		}
@@ -513,25 +518,29 @@ public class Servlet extends HttpServlet {
 		Result result = null;
 		
 		try {
+			String op = null;
 			if (r.isTask) {
-				inp = taskInputData(r);
-				if (inp == null) {
+				inp = new InputData(r);
+				if (inp.taskInfo == null) {
 					sendText(200, null, r.resp);
 					return;
 				}
 				if (r.nsqm.onoff != 0) 
 					throw new AppException("OFF", BConfig.label("OFF"));
+				op = inp.args.get("op");
+			} else if (r.isOpGet){
+				inp = new InputData(r.req, r.uri.substring(3), true);
+				op = inp.uri[0];
 			} else {
 				if (r.customHeader != null && r.customHeader.build != 0 && r.customHeader.build != BConfig.build())
 					throw new AppException("DBUILD", "" + r.customHeader.build, "" + BConfig.build());
 				String ct = r.req.getContentType();
 				boolean mpfd = !r.isGet && ct != null && ct.toLowerCase().indexOf("multipart/form-data") > -1;
-				inp = !mpfd ? getInputData(r.req) : postInputData(r.req);
+				inp = new InputData(r.req, r.uri.substring(3), !mpfd);
+				op = inp.args.get("op");
 			}
 			
-			inp.uri = r.uri.substring(3);
 			inp.sslDN = r.sslDN;
-			String op = inp.args.get("op");
 			inp.operationName = op != null ? op  : "Default";			
 			if(inp.operationName.indexOf("OnOff") == -1 && r.nsqm.onoff != 0) throw new AppException("OFF", BConfig.label("OFF"));	
 			
@@ -581,95 +590,7 @@ public class Servlet extends HttpServlet {
 		resp.setCharacterEncoding(r.encoding());
 		try { Util.bytesToStream(bytes, resp.getOutputStream()); } catch (IOException e) {	}
 	}
-
-	/*********************************************************************************/
-	private InputData taskInputData(ReqCtx r) throws AppException {
-		InputData inp = new InputData();
-		String key = r.req.getParameter("key");
-		if (!r.nsqm.pwd().equals(key)) throw new AppException("STASKKEY");
-		String s = r.uri.substring(3);
-		int i = s.indexOf('/');
-		String taskid = i == -1 ? s : s.substring(0, i);
-		s = s.substring(i + 1);
-		int step = 0;
-		try { step = Integer.parseInt(s); } catch (Exception e) {}
-		// public TaskInfo startTask(String ns, String taskid, int step, long startTime)
-		inp.taskInfo = r.exec.dbProvider().startTask(r.nsqm.code, taskid, step, Stamp.fromNow(0).stamp());
-		if (inp.taskInfo != null)  {
-			inp.args.put("op", inp.taskInfo.opName);
-			return inp;
-		} else
-			return null;
-	}
 	
-	/********************************************************************************/
-	private InputData getInputData(HttpServletRequest req) {
-		InputData inp = new InputData();
-		inp.isGet = true;
-		Enumeration<String> e = req.getParameterNames();
-		while (e.hasMoreElements()) {
-			String n = e.nextElement();
-			String[] v = req.getParameterValues(n);
-			if (v.length >= 1) {
-				if (inp.args == null)
-					inp.args = new Hashtable<String, String>();
-				inp.args.put(n,  v[0]);
-			}
-		}
-		return inp;
-	}
-	
-	/********************************************************************************/
-	private InputData postInputData(HttpServletRequest req) throws AppException {
-		InputData inp = new InputData();
-		inp.isGet = false;
-		ServletFileUpload upload = new ServletFileUpload();
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		byte[] buffer = new byte[8192];
-		FileItemIterator iterator;
-		try {
-			iterator = upload.getItemIterator(req);
-			while (iterator.hasNext()) {
-				FileItemStream item = iterator.next();
-				InputStream stream = item.openStream();
-				String fn = item.getFieldName();
-				if (item.isFormField()){
-					int len;
-					bos.reset();
-					while ((len = stream.read(buffer, 0, buffer.length)) != -1)
-						bos.write(buffer, 0, len);
-					if (inp.args == null)
-						inp.args = new Hashtable<String, String>();
-					inp.args.put(fn, new String(bos.toByteArray(), "UTF-8"));
-				} else {
-					Attachment a = new Attachment();
-					FileItemHeaders fih = item.getHeaders();
-					String h = fih.getHeader("Content-Transfer-Encoding");
-					a.filename = item.getName();
-					a.name = fn;
-					a.contentType = item.getContentType();
-					int len;
-					bos.reset();
-					while ((len = stream.read(buffer, 0, buffer.length)) != -1)
-						bos.write(buffer, 0, len);
-					byte[] b = bos.toByteArray();
-					if ("base64".equals(h)){
-						a.b64 = new String(b, "UTF-8");
-						a.decodeB64();
-					} else 
-						a.bytes = b;
-					if (inp.attachments == null)
-						inp.attachments = new Hashtable<String, Attachment>();
-					inp.attachments.put(a.name, a);
-				}
-			}
-			bos.close();
-			return inp;
-		} catch (FileUploadException | IOException e) {
-			throw new AppException(e, "XINPFAILURE");
-		}
-	}	
-
 	/********************************************************************************/
 	static void sendRes(Resource r, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (r != null) {
@@ -710,7 +631,7 @@ public class Servlet extends HttpServlet {
 		private TaskInfo taskInfo;
 		private boolean isGet;
 		private boolean isTask;
-		private String uri;
+		private String[] uri;
 		private String sslDN;
 		private Hashtable<String, String> args = new Hashtable<String, String>();
 		private Hashtable<String, Attachment> attachments = new Hashtable<String, Attachment>();		
@@ -719,10 +640,90 @@ public class Servlet extends HttpServlet {
 		public boolean isTask() { return isTask; };	
 		public String operationName() {return operationName; }	
 		public TaskInfo taskInfo() { return taskInfo; }
-		public String uri() { return uri;}
+		public String[] uri() { return uri;}
 		public String sslDN() { return sslDN;}
 		public Hashtable<String, String> args() { return args; };
-		public Hashtable<String, Attachment> attachments() { return attachments; };		
+		public Hashtable<String, Attachment> attachments() { return attachments; };	
+		
+		private InputData(ReqCtx r) throws AppException {
+			String key = r.req.getParameter("key");
+			if (!r.nsqm.pwd().equals(key)) throw new AppException("STASKKEY");
+			String s = r.uri.substring(3);
+			int i = s.indexOf('/');
+			String taskid = i == -1 ? s : s.substring(0, i);
+			s = s.substring(i + 1);
+			int step = 0;
+			try { step = Integer.parseInt(s); } catch (Exception e) {}
+			// public TaskInfo startTask(String ns, String taskid, int step, long startTime)
+			taskInfo = r.exec.dbProvider().startTask(r.nsqm.code, taskid, step, Stamp.fromNow(0).stamp());
+			if (taskInfo != null)
+				args.put("op", taskInfo.opName);
+		}
+		
+		private InputData(HttpServletRequest req, String uri, boolean isGet) throws AppException {
+			this.uri = uri.split("/");
+			for(int i = 0; i < this.uri.length; i++)
+				this.uri[i] = this.uri[i].trim(); 
+			if (isGet) {
+				this.isGet = true;
+				Enumeration<String> e = req.getParameterNames();
+				while (e.hasMoreElements()) {
+					String n = e.nextElement();
+					String[] v = req.getParameterValues(n);
+					if (v.length >= 1) {
+						if (this.args == null)
+							this.args = new Hashtable<String, String>();
+						this.args.put(n,  v[0]);
+					}
+				}
+			} else {				
+				this.isGet = false;
+				ServletFileUpload upload = new ServletFileUpload();
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				byte[] buffer = new byte[8192];
+				FileItemIterator iterator;
+				try {
+					iterator = upload.getItemIterator(req);
+					while (iterator.hasNext()) {
+						FileItemStream item = iterator.next();
+						InputStream stream = item.openStream();
+						String fn = item.getFieldName();
+						if (item.isFormField()){
+							int len;
+							bos.reset();
+							while ((len = stream.read(buffer, 0, buffer.length)) != -1)
+								bos.write(buffer, 0, len);
+							if (this.args == null)
+								this.args = new Hashtable<String, String>();
+							this.args.put(fn, new String(bos.toByteArray(), "UTF-8"));
+						} else {
+							Attachment a = new Attachment();
+							FileItemHeaders fih = item.getHeaders();
+							String h = fih.getHeader("Content-Transfer-Encoding");
+							a.filename = item.getName();
+							a.name = fn;
+							a.contentType = item.getContentType();
+							int len;
+							bos.reset();
+							while ((len = stream.read(buffer, 0, buffer.length)) != -1)
+								bos.write(buffer, 0, len);
+							byte[] b = bos.toByteArray();
+							if ("base64".equals(h)){
+								a.b64 = new String(b, "UTF-8");
+								a.decodeB64();
+							} else 
+								a.bytes = b;
+							if (this.attachments == null)
+								this.attachments = new Hashtable<String, Attachment>();
+							this.attachments.put(a.name, a);
+						}
+					}
+					bos.close();
+				} catch (FileUploadException | IOException e) {
+					throw new AppException(e, "XINPFAILURE");
+				}
+			}
+		}
 	}
 	
 	/********************************************************************************/

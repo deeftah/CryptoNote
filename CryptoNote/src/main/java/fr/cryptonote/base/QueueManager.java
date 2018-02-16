@@ -3,7 +3,6 @@ package fr.cryptonote.base;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -20,9 +19,8 @@ public class QueueManager implements Runnable {
 	
 	private static boolean isDatastore;
 	private static String myName;
-	private static ArrayList<Nsqm> myNSs;
-	private static ArrayList<String> myNSnames = new ArrayList<String>();
-	private static HashSet<String> myDBs = new HashSet<String>();
+	private static ArrayList<Nsqm> myNSs = new ArrayList<Nsqm>();
+	private static String[] myDBs;
 	public static boolean hostsQM; 
 	private static QueueManager qm;
 	private static int nbQueues;
@@ -43,10 +41,16 @@ public class QueueManager implements Runnable {
 	static void startQM() {
 		isDatastore = (BConfig.dbProviderName()).endsWith("DS");
 		myName = BConfig.QM();
-		myNSs = BConfig.namespacesByQM(myName); 
-		if (myNSs != null) for(Nsqm x : myNSs) { myDBs.add(x.base()); myNSnames.add(x.code); }
-		hostsQM = myName != null && myNSs != null && !isDatastore && myNSs.size() != 0; 
+		hostsQM = myName != null && !isDatastore; 
 		if (!hostsQM) return;
+		myNsqm = BConfig.queueManager(myName, false);
+		myDBs = myNsqm.bases();
+		for(String db : myDBs)
+			for(Nsqm x : BConfig.namespacesByDB(db)) 
+				myNSs.add(x);
+		hostsQM = myNSs.size() != 0; 
+		if (!hostsQM) return;
+		
 		myNsqm = BConfig.queueManager(myName, false);
 		nbQueues = myNsqm.threads.length;
 		qm = new QueueManager();
@@ -134,7 +138,8 @@ public class QueueManager implements Runnable {
 	public static PostResponse enqueue(TaskMin tm) throws AppException {
 		Nsqm ns = BConfig.namespace(tm.ns, false);
 		if (ns == null) throw new AppException("BNSUNKNOWN", tm.ns);
-		Nsqm nsqm = BConfig.queueManager(ns.qm, false);
+		String db = ns.base();
+		Nsqm nsqm = BConfig.qmOfDB(db);
 		if (nsqm == null) throw new AppException("BNSQMUNKNOWN", tm.ns);
 		if (tm.startAtEpoch() > System.currentTimeMillis() + (nsqm.scanlapseinseconds() * 1000)) return new PostResponse(200, null);
 		if (nsqm == myNsqm) { // inscription locale sans passer par un POST

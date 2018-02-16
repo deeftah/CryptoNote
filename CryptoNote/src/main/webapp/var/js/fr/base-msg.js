@@ -69,6 +69,13 @@ App.setAll("fr", {
 "XMAILJAVAMAIL":"Echec d''envoi (JAVAMAIL) du mail : [{0}]",
 "BMAILTYPE":"Paramètres du mail incorrects. url : [{0}]",
 
+"XNAMESPACEPWD":"Paramètre \"pwd\" absent pour [{0}]",
+"XNAMESPACEBASES3":"Paramètre \"bases\" avec base[{1}] absente pour [{0}]",
+"XNAMESPACEBASES4":"Paramètre \"bases\" avec base {1} inconnue pour [{0}]",
+"XNAMESPACEBASES5":"Paramètre \"bases\" avec base {1} en doublon pour [{0}]",
+"XNAMESPACEBASES6":"Base {0} ayant 2 QueueManagers [{1} {2}]",
+"XNAMESPACEBASE1":"Paramètre \"base\" vide pour [{0}]",
+
 "XSQL0":"Echec SQL - opération:[{0}] méthode:[{1}] namespace:[{2}] sql:[{3}]\nmessage:[{4}]",
 "XSQLDS":"Datasource pour la base [{0}] non initialisable.\nmessage:[{1}]",
 

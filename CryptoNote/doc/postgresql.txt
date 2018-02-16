@@ -99,10 +99,6 @@ CREATE TABLE item (
 ALTER TABLE item OWNER TO "docdb";
 
 /* Pour chaque namespace NS hébergé dans la base ******************************/
-DROP TABLE IF EXISTS s2cleanup_NS;
-CREATE TABLE s2cleanup_NS (CONSTRAINT s2cleanup_NS_pk PRIMARY KEY (clid, hour)) INHERITS (s2cleanup);
-ALTER TABLE s2cleanup_NS OWNER TO "docdb";
-
 DROP TABLE IF EXISTS consts_NS;
 CREATE TABLE consts_NS (
   	key varchar(256) NOT NULL,
