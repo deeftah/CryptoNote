@@ -1280,1104 +1280,557 @@
   </head>
 <body>
 <!-- Content goes here. The div must have an id of "content" -->
-<div id="content"><h1>Document DB - API</h1>
-<h1>Requêtes HTTP et Contextes d'exécution</h1>
-<p>Les sessions externes émettent des requêtes HTTPS qui peuvent être des GET ou des POST.</p>
-<h3>Applications : <code>context-path</code>, ping, build</h3>
-<p>Le pool de serveurs peut servir plusieurs instances internes d'application, chacune relative à une organisation, l'URL étant différente selon qu'il y a ou un <code>context-path</code> <code>cp</code> :</p>
-<pre><code>Sans context-path    : https://site.org/monOrg/xxx...
-Avec context-path cp : https://site.org/cp/monOrg/xxx...
-</code></pre>
-<p>A la place de <code>monApp</code> on peut avoir <code>admin</code> afin d'adresser l'application d'administration  globale des instances (on/off, gestion des tâches différées).<br>
-Par la suite on ne considère les URLs qu'à partir de <code>monOrg/...</code></p>
-<h5>GET <code>ping</code></h5>
-<pre><code>(1) ping
-(2) monOrg/ping
-(3) admin/ping
-</code></pre>
-<p>Retourne un JSON avec :</p>
+<div id="content"><h1>Document DB</h1>
+<p>La stockage persistant enregistre les types d'éléments :</p>
 <ul>
-<li><code>t</code> : la date-heure sous la forme estampille : <code>180124175849876</code></li>
-<li><code>b</code>: le numéro de build : 264</li>
-<li>pour les formes 2 et 3 :
+<li>des <strong>documents</strong> ayant une identification et une version.</li>
+<li>des <strong>constantes</strong> ayant un identifiant et un alias unique. Après sa création une constante peut être détruite mais n'est jamais mise à jour.</li>
+<li>des <em>items statistiques</em> sur les opérations invoquées.</li>
+</ul>
+<p>La mise en œuvre est considérée sous deux environnements :</p>
 <ul>
-<li><code>off</code> : 0 ou 1 selon que l'instance est on ou off. L'opération <code>setOnOff</code> permet à l'administrateur de mettre on ou off une instance.</li>
-<li><code>db</code> : le message d'information stocké dans la table <code>dbinfo</code> de la base de l'instance. Si <code>?</code> elle n'est pas joignable.</li>
+<li>DS/GAE : Google App Engine (servlets Java) et son datastore.</li>
+<li>PG/SQL : serveurs de servlets Java avec une base de données SQL (en l'occurrence PostgreSQL).</li>
 </ul>
-</li>
+<h1>Instances internes</h1>
+<p>L'URL d'accès donne ordinairement accès à un pool de serveurs qui héberge N <strong>instances</strong>  travaillant chacune sur <strong>son propre espace de données</strong> indépendant des autres et identifié par un nom court. Plusieurs organisations peuvent ainsi mutualiser des ressources et bénéficier chacune ponctuellement de pics de charge pendant le creux des autres ainsi que d'une administration technique commune.</p>
+<p>Chaque instance peut être mise <strong>on/off</strong> :</p>
+<ul>
+<li>ponctuellement par instance.</li>
+<li>globalement pour toutes les instances dans le cas d'une maintenance technique globale.</li>
+<li>c'est la fonction principale d'une instance spécifique <code>admin</code>, son autre fonction étant l'administration / surveillance centralisée des tâches différées en attente (ou archivées).</li>
 </ul>
-<p><strong>Queue Managers</strong>
-Certains hosts sont chargés de gérer la file des tâches différées pour une ou plusieurs instances : ils ont un code d'instance commençant par <code>qm</code> et le front end nginx se charge de router les quelques opérations spécifiques à un Queue Manager en détectant le nom d'instance.</p>
+<p>Le fichier de configuration générale comporte, en plus de paramètres généraux, une entrée spécifique par instance qui exprime ses choix de customisation spécifique portant sur :</p>
+<ul>
+<li>des thèmes graphiques spécifiques.</li>
+<li>des libellés / traductions spécifiques pouvant se substituer à ceux généraux.</li>
+<li>des dictionnaires et langues spécifiques.</li>
+<li>quelques options, principalement de session terminale spécifiques.</li>
+<li>des pages d'accueil spécifiques, voire quelques pages internes spécifiques.</li>
+</ul>
+<h4>Déploiement sur R-DBMS</h4>
+<p>Plusieurs serveurs peuvent héberger un Queue Manager :</p>
+<ul>
+<li>le code du Queue Manager hébergé figure sur la ligne de commande qui lance le serveur (<code>-Dqueuemanager=qm7</code>).</li>
+<li>le <em>front end</em> qui route les requêtes sur le pool de serveurs redirige les URLS <code>http://pool/qm7/..</code> vers le serveur du pool qui héberge <code>qm7</code>.</li>
+<li>un Queue Manager gère les tâches différées d'une ou de plusieurs bases de données.</li>
+</ul>
+<p>Il <em>peut</em> exister <strong>plusieurs bases de données</strong> :</p>
+<ul>
+<li>chacune héberge les tables <strong>d'une ou de plusieurs instances</strong>. Le nom des tables contient le code de l'instance.</li>
+<li>chacune a une table <code>TaskQueue</code> qui permet au serveur Queue Manager assigné à cette base de gérer les tâches différées de toutes les instances hébergées par cette base.</li>
+</ul>
+<p>L'instance <code>admin</code> ne comporte qu'une petite table technique et est hébergé par la base d'une instance.</p>
 <blockquote>
-<p>Pour chaque host il est nécessaire de savoir quel Queue Manager il exécute. Ceci est indiqué dans la variable système <strong>-Dqueuemanager=qm1</strong> de la ligne de commande qui lance le serveur.</p>
+<p>Synthèse :</p>
+<ul>
+<li>chaque instance a son URL qui aboutit sur le <em>front end</em> (nginx)  joue un rôle de load balancing vers les hosts du pool de serveurs. Si on souhaite spécialiser des hosts pour des instances, le load balancing redirige les URLs des instances sur le sous pool correspondant.</li>
+<li>chaque host <em>peut</em> héberger un Queue Manager dont le code apparaît alors dans l'URL locale du host. Ce QM gère les tâches différées d'une ou plusieurs bases.</li>
+<li>chaque instance spécifie sur quelle base ses données sont hébergées, la table <code>TaskQueue</code> de la base contenant ses tâches différées.</li>
+</ul>
 </blockquote>
-<h2>Ressources Web</h2>
-<p>Les ressources web sont /var et /WEB-INF mais celle-ci n'étant pas accessible depuis un GET il ne reste que les ressources localisées sous <code>/var</code>.<br>
-Une page d'accueil (home) pour l'instance <code>monOrg</code> ressemble à ça et a été générée en utilisant le template /var/index.html</p>
-<pre><code>&lt;!-- Partie générée sur le serveur en remplacement de la première ligne de index.html --&gt;
-&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;base href=&quot;/cp/monOrg/var281/&quot;&gt;
-&lt;meta http-equiv='Content-Type' content='text/html; charset=utf-8'&gt;
-&lt;script src='js/build.js'&gt;&lt;/script&gt; &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;(1)
-&lt;script src='js/root.js'&gt;&lt;/script&gt;  &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;(2)
-
-&lt;!-- Ce texte est inséré par le serveur en fonction de l'instance et de sa configuration -&gt;
-&lt;script type='text/javascript'&gt;
-App.modeMax = 0;
-App.buildAtPageGeneration = 281;
-App.zone = &quot;Europe/Paris&quot;;
-App.langs = [&quot;fr&quot;,&quot;en&quot;];
-App.lang = &quot;fr&quot;;
-App.theme = &quot;z&quot;;
-App.themes = JSON.parse('[&quot;z&quot;,&quot;a&quot;,&quot;b&quot;,&quot;en&quot;,&quot;fr&quot;]');
-App.helpDic = JSON.parse('{&quot;p12&quot;:{&quot;p&quot;:&quot;p11&quot;,&quot;t&quot;:&quot;s1&quot;,&quot;refs&quot;:[&quot;p22&quot;]},&quot;p11&quot;:{&quot;t&quot;:&quot;s1&quot;,&quot;s&quot;:&quot;p12&quot;,&quot;refs&quot;:[&quot;p22&quot;]},&quot;p22&quot;:{&quot;p&quot;:&quot;p21&quot;,&quot;t&quot;:&quot;s1&quot;,&quot;refs&quot;:[&quot;p11&quot;,&quot;p12&quot;]},&quot;s1&quot;:{&quot;t&quot;:&quot;home&quot;,&quot;s&quot;:&quot;s2&quot;,&quot;refs&quot;:[&quot;p11&quot;,&quot;p12&quot;]},&quot;p21&quot;:{&quot;t&quot;:&quot;s1&quot;,&quot;s&quot;:&quot;p22&quot;,&quot;refs&quot;:[]},&quot;home&quot;:{&quot;refs&quot;:[&quot;s1&quot;,&quot;s2&quot;]},&quot;s2&quot;:{&quot;p&quot;:&quot;s1&quot;,&quot;t&quot;:&quot;home&quot;,&quot;refs&quot;:[&quot;p21&quot;,&quot;p22&quot;]}}');
-App.zDics = {};
-App.customThemes = {};
-App.zres = {
-};
-&lt;/script&gt;
-&lt;script src='js/fr/base-msg.js'&gt;&lt;/script&gt;
-&lt;script src='js/fr/app-msg.js'&gt;&lt;/script&gt;
-&lt;script src='js/fr/theme.js'&gt;&lt;/script&gt;
-&lt;script src='js/en/app-msg.js'&gt;&lt;/script&gt;
-&lt;script src='js/en/theme.js'&gt;&lt;/script&gt;
-&lt;script src='js/theme-z.js'&gt;&lt;/script&gt;
-&lt;script src='js/theme-a.js'&gt;&lt;/script&gt;
-&lt;script src='js/theme-b.js'&gt;&lt;/script&gt;
-
-&lt;!-- Le texte qui suit est directement celui du template index.html. -&gt;
-&lt;title&gt;CN-test&lt;/title&gt;
-&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/png&quot; href=&quot;z/z/icon.png&quot;&gt;
-&lt;script&gt;App.setup();&lt;/script&gt;                    &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;(3)
-&lt;script src='js/encoding.js'&gt;&lt;/script&gt;
-&lt;script src='js/pako.js'&gt;&lt;/script&gt;
-&lt;script src='js/bcrypt.js'&gt;&lt;/script&gt;
-&lt;script src='js/showdown.min.js'&gt;&lt;/script&gt;
-&lt;script src='js/util.js'&gt;&lt;/script&gt;
-
-&lt;script src=&quot;bower_components/webcomponentsjs/webcomponents-loader.js&quot;&gt;&lt;/script&gt;
-&lt;link rel=&quot;import&quot; href=&quot;bower_components/polymer/polymer-element.html&quot;&gt;
-&lt;link rel=&quot;import&quot; href=&quot;base.html&quot;&gt;
-&lt;link rel=&quot;import&quot; href=&quot;shared1.html&quot;&gt;
-&lt;link rel=&quot;import&quot; href=&quot;shared2.html&quot;&gt;
-&lt;link rel=&quot;import&quot; href=&quot;shared3.html&quot;&gt;
-&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;fonts/roboto.css&quot;&gt;
-&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;fonts/roboto-mono.css&quot;&gt;
-&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;fonts/comfortaa.css&quot;&gt;
-&lt;link rel=&quot;import&quot; href=&quot;app_components/app-homes.html&quot;&gt;
-&lt;script src='js/custom.js'&gt;&lt;/script&gt;
-&lt;script src='z/z/custom.js'&gt;&lt;/script&gt;
-&lt;/head&gt;
-&lt;body&gt;
-&lt;app-homes&gt;&lt;/app-homes&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
-<p>Dans ce texte générée par le servlet <code>281</code> est le numéro de build. Sa présence permet de mettre hors jeu les ressources gardées en cache d'une build antérieure : dans le répertoire déployé il n'apparaît que <code>../var/...</code></p>
-<h4>Structure du /var</h4>
-<pre><code>app_components/
-bower_compoents/
-fonts/
-js/
-z/
-base.html
-bower.json
-bye.html
-index.html
-reload.html
-reload2.html
-reload3.html
-shared.html
-</code></pre>
-<p><strong>app_components/</strong> : répertoire contenant les web components de l'application. Quand on souhaite ne pas laisser les scripts (sauf les très simples) dans le <code>.html</code> où ils peuvent poser problèmes de debug dans d'autres browser que Chrome, on les retrouve ici avec <code>.js</code>.</p>
-<p><strong>bower_components/</strong> : répertoire contenant les web components externes (Polymer etc.).</p>
-<p><strong>fonts/</strong> : répertoire contenant les fichiers <code>f1.css</code> des fontes f1 et <code>f1x.woff</code> référencés dans les <code>f1.css</code>.</p>
-<p><strong>js/</strong> :</p>
+<h5>Déploiement GAE Datastore</h5>
+<p>Chaque instance correspond à un <code>namespace</code>.</p>
+<p>Le Datastore a son lanceur de tâches mais l'entity <code>TaskQueue</code> existe  avec les mêmes données : elle réside sous le même namespace que l'instance. Il n'y a pas de Queue Manager.</p>
+<p>Chaque instance étant étanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de <code>TaskQueue</code> (une table par base) et <code>OnOff</code> (une table pour toutes les instances dans une des bases) qui peuvent être relatives à plusieurs instances.</p>
+<h1>Constantes</h1>
+<p>Chaque instance peut avoir des constantes. Une constante :</p>
 <ul>
-<li>un répertoire par langue contenant les fichiers <strong>base-msg.js app-msg.js theme.js</strong></li>
-<li>les fichiers <strong>.js</strong> de l'application (en particulier ceux des web components) et les fichiers spécifiques suivants :
+<li>a une clé primaire String (256 caractères au plus).</li>
+<li>un alias éventuel, unique, String (256 caractères au plus).</li>
+<li>un contenu String (en général un JSON).</li>
+</ul>
+<p>Une constante peut être <strong>créée</strong>, <em>détruite</em> mais <strong>pas mise à jour</strong> ce qui optimise la gestion de cache. Du fait du phénomène de cache la destruction d'une constante ne doit pas avoir de conséquence fonctionnelle et ne doit correspondre qu'à une purge de données obsolètes inutiles.</p>
+<h1>Documents et items</h1>
+<p>Le stockage de données apparaît comme un ensemble de <strong><em>documents</em></strong> :</p>
 <ul>
-<li><strong>build.js</strong> : ce fichier est à changer à chaque build et son format est contraint.
-<code>appbuild = 281;</code></li>
-<li><strong>root.js</strong> : premier script chargé, déclare la classe App et l'initialise, enregistre le service worker. Il est réellement exécuté à la ligne (3).</li>
-<li><strong>util.js</strong> : contient les classes utilitaires requises.</li>
-<li><strong>sw.js</strong> : template du script du service worker.</li>
-<li>service worker : déclare les mime types acceptés des ressources et spécifie ceux qui peuvent subir une compression. <strong>Peut être customisé</strong>.</li>
-<li><strong><em>Scripts externes</em></strong> :
+<li>un document a une <strong>classe</strong> qui en Java étend la classe <code>Document</code>.</li>
+<li>un document est <strong>identifié</strong> par un <code>String</code> nommé par la suite <code>docid</code> d'une longueur maximale de 255. Les identifiants des documents ne doivent jamais être réutilisés : <strong>un document d'identifiant donné a UNE vie</strong>. Supprimer un document et en recréer un autre avec le même identifiant créerait des troubles insurmontables dans la gestion des copies distantes.</li>
+<li>un document a une <strong>version</strong>, une date-heure en millisecondes UTC sous forme d'un <code>long</code> lisible (171128094052123) et croissante dans le temps : la version est la date-heure de la dernière opération ayant mis à jour le document.</li>
+<li>un document à une <strong><code>dtime</code></strong> qui est la date-heure au delà de laquelle le document a gardé la trace des items détruits (voir la gestion des mémoires persistante et cache).</li>
+</ul>
+<p>Une classe de document a <strong>des données qui représentent l'entête du document</strong>.</p>
+<h3>Items</h3>
+<p>En plus de son entête, un document a en général un <strong><em>ensemble d'items</em></strong> chacun ayant,</p>
 <ul>
-<li><strong>encoding.js</strong> : pallie pour Edge au manque de la classe <code>TextEncoder</code>.</li>
-<li><strong>pako.js</strong> : gzip en javascript.</li>
-<li><strong>showdown.min.js</strong> : conversion MD en HTML.</li>
-<li><strong>bcrypt.js</strong> : digest BCRYPT.</li>
+<li>une <strong>classe</strong> d'item qui en Java correspond à une sous classe statique de la classe du document et qui étend la classe <code>Document.BItem</code> et plus spécifiquement <code>Item</code> <code>RawItem</code> <code>Singleton</code> <code>RawSingleton</code> qui étendent <code>BItem</code>.
+<ul>
+<li>un <code>Singleton</code> existe en une occurrence au plus dans son document.</li>
+<li>un <code>Item</code> existe en 0 à N occurrences identifiées par un <code>String</code> nommé par la suite <code>key</code> d'une longueur maximale de 255 caractères.</li>
 </ul>
 </li>
-<li><strong><em>Scripts de définition des thèmes</em></strong> : <strong>theme-z.js theme-a.js theme-b.js</strong></li>
+<li>une <strong>version</strong> : c'est la date-heure de l'opération qui a <em>mis à jour l'item</em> et qui se retrouve comme version du document après validation de cette opération.</li>
+<li>un item a un <strong>contenu</strong> <code>String</code> qui peut être,
+<ul>
+<li>un JSON (<code>Singleton</code> et <code>Item</code>),</li>
+<li>un <code>String</code> opaque (<code>RawSingleton</code> et <code>RawItem</code>), typiquement l'encodage en base 64 d'un vecteur d'octets.</li>
+</ul>
+</li>
+<li>un <strong>contenu <code>null</code></strong> indique un item détruit (<code>vop</code> est 0), sa <em>version</em> indiquant quelle opération l'a détruit. Un item détruit peut rester connu en tant que tel pendant un certain temps afin de permettre la synchronisation rapide du contenu du document avec un contenu distant, puis être finalement physiquement purgé.</li>
+</ul>
+<p>L'entête d'un document a les mêmes contraintes qu'un item JSON : son contenu n'est toutefois jamais <code>null</code>.</p>
+<h5>Items JSON</h5>
+<p>Les propriétés d'un item JSON ou d'un document peuvent être :</p>
+<ul>
+<li>d'un des types primitifs : <code>long, int, double, boolean</code> ;</li>
+<li>d'une classe interne <code>?</code> ou des <code>Map&lt;String,?&gt;</code> ou des <code>Collection&lt;?&gt;</code> où les classes <code>?</code> elles-même peuvent avoir le même type de propriétés.</li>
+</ul>
+<blockquote>
+<p><strong><em>Remarque :</em></strong> les noms des classes de Document et d'Item dans un document doivent être le plus court possible afin de réduire la taille des index et clés en stockage.</p>
+</blockquote>
+<p><strong>Sérialisation en JSON</strong> : les propriétés <code>transient</code> ne sont pas sérialisées et les propriétés ayant une valeur <code>null</code> non plus (sauf en tant que valeurs à l'intérieur d'une <code>Map</code> ou <code>Collection</code>).</p>
+<h5>Pièces jointes attachées à un document</h5>
+<p>Il est possible d'attacher à un document des pièces jointes <em>immuables</em>.</p>
+<ul>
+<li><strong>une pièce jointe a une clé d'accès relative à son document</strong>, typiquement le SHA de son contenu (en clair ou crypté).</li>
+<li>une pièce jointe a un <strong>contenu binaire</strong>.</li>
+<li>les clés des pièces jointes sont gérées comme des propriétés usuelles dans les items, avec en conséquence la cohérence inhérente à son document.</li>
+<li>un item à deux volumes :
+<ul>
+<li><code>v1</code> est le volume de son texte + sa clé.</li>
+<li><code>v2</code> est le volume de la ou des pièces jointes éventuelles gérées par l'item. C'est la logique applicative qui sait calculer ce volume.</li>
 </ul>
 </li>
 </ul>
-<p><strong>z/</strong> :</p>
+<p>Le contenu d'une pièce jointe doit être stocké avant l'enregistrement de sa référence dans son document. En conséquence il peut arriver qu'un contenu de pièce jointe soit stocké puis que finalement l'opération qui l'enregistre échoue : bref il peut exister des contenus fantômes, en trop, dans le stockage secondaire.</p>
+<p>Il est préférable de gérer la disparition des pièces jointes par un mécanisme de corbeille qui permet de disposer du contenu a minima un certain temps après sa suppression fonctionnelle :</p>
 <ul>
-<li>un sous répertoire pour chaque instance contenant ses surcharges spécifiques des valeurs par défaut qui sont dans <code>z/z/</code>. Par principe toutes les ressources requises se trouvent dans <code>z/z/</code> mais s'il en existe une de même nom pour le sous-répertoire d'une instance c'est celle-ci qui est prise quand cette instance s'exécute dans un browser.</li>
-<li><strong>custom.js</strong> : classe d'interface entre la couche de base et l'application. La méthode <code>static ready()</code> est invoquée quand tout est chargé. Elle peut être différente d'une application à l'autre. Elle étend / surcharge <code>CustomTemplate</code> de <code>js/custom.js</code>.</li>
-<li><strong>shared1.html shared2-styles</strong> : ils peuvent être inclus dans le <code>custom-style</code> dans les web components qui en ont besoin. Ces styles ne référencent pas d'attributs de présentation (couleur, taille, fonte) en dur mais uniquement des variables qu'on va trouver dans les thèmes.</li>
+<li>ça permet de ressortir des pièces jointes de la corbeille ce qui est souvent utile.</li>
+<li>ça permet de prendre un cliché instantané et cohérent d'un document tout en laissant un certain délai pour en récupérer les contenus, qui peuvent être lourds, des pièces jointes.</li>
 </ul>
-<p><strong>base.html</strong> : c'est le <code>&lt;custom-style&gt;</code> applicable dans la page d'accueil et qui régit les dimensionnements des fontes selon la taille des pages afin que le reste de l'application s'exprime en <code>rem</code>.</p>
-<p><strong>bower.json</strong> : pour mettre à jour les web components externes. Pas d'intérêt pour l'application mais il doit être là.</p>
-<p><strong>bye.html</strong> : page d'adieu invoquée en sortie de l'application.</p>
-<p><strong>index.html</strong> : template de la page d'accueil générique.</p>
-<p><strong>reload.html reload2.html reload3.html</strong> : trois pages nécessaires pour arriver à faire recharger une nouvelle version dans le cas d'un service worker.</p>
-<p><strong>WEB-INF</strong><br>
-Il comporte les fichiers suivants :</p>
+<p>Le stockage secondaire des pièces jointes offre trois fonctions instantanées (non couvertes par la cohérence de leur document) :</p>
 <ul>
-<li><strong>web.xml</strong> : contient principalement le nom de la classe d'application de configuration et toutes les liens vers les ressources jdbc requises (en gros la liste des bases).</li>
-<li><strong>appengine-web.xml queue.xml</strong> : configuration pour GAE.</li>
-<li><strong>logging.properties</strong> : configuration du logger.</li>
-<li><strong>base-config.json</strong> : configuration de l'application et des instances.</li>
-<li><strong>app-config.json</strong> : configuration complète spécifique de l'application.</li>
+<li><strong>stockage</strong> du contenu.</li>
+<li><strong>lecture</strong> du contenu.</li>
+<li><strong>nettoyage du document</strong> en ne conservant que les pièces jointes citées : typiquement ce qui se passe au cours d'une opération <em>Vider la corbeille</em>.</li>
+<li><strong>copie / déplacement</strong> d'une pièce jointe d'un document à un autre.</li>
 </ul>
-<h2>Pages d'accueil et URLs</h2>
-<p>Chaque instance peut avoir une ou plusieurs pages d'accueil :</p>
+<h3>Mémoires persistante de référence et cache</h3>
+<p>Il n'existe qu'une <strong>mémoire persistante de référence</strong> (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.</p>
+<p>Il existe de nombreuses <strong>mémoires caches</strong> de documents, qui sont toujours potentiellement retardées (dispose d'une version antérieure) par rapport à la référence persistante :</p>
 <ul>
-<li>chaque page d'accueil a un nom <code>home admin index</code> ... et la configuration spécifie si la page peut être en mode <code>sync</code> ou <code>avion</code>.</li>
-<li>la page générique d'accueil <code>app-homes.html</code> reprend toutes les pages (d'accueil  ou non) possibles pour toutes les instances, sachant que plusieurs instances peuvent avoir une même page d'accueil.</li>
-<li>à chaque page d'accueil correspond une <em>top bar</em> qui ne changera pas alors que la navigation permet de passer à d'autres pages que celle d'accueil. Toutes les pages possibles figurent dans <code>app-homes</code>.</li>
-</ul>
-<h3>URLs d'une instance</h3>
-<pre><code>monOrg/home2      &gt;&gt;&gt; page d'accueil home2 de l'instance monOrg en incognito
-monOrg/s/home2    &gt;&gt;&gt; page d'accueil home2 de l'instance monOrg en mode sync
-monOrg/s/home2.a  &gt;&gt;&gt; page d'accueil home2 de l'instance monOrg en mode avion
-
-monOrg/var...     &gt;&gt;&gt; ressources accessibles par GET en mode incognito
-monOrg/s/var...   &gt;&gt;&gt; ressources accessibles par GET en mode sync et avion
-
-monOrg/x.appcache &gt;&gt;&gt; en attente de passage en service worker
-
-monOrg/s/sw.js    &gt;&gt;&gt; script du service worker spécifique à cette instance
-
-monOrg/ping       &gt;&gt;&gt; ping en GET et POST
-monOrg/op/...     &gt;&gt;&gt; appel d'une opération en POST 
-monOrg/od/...     &gt;&gt;&gt; appel d'une opération différée en POST
-</code></pre>
-<p><strong><em>Raccourcis d'URLs</em></strong> pour les pages d'accueil
-La configuration permet de définir des URLs raccourcies correspondant aux chargements des pages d'accueil : ceci permet de fournir aux utilisateurs une URL plus simple et en particulier de sauter le <em>code de l'organisation</em>. In fine dès le début du GET la substitution intervient et c'est comme si l'utilisateur avait saisi l'URL complète.</p>
-<pre><code>https://site.org/cp/ -&gt; https://site.org/cp/monOrg/home2
-https://site.org/cp/ad -&gt; https://site.org/cp/admin/admin
-</code></pre>
-<h4>Ressources en /var/z</h4>
-<p>Une ressource <code>/var/z/z/toto.png</code> demandée par l'instance <code>monOrg</code> est obtenue depuis :</p>
+<li>éventuellement dans le cas Datastore une en mémoire <em>memcached</em> <em>commune à tous les serveurs du pool</em> servant les opérations.</li>
+<li>une mémoire cache <em>volatile dans chaque serveur du pool</em> servant les opérations.</li>
+<li>dans les <em>sessions externes clientes</em>:
 <ul>
-<li><code>/var/z/monOrg/toto.png</code>,</li>
-<li>si elle n'a pas été trouvée elle est recherchée en <code>/var/z/z/toto.png</code></li>
-</ul>
-<p>Le répertoire <code>/var/z/z/...</code> contient toutes les ressources par défaut qui sont en priorité recherchées dans le répertoire spécifique de l'instance <code>monOrg</code> <code>/var/z/monOrg/...</code></p>
-<h4>Traduction des messages</h4>
-<p>Un message a un <strong>code</strong> et un <strong>texte</strong> dans lequel les arguments <code>{0} {1} ...</code> sont remplacés par les paramètres positionnels passés lors de l'obtention du texte. Les simples <code>quotes</code> doivent être doublés, les <code>doubles quotes</code> précédés d'un <code>backslash</code>.<br>
-Un fichier de traduction est un script <code>.js</code> qui respecte cette syntaxe :</p>
-<pre><code>App.setAll(&quot;en&quot;, {
-&quot;ns_test&quot;:&quot;Test : workgroups and associations&quot;,
-&quot;ns_admin&quot;:&quot;Hosted Organizations Administration&quot; 
-});
-</code></pre>
-<p>Tout ce qui est entre le premier <code>{</code> et le dernier <code>}</code> (inclus) respecte strictement une syntaxe JSON.</p>
-<p>Les fichiers de traductions pour une langue donnée <code>fr</code> et une instance donnée <code>monOrg</code> sont chargés dans l'ordre suivant, le dernier trouvé étant retenu :</p>
-<pre><code>js/fr/base-msg.js js/fs/app-msg.js z/monOrg/fr/base-msg.js z/monOrg/fr/app-msg.js 
-</code></pre>
-<h4>Définition des thèmes graphiques</h4>
-<p>Les thèmes graphiques sont nommés <code>a b ...</code> Le thème <code>z</code> est le thème virtuel contenant les valeurs par défaut.</p>
-<ul>
-<li>il existe de plus un correctif de thème par langue, pour les quelques données CSS pouvant dépendre de la langue (<code>after</code> / <code>before</code> et quelques images.</li>
-<li>un thème est défini par une liste de variables CSS sous la syntaxe ci-dessous.</li>
-<li>la liste des valeurs finalement applicables pour le thème <code>a</code> en langue <code>fr</code> résulte de l'application des scripts : <code>js/theme-z.js js/theme-a.js js/fr/theme.js</code></li>
-</ul>
-<p><em>Syntaxe d'un fichier thème :</em></p>
-<pre><code>App.setTheme(&quot;z&quot;, {
-&quot;--font-mono&quot; : &quot;'Roboto Mono'&quot;,
-&quot;--font-std&quot; : &quot;'Roboto'&quot;,
-&quot;--font-cf&quot; : &quot;'Comfortaa'&quot;,
-&quot;--btnstd-color&quot;: &quot;var(--paper-indigo-900)&quot;,
-...
-});
-</code></pre>
-<h2>Invocation d'opérations</h2>
-<p>URLs : <code>/cp/monOrg/op/p1/p2 ...</code>  ou <code>cp/monOrg/od/taskid/step</code></p>
-<p>Les autres arguments sont passés soit en <code>application/x-www-form-urlencoded</code> (sur un GET) ou en <code>multipart/form-data</code> (sur un POST) :</p>
-<ul>
-<li><code>op/</code> :  obligatoire, signale un appel d'opération. Ce code est <code>od/</code> pour une opération différée <em>émise</em> par le Queue Manager.</li>
-<li><code>p1 p2 ...</code> sont facultatifs. Ils peuvent être obtenus par <code>inputData.uri()</code> qui retourne un <code>String[]</code>;</li>
-<li>les <strong><em>arguments</em></strong> sont récupérables par <code>inputData.args().get(&quot;nom argument&quot;)</code>:
-<ul>
-<li>l'argument de nom <strong><code>op</code></strong> donne le nom de l'opération et permet de trouver la classe de l'opération à instancier.</li>
-<li>les arguments de nom <strong><code>account key sudo</code></strong> sont en général utilisés pour gérer les habilitations à effectuer l'opération.</li>
-<li>l'argument de nom <strong><code>param</code></strong> est traité spécifiquement : c'est un JSON et il est dé-sérialisé dans le champ de nom <code>param</code> de l'opération.</li>
-<li><strong><em>dans le cas d'un POST des pièces jointes peuvent être transmises</em></strong> : elles sont récupérables par <code>inputData.attachments().get(&quot;name&quot;)</code> qui retourne un objet (ou <code>null</code>) portant les informations <code>name, fileName, contentType, bytes</code>.</li>
+<li>une mémoire cache volatile dans chaque session active.</li>
+<li>éventuellement une (ou des) mémoire cache persistante locale au terminal survivant aux interruptions de sessions.</li>
 </ul>
 </li>
 </ul>
-<h2><code>ExecContext</code></h2>
-<p>Un objet de la classe <code>ExecContext</code> est créé par l'arrivée d'une requête et suit son thread durant sa vie.<br>
-Cet objet se récupère par <code>ExecContext.current()</code> à n'importe quel endroit du code.</p>
-<p>Quelques informations disponibles sur <code>ExecContext</code> :</p>
-<pre><code>public boolean hasAdminKey() 
-</code></pre>
-<p>Retourne true si l'argument de la requête <code>admin</code> en base 64, représente un <code>byte[]</code> dont le SHA-256 en base 64 est égal au paramètre de configuration <code>secretKey</code>.</p>
-<pre><code>public boolean hasQmKey() 
-</code></pre>
-<p>Retourne true si l'argument de la requête <code>admin</code> en base 64, représente un <code>byte[]</code> dont le SHA-256 en base 64 est égal au paramètre de configuration <code>qmSecretKey</code>.</p>
-<pre><code>public int phase() 
-</code></pre>
-<p>Retourne numéro de phase ou s'en trouve l'exécuion.</p>
-<pre><code>public String operationName()
-public Operation operation()
-</code></pre>
-<p>Retournent le nom de l'opération en cours et son objet (du moins quand la requête en est à une phase où une opération est en exécuttion <code>work()</code> ou <code>afterwork()</code>).</p>
-<pre><code>public String ns()
-</code></pre>
-<p>Retourne le code du namespace sur lequel la requête s'effectue.</p>
-<pre><code>public boolean isTask()
-</code></pre>
-<p>Indique si l'opération est normale ou différée.</p>
-<pre><code>public InputData inputData()
-</code></pre>
-<p>Retourne l'objet <code>InputData</code> contenant le sparamètres de la requête :</p>
+<p>L'objectif est de permettre de remettre à un niveau plus récent <code>vr</code> (<em>version de référence</em>, la plus récente pour simplifier) un exemplaire d'un document <code>d</code> en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.<br>
+La mise à jour d'une mémoire cache depuis un exemplaire de référence d'un document <code>d</code> est <em>un document de mise à niveau</em> plus ou moins complet établi selon les principes suivants. L'exemplaire en cache contient :</p>
 <ul>
-<li><code>uri()</code> : partie utile de l'URL de la requête (après la partie <code>namespace</code> et <code>op</code>).</li>
-<li><code>args()</code> : une map donnant les arguments passés sur le POST (habituellement sans utilité).</li>
-<li><code>attachments()</code> : map des fichiers attachés, clé par leur nom d'attachement. Chaque <code>Attachment</code> contient :
+<li>des items inchangés, toujours existants en référence avec la même version : ils ne figurent pas dans le document de remise à niveau.</li>
+<li>des items qui ont changé, toujours existants en référence avec une version plus récente : ils figurent dans le document de remise à niveau avec leur nouveau contenu.</li>
+<li>des items qui existent en mémoire cache mais plus en référence : ils devront être détruits ou conservés marqués détruits dans la mémoire cache. Voir les cas 1 et 2 ci-dessous.</li>
+</ul>
+<p>Un exemplaire dans une mémoire cache contient,</p>
 <ul>
-<li><code>String name</code> : son nom d'attachement.</li>
-<li><code>String fileName</code> : son nom de fichier dans la session.</li>
-<li><code>String contentType</code> : son type MIME dans la session.</li>
-<li><code>byte[] bytes</code> : son contenu.</li>
+<li>tous les items existants (ayant un contenu) avec leur version;</li>
+<li>tous les items détruits (sans contenu) avec leur version de destruction, <em>postérieurement à la date-heure <code>dtime</code> du document</em>.</li>
 </ul>
-</li>
-</ul>
-<p>.</p>
-<pre><code>public void trace(String msg)
-</code></pre>
-<p><strong>Dans le seul cas d'une opération différée</strong> il est possible d'accumuler des traces d'exécution textuelles simples et de les retrouver en cas de sortie en exception dans le rapport d'erreur stocké par le Queue Manager. C'est sans objet sur une requête émise par une requête interactive.</p>
-<pre><code>public DBProvider dbProvider()
-</code></pre>
-<p>Le DBProvider est l'objet en charge d'accéder directement au stockage de données sans passer par l'intermédiaire normal des documents. Son emploi n'est nécessaire que pour écrire des recherches spécifiques.</p>
-<p>Le contexte d'exécution a pour fonction :</p>
-<ul>
-<li>de créer un objet <code>Operation</code> en initialisant sa propriété <code>param</code> avec le contenu dé-sérialisé de l'objet JSON reçu en argument <code>param</code> de la requête. L'opération trouve dans l'objet Java <code>param</code> les arguments (du moins la plupart) du travail à effectuer.</li>
-<li>de garder dans une mémoire cache de travail spécifique à ce contexte tous les objets <code>Document</code> des documents accédés / créés / modifiés / supprimés.</li>
-<li>de garder trace des demandes de création de tâches différées.</li>
-<li>d'appeler la méthode <code>work()</code> de l'objet <code>Operation</code>.</li>
-<li>d'effectuer la validation des documents créé / modifiés / supprimés et des tâches créées  / modifiées / annulées.</li>
-<li>d'appeler la méthode <code>afterwork()</code>.</li>
-<li>en cas d'exception (et pour certaines d'entre elles seulement) de recommencer le cycle création d'opération <code>work()</code> / validation / <code>afterwork()</code>.</li>
-<li>de calculer les synchronisations de documents requises dans la requête.</li>
-<li>de mettre en forme et retourner le résultat à retourner à la session appelante et de terminer la requête.</li>
-</ul>
-<h2>Opération</h2>
-<p>L'objet <code>ExecContext</code> de la requête crée un objet <code>Operation</code> correspondant à l'opération souhaitée par la requête (paramètre <code>op</code> de la requête).<br>
-Les classes de document (qui étendent <code>Document</code>) peuvent avoir des classes internes statiques qui étendent la classe <code>Operation</code> : celles-ci sont automatiquement enregistrées comme classe d'opération.<br>
-Les opérations figurant dans une classe séparée doivent être déclarées à la configuration.</p>
-<h4>La propriété <code>param</code> d'un objet opération</h4>
-<p>La classe d'une opération (qui étend <code>Operation</code>) doit avoir :</p>
-<ul>
-<li>une classe interne statique (sérialisable en JSON, même contrainte qu'un Item) usuellement dénommée <code>Param</code>.</li>
-<li>une propriété d'instance nommée <code>Param param</code>.</li>
-</ul>
-<p>Lorsqu'une opération est lancée, le paramètre de la requête HTTPS nommé <code>param</code> est supposé être un JSON qui va être dé-sérialisé selon la classe <code>Param</code> et stocké dans la propriété <code>param</code> de l'objet <code>Operation</code>: les paramètres de l'opération s'y trouvent, même si parfois d'autres paramètres peuvent plus exceptionnellement figurer dans l'URI de la requête et des pièces jointes de la requête.</p>
-<h4>Méthodes génériques de la classe <code>Operation</code></h4>
-<p>L'objet <code>Operation</code> a en générique quelques services :</p>
-<pre><code>public ExecContext execContext()
-public InputData inputData()
-
-// retourne et mémorise l'objet taskChekPoint (tâche seulement)
-public Object taskCheckpoint()
-public void taskCheckpoint(Object obj)
-
-// retourne le résultat à remplir par l'opération
-public Result result()
-
-// retourne le Document.Id identifiant une tâche
-// quand un document existe pour cette id, son contenu donne les paramètres de la tâche
-public Document.Id taskId()
-public boolean isTask()
-
-public Stamp startTime()
-
-// Descripteur technique de l'opéaration
-public OperationDescriptor descr()
-public String name()
-
-public String ungzip(Attachment a)
-public void gzipResultat(String res)
-</code></pre>
-<h4>Résultat d'une opération</h4>
-<p>L'objet résultat peut être rempli selon l'une des trois options suivantes :</p>
-<ul>
-<li>(1) <code>Object out</code> : c'est un objet applicatif quelconque qui sera sérialisé en JSON.</li>
-<li>(2) <code>String text / String encoding</code> : le résultat est considéré comme un texte et son encoding peut être donné s'il n'est pas UTF-8.</li>
-<li>(3) <code>byte[] bytes / String mime</code> : le résultat est en binaire et son type MIME est donné.</li>
-</ul>
-<p>Un résultat de synchronisation (c'est un String en JSON mis dans la propriété <code>syncs</code>) n'est possible que quand le résultat est dans l'option (1) (<code>Object</code> à sérialiser en JSON).</p>
-<p>Il n'est pas obligatoire de déclarer un résultat : un <code>Object</code> laissé vide est retourné à la session appelante.</p>
-<h4>Gestion des opérations différées</h4>
-<pre><code>public void setTask(Document.Id id, long nextStart, String info)
-</code></pre>
-<p>Cette méthode déclare une opération différée identifiée par le <code>Document.Id</code> fourni et sera lancée au plus tôt à la date-heure <code>nextStart</code> donnée.<br>
-Un String d'information facultatif peut être donné et apparaîtra dans les pages de gestion du Queue Manager (c'est son seul rôle).</p>
-<pre><code>  public void setTaskByCron(Document.Id id, String cron)
-</code></pre>
-<p>Même fonctionnalité mais la <code>nextStart</code> est calculée selon le <code>String cron</code> passé en argument (qui sera mis en info).</p>
-<p>Un objet <code>TaskInfo</code> contient principalement :</p>
-<ul>
-<li><code>String ns</code> : le namespace sur lequel l'opération porte.</li>
-<li><code>Document.Id id</code> : son identité.</li>
-<li><code>long nexstart</code> : sa date-heure de lancement au plus tôt.</li>
-<li><code>int retry</code> : le numéro de l'essai d'exécution (usuellement 0).</li>
-<li><code>String info</code> : le commentaire informatif donné à la création.</li>
-</ul>
-<h1>Sérialisation JSON d'un document</h1>
-<p>La forme générale est la suivante:</p>
-<pre><code>{
-&quot;c&quot;:&quot;C&quot;,
-&quot;id&quot;:&quot;abcd&quot;,
-&quot;v&quot;:1712... ,
-&quot;ct&quot;:1712... ,
-&quot;dt&quot;:1712... ,
-&quot;dels&quot;: [
-    {&quot;c&quot;:&quot;S4&quot;, &quot;v&quot;:1712...},
-    {&quot;c&quot;:&quot;S5&quot;, &quot;k&quot;:&quot;def&quot;, &quot;v&quot;:1712...}
-    ],
-&quot;items&quot;: [
-    {&quot;c&quot;:&quot;S2&quot;, &quot;v&quot;:1712... &quot;s&quot;:&quot;texte d'un raw&quot;},
-    {&quot;c&quot;:&quot;S1&quot;, &quot;v&quot;:1712... &quot;j&quot;:{ l'item en JSON }},
-    {&quot;c&quot;:&quot;R1&quot;, &quot;k&quot;:&quot;def&quot;, &quot;v&quot;:1712... &quot;s&quot;:&quot;texte d'un raw&quot;},
-    {&quot;c&quot;:&quot;I1&quot;, &quot;k&quot;:&quot;abc&quot;, &quot;v&quot;:1712... &quot;j&quot;:{ l'item en JSON }}
-    ],
-&quot;clkeys&quot;:[&quot;S1&quot;, &quot;I1.abc&quot;, &quot;I1.def&quot;, &quot;R1.def&quot;... ]
-}
-
-Document supprimé :  {&quot;c&quot;:&quot;C&quot;, &quot;id&quot;:&quot;abcd&quot;, &quot;v&quot;:0 , &quot;ct&quot;:1712... }
-
-1A
-source ----------dtr-----------vr
-cache  ----------------dt---v
-maj1   ----------------dt------vr suppr depuis dt / clkeys vide
-maj2   ----------------dt------vr suppr depuis dt / clkeys vide
-
-1B
-source ----------dtr-----------vr
-cache  ------dt-------------v
-maj1   ----------dtr-----------vr suppr depuis dtr / clkeys vide
-maj2   ----------dtr-----------vr suppr depuis dtr / clkeys vide
-
-2A
-source ----------dtr-----------vr
-cache  --dt---v
-maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
-maj2   ------------------------vr vr/vr suppr vide / clkeys vide
-
-2B
-source ----------dtr-----------vr
-cache  v
-maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
-maj2   ------------------------vr vr/vr suppr vide / clkeys vide
-</code></pre>
-<p>La mémoire cache à remettre à niveau contient un exemplaire de <code>d</code> de version <code>v</code> et de <code>dtime</code> <code>dt</code>.
+<p>La mémoire cache à remettre à niveau contient un exemplaire de <code>d</code> de version <code>v</code> et de <code>dtime</code> <code>dt</code>.<br>
 La mémoire source de la remise à niveau contient un exemplaire de <code>d</code> de version <code>vr</code> et de <code>dtime</code> <code>dtr</code>.<br>
-<code>items</code> contient toujours les items créés / recréés / modifiés après <code>v</code>.
-Sous option <code>maj1</code> on garde dans le document de mise à jour l'historique des destructions le plus large possible.<br>
-Sous option <code>maj2</code> on limite au maximum dans le document de mise à jour l'historique des destructions.<br>
-Dans le cas 2B, le cache ne connaît rien (<code>v = 0</code>).<br>
-Lorsque les <code>ctime</code> diffèrent, on se ramène au cas 2B.<br>
-<code>clkeys</code> ne contient pas les clés des items créés /recréés / modifiés qui figurent déjà dans <code>items</code>.</p>
-<p>Après analyse de la situation de départ, les options de calcul sont :</p>
+En plus des données <code>vr</code> et <code>dtr</code>, que contient le document de mise à niveau ?</p>
+<h5>Cas 1 : <code>v</code> est postérieure ou égale à <code>dtr</code>.</h5>
+<p>La référence contient tous les items détruits depuis <code>v</code> :</p>
 <ul>
-<li>Cas 1 : <code>clkeys</code> vide. Option maj1/maj2 ignorée.
+<li>le document de mise à niveau inclus les items détruits postérieurement à <code>v</code> avec un contenu <code>null</code> et leurs version de destruction.</li>
+<li>les autres items sont inclus avec un contenu et une version si leur version est postérieure à <code>v</code> (ils ont changé).</li>
+<li>les items inchangés depuis v ne sont pas inclus.</li>
+</ul>
+<p>Dans ce cas un item sans contenu est un item détruit et un item présent dans le cache et absent du document de remise à niveau est inchangé.</p>
+<p>La mise à niveau de la mémoire cache par le document de mise à niveau transmis consiste à :</p>
 <ul>
-<li>suppressions postérieures à dtx = max(dt, dtr)</li>
-<li>en sortie : vr-&gt;version ctime-&gt;ctime dtx-&gt;dtime</li>
+<li>inscrire <code>vr</code> comme nouvelle version du cache.</li>
+<li>inscrire la plus récente de la <code>dtime</code> actuelle <code>dt</code> et <code>dtr</code> comme nouvelle <code>dtime</code> du cache (les items détruits antérieurement n'étant pas connus).</li>
+<li>les items <em>sans</em> contenu du document de remise à niveau sont inscrits dans le cache avec un contenu vide et leur version.</li>
+<li>les items <em>avec</em> contenu du document de remise à niveau écrasent ceux du cache ou les insèrent quand ils n'y étaient pas.</li>
+<li>la nouvelle <code>dtime</code> du cache peut aussi être avancée entre sa nouvelle valeur et la nouvelle version pour éviter de garder trop d'items détruits : le cache purge tous les items sans contenu de version antérieure à la nouvelle <code>dtime</code>.</li>
+</ul>
+<p>Le cache peut lui-même désormais servir de référence pour créer un document de remise à niveau d'un autre cache plus retardé.</p>
+<h5>Cas 2 : <code>v</code> est antérieure à <code>dtr</code>.</h5>
+<p>La référence ne contient pas tous les items détruits depuis <code>v</code> mais seulement depuis <code>dtr</code>. Si le cache détient un item <code>x</code> détruit entre <code>v</code> et <code>dtr</code>, le document de remise à niveau ne peut pas le savoir.</p>
+<p>Le document de remise à niveau contient en plus de <code>vr</code> et <code>dtr</code> une <strong>liste des clés des items existants</strong> (sauf toutefois celles de ceux listés parce qu'ayant été créés ou modifiés).</p>
+<ul>
+<li>le document de mise à niveau inclus les items détruits postérieurement à <code>dtr</code> avec un contenu <code>null</code> et leurs version de destruction.</li>
+<li>les autres items sont inclus avec un contenu et une version si leur version est postérieure à <code>v</code> (ils ont changé).</li>
+<li>les items inchangés depuis <code>v</code> ne sont pas inclus.</li>
+</ul>
+<p>La nouvelle <code>dtime</code> du cache est <code>dtr</code>.<br>
+Elle peut aussi être avancée entre sa nouvelle valeur et la nouvelle version <code>vr</code> pour éviter de garder trop d'items détruits : le cache purge tous les items sans contenu de version antérieure à la nouvelle <code>dtime</code>.</p>
+<p>Dans ce cas un item sans contenu reste toujours un item détruit et un item absent est,</p>
+<ul>
+<li>soit inchangé s'il figure dans la liste des existants,</li>
+<li>soit détruit avant <code>dtr</code> dans le cas contraire et à purger du cache.</li>
+</ul>
+<p>La mise à niveau s'effectue de manière identique au cas 1 mais comporte une phase supplémentaire de purge de tous les items existants en cache et absents de la liste des existants et de la liste des items détruits depuis <code>dtr</code>.</p>
+<h1>Opérations</h1>
+<p>Une opération est une succession d'actions de lecture, d'écriture (création / modification / suppression) de documents et d'items de documents et de calculs sur ces données :</p>
+<ul>
+<li><strong>une opération est &quot;atomique&quot;</strong> vis à vis de la mise à jour des documents, tous mis à jour et datés du même instant ou aucun.</li>
+<li><strong>une opération est &quot;isolée&quot;</strong> et travaille sur tous les documents accédés comme si elle était seule le faire.</li>
+<li><strong>une opération peut retourner un résultat</strong> ou aucun. Ce résultat peut être :
+<ul>
+<li>n'importe quel <strong>contenu binaire</strong> ayant un type mime.</li>
+<li>le couple,
+<ul>
+<li>d'un <strong>résultat structuré</strong> sous forme d'un objet JSON,</li>
+<li>d'une <strong>liste de synchronisations</strong> donnant tous les changements opérés depuis une version donnée sur les documents que le demandeur de l'opération avait cité à des fins de synchronisation.</li>
 </ul>
 </li>
-<li>Cas 2 : option maj1. clkeys NON vide.
+</ul>
+</li>
+<li><strong>une opération peut se terminer prématurément en exception</strong>, technique ou métier, bug détecté ou situation inattendue ...</li>
+<li>Une opération a trois date-heures :
 <ul>
-<li>suppressions postérieures à dtr</li>
-<li>en sortie : vr-&gt;version ctime-&gt;ctime dtr-&gt;dtime</li>
+<li>souvent mais pas toujours, une <em>date-heure d'opération</em> <code>dhop</code> qui est celle de la session ayant invoqué l'opération. Quand elle est enregistrée elle permet de détecter fonctionnellement qu'une opération identifiée de manière unique par la session terminale a été faite ou non.</li>
+<li>une <em>date heure de début</em>, horloge du début du traitement. Si <code>dhop</code> existe elle doit ne pas être trop inférieure à celle-ci mais jamais supérieure. Les horloges des sessions doivent être à peu synchronisées sur celle du serveur;</li>
+<li>une <strong>date-heure de validation</strong>, non connue au cours du traitement, et qui marque la <strong>version</strong> de tous les documents et de leurs items ayant été créés, modifiés, ou détruits au cours de l'opération.</li>
 </ul>
 </li>
-<li>Cas 2 : option maj2. suppressions vide. clkeys vide.
+</ul>
+<p>Une opération est initiée par l'arrivée d'une <strong>requête externe</strong> HTTPS le cas échéant émise par le <em>Queue Manager</em> gérant des requêtes différées mises en file d'attente.</p>
+<p>Une opération est matérialisée par un objet <code>operation</code> d'une classe étendant <code>Operation</code> et ayant deux méthodes <code>work()</code> et <code>afterwork()</code>, l'étape <em>validation</em> intervenant entre elles:</p>
 <ul>
-<li>en sortie : vr-&gt;version ctime-&gt;ctime vr-&gt;dtime</li>
+<li><code>work()</code> : cette méthode lit les arguments de la requête qui l'a initiée, effectue les traitements nécessaires et retourne un résultat éventuel de classe <code>Result</code>.</li>
+<li>à la fin de <code>work()</code> l'étape de <strong>validation</strong> vérifie la consistance temporelle des documents utilisés au cours du traitement et le cas échéant rend persistant les documents créés / modifiés / supprimés au cours de <code>work()</code> : la validation peut échouer en cas d'inconsistance temporelle des documents et/ou de problèmes de contention sur la base de données ;</li>
+<li><code>afterWork()</code> : cette méthode est exécutée après la validation et peut le cas échéant diffuser des e-mails par exemple. En général et par défaut elle ne fait rien.</li>
 </ul>
-</li>
-</ul>
-<h1>Accès aux documents par la classe <code>Document</code></h1>
-<p>Chaque classe de document a une classe qui hérite de <code>Document</code>.<br>
-Chaque classe d'item est une classe statique interne portant le nom de la classe d'item (relative au document) héritant de :<br>
-<code>Document.Item .RawItem .Singleton .RawSingleton</code> selon le cas.</p>
-<h3>Méthodes générales applicables à un document</h3>
-<p>Le <code>Status</code> d'un document traduit l'état du document à l'instant t vis à vis de son cycle de vie et de ce qu'il convient de faire à la validation de l'opération si les choses en restaient là :</p>
+<p>En cas d'exception au cours du traitement, un nouvel objet <code>operation</code> est recréé et le cycle <strong><code>work()</code> -&gt; validation-&gt;  <code>afterwork()</code></strong> est relancé (après un certain délai, au plus 3 fois et pas pour toutes les exceptions).</p>
+<h5>Estampilles d'un document et de ses items : classe <code>Stamp</code></h5>
+<p>Les estampilles sont des nombres de la forme <code>AAMMJJhhmmssmmm</code> soit la date en année mois jour heure minute seconde milliseconde en UTC (du XXIième siècle) :</p>
 <ul>
-<li><code>unchanged</code> : aucun item n'a changé sur le document qui existait avant le début de l'opération.</li>
-<li><code>modified</code> : le document existait avant le début de l'opération et un ou des items ont été créés / modifiés / supprimés.</li>
-<li><code>created</code> : le document n'existait pas et il a été créé par un <code>getOrNew()</code>. Il n'a pas forcément d'items.</li>
-<li><code>recreated</code> : le document existait et a été recréé par la méthode <code>recreate()</code>. Sa date-heure de création n'est pas la même qu'au début de l'opération et son contenu a complètement été purgé par la suppression survenue avant sa recréation.</li>
-<li><code>deleted</code> : le document existait mais a été supprimé par l'opération.</li>
-<li><code>shortlived</code> : le document n'existait pas, a été créé par un <code>getOrNew()</code> et a été supprimé ensuite au cours de l'opération.</li>
+<li><code>Stamp.minStamp</code> : première milliseconde du siècle,</li>
+<li><code>Stamp.maxStamp</code> : dernière milliseconde du siècle.</li>
 </ul>
-<p>Les principales propriétés d'un document sont :</p>
-<ul>
-<li>
-<p><code>Document.Id id()</code> : identifiant du document.</p>
-</li>
-<li>
-<p><code>long ctime()</code> : date-heure de création, telle qu'elle était connue au début de l'opération.</p>
-</li>
-<li>
-<p><code>long dtime()</code> : <strong>tous</strong> les items supprimés après cette date-heure sont disponibles en cache (et marqués supprimés).</p>
-</li>
-<li>
-<p><code>long version()</code> : date-heure de création ou dernière modification, telle qu'elle était connue au début de l'opération.</p>
-</li>
-<li>
-<p><code>Status status()</code> : état du document.</p>
-</li>
-<li>
-<p><code>isRO()</code> : <code>true</code> si le document est en lecture seule.</p>
-<pre><code>public int nbExisting() : nombre d'items existants
-public int nbToSave() : nombre d'items qui seront sauvés à la validation
-public int nbToDelete() : nombre d'items qui seront détruits à la validation
-public int nbTotal() : nombre total d'items
-public long v1() : volume de class (1) occupé
-public long v2() : volume de classe (2) - pièces jointes - occupé.
-</code></pre>
-</li>
-</ul>
-<p>Ces dernières méthodes n'ont de valeurs significatives que juste après l'appel de la méthode <strong><code>summarize()</code></strong> qui scanne tous les items pour calculer les volumes et les dénombrer.</p>
-<h3>Obtention d'une instance de document</h3>
-<pre><code>  public static Document get(Document.Id id, int maxDelayInSeconds) 
-  throws AppException
-  public static Document getOrNew(Document.Id id) throws AppException
-</code></pre>
-<p>La première méthode retourne le document dont l'identification est donnée et <code>null</code> s'il n'existe pas. La contrainte de fraîcheur peut être spécifiée afin de tolérer un document trouvé en mémoire cache et d'âge compatible avec les exigences métier. Si cette valeur n'est pas 0 (par convention la version la plus récente possible) le document est en lecture seule.</p>
-<p>La seconde méthode retourne un nouveau document s'il n'en existe pas un.</p>
+<p>Par exemple : <code>160714223045697</code> (le 14 juillet 2016 à 22:30:45 et 697 ms).<br>
+La classe <code>Stamp</code> dont les objets sont immuables permet de créer et manipuler ces estampilles et de les convertir en <code>epoch</code> nombre de millisecondes écoulées depuis le 1/1/1970 (<code>epoch</code>).</p>
 <blockquote>
-<p>Dans une opération pour un document d'identification donnée toutes les variables de retour d'un <code>get()</code> pointe vers le même objet : un document donné n'existe qu'en un exemplaire unique dans l'espace d'une opération.</p>
+<p>Un document <em>existe</em> dès qu'il a été enregistré avec une version : ses données d'entête existent mais il peut n'avoir aucun item. Les versions étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.</p>
 </blockquote>
-<p>Usuellement chaque classe de document écrit ses propres méthodes <code>get()</code> / <code>getOrNew()</code>, ayant le cas échant des paramètres métiers pertinents et en castant le résultat dans la classe du document cherché / créé.</p>
-<h3>Suppression et recréation d'un document</h3>
-<pre><code>public void delete() throws AppException
-public static void delete(Document.Id id) throws AppException
-public void recreate() throws AppException
-</code></pre>
-<p>Un document peut être supprimé,</p>
-<ul>
-<li>soit depuis son instance elle-même : c'est obligatoire quand les conditions de sa suppression sont liées à son contenu. Il est vérifié à la validation que la version du document n'a pas progressé depuis.*</li>
-<li>soit en <code>static</code> depuis la classe elle-même en donnant son Id quand la logique de suppression ne se base pas sur le contenu du document (éventuellement juste son Id).</li>
-</ul>
-<p>La recréation d'un document le met à vide et sa <code>ctime</code> est réinitialisée : une nouvelle vie du document commence.</p>
-<h3>Accès aux items d'un document</h3>
-<p>Les méthodes ci-dessous sont génériques mais usuellement une classe de document écrit ses propres accesseurs, le cas échéant avec des paramètres métiers adéquats et en castant les résultats dans la classe de l'item souhaité.</p>
-<pre><code>public Singleton singleton(Class&lt;?&gt; itemClass)
-public Singleton singletonOrNew(Class&lt;?&gt; itemClass)
-public Item item(Class&lt;?&gt; itemClass, String key)
-public Item itemOrNew(Class&lt;?&gt; itemClass, String key)
-</code></pre>
-<p>Les méthodes retournant des singletons n'ont pas de paramètre <code>key</code>.<br>
-Toutes les méthodes prennent en premier paramètre la classe de l'item souhaité.
-Les méthodes <code>...OrNew</code> créé un item s'il n'existait pas alors que les autres retournent <code>null</code> dans ce cas.</p>
-<pre><code>public String[] getKeys(Class&lt;?&gt; itemClass)
-</code></pre>
-<p>Cette méthode retourne toutes les clés des items (non singleton) existant pour la classe citée.</p>
-<p>L'accès aux propriétés d'un item JSON est celui standard d'accès aux propriétés en Java.<br>
-<strong>Après un ou plusieurs changements dans un item item il faut appeler la méthode <code>commit()</code> de l'item pour valider ces changements</strong> : sinon les modifications de l'item seront perdues.</p>
-<p>Pour un <code>RawItem</code> ou un <code>RawSingleton</code> sa valeur est la propriété unique <code>String value</code>.</p>
-<p>Après une série de changement de valeurs des propriétés d'un item, un appel <code>void commit()</code> pour les valider. Plusieurs appels commit() peuvent être effectués.</p>
-<pre><code>Document _document() : retourne le document auquel appartient de l'item
-public ItemDescr descr() : retourne le descripteur de l'item
-String key() : retourne la clé de l'item
-String clkey() : retourne sa classe pour un singleton ou sa classe &quot;.&quot; sa clé pour un item.
-long version() : retourne sa version au début de l'opération (si 0, l'item à été créé)
-long vop() : retourne la date-heure de l'opération l'ayant mis à jour, inférieure à version dans le cas d'une réplication désynchronisée.
-int v1() : retourne le volume (1) occupé par l'item.
-int v2() : dans le cas d'un item P retourne son volume (2) (la pièce jointe)
-boolean toSave() : retourne true si l'item a été créé ou modifié
-String cvalue() : retourne sa valeur courante sérilisée
-boolean deleted() : si true l'item détruit.
-boolean toDelete() : si true l'item sera détruit à la prochaine validation.
-boolean created() : si true l'item vient d'être créé dans l'opération.
-
-void commit() : valide une ou plusieurs modification de l'item.
-void delete() : supprime l'item.
-</code></pre>
-<h4>Items / singletons, détachés et rattachés</h4>
-<p>Quand on obtient un item par <code>get()</code> ou <code>getOrNew()</code> l'item est instancié et automatiquement <em>attaché</em> au document dont il fait partie.<br>
-Si on créé ce même item par un <code>new MonItem()</code> standard Java, on obtient un objet de la classe <code>MonItem</code> mais détaché de tout document : typiquement ce peut être le cas au cours d'une procédure d'importation depuis une source externe.<br>
-Cet item détaché peut venir remplacer l'item actuel par l'appel d'une de ces méthodes (Item ou Singleton) appliqués sur l'item créé détaché :</p>
-<pre><code>void replaceIn(Document d, String key)
-void replaceIn(Document d)
-</code></pre>
-<p>par exemple :</p>
-<pre><code>MonItem it = new MonItem();
-it.foo = &quot;bar&quot;;
-it.replaceIn(monDoc, &quot;clé2&quot;);
-</code></pre>
-<h3>Les items de classe prédéfinie P</h3>
-<p>Chaque instance de ces items représente une pièce jointe, un fichier attaché au document.<br>
-Un item P a des méthodes spécifiques, son contenu n'étant pas directement lisible.<br>
-Pour l'obtention dans un document :</p>
-<pre><code>P p(String key)
-String[] getPKeys()
-</code></pre>
-<p>Pour la lecture des propriétés d'un item P :</p>
-<pre><code>// Méthodes spécifiques d'un item P
-String mime() : retourne le type mime de la pièce jointe
-String sha() : retourne son sha.
-int size() : retourne sa taille en bytes.
-byte[] blobGet() : retourne le contenu de la pièce jointe.
-</code></pre>
-<p>Une seule méthode sur un document permet de créer / modifier un item P en donnant son contenu binaire:</p>
-<pre><code>P blobStore(String key, String mime, byte[] bytes)
-</code></pre>
-<p>La méthode retourne l'item créé ou modifié.</p>
-<h3>Browse items</h3>
-<p>Ces méthodes permettent d'effectuer une action / dénombrer les items selon une action / filtre quelconque.</p>
-<pre><code>@FunctionalInterface public interface CIAction {
-  public boolean action(CItem ci);
-}
-@FunctionalInterface interface CICounter {
-  int count(CItem ci);
-}
-void browse(CIAction a) : exécute l'action indiquée sur tous les items
-int count(CICounter c) : compte tous les items ayant répondu true
-</code></pre>
-<p>On peut obtenir l'item lui-même dans des méthodes CIAction / CICounter en provoquant la dé-sérialisation de son CItem associé, par la méthode :</p>
-<pre><code>public BItem item(CItem ci)
-</code></pre>
-<p>Il faut caster le résultat dans la classe effective de l'item souhaité.</p>
-<h2>Contrôle des synchronisations</h2>
-<p>Une synchronisation est une requête dont l'objectif est de récupérer les items modifiés de documents afin de remettre à jour ceux-ci dont la session requérante détient, ou non, une copie possiblement retardée.<br>
-Une synchronisation peut être une requête spécifique ou intervenir après la bonne exécution d'une opération, en particulier de mise à jour.</p>
 <blockquote>
-<p>Pour chaque document concerné, selon sa classe, son identifiant et pour chaque item du document, sa classe, son identifiant sa clé puis enfin son contenu, il peut être décidé d'accepter ou non l'élément et finalement le cas échéant avec seulement certaines des propriétés.</p>
+<p>Une opération peut créer / modifier / supprimer plusieurs documents : ces documents, et leurs items, portent comme version l'estampille de validation de l'opération ce qui permet de déterminer après coup si plusieurs modifications ont été portées exactement par la même opération.</p>
 </blockquote>
-<p>Une synchronisation est définie par une liste de document à synchroniser. Cette liste parvient en JSON dans le paramètre <code>syncs</code> de la requête. Chaque item de cette liste <code>[{&quot;c&quot;: ...}, {...}, ...]</code> correspond à un objet de la classe <code>Sync</code> et décrit un document à synchroniser :</p>
-<pre><code>String c; // classe du document
-String id; // docid du document
-long v; // version du document détenue
-long ct; // date-heure de création
-long dt; // toutes les suppressions d'items après cette date-heure sont connues 
-String filter; // Objet de classe docclass.SyncFilter en Json
-</code></pre>
-<p>Le <code>String filter</code> est lui-même le JSON d'un objet qui sera instancié selon la classe interne <code>static Filter</code> de la classe du document correspondant.</p>
-<pre><code>La mémoire cache à remettre à niveau contient un exemplaire de `d` de version `v` et de `dtime` `dt`. 
-La mémoire source de la remise à niveau contient un exemplaire de `d` de version `vr` et de `dtime` `dtr`.  
-`items` contient toujours les items créés / recréés / modifiés après `v`.
-{
-&quot;c&quot;:&quot;C&quot;,
-&quot;id&quot;:&quot;abcd&quot;,
-&quot;v&quot;:1712... ,
-&quot;ct&quot;:1712... ,
-&quot;dt&quot;:1712... ,
-&quot;dels&quot;: [
-     {&quot;c&quot;:&quot;S4&quot;, &quot;v&quot;:1712...},
-     {&quot;c&quot;:&quot;S5&quot;, &quot;k&quot;:&quot;def&quot;, &quot;v&quot;:1712...}
-     ],
-&quot;items&quot;: [
-     {&quot;c&quot;:&quot;S1&quot;, &quot;v&quot;:1712... &quot;j&quot;:{ l'item en JSON }},
-     {&quot;c&quot;:&quot;R1&quot;, &quot;k&quot;:&quot;def&quot;, &quot;v&quot;:1712... &quot;s&quot;:&quot;texte d'un raw&quot;},
-     {&quot;c&quot;:&quot;I1&quot;, &quot;k&quot;:&quot;abc&quot;, &quot;v&quot;:1712... &quot;j&quot;:{ l'item en JSON }}
-     ],
- &quot;clkeys&quot;:[&quot;S1&quot;, &quot;I1.abc&quot;, &quot;I1.def&quot;, &quot;R1.def&quot;... ]
-}
- 
-Document supprimé :  {&quot;c&quot;:&quot;C&quot;, &quot;id&quot;:&quot;abcd&quot;, &quot;v&quot;:0 , &quot;ct&quot;:1712... }
-
-1A
-source ----------dtr-----------vr
-cache  ----------------dt---v
-maj1   ----------------dt------vr suppr depuis dt / clkeys vide
-maj2   ----------------dt------vr suppr depuis dt / clkeys vide
-
-1B
-source ----------dtr-----------vr
-cache  ------dt-------------v
-maj1   ----------dtr-----------vr suppr depuis dtr / clkeys vide
-maj2   ----------dtr-----------vr suppr depuis dtr / clkeys vide
- 
-2A
-source ----------dtr-----------vr
-cache  --dt---v
-maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
-maj2   ------------------------vr vr/vr suppr vide / clkeys vide
- 
-2B
-source ----------dtr-----------vr
-cache  v
-maj1   ----------dtr-----------vr suppr depuis dtr / clkeys
-maj2   ------------------------vr vr/vr suppr vide / clkeys vide
-
-Sous option `maj1` on garde dans le document de mise à jour l'historique des destructions le plus large possible.  
-Sous option `maj2` on limite au maximum dans le document de mise à jour l'historique des destructions.  
-Dans le cas 2B, le cache ne connaît rien (`v = 0`).  
-Lorsque les `ctime` diffèrent, on se ramène au cas 2B.  
-`clkeys` ne contient pas les clés des items créés /recréés / modifiés qui figurent déjà dans `items`.
-
-Après analyse de la situation de départ, les options de calcul sont :
-- Cas 1 : `clkeys` vide. Option maj1/maj2 ignorée.
-    - suppressions postérieures à dtx = max(dt, dtr)
-    - en sortie : vr-&gt;version ctime-&gt;ctime dtx-&gt;dtime
-- Cas 2 : option maj1. clkeys NON vide.
-    - suppressions postérieures à dtr
-    - en sortie : vr-&gt;version ctime-&gt;ctime dtr-&gt;dtime
-- Cas 2 : option maj2. suppressions vide. clkeys vide.
-    - en sortie : vr-&gt;version ctime-&gt;ctime vr-&gt;dtime
-</code></pre>
-<p>Le retour d'une synchronisation est un vecteur similaire où chaque élément correspondant à un document <em>peut</em> avoir changé.</p>
-<h4>Classes héritant de <code>Document.ISyncFilter</code></h4>
-<p>Chaque classe de Document <em>peut</em> avoir une classe <code>static</code> <code>Filter</code> héritant de <code>Document.ISyncFilter</code>.<br>
-Si cette classe existe pour une classe de document, lors de chaque synchronisation relative à un document de cette classe un objet filtre est créé :</p>
+<blockquote>
+<p>Vues d'un document toutes les estampilles de validation des opérations sont distinctes et croissantes dans le temps. Deux opérations strictement parallèles et n'ayant pas modifié les mêmes documents peuvent avoir une même estampille de validation : la chronologie réelle entre elles est indécidable mais ne peut pas avoir d'impact sur la logique métier.</p>
+</blockquote>
+<h1>Cohérence temporelle entre documents</h1>
+<p><strong>Dans sa phase <code>work()</code></strong> une opération qui souhaite modifier un document, ou s'assurer qu'il ne changera pas au cours du traitement, le demande avec <em>une tolérance temporelle de 0 seconde</em> (l'état le plus récent possible) :</p>
 <ul>
-<li>soit depuis le constructeur par défaut ;</li>
-<li>soit depuis l'objet reçu en JSON comme paramètre de filtre passé par la requête de synchronisation.</li>
+<li>ceci autorise l'opération à modifier le document, ce qu'elle n'est <em>pas</em> obligé de faire.</li>
+<li>ceci garantit qu'au cours du traitement c'est exactement ce même objet document qui sera vu / modifié, même s'il est demandé plusieurs fois.</li>
 </ul>
-<p>Les propriétés de cet objet sont les paramètres de filtrage spécifiques au document à synchroniser et en particulier les paramètres éventuels d'authentification : <em>en fonction de ces paramètres, le document est-il à synchroniser et si oui quels items en particulier</em>.</p>
-<p><code>Document</code> a plusieurs méthodes surchargeables par héritage :<br>
-<strong><em>Filtre sur l'identifiant du document et sa classe selon l'environnement de la requête</em></strong></p>
-<pre><code>FilterPolicy filter(ISyncFilter sf)
-</code></pre>
-<p>Cette méthode retourne la politique à mener pour le document lui-même en fonction de sa <strong>classe</strong> et son <strong>identification</strong> :</p>
+<p>Si l'opération demande un document avec une tolérance temporelle supérieure à 0 (1 seconde, 30 secondes, etc.) elle récupère une version (disponible le cas échéant en cache) avec une fraîcheur compatible avec l'exigence : le document est en lecture seule dans l'opération.</p>
+<p><strong>La validation d'une opération</strong> s'opère selon les étapes suivantes :</p>
 <ul>
-<li><code>Accept</code> : accepter tous les items du document ;</li>
-<li><code>Exclude</code> : exclure de la synchronisation ce document ;</li>
-<li><code>Continue</code> : l'acceptation ou l'exclusion des items dépend de l'identifiant de chaque classe d'item.</li>
+<li><strong>elle s'assure</strong> (en les verrouillant effectivement sur le stockage persistant) que tous les documents demandés avec une tolérance 0 (qu'ils aient été modifiés ou non) <strong>n'ont pas changé de version</strong> par rapport à celle de l'exemplaire utilisé en traitement ;</li>
+<li><strong>elle détermine sa propre version</strong>: c'est la date-heure courante mais toujours garantie supérieure d'au moins une milliseconde à la plus tardive des versions des documents à tolérance 0 ;</li>
+<li><strong>elle valide définitivement le stockage des contenus</strong> des documents créés / modifies / supprimes au cours du traitement et de leurs items.</li>
+<li><strong>elle libère les verrouillages</strong> sur les documents qui étaient verrouillés par le <code>commit()</code> technique du stockage persistant.</li>
 </ul>
-<p>A noter que cette méthode peut stocker dans l'objet de filtre des informations  utiles à la poursuite de la synchronisation pour ce document.</p>
-<p><strong><em>Filtre sur les classes d'items et leur clé:</em></strong></p>
-<pre><code>FilterPolicy filter(ISyncFilter sf, ItemDescr itemDescr, String key)
-</code></pre>
-<p>Cette méthode retourne la politique à mener pour les items du document en fonction de leur classe et de leur clé éventuelle :</p>
+<blockquote>
+<p>Si un document a évolué entre la phase de traitement et la validation, l'opération subit une exception : la validation s'interrompt, libère les verrous et l'opération est recyclée. Elle prendra alors la dernière version du / des documents ayant provoqué cette exception.
+Le nombre de recyclages est limité et un certain temps est laissé entre chaque cycle : in fine l'opération peut sortir définitivement en erreur du fait d'un excès de contention d'accès sur les documents persistants.</p>
+</blockquote>
+<p>Ce mode de gestion <em>optimiste</em> table sur le fait que les opérations vont travailler sur peu de documents (il y a une limite autoritaire à 32). Elle optimise aussi la connaissance entre plusieurs serveurs des dernières versions des documents et rend la gestion des caches locales à chaque instance plus efficientes.</p>
+<h5>Travail sur l'entête seule d'un document</h5>
+<p>Quand une opération dans sa méthode <code>work()</code> demande un document, outre sa fraîcheur (0 ou N secondes), elle spécifie si elle souhaite :</p>
 <ul>
-<li><code>Accept</code> : accepter l'item ;</li>
-<li><code>Exclude</code> : exclure cet item de la synchronisation ;</li>
-<li><code>Continue</code> : l'acceptation ou l'exclusion dépend du contenu de l'item.</li>
+<li>disposer du document <strong>réduit à ses seules données d'entête</strong> : aucun item n'est accessible, ni en lecture ni en mise à jour.</li>
+<li>disposer du document <strong>complet avec tous ses items</strong> qui peuvent être lus et mis à jour.</li>
 </ul>
-<p><strong><em>Filtre sur le contenu même de l'item</em></strong></p>
-<pre><code>FilterPolicy filter(ISyncFilter sf, ItemDescr itemDescr, String key, Item item)
-FilterPolicy filter(ISyncFilter sf, ItemDescr itemDescr, String key, Text text)
-public static class Text {
-    public String src;
-    public String filtered;
-  }
-</code></pre>
-<p>Cette méthode retourne,</p>
+<p>Travailler sur un document réduit à son entête, pour les opérations qui s'y prêtent, présente l'avantage de ne pas faire charger en cache locale du serveur un volume souvent conséquent d'items ce qui allège notemment le traitement des cas simples agissant sur beaucoup de documents.</p>
+<h5>Consistance structurelle entre plusieurs documents : documents verrous</h5>
+<p>Parfois un groupe de documents doit être considéré comme immobile dès lors qu'une opération travaille sur l'un deux :</p>
 <ul>
-<li><code>Exclude</code> : l'item n'est pas synchronisé.</li>
-<li><code>Accept</code> : l'item est synchronisé dans son intégralité et son état initial.</li>
-<li><code>Continue</code> : la méthode a pu modifier l'item, masquer certains champs ou en calculer d'autres... c'est l'item modifié passé en argument qui est synchronisé.<br>
-La seconde méthode s'applique aux items opaques : si la propriété <code>filtered</code> est non <code>null</code> c'est la valeur à retourner en synchronisation au lieu de la valeur <code>src</code> réelle du contenu de l'item.</li>
+<li>par exemple pour effectuer des arrêtés comptables exactement synchronisés sur les documents du groupe et enregistrer dans un document un agrégat de décomptes provenant de documents du groupe.</li>
+<li>dans ce cas il faut déterminer un document représentatif du groupe (le cas échéant sans item) et s'astreindre à le demander avec une tolérance 0 dans toutes les opérations portant sur un des documents du groupe.</li>
 </ul>
-<p><strong><em>Sérialisation d'un document</em></strong></p>
-<pre><code>String toJson(String filter, long ctime, long version, long dtime, boolean shortest)
-String toJson()
-</code></pre>
-<p>Cette méthode retourne la sérialisation JSON du document de delta en supposant qu'un état antérieur était connu et y applique les éléments de filtre décrits ci-dessus.</p>
+<h3>Opérations de mise à jour et synchronisations</h3>
+<p>Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents et mettre à jour les données d'entête.</p>
+<p>En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une <strong><em>synchronisation</em></strong> qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session externe d'origine a cité <em>à synchroniser</em> (avec la version et le <code>dtime</code> détenus pour chacun).<br>
+Une session peut ainsi effectuer des actions de mises à jour et récupérer toutes les conséquences de ces actions sur les documents dont elle détient une copie (plus ou moins retardée).</p>
+<p><strong>Une opération de mise à jour doit être idempotente</strong> : l'exécuter plusieurs fois successivement doit laisser l'ensemble des documents dans le même état qu'une exécution unique ce qui exige le cas échéant de détecter que la mise à jour a déjà été faite ou qu'elle peut être faite plusieurs fois sans dommage pour la logique métier.<br>
+L'utilisation de la date-heure d'opération <code>dhop</code> permet souvent de mémoriser qu'une opération de la session a déjà été effectuée et éviter de la refaire.</p>
+<p><strong><em>Une opération de mise à jour peut retourner un résultat</em></strong> : du fait de l'idempotence le traitement doit retourner le même résultat qu'elle ait procédé effectivement à la mise à jour ou constaté qu'elle avait déjà été faite.</p>
+<h3>Opérations de reporting</h3>
+<p>Elles ont pour objectif de retourner un résultat construit depuis des documents stockés.</p>
+<p>Des exécutions successives donnent usuellement des résultats différents, l'état des documents stockés ayant évolué.<br>
+Le résultat d'une opération de reporting peut avoir n'importe quelle forme : <em>JSON, image, html</em>, etc.</p>
+<p>Si une opération de reporting retourne un résultat en JSON, elle <em>peut</em> être suivie d'une synchronisation.</p>
+<h1>Exceptions</h1>
+<p>Opérations et synchronisations retournent une <strong><em>exception</em></strong> en cas d'échec aboutissant à un status HTTP 400 (404 pour les N).</p>
+<h3>Codes MAJOR / MINOR</h3>
+<p>La première lettre du <strong>code</strong> de l'exception définit son code <strong>MAJOR</strong> (1 à 7) :</p>
 <ul>
-<li><code>ctime</code> : date-heure de création de l'exemplaire détenu.</li>
-<li><code>version</code> : version de l'exemplaire détenu.</li>
-<li><code>dtime</code> : dans l'exemplaire détenu toutes les suppressions au delà de dtime sont connues.</li>
-<li><code>shortest</code> : si vrai les items supprimés ne sont pas transmis (dtime = version).</li>
+<li>1 : <strong><em>A - métier</em></strong> : les conditions fonctionnelles sont non satisfaisantes sur le contenu des documents vis à vis des paramètres de l'opération. Recommencer l'opération avec les mêmes paramètres a de fortes chances de provoquer la même exception ...  sauf si les données sur le serveur ont évolué favorablement depuis, typiquement du fait d'une requête émise par une autre session depuis la requête initiale.</li>
+<li>1 : <strong><em>N - ressource inexistante</em></strong> : l'opération a demandé typiquement le contenu d'une pièce jointe inexistante (404).</li>
+<li>2 : <strong><em>B - bug</em></strong> : l'application <em>a rencontré et bien détecté</em> une conjonction des valeurs de données qui n'auraient jamais dû exister (selon le développeur). Recommencer l'opération avec les mêmes paramètres a des chances de provoquer la même exception, sauf si les données sur le serveur ont évolué depuis de sorte que cette conjonction non prévue n'apparaisse plus (chance ... relative, c'est un incident non reproductible et peut-être difficile à corriger).</li>
+<li>3 : <strong><em>X - inattendue</em></strong> : l'application <em>a rencontré une exception inattendue</em> (par exemple des valeurs incohérentes et non détectées en tant que telle) qui peut être la conséquence d'une indisponibilité ou du système ou du matériel (I/O, réseau, contention sur les données, famine de mémoire ...). Recommencer l'opération un peu plus tard avec les mêmes paramètres peut ne pas faire apparaître la même exception si elle résultait d'un problème ponctuel ou d'une surcharge système ayant disparu depuis. Mais ce peut être aussi un bug non détecté par l'application en tant que bug.</li>
+<li>4 : <strong><em>D - version retardée</em></strong> : la session requérante peut (et sauf exception le fait) transmettre avec sa requête l'identification de sa build. Si le serveur a une build plus avancée pour éviter des incidents de gestion liés à cette discordance il émet une exception de ce type.</li>
+<li>5 : <strong><em>C - contention sur les données</em></strong> : l'opération trop longue n'arrive pas à s'exécuter avec un ensemble de documents cohérents temporellement entre eux. Malgré plusieurs tentatives l'échec de la validation d'une opération réapparaît.</li>
+<li>6 : <strong><em>O - domaine off</em></strong> : une opération de maintenance technique a fermé le service temporairement. Un message plus détaillé peut donner plus d'informations sur les raisons de cette fermeture et perspective de réouverture.</li>
+<li>7 : <strong><em>S - non autorisée</em></strong> : la session a joint des identifiant / clé d'authentification / autorisation ... n'autorisant pas l'exécution de l'opération. Il s'agit soit d'une session dont l'autorisation a expiré ou  a été supprimée par l'administrateur ou d'une tentative d'intrusion.</li>
 </ul>
-<p>La seconde méthode suppose qu'aucun exemplaire n'est détenu et que les items supprimés ne sont pas demandés : bref c'est l'état courant complet du document.</p>
-<h1>Accès documents du cache <code>Cache</code></h1>
-<p>Chaque instance de serveur dispose d'une mémoire cache gérée par la classe <code>Cache</code> où sont stockés les derniers documents accédés.</p>
-<p>Tout accès à un document passe toujours par la mémoire cache et les documents y sont en lecture seule.</p>
-<p>La mémoire cache est séparée par <code>namespace</code> : il est en conséquence possible d'accéder à des documents d'un autre namespace, du moins en lecture. Acquérir d'abord la mémoire cache, soit de son namespace courant soit d'un autre :</p>
-<pre><code>public static Cache current()
-public static Cache cacheOf(String namespace)
-
-public Document document(DocumentId id, Stamp minTime, long versionActuelle)
-</code></pre>
-<p>Le document est retourné de la mémoire cache (après y avoir été mis s'il n'y était pas). Il est en lecture seule. Le retour est null si la version obtenue ne peut pas être meilleure que celle détenue (<code>versionActuelle</code>).</p>
-<h1>Sélection des identifiants de documents et des items</h1>
-<h3>Recherche générique sur les valeurs des propriétés d'un item</h3>
-<p>L'objectif est de pouvoir rechercher une liste de documents dont l'un des items a une valeur de propriété indexée recherchée (par exemple un code postal donné et les premières lettres d'un nom, ou une adresse e-mail ...).</p>
-<p>Ce genre de recherche n'est fait que pour retourner un nombre réduit de documents.</p>
-<pre><code>public static Collection&lt;Document.Id&gt; searchDocIdsByIndexes(Class&lt;?&gt; docClass, Class&lt;?&gt; itemClass, Cond&lt;?&gt;... ffield) throws AppException
-
-public static Collection&lt;XItem&gt; searchItemsByIndexes(Class&lt;?&gt; docClass, Class&lt;?&gt; itemClass, XItemFilter filter, Cond&lt;?&gt;... ffield) throws AppException 
-public static class XItem {
-    public String docId;
-    public String key;
-    public long version;
-    public BItem item;
-}
-</code></pre>
-<p><em>Une ou plusieurs filtres portent sur les propriétés indexées</em> de l'item. Chaque filtre doit avoir pour attribut <code>name</code> le nom de la propriété filtrée. Seule la première condition peut être <strong>une non <code>EQ</code></strong>.</p>
-<p>Le résultat est une <code>Collection</code> de <code>Document.Id</code> dans le premier cas et une Collection de XItem (item + méta données).</p>
-<p>En GAE Datastore la recherche est prioritairement sur les conditions de filtre des propriétés indexées et d'abord sur la première d'entre elle seule à pouvoir être non <code>EQ</code> (conditions d'inégalité). Les éventuelles autres conditions d'inégalité ne sont appliquées que sur le résultat retourné par le Datastore qu'il réduit.</p>
-<h1>L'espace secondaire de stockage des fichiers attachés aux documents</h1>
-<p>Selon les providers ce stockage est implémenté sur un service Cloud ou un File-System local.<br>
-Une classe abstraite <code>BlobProvider</code> donne les services minimum à fournir et chaque provider a son implémentation spécifique.</p>
-<p>Le stockage des blobs s'effectue par document : chacun y est identifié par son sha-256.</p>
+<h3>Phase de traitement</h3>
+<p>Une exception embarque la phase de ce traitement où elle a été levée et permet de déterminer si oui ou non le traitement a été exécuté et/ou validé :</p>
 <ul>
-<li>Un blob est stocké au cours d'exécution de <code>work(</code>) dans une opération, même si l'opération n'est pas validée.</li>
-<li>Un blob n'est pas détruit quand il est détruit au cours d'un <code>work()</code> (sa validation n'étant pas acquise).</li>
-<li>Ce principe prend le risque d'accumuler des fichiers qui ne sont pas / plus référencés dans le document.</li>
-<li>L'avantage est que ça laisse du temps pour synchroniser dans une session distante une image cohérente d'un document et de ses pièces jointes assurées de pouvoir être obtenues conformément à l'état du document synchronisé dans une version donnée.</li>
-<li>En contrepartie ceci suppose des nettoyages périodiques.</li>
+<li>phase 0 : avant début de l'opération.</li>
+<li>phase 1 : au cours de l'opération (<code>work()</code>).</li>
+<li>phase 2 : durant la <em>validation</em> de l'opération.</li>
+<li>phase 3 : au cours de la phase <code>afterwork()</code> de l'opération.</li>
+<li>phase 4 : durant la synchronisation postérieure à l'opération.</li>
+<li>phase 5 : durant l'envoi du résultat.</li>
 </ul>
-<p>.</p>
-<pre><code>void blobDeleteAll(String clid) : suppression physique de tous les blobs du document
-void blobStore(String clid, String sha, byte[] bytes) : stocke un blob
-byte[] blobGet(String clid, String sha) : retourne un blob
-boolean cleanup(String clid, HashSet&lt;String&gt; shas)
-</code></pre>
-<p>Le nettoyage d'un document est lancé par une tâche qui s'exécute dans les N heures après une création / modification / suppression de ses pièces jointes.<br>
-Si rien ne bouge pendant un certain temps sur un document aucun nettoyage n'est lancé et si des modifications frénétiques sont effectuées, au plus un nettoyage intervient par groupe de N heures (1, 2, 3, 4, 6, 8 ou 12) configurable.</p>
-<p>Le nettoyage,</p>
+<p>Une requête HTTP peut également retourner des codes d'incident autres :</p>
 <ul>
-<li>lit la liste des sha des fichiers qui avait été <em>mis à la corbeille</em> lors du cycle précédent et supprime les fichiers correspondants, sauf quand ils sont dans la liste des sha encore référencés ;</li>
-<li>lit tous les noms des fichiers stockés et les inscrit dans la corbeille quand ils ne sont plus référencés dans <code>shas</code> : ils sont simplement ainsi <em>candidats</em> à être purgés au tours suivant (sauf ceux qui d'ici là sont de nouveau référencés).</li>
+<li>avant envoi de la requête ;</li>
+<li>des codes HTTP 0 ou 500 émis par le frontal ou le conteneur de l'application, dépassement de temps etc.</li>
+<li>après retour de la requête sur l'interprétation du résultat retourné.</li>
 </ul>
-<h1>Configuration des Namespaces</h1>
-<p>Chaque namespace a quelques attributs techniques que l'administrateur peut fixer :</p>
-<ul>
-<li><code>status</code> : il peut prendre les valeurs suivantes :
-<ul>
-<li><code>0</code> : espace accessible normalement (lecture et écriture) ;</li>
-<li><code>1</code> : espace accessible temporairement aux seules opération n'agissant qu'en lecture ;</li>
-<li><code>2</code> : espace temporairement non accessible, sauf aux requêtes d'administration ;</li>
-<li><code>3</code> : espace définitivement non accessible (en destruction) mais pouvant peut-être un jour être réactivé.</li>
-</ul>
-</li>
-<li><code>info</code>  un court texte à propos du status ;</li>
-<li><code>theme</code> :  lettre identifiant le thème visuel utilisé ;</li>
-<li><code>label</code> : un intitulé plus long pour l'espace de noms ;</li>
-<li><code>qm</code> : identifiant du Queue Manager gérant le namespace ;</li>
-<li><code>nsbuild</code> : numéro d'ordre de la dernière modification du thème, du label, du queue manager, ou de l'une des ressources.</li>
-</ul>
-<p>Quelques fichiers de ressources peuvent être définis, typiquement :</p>
-<ul>
-<li><code>custom.css</code> : directives CSS intégrées à la suite du thème associé à l'espace ;</li>
-<li><code>custom.js</code> : un script <em>javascript</em> exécuté après les autres juste avant le démarrage effectif de l'application dans le browser ;</li>
-<li><code>logo.png</code> : un fichier image représentant un logo pour la page d'accueil de l'application graphique.</li>
-</ul>
-<p>Toutes ces ressources ont obligatoirement une valeur par défaut (figurant dans <code>/var/z/...</code>) : en cas d'absence de valeur spécifique à l'espace de noms c'est la valeur par défaut de &quot;z&quot; qui est utilisée.<br>
-L'espace <code>z</code> n'est pas configurable dynamiquement, une erreur risquant de rendre tous les namespaces inaccessibles : il ne peut l'être que dans la livraison de l'application (qui, elle, est testée avant mise en ligne).</p>
-<p>Une session externe standard ne peut accéder qu'à un seul namespace fixé dans son URL d'appel (et reconduite dans toutes les URLs d'opération).</p>
-<p>Une session externe d'administration des namespaces peut accéder à la liste des namespaces afin de les initialiser, les mettre on/off ou les configurer.</p>
-<p>La configuration d'un namespace est contenue dans un document de classe <code>Namespace</code> :</p>
-<ul>
-<li>ayant pour <code>docid</code> le code du namespace,</li>
-<li>mémorisé dans le namespace <code>z</code> (en réalité dans le premier cité dans la configuration de l'application).</li>
-</ul>
-<h1>Stockage en R-DBMS</h1>
-<p>Les colonnes <code>contentt</code> et <code>contentb</code> vont de pair :</p>
-<ul>
-<li>si le texte (typiquement un JSON) est court il est stocké dans <code>contentt</code>;</li>
-<li>sinon il est gzippé et stocké en <code>contentb</code>. L'une des deux colonnes est toujours <code>null</code>.</li>
-</ul>
-<h3>Table <code>dbinfo</code></h3>
-<pre><code>CREATE TABLE dbinfo (
-info text NOT NULL
-);
-</code></pre>
-<p>Cette table contient une constante : elle sert principalement au serveur à vérifier qu'il peut accéder à la base de données au lancement.</p>
-<h3>Table <code>s2cleanup</code></h3>
-<pre><code>CREATE TABLE s2cleanup (
-clid varchar(255) NOT NULL,
-hour int,
-CONSTRAINT s2cleanup_pk PRIMARY KEY (clid, hour)
-);
-</code></pre>
-<p>Cette table indique pour chaque document SA prochaine heure de cleanup plannifiée. Contraitement aux apparences sa clé primaire logique est <code>clid</code> : si <code>hour</code> y figure c'est pour bénéficier de l'index de clé primaire sans en créer un second.</p>
-<h3>Table <code>doc</code></h3>
-<pre><code>CREATE TABLE doc (
-clid varchar(255) NOT NULL,
-version bigint NOT NULL,
-ctime bigint NOT NULL,
-dtime bigint NOT NULL,
-CONSTRAINT doc_pk PRIMARY KEY (clid)
-);
-</code></pre>
-<p>Cette table donne l'état courant d'un document existant.
-Ce row est mis à jour pour un document à chaque création ou mise à jour et est détruit quand le document l'est.</p>
-<h3>Table <code>item</code></h3>
-<pre><code>CREATE TABLE item (
-docid varchar(255) NOT NULL,
-clkey varchar(255) NOT NULL,
-version bigint NOT NULL,
-vop bigint NOT NULL,
-sha varchar(255),
-contentt text,
-contentb bytea,
-CONSTRAINT item_pk PRIMARY KEY (docid, clkey)
-);
-CREATE INDEX item_v on item (docid, version, clkey);
-CREATE INDEX item_p on item (docid, sha) where sha is NOT NULL;
-</code></pre>
-<p>Cette table est <em>abstraite</em> : pour chaque classe de document il est créé une table qui hérite de celle-ci. Par exemple la table <code>compte</code> :</p>
-<pre><code>CREATE TABLE compte () INHERITS (item);
-</code></pre>
-<p>Cette table héberge tous les items n'ayant pas de propriétés indexées.</p>
-<p>Pour chaque item comportant une ou des propriétés indexées (du moins visible du R-DBMS) il est déclarée une table spécifique qui hérite de la table des items du document :</p>
-<pre><code>CREATE TABLE compte_ent (
-dhl varchar(255),
-nomr varchar(255)
-) INHERITS (compte);
-CREATE INDEX compte_ent_dhl ON compte_ent (dhl, docid);
-CREATE INDEX compte_ent_nomr ON compte_ent (nomr, docid);
-</code></pre>
-<p>Le nom de la table est suivie de <code>_</code> et du nom de la classe d'item.<br>
-Il est définie une colonne pour chaque valeur exportée / indexée.<br>
-Il est, en général, défini un index reprenant cette colonne en tête et suivie de l'identifiant du document <code>docid</code>.</p>
-<h3>Table <code>taskqueue</code></h3>
-<pre><code>CREATE TABLE taskqueue (
-clid varchar(255) NOT NULL,
-nextstart bigint NOT NULL, 
-retry int NOT NULL,
-info varchar(255),
-report text,
-CONSTRAINT taskqueue_pk PRIMARY KEY (docid)
-CREATE INDEX taskqueue_nexstart on taskqueue (nextstart, clid);
-</code></pre>
-<p>Cette table est celle des tâches différées en attente de traitement ou en cours.   Le Queue Manager est certes averti de chaque modification par une requête HTTP mais périodiquement il scanne la table par les <code>nextStart</code> pour récupérer les pertes éventuelles et au lancement également.</p>
-<h1>Stockage en GAE Datastore (à revoir)</h1>
-<p>Le Datastore est sensible au namespace standard de GAE.<br>
-Les entités ont deux propriétés non indexées qui hébergent le texte (JSON souvent, simple String parfois) de l'entité :</p>
-<ul>
-<li><code>text</code> : type <code>Text</code> pour les contenus courts (inférieurs à 2K);</li>
-<li><code>blob</code> : type <code>Blob</code> pour les contenus longs gzippés en binaire.</li>
-</ul>
-<p>Une des deux propriétés est toujours <code>null</code>.</p>
-<h3>Entité <code>Group</code></h3>
-<p>C'est l'entité racine de chaque groupe et sa clé est <code>groupid</code>.<br>
-Propriétés :</p>
-<ul>
-<li><code>version</code> : version du groupe;</li>
-<li><code>text/blob</code> : le contenu du <code>GState</code>.</li>
-</ul>
-<h3>Entité S2</h3>
-<p>C'est l'entité enregistrant pour un groupe la dernière date-heure de cleanup de l'espace de stockage secondaire.</p>
-<p>Clé :</p>
-<ul>
-<li>parente : clé du groupe,</li>
-<li>nom : &quot;0&quot;</li>
-</ul>
-<p>Propriété :</p>
-<ul>
-<li><code>hour</code> : AAMMJJHH heure du dernier cleanup effectué / planifié.</li>
-</ul>
-<h3>Entité <code>Document</code></h3>
-<p>Cette entité représente un <code>DState</code>, l'état d'un document et traduit son existence.</p>
-<p>Clé :</p>
-<ul>
-<li>parente : clé du groupe,</li>
-<li>nom : <code>docclass/docid</code></li>
-</ul>
-<p>Propriété :</p>
-<ul>
-<li><code>version</code> : version du document,</li>
-<li><code>text/blob</code> : son <code>DState</code>.</li>
-</ul>
-<h3>Entité des items : <code>docClass</code> du document</h3>
-<p>Les entités représentant les items d'un document portent comme classe celle du document.</p>
-<p>Clé :</p>
-<ul>
-<li>parente : celle de l'entité Document du document,</li>
-<li>nom :
-<ul>
-<li><code>&quot;0&quot;</code> : pour le header du document.</li>
-<li><code>cl/itn</code> : classe de l'item et son identifiant relatif au document.</li>
-</ul>
-</li>
-</ul>
-<p>Propriétés :</p>
-<ul>
-<li><code>version</code> : version de l'item.</li>
-<li><code>key</code> : <code>null</code> pour les singletons.</li>
-<li><code>text/blob</code> : le contenu de l'item (String pour les opaques ou JSON pour les autres).</li>
-<li><code>P_sha</code> : pour les seuls items P.</li>
-</ul>
-<p>Quand un item de classe <code>Cl</code> d'un document de classe <code>docClass</code> à des propriétés indexées p1, p2 l'entité <code>docClass</code> a les propriétés suivantes supplémentaires :</p>
-<ul>
-<li><code>Cl_p1</code></li>
-<li><code>Cl_p2</code></li>
-</ul>
-<p>Des index sont déclarés sur ces propriétés.</p>
-<h4>Exemple du <code>datastore-indexes.xml</code></h4>
-<pre><code>&lt;datastore-indexes autoGenerate=&quot;false&quot;&gt;
-&lt;datastore-index kind=&quot;Group&quot; ancestor=&quot;true&quot; source=&quot;manual&quot;&gt;
-    &lt;property name=&quot;version&quot; direction=&quot;asc&quot;/&gt;
-&lt;/datastore-index&gt;
-&lt;datastore-index kind=&quot;Document&quot; ancestor=&quot;true&quot; source=&quot;manual&quot;&gt;
-    &lt;property name=&quot;version&quot; direction=&quot;asc&quot;/&gt;
-&lt;/datastore-index&gt;
-&lt;datastore-index kind=&quot;NsDoc&quot; ancestor=&quot;true&quot; source=&quot;manual&quot;&gt;
-    &lt;property name=&quot;P_sha&quot; direction=&quot;asc&quot;/&gt;
-&lt;/datastore-index&gt;
-&lt;datastore-index kind=&quot;NsDoc&quot; ancestor=&quot;true&quot; source=&quot;manual&quot;&gt;
-    &lt;property name=&quot;version&quot; direction=&quot;asc&quot;/&gt;
-&lt;/datastore-index&gt;
-&lt;datastore-index kind=&quot;Compte&quot; ancestor=&quot;true&quot; source=&quot;manual&quot;&gt;
-    &lt;property name=&quot;version&quot; direction=&quot;asc&quot;/&gt;
-&lt;/datastore-index&gt;
-&lt;datastore-index kind=&quot;Compte&quot; ancestor=&quot;true&quot; source=&quot;manual&quot;&gt;
-    &lt;property name=&quot;Ent_dhl&quot; direction=&quot;asc&quot;/&gt;
-&lt;/datastore-index&gt;
-&lt;datastore-index kind=&quot;Compte&quot; ancestor=&quot;true&quot; source=&quot;manual&quot;&gt;
-    &lt;property name=&quot;Ent_nomR&quot; direction=&quot;asc&quot;/&gt;
-&lt;/datastore-index&gt;
-</code></pre>
-<p>Les index <code>P_sha</code> ne sont à déclarer que sur les documents ayant des pièces jointes.</p>
 <h1>Tâches : opérations différées</h1>
-<h4>Enregistrement du début d'exécution</h4>
-<p>Il est effectué dans le serveur d'exécution.</p>
+<p>Certains traitements peuvent être constitués d'une séquence, possiblement longue, d'opérations. D'autres sont à lancer périodiquement.<br>
+Comme une opération doit avoir un temps d'exécution réduit et surtout ne pas accéder à trop de documents en tolérance 0, ces traitements s'exécutent sous la forme d'une suite d'opérations distinctes et différées.<br>
+Par ailleurs une opération <em>principale</em> peut avoir besoin d'être suivie après un délai plus ou moins court d'opérations <em>secondaires</em> différées par rapport à l'opération principale.</p>
+<p><strong>Une tâche est constituée d'une succession d'étapes de 1 à N</strong>, chacune marquant un point de reprise persistant :</p>
 <ul>
-<li><strong>enregistrement de <code>TaskQueue</code> non trouvé</strong> : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. La tâche était terminée ou supprimée par l'administrateur.</li>
-<li><strong>step demandée inférieure à celle enregistrée (ou celle enregistrée est 0 - trace)</strong> : on ne fait rien et on retourne un status 200 pour ne pas provoquer de relance du QM Datastore. L'étape était terminée, le QM Datastore n'en savait rien (et a même lancé l'étape suivante).</li>
-<li><strong>steps demandée et enregistrée identiques</strong>.
+<li>une tâche est identifiée par le couple :
 <ul>
-<li>l'état enregistré n'a pas de <code>startTime</code>. C'est le cas normal, du premier lancement ou d'une relance. On inscrit une <code>startTime</code> et le <code>retry</code> est incrémenté.</li>
-<li>l'état enregistré a une <code>startTime</code>. On écrase la <code>startTime</code> (le <code>retry</code> est laissé tel quel) ce qui fera ignorer la fin de la précédente. La nouvelle exécution devient officielle (l'autre ayant de fortes chances de ne plus être suivie par le QM Datastore).</li>
+<li><code>ns</code> : du code de l'instance qui l'a inscrite.</li>
+<li><code>taskid</code> : d'un code aléatoire généré à la création.</li>
 </ul>
 </li>
-<li><strong>step demandée supérieure à celle enregistrée</strong>. Situation a priori impossible : on ne fait rien et on retourne un status 200.</li>
+<li>chaque fin d'étape spécifie s'il y a ou non une étape ultérieure et quel est son objet paramètre d'exécution. Cet objet porte également, si souhaité, des informations de reporting sur le travail déjà exécuté.</li>
+<li>la fin de la dernière étape spécifie si son résultat doit être conservé, et si oui combien de temps, ou si la trace de la tâche est à détruire immédiatement.</li>
 </ul>
-<h4>Fin d'exécution</h4>
-<p>Elle est exécutée par l'opération, soit sur fin normale, soit en exception :</p>
+<h5><code>TaskQueue</code></h5>
+<p>Cette table / entité enregistre l'étape courante de chaque tâche :</p>
 <ul>
-<li>toute exécution qui se termine alors que l'état enregistré ne correspond pas à sa signature <code>startTime</code> est ignorée, non enregistrée et la transaction non validée : c'est une exécution perdue qui a été relancée depuis. Son retour est un status 200 afin que le QM Datastore surtout ne relance rien (au cas improbable où il écouterait encore).</li>
-<li>la fin sur exception est enregistrée (transaction non validée) et retourne un 500 afin que le QM Datastore relance.</li>
-<li>la fin normale est enregistrée, la transaction est validée et retourne un status 200 afin que le QM Datastore ne relance pas. La fin normale correspond à,
+<li><strong>en attente</strong>, de traitement de la prochaine / première étape ou de reprise de l'étape actuelle après une exécution tombée en exception. Le numéro de la prochaine étape à traiter est renseigné (à partir de 1) et la <code>toStartAt</code> mentionne quand elle doit être lancée au plus tôt. Le code <code>exc</code> indique :
 <ul>
-<li>soit la fin de la dernière étape avec trace (<code>step</code> est <code>null</code>, <code>toPurgetAt</code> est renseignée).</li>
-<li>soit la fin de la dernière étape sans trace (l'enregistrement est supprimé).</li>
-<li>soit la demande d'une nouvelle étape (<code>step</code> est incrémenté, <code>retry</code> à 0, <code>toStartAt</code> est renseignée).</li>
-</ul>
-</li>
-</ul>
-<h4>Fin d'étape d'une tâche</h4>
-<p>La fin d'une étape <em>intermédiaire</em> donne lieu :</p>
-<ul>
-<li>à l'enregistrement du <code>param</code> de l'étape suivante, objet pouvant comporter facultativement des données de compte rendu synthétique d'exécution des étapes précédentes;</li>
-<li>à l'incrémentation du compteur d'étapes <code>step</code>;</li>
-<li>à l'enregistrement d'une nouvelle date-heure de lancement pour l'étape suivante.</li>
-</ul>
-<p>La fin de la <em>dernière</em> étape donne lieu :</p>
-<ul>
-<li>à l'enregistrement du <code>param</code> qui, s'il n'est pas <code>null</code>, ne contient plus que des données de compte rendu synthétique d'exécution;</li>
-<li>à l'enregistrement d'une date-heure de purge de l'enregistrement de suivi de la tâche.</li>
-<li>à la mise à <code>null</code> du numéro de la prochaine étape et de la date-heure de prochain lancement.</li>
-</ul>
-<p>A noter que si la dernière étape ne veut pas conserver de trace de traitement, son enregistrement est purement et simplement détruit.</p>
-<h3>Principe d'exécution nominal</h3>
-<p>Une opération inscrit une nouvelle tâche en ayant fourni <code>ns opName param info cron</code> : <code>taskid</code> est générée et <code>qn</code> obtenu de la configuration.<br>
-Au commit :</p>
-<ul>
-<li>la tâche est inscrite dans la table <code>TaskQueue</code>.</li>
-<li>pour un Datastore, <strong>avant le commit</strong>, une tâche est mise en queue avec pour URL d'invocation <code>/ns/od/taskid/step?key=...</code>.</li>
-<li>pour une base de données, <strong>après le commit</strong>, si la <code>toStartAt</code> est proche (moins de X minutes : X est le scan lapse du Queue Manager), le Queue Manager associé à l'instance (<code>qm7</code> par exemple) reçoit une requête HTTP <code>/qm7/op?key=...&amp;op=inq&amp;param={ns:..,taskid:..,toStartAt:..,qn:..,step:N}</code> pour inscription de l'étape N de la tâche à relancer sans attendre le prochain scan.</li>
-</ul>
-<p><strong>Quand le Queue Manager peut / doit lancer la tâche</strong>, il cherche un thread worker libre qui émet vers le serveur du namespace une requête HTTP avec <code>/ns/od/taskid/step?key=...</code> :</p>
-<ul>
-<li><code>ns</code> : le code de l'instance (comme pour toute requête),</li>
-<li><code>od</code> au lieu de <code>op</code> pour identifier qu'il s'agit d'une opération différée,</li>
-<li><code>taskid/step</code> dans l'URL.</li>
-<li>le paramètre <code>key</code> : mot de passe permettant de s'assurer que c'est bien le Queue Manager qui a émis la requête et non une session externe (en fait sur un POST, <code>key</code> n'apparaît pas dans l'URL comme dans celle ci-dessus qui est employée en test).</li>
-</ul>
-<p>Quand le Datastore lance la tâche il émet une requête HTTP sur l'URL <code>/ns/od/taskid/step?key=...</code>.</p>
-<p>L'opération souhaitée s'exécute ensuite :</p>
-<ul>
-<li><strong>traitement OK</strong> :
-<ul>
-<li>la tâche <code>ns.taskid</code> est,
-<ul>
-<li>soit supprimée de la table <code>TaskQueue</code> au commit.</li>
-<li>soit enregistrée pour une nouvelle étape.</li>
+<li>non <code>null</code> : la dernière exécution est tombée en exception et c'est une relance (<code>retry</code> est &gt; 0) qui est en attente.</li>
+<li><code>null</code> : la dernière exécution s'est terminée normalement et c'est la première exécution de cette étape qui est en attente (<code>retry</code> vaut 0).</li>
+<li><code>detail</code> donne le détail de l'exception (quand il y a un code <code>exc</code>).</li>
 </ul>
 </li>
-<li>le retour est un status 200 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle étape de tâche ou signale au Datastore que l'étape de la tâche est finie.</li>
-</ul>
-</li>
-<li><strong>traitement en Exception</strong> :
+<li><strong>en cours de traitement</strong> : le numéro d'étape indique l'étape en cours de traitement, <code>toStartAt</code> est <code>null</code> et <code>startTime</code> donne la date-heure de début de traitement.</li>
+<li><strong>terminée</strong> : il s'agit de la trace d'exécution d'une tâche :
 <ul>
-<li>la tâche <code>ns.taskid</code> est mise à jour dans <code>TaskQueue</code> :
-<ul>
-<li><code>starTime</code> y est mise à <code>null</code>;</li>
-<li><code>retry</code> est incrémenté;</li>
-<li><code>exc detail</code> sont renseignés;</li>
-<li><code>toStartAt</code> est calculée à une valeur future d'autant plus lointaine que le numéro de <code>retry</code> est élevé, voire finalement infinie.</li>
-</ul>
-</li>
-<li>le retour est un status 500 ce qui libère le worker du Queue Manager pour prendre en charge une nouvelle étape d'une tâche ou signale au Datastore qu'il faudra relancer.</li>
-<li>sauf Datastore, si la <code>nexstart</code> est proche (moins de X minutes), le Queue Manager associé au namespace reçoit une requête HTTP pour inscription de la tâche à relancer sans attendre le prochain scan.</li>
+<li><code>step</code> le numéro d'étape est <code>null</code> tout comme <code>toStartAt</code>.</li>
+<li><code>param</code> donne en JSON le rapport synthétique du travail exécuté.</li>
+<li><code>toPurgetAt</code> indique quand cette trace doit être supprimée.</li>
 </ul>
 </li>
 </ul>
-<p><strong>Scan périodique des <code>TaskQueue</code> par le Queue Manager</strong>
-Un Queue Manager gère une ou plusieurs instances et fait donc face à une ou plusieurs base de données.<br>
-Seules les étapes des tâches à échéance proche lui sont soumises par HTTP : un scan périodique lui permet de récupérer les autres. Ce scan, pour chaque base de données, filtre les tâches ayant :</p>
+<p>Une tâche <strong>présumée perdue</strong> apparaît <strong>en cours de traitement</strong> avec une <code>startTime</code>   ancienne : périodiquement on scrute ces tâches, on suppose que leur fin, normale ou en exception, n'a pas pu être enregistrée et elles sont convertie en tâches en attente de relance avec un <code>retry</code> &gt; 0 et un <code>exc</code> LOST..</p>
+<h5>Queue Manager</h5>
+<p>C'est est un ensemble de threads hébergés dans un des hosts et chargés d'envoyer des requêtes HTTP demandant l'exécution des opérations différées inscrites en régulant le flux des demandes afin de ne pas saturer les serveurs. Un Queue Manager joue un rôle de session externe mais non humaine :</p>
 <ul>
-<li>une <code>toStartAt</code> antérieure à la date-heure du scan suivant,</li>
-<li>ayant l'un des codes d'instance dont il est en charge,</li>
-<li>un numéro d'étape : si <code>null</code> la tâche est terminée et l'enregistrement n'est qu'une trace,</li>
-<li>ayant une <code>startTime</code> <code>null</code> (tâche pas en cours).</li>
+<li>il n'interprète pas le résultat qui peut être stocké afin d'être consultable un certain temps après la fin de la tâche par un administrateur.</li>
+<li>il ne gère pas les exceptions des opérations : elles réapparaissent en queue avec un <code>retry</code> &gt; 1 inscrites par la requête dans le catch final.</li>
+<li>il récupère périodiquement les tâches <em>présumée perdues</em> dont la fin normale ou exception n'a pas pu être enregistrée.</li>
 </ul>
-<p>Ce scan permet au Queue Manager de récupérer les tâches à relancer autant que celle à lancer une première fois.</p>
-<h3>Situations anormales</h3>
-<h5>Perte de contact par le worker du Queue Manager qui suit l'exécution d'une étape d'une tâche</h5>
-<p>Sa requête HTTP sort prématurément en exception : la notification de fin ne lui parviendra pas.</p>
+<h5>Datastore</h5>
+<p>Le GAE Datastore a son propre Queue Manager. Afin d'uniformiser la gestion des tâches, la politique suivante est appliquée :</p>
 <ul>
-<li>le worker considère l'étape comme terminée.</li>
-<li>le worker n'est en fait pas intéressé par le status de bonne ou mauvaise fin de celle-ci.</li>
-</ul>
-<p>Si l'étape de la tâche se termine bien, elle disparaîtra de <code>TaskQueue</code> ou aura un numéro d'étape supérieur.<br>
-Si la tâche sort en exception elle sera modifiée en <code>TaskQueue</code> pour une future relance de son étape et si cette relance est proche le Queue Manager sera notifié par HTTP pour accélérer la relance.</p>
-<h5>Tâches perdues</h5>
-<p>Il s'agit de tâches qui ont été lancées (ou relancées),</p>
+<li>le QM Datastore ne considère que les étapes individuellement : le lancement de l'étape suivante est géré par la fin de la précédente qui inscrit une <code>task</code> Datastore explicitement.</li>
+<li>le QM Datastore gère la relance des étapes tombées en exception. Toutefois au bout d'un certain nombre de fois il abandonne silencieusement. La tâche apparaît dans <code>TaskQueue</code>,
 <ul>
-<li>ayant une <code>startTime</code> ancienne,</li>
-<li>dont le Queue Manager n'a pas de trace en exécution dans un worker.</li>
+<li>soit comme sortie en exception,</li>
+<li>soit comme présumée perdue si son exception n'a pas pu être attrapée.</li>
 </ul>
-<p>On va considérer que l'étape de la tâche s'est mal terminée sans que son exception n'ait pu être enregistrée dans <code>TaskQueue</code> : elle est enregistrée avec comme exception <code>LOST</code> et marquée avec une <code>toStartAt</code> pour une relance ultérieure (comme une exception normale).</p>
-<p>Une tâche perdue est <em>supposée</em> être perdue mais en fait elle peut être cachée en exécution et dans ce cas il peut exister à un moment donné plus d'une exécution en cours, voire dans le pire des cas avec des numéros d'étapes différents.</p>
-<h1>Configuration (à reprendre)</h1>
-<p>Chaque instance de serveur du pool a un code identifiant qui lui permet de retrouver dans le fichier de configuration les options qui lui sont spécifiques.
-Ce code est donnée comme paramètre système :</p>
-<pre><code>java -Dfr.sportes.base.INSTANCE=A1 ... 
-</code></pre>
-<h4><code>web.xml</code></h4>
-<pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-&lt;web-app xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
-xmlns=&quot;http://java.sun.com/xml/ns/javaee&quot;
-xmlns:web=&quot;http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd&quot;
-xsi:schemaLocation=&quot;http://java.sun.com/xml/ns/javaee
-http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd&quot; version=&quot;2.5&quot;&gt;
-
-  &lt;context-param&gt;
-    &lt;param-name&gt;ConfigClass&lt;/param-name&gt;
-    &lt;param-value&gt;fr.sportes.forums.Config&lt;/param-value&gt;
-  &lt;/context-param&gt;
-
-  &lt;system-properties&gt;
-        &lt;property name=&quot;java.util.logging.config.file&quot; value=&quot;WEB-INF/logging.properties&quot; /&gt;
-    &lt;/system-properties&gt;
-
-  &lt;servlet&gt;
-    &lt;servlet-name&gt;Generic&lt;/servlet-name&gt;
-    &lt;servlet-class&gt;fr.sportes.base.Servlet&lt;/servlet-class&gt;
-    &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
-  &lt;/servlet&gt;
-  &lt;servlet-mapping&gt;
-    &lt;servlet-name&gt;Generic&lt;/servlet-name&gt;
-    &lt;url-pattern&gt;/*&lt;/url-pattern&gt;
-  &lt;/servlet-mapping&gt;  
-&lt;/web-app&gt;
-</code></pre>
-<p>Le paramètre <code>ConfigClass</code> donne le nom de la classe de configuration qui étend <code>AConfig</code>.</p>
-<h4><code>config.json</code></h4>
-<p>Ce fichier donne les options de configuration générale et les options propres à chaque instance de serveur du pool.</p>
-<h4><code>secret.json</code></h4>
-<p>Ce fichier donne des options de sécurité (mot de passe, etc.) requis pour accéder à la base de données, le SHA-256 de la clé d'administration, les paramètres d'accès au mailer  ..</p>
-<h4>Classe <code>Config</code></h4>
-<p>Cette classe étend la classe <code>AConfig</code> et donne la description spécifique de <code>config.json</code> et <code>secret.json</code>.</p>
+</li>
+<li>une tâche périodique <code>Cron</code> du datastore est en charge :
+<ul>
+<li>de récupérer les tâches présumées perdues et de les relancer en tant que nouvelle <code>task</code> pour le QM Datastore.</li>
+<li>d'envoyer un e-mail d'alerte à l'administrateur signalant les tâches en erreur ayant un indice de <code>retry</code> important et marquées à relancer à la fin du siècle.</li>
+</ul>
+</li>
+</ul>
+<p>La différence se situe dans la récupération dans les QM d'une exécution dont la fin n'a pas été attrapée / enregistrée sur le serveur exécutant :</p>
+<ul>
+<li>la requête HTTP dans un QM Datastore récupère un statut non 200 ou une exception de rupture de connexion. Il considère que c'est une exception et relance l'étape.</li>
+<li>le Queue Manager ne fait pas de relance. Il faudra attendre un scan qui force une exception LOST et relance l'étape.</li>
+<li>dans les deux cas,
+<ul>
+<li>l'exécution dont le contrôle a été perdue peut se terminer finalement alors qu'une autre exécution a été relancée et ce avant ou après détection de LOST.</li>
+<li>la nouvelle exécution peut se retrouver lors de son début face à une exécution antérieure qui s'est terminée.</li>
+</ul>
+</li>
+</ul>
+<h4>Création d'une tâche et de sa première étape</h4>
+<p>Une tâche est inscrite dans une table <code>TaskQueue</code> (<em>entity</em> en Datastore) au commit de l'opération qui l'a créé avec les données suivantes :</p>
+<ul>
+<li><code>ns</code> : le code son instance.</li>
+<li><code>taskid</code> : son identification aléatoire tirée à la création.</li>
+<li><code>opName</code> : le nom de l'opération en charge du traitement.</li>
+<li><code>param</code> : un JSON contenant les paramètres requis. Si ceux-ci sont très volumineux, on créé un document et <code>param</code> en contient juste l'identification.</li>
+<li><code>info</code> : texte d'information indexé permettant des filtrages pour l'administrateur.</li>
+<li><code>step</code> : le numéro d'étape est 1, c'est celui de la <strong>prochaine</strong> étape à exécuter.</li>
+<li><code>cron</code> : un code <code>Cron</code> qui indique qu'il faut lancer automatiquement à la fin complète de la tâche une autre tâche de même opération, même paramètres, un certain temps plus tard (défini par <code>cron</code>).</li>
+<li><code>retry</code> : son numéro d'ordre d'exécution dans l'étape <code>step</code> est 0. Il est incrémenté à chaque relance après exception.</li>
+<li><code>toStartAt</code> : la date-heure de son lancement / relance au plus tôt.</li>
+<li><code>startTime</code> : la date-heure du début d'exécution de l'étape courante. <code>null</code> quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.</li>
+<li><code>qn</code> : numéro de queue : le Queue Manager a plusieurs queues numérotées de 0 à N pour des usages différents, par exemple :
+<ul>
+<li>0: <em>rapide</em>, plusieurs threads pour des tâches courtes,</li>
+<li>1: <em>standard</em>, 2 threads pour des tâches plus longues,</li>
+<li>3: <em>background</em>, un seul thread pour des tâches peu fréquentes et peu prioritaires.</li>
+<li>pour chaque code d'opération la configuration d'application définit le numéro de queue (quand il n'est pas 0).</li>
+</ul>
+</li>
+<li><code>exc</code> : code d'exception du dernier traitement en erreur. <code>null</code> au lancement / relance.</li>
+<li><code>detail</code> : le détail de l'exception, stack etc.</li>
+</ul>
+<h4>Opération associée à une tâche</h4>
+<p>C'est une opération normale. L'objet <code>param</code> et le nom de l'opération <code>opName</code> ont été récupérés de <code>TaskQueue</code> avec les informations <code>startTime</code> <code>step</code> et <code>retry</code> rendues disponibles dans <code>InputData.args</code>.</p>
+<ul>
+<li>elle retourne un résultat indiquant si une nouvelle étape est demandée, quand ou si c'est la dernière. Son objet <code>param</code> peut être mis à jour pour refléter à la fois le compte rendu d'exécution et les paramètres de l'étape suivante. L'opération n'effectue pas de calcul de synchronisation et n'a pas de phase <code>afterwork()</code> : elle ne fait <em>que</em> des mises à jour de documents et de son <code>param</code> dans sa phase <code>work()</code>.</li>
+<li>elle peut inscrire des opérations différées.</li>
+<li>elle bénéficie d'un quota de temps plus long pour son exécution.</li>
+</ul>
+<h4>Exécution de plusieurs étapes successives dans la même requête</h4>
+<p>La phase <code>work()</code> se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat obtenu par les méthodes statiques suivantes de la classe <code>Result</code> <em>factory</em> d'un objet <code>Result</code> :</p>
+<ul>
+<li><code>Result taskComplete()</code> : tâche terminée (c'était la dernière étape). L'enregistrement est immédiatement détruit.</li>
+<li><code>Result taskComplete(Stamp toPurgeAt)</code> : indique la date-heure à laquelle il faut purger l'enregistrement de trace.</li>
+<li><code>Result nextStep()</code> : passage à l'étape suivante dans la même requête.</li>
+<li><code>Result nextStep(Stamp toStartAt)</code> : passage à l'étape suivante dans une autre requête.</li>
+</ul>
+<p>Enchaîner un grand nombre d'étapes dans la même requête a l'avantage évident de limiter l'overhead de nouvelles requêtes mais plusieurs inconvénients :</p>
+<ul>
+<li>monopoliser un thread de calcul pour une tâche de fond au détriment du passage de requêtes de front;</li>
+<li>risquer une interruption pour excès de consommation de temps calcul pour une requête.</li>
+</ul>
+<h4>Lancement automatique d'une autre à la fin d'une tâche : <code>Cron</code></h4>
+<p>Une tâche peut être périodique : à la fin d'une exécution, une nouvelle tâche est inscrite pour exécution ultérieure.<br>
+Par exemple une tâche mensuelle prévue le 2 du mois à 3h30, sera inscrite dès sa fin d'exécution pour le 2 du mois suivant à 3h30.<br>
+Une tâche peut <em>calculer</em> cette date-heure de prochaine relance mais peut aussi inscrire un code <code>cron</code> qui va faire invoquer la classe <code>Cron</code> pour calculer la prochaine échéance <code>toStartAt</code> en fonction de la date-heure courante.</p>
+<p><code>Cron</code> gère une période qui peut être :</p>
+<ul>
+<li>Y : annuelle,</li>
+<li>M : mensuelle,</li>
+<li>W : hebdomadaire,</li>
+<li>D : journalière,</li>
+<li>H : horaire.</li>
+</ul>
+<p><strong><em>Exemples :</em></strong></p>
+<ul>
+<li><code>H25</code> : soit cette même heure à 25 minutes s'il est moins de 25, soit l'heure suivante à 25 minutes ;</li>
+<li><code>D0425</code> : soit aujourd'hui à 4h25 s'il est moins de 4h25, soit le jour calendaire suivant à 4h25 ;</li>
+<li><code>W30425</code> : soit aujourd'hui si c'est un mercredi et qu'il moins de 4h25, soit le mercredi qui suit à 4h25 ;</li>
+<li><code>M100425</code> : soit le 10 de ce mois si on est avant le 10 à 4h25, soit le 10 du mois suivant à 4h25 ;</li>
+<li><code>Y11100425</code> : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.</li>
+</ul>
+<p>Normalement un traitement dont la <code>toStartAt</code> a été calculée depuis son <code>cron</code> avec le paramètre <code>D0425</code> n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard.</p>
+<h5>Date fonctionnelle</h5>
+<p>La date <em>fonctionnelle</em> d'un traitement,</p>
+<ul>
+<li>annuel (Y...) est le premier jour de cette année;</li>
+<li>mensuel (M...) est le premier jour de ce mois;</li>
+<li>hebdomadaire (W...) est celle du lundi de la semaine.</li>
+<li>journalière (D...) est celle du jour.</li>
+</ul>
+<p>L'heure <em>fonctionnelle</em> est toujours 00 pour les cas ci-dessus. Elle n'est l'heure réelle 040000 que le pour le cas (H...). Les minutes, secondes et millisecondes sont toujours à 0.</p>
+<p>Cette date-heure fonctionnelle est disponible à la suite du code Cron (séparée par un espace).</p>
+<ul>
+<li>un traitement fréquent, horaire et à la limite journalier, peut avoir des sauts de date fonctionnelle : le traitement d'un 12 pouvant suivre celui du jour 10 (le traitement du jour 11 ayant sauté du fait d'incident et de relance).</li>
+<li>le saut de date est assez improbable en hebdomadaire, mensuel, annuel.</li>
+</ul>
+<p>Dans les cas plus complexes de gestion de périodicité, c'est au traitement fonctionnel d'enregistrer dans des documents calendriers quels traitements ont été faits ou sont à rattraper.</p>
+<h2>Administration des tâches</h2>
+<p>Le privilège d'administration permet de joindre un Queue Manager et de lui soumettre les requêtes suivantes :</p>
+<ul>
+<li>suspension de fonctionnement.</li>
+<li>relance de fonctionnement.</li>
+<li>liste des tâches en attente pour lancement proche.</li>
+</ul>
+<h3>Interrogation / mise à jour de <code>TaskQueue</code></h3>
+<p>Le privilège d'administration générale permet d'accéder à tous les <code>TaskQueue</code> (de toutes les instances).</p>
+<p>Le privilège d'administration d'une instance ne permet d'accéder qu'au seul <code>TaskQueue</code> de l'instance.</p>
+<p>Les opérations possibles sont :</p>
+<ul>
+<li>liste des tâches candidates.</li>
+<li>liste des tâches en erreur.</li>
+<li>liste de tâches terminées.</li>
+<li>obtention du <code>param</code> (tâche en cours ou terminée).</li>
+<li>obtention du <code>detail</code> d'une tâche en erreur.</li>
+<li>destruction d'une tâche.</li>
+<li>rectification de sa <code>toStartAt</code>, de son <code>cron</code> et avec énormément de prudence de son <code>param</code>.</li>
+<li>inscription d'une nouvelle tâche avec beaucoup de prudence pour tous les paramètres : <code>opName</code>, <code>info</code>, <code>cron</code>, <code>param</code>, <code>toStartAt</code>. C'est utile surtout pour initialiser la première tâche d'un <code>cron</code> sans avoir à coder une opération qui ne serait utiliser que très peu : cela suppose quand même que le JSON <code>param</code> soit bien formé et correct et que l'opération existe. A la limite ça peut se limiter à une page de session, sans développement serveur.</li>
+</ul>
+<p>Une tâche peut être supprimée :</p>
+<ul>
+<li>en Datastore elle sera toutefois lancée mais se terminera immédiatement.</li>
+<li>en base de données en général elle ne sera pas lancée, si le Queue Manager est notifié à temps.</li>
+</ul>
+<p>Une tâche peut être avancée :</p>
+<ul>
+<li>en Datastore une autre tâche sera créée plus tôt, la seconde sera ignorée à l'exécution.</li>
+<li>en base de données le Queue Manager est notifié.</li>
+</ul>
+<p>Une tâche peut être reculée :</p>
+<ul>
+<li>en Datastore une autre tâche sera créée plus tard, la première sera ignorée à l'exécution.</li>
+<li>en base de données le Queue Manager est notifié, en général à temps avant lancement.</li>
+</ul>
+<p>En Datastore c'est aussi un moyen de faire une relance de tâche après erreur quand le Datastore a renoncé aux relances.</p>
+<h1>Identification / authentification</h1>
+<p>Ce service est géré au niveau de l'application : chaque requête est autonome des précédentes et il n'y a pas de concept de session dans le serveur.<br>
+Chaque requête peut être porteuse de propriétés, <strong><em>par exemple</em></strong> <code>account</code> <code>key</code> <code>sudo</code> où,</p>
+<ul>
+<li><code>account</code> : identifie un compte,</li>
+<li><code>key</code> : donne le mot de passe, tout autre élément d'authentification, un jeton de session etc.</li>
+<li><code>sudo</code> : donne pour certaines opérations une clé d'autorisation de privilège administrateur.</li>
+</ul>
+<p>Des opérations de login <em>peuvent</em> être écrites pour identifier des sessions d'utilisation avec un utilisateur identifié par le login qui déclare (ou retrouve) une session puis des requêtes qui ne font que référencer des sessions déclarées.</p>
+<h1>Indexation et recherche de documents</h1>
+<p>L'objectif de l'indexation est de pouvoir effectuer une recherche de tous les identifiants des documents d'une classe donnée,</p>
+<ul>
+<li><strong><em>dont l'identifiant est éventuellement contraint</em></strong>,</li>
+<li><strong><em>dont au moins un item d'une classe donnée a une valeur de propriété satisfaisant au critère de sélection</em></strong>.</li>
+</ul>
+<p>Un second type de recherche utilisant l'indexation consiste à obtenir, non plus seulement l'identifiant d'un document mais le <strong><em>contenu</em></strong> des items (dont leur <code>key</code> et l'identifiant de leur document).</p>
+<p>Par exemple si un item <code>Adr</code> contient un <code>codePostal</code> et une <em>collection</em> d'adresses <code>email</code>, obtenir la liste des identifiants des documents ayant un item <code>Adr</code> dont le <code>codePostal</code> est compris entre <code>94000</code> et <code>94999</code> et ayant au moins une adresse <code>email</code> <code>toto@gmail.com</code>.</p>
+<h3>Déclaration des propriétés indexées</h3>
+<p>Dans la classe d'un Item quelques propriétés peuvent avoir une annotation <code>@ExportedField</code>. Le type de ces propriétés est l'un des suivants <code>String long int double String[] long[] int[] double[]</code>.</p>
+<h4>Mise en œuvre en R-DBMS</h4>
+<p>Il faut déclarer une table portant le nom <code>Item_docClass_itemClass</code> héritant de la table <code>Item</code> et y déclarer les propriétés indexées sous le même nom que dans la classe Java et avec le même type. <code>docClass</code> et <code>itemClass</code> sont les noms des classes de document et de l'item dans le document.<br>
+Il faut ensuite déclarer un (ou plusieurs) index sur ces propriétés, index contenant en tête la (ou les) propriétés indexées puis les colonnes identifiantes du document et de l'item.</p>
+<h4>Mise en œuvre en GAE Datastore</h4>
+<p>L'entité des items est <code>docClass</code> : il faut déclarer des index sur les noms des propriétés indexées ( <code>itemClass_propName</code>).</p>
+<h4>Conditions sur les valeurs des identifiants et propriétés</h4>
+<p>Une condition est déclarée par un objet immuable de classe <code>Filtre</code> dont les deux constructeurs permettent de spécifier une ou deux valeurs et la condition à respecter :</p>
+<ul>
+<li><code>Filtre(type, valeur1)</code> :
+<ul>
+<li><code>EQ</code> : égal à la valeur 1 ;</li>
+<li><code>SW</code> : commençant par la valeur 1 (String seulement) ;</li>
+<li><code>LT LE GE GT</code> : supérieur / inférieur strictement ou non à la valeur 1 ;</li>
+</ul>
+</li>
+<li><code>Filtre(type, valeur1, valeur2)</code>
+<ul>
+<li><code>LTGE LTGT LEGE LEGT</code>  : compris entre valeur 1 et valeur 2 (bornes inférieure et supérieures incluses ou non).</li>
+</ul>
+</li>
+</ul>
+<h4>Recherches spécifiques</h4>
+<p>Des recherches <em>spécifiques</em> demandent le développement d'une classe comportant une ou deux (voire plus) implémentations selon le type GAE Datastore et R-DBMS (le cas échéant plusieurs).</p>
+<p>Détail des méthodes dans le document API.</p>
+<hr>
+<h1>Argumentaires</h1>
+<h3>Gestion pessimiste / optimiste du verrouillage des groupes</h3>
+<p><strong><em>En mode pessimiste</em></strong> le verrouillage <strong><em>a priori</em></strong> des groupes présente un risque accru de deadlock du fait de l'allongement de la durée de verrouillage durant les traitements. En contrepartie la lecture (avec verrouillage) du row du groupe n'intervient qu'une fois.</p>
+<p><strong><em>En mode optimiste</em></strong>, le traitement est fait sans verrouillage : les verrouillages des documents n'interviennent qu'au moment de la <em>phase finale d'écriture des documents en base</em>. Cette fois-ci les verrouillages des documents permettent a minima de vérifier que les versions n'ont pas changé depuis le début de la transaction (une requête un peu complexe <code>select for update</code> mais n'attaquant que des index). Si ça n'est  pas le cas l'opération est reprise.</p>
+<h3>Mono / multi instances de serveur</h3>
+<p>En Datastore il n'y a pas de moyen (semble-t-il) de garantir qu'une seule instance de serveur tourne, même si c'est celle-ci peut assurer le débit nécessaire. Le mode &quot;multi&quot; est implicite.</p>
+<p>En R-DBMS c'est un choix de configuration qui fixe le nombre d'instances en exécution parallèle : il est donc possible de fixer le choix en &quot;mono&quot;.</p>
+<p>Le mode &quot;mono&quot; permet plusieurs optimisations de la gestion de la mémoire cache du serveur qui en baissant la consommation de ressources permet de retarder le basculement en multi-instances : ce basculement augmente le débit mais la surconsommation de ressources est plus que linéaire.</p>
+<p>En mono instance il n'est pas nécessaire de vérifier qu'un document détenu en cache a bien la dernière version : il l'a, presque, toujours (ou pas du tout). La base peut cependant être committée et la mise à jour de la mémoire cache à l'instruction suivante une fraction de milliseconde plus tard échouer (ou son thread temporairement être bloqué par le scheduler) : la relecture dans ce cas s'impose.</p>
+<p>Le code générique est unique avec quelques courtes variantes.</p>
 
 </div>
 <!-- Adds some scroll space to the bottom of the doucment -->

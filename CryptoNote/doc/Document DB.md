@@ -3,9 +3,6 @@
 La stockage persistant enregistre les types d'éléments : 
 - des **documents** ayant une identification et une version.
 - des **constantes** ayant un identifiant et un alias unique. Après sa création une constante peut être détruite mais n'est jamais mise à jour.
-- des *items de comptabilité* :
-    - consommation de ressources par compte.
-    - lignes de crédit.
 - des *items statistiques* sur les opérations invoquées.
 
 La mise en œuvre est considérée sous deux environnements :
@@ -62,25 +59,27 @@ Une constante peut être **créée**, *détruite* mais **pas mise à jour** ce q
 # Documents et items
 Le stockage de données apparaît comme un ensemble de ***documents*** :
 - un document a une **classe** qui en Java étend la classe `Document`.
-- un document est **identifié** par un `String` nommé par la suite `docid` avec la seule contrainte d'une longueur maximale de 255.
+- un document est **identifié** par un `String` nommé par la suite `docid` d'une longueur maximale de 255. Les identifiants des documents ne doivent jamais être réutilisés : **un document d'identifiant donné a UNE vie**. Supprimer un document et en recréer un autre avec le même identifiant créerait des troubles insurmontables dans la gestion des copies distantes.
 - un document a une **version**, une date-heure en millisecondes UTC sous forme d'un `long` lisible (171128094052123) et croissante dans le temps : la version est la date-heure de la dernière opération ayant mis à jour le document.
-- un document a une **date-heure de création `ctime`** : un document peut être détruit et recréé plus tard avec un même `docid` : `ctime` permet à une mémoire externe retardée de savoir si elle détient une version retardée de la *même vie* du document (dont le contenu peut être valable en partie) ou une version *d'une vie antérieure* (dont le contenu est totalement obsolète).
 - un document à une **`dtime`** qui est la date-heure au delà de laquelle le document a gardé la trace des items détruits (voir la gestion des mémoires persistante et cache).
 
+Une classe de document a **des données qui représentent l'entête du document**.
+
 ### Items
-Un document est un ***ensemble d'items*** chacun ayant,
+En plus de son entête, un document a en général un ***ensemble d'items*** chacun ayant,
 - une **classe** d'item qui en Java correspond à une sous classe statique de la classe du document et qui étend la classe `Document.BItem` et plus spécifiquement `Item` `RawItem` `Singleton` `RawSingleton` qui étendent `BItem`.
     - un `Singleton` existe en une occurrence au plus dans son document.
-    - un `Item` existe en 0 à N occurrences identifiées par un `String` nommé par la suite `key` avec la seule contrainte d'une longueur maximale de 255.
-- une **version** : date-heure de l'opération qui a *mis à jour le document*.
-- une **vop** : date-heure de l'opération ayant mis à jour l'item. Pour une mise à jour non différée `vop` et `version` ont la même valeur. `vop` vaut 0 pour un item détruit.
+    - un `Item` existe en 0 à N occurrences identifiées par un `String` nommé par la suite `key` d'une longueur maximale de 255 caractères.
+- une **version** : c'est la date-heure de l'opération qui a *mis à jour l'item* et qui se retrouve comme version du document après validation de cette opération.
 - un item a un **contenu** `String` qui peut être,
     - un JSON (`Singleton` et `Item`),
     - un `String` opaque (`RawSingleton` et `RawItem`), typiquement l'encodage en base 64 d'un vecteur d'octets.
 - un **contenu `null`** indique un item détruit (`vop` est 0), sa *version* indiquant quelle opération l'a détruit. Un item détruit peut rester connu en tant que tel pendant un certain temps afin de permettre la synchronisation rapide du contenu du document avec un contenu distant, puis être finalement physiquement purgé.
 
+L'entête d'un document a les mêmes contraintes qu'un item JSON : son contenu n'est toutefois jamais `null`.
+
 ##### Items JSON
-Leurs propriétés peuvent être : 
+Les propriétés d'un item JSON ou d'un document peuvent être : 
 - d'un des types primitifs : `long, int, double, boolean` ; 
 - d'une classe interne `?` ou des `Map<String,?>` ou des `Collection<?>` où les classes `?` elles-même peuvent avoir le même type de propriétés. 
 
@@ -107,6 +106,7 @@ Le stockage secondaire des pièces jointes offre trois fonctions instantanées (
 - **stockage** du contenu.
 - **lecture** du contenu.
 - **nettoyage du document** en ne conservant que les pièces jointes citées : typiquement ce qui se passe au cours d'une opération *Vider la corbeille*.
+- **copie / déplacement** d'une pièce jointe d'un document à un autre.
 
 ### Mémoires persistante de référence et cache
 Il n'existe qu'une **mémoire persistante de référence** (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.
@@ -118,13 +118,11 @@ Il existe de nombreuses **mémoires caches** de documents, qui sont toujours pot
     - une mémoire cache volatile dans chaque session active.
     - éventuellement une (ou des) mémoire cache persistante locale au terminal survivant aux interruptions de sessions.
 
-L'objectif est de permettre de remettre à un niveau plus récent `vr` (*version de référence*, la plus récente pour simplifier) un exemplaire d'un document `d` datée `v` en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.  
-La mise à jour d'une mémoire cache depuis un exemplaire de référence d'un document `d` est *un document de mise à niveau* plus ou moins complet établi selon les principes suivants :
-- si l'exemplaire en cache a une `ctime` inférieure à celle de référence, son contenu en cache est à remplacer en totalité totalement par le document de mise à niveau qui contient une copie complète de celui de référence (y compris des items détruits).
-- sinon l'exemplaire en cache contient :
-    - des items inchangés, toujours existants en référence avec la même version : ils ne figurent pas dans le document de remise à niveau.
-    - des items qui ont changé, toujours existants en référence avec une version plus récente : ils figurent dans le document de remise à niveau avec leur nouveau contenu.
-    - des items qui existent en mémoire cache mais plus en référence : ils devront être détruits ou conservés avec un contenu vide (marqués détruits) dans la mémoire cache. Voir les cas 1 et 2 ci-dessous.
+L'objectif est de permettre de remettre à un niveau plus récent `vr` (*version de référence*, la plus récente pour simplifier) un exemplaire d'un document `d` en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.  
+La mise à jour d'une mémoire cache depuis un exemplaire de référence d'un document `d` est *un document de mise à niveau* plus ou moins complet établi selon les principes suivants. L'exemplaire en cache contient :
+- des items inchangés, toujours existants en référence avec la même version : ils ne figurent pas dans le document de remise à niveau.
+- des items qui ont changé, toujours existants en référence avec une version plus récente : ils figurent dans le document de remise à niveau avec leur nouveau contenu.
+- des items qui existent en mémoire cache mais plus en référence : ils devront être détruits ou conservés marqués détruits dans la mémoire cache. Voir les cas 1 et 2 ci-dessous.
 
 Un exemplaire dans une mémoire cache contient,
 - tous les items existants (ayant un contenu) avec leur version;
@@ -174,14 +172,16 @@ Une opération est une succession d'actions de lecture, d'écriture (création /
 - **une opération est "isolée"** et travaille sur tous les documents accédés comme si elle était seule le faire.
 - **une opération peut retourner un résultat** ou aucun. Ce résultat peut être :
     - n'importe quel **contenu binaire** ayant un type mime.
-    - le couple, a) d'un **résultat structuré** sous forme d'un objet JSON, b) d'une **liste de synchronisations** donnant tous les changements opérés depuis une version donnée sur les documents que le demandeur de l'opération avait cité à des fins de synchronisation.
+    - le couple, 
+        - d'un **résultat structuré** sous forme d'un objet JSON, 
+        - d'une **liste de synchronisations** donnant tous les changements opérés depuis une version donnée sur les documents que le demandeur de l'opération avait cité à des fins de synchronisation.
 - **une opération peut se terminer prématurément en exception**, technique ou métier, bug détecté ou situation inattendue ...
 - Une opération a trois date-heures :
-    - souvent mais pas toujours, une *date-heure d'opération* `dhop` qui est celle de la session ayant invoqué l'opération.
+    - souvent mais pas toujours, une *date-heure d'opération* `dhop` qui est celle de la session ayant invoqué l'opération. Quand elle est enregistrée elle permet de détecter fonctionnellement qu'une opération identifiée de manière unique par la session terminale a été faite ou non.
     - une *date heure de début*, horloge du début du traitement. Si `dhop` existe elle doit ne pas être trop inférieure à celle-ci mais jamais supérieure. Les horloges des sessions doivent être à peu synchronisées sur celle du serveur;
     - une **date-heure de validation**, non connue au cours du traitement, et qui marque la **version** de tous les documents et de leurs items ayant été créés, modifiés, ou détruits au cours de l'opération.
 
-Une opération est initiée par l'arrivée d'une requête externe HTTPS le cas échéant émise par le *Queue Manager* gérant des requêtes différées mises en file d'attente.
+Une opération est initiée par l'arrivée d'une **requête externe** HTTPS le cas échéant émise par le *Queue Manager* gérant des requêtes différées mises en file d'attente.
 
 Une opération est matérialisée par un objet `operation` d'une classe étendant `Operation` et ayant deux méthodes `work()` et `afterwork()`, l'étape *validation* intervenant entre elles:
 
@@ -199,7 +199,7 @@ Les estampilles sont des nombres de la forme `AAMMJJhhmmssmmm` soit la date en a
 Par exemple : `160714223045697` (le 14 juillet 2016 à 22:30:45 et 697 ms).  
 La classe `Stamp` dont les objets sont immuables permet de créer et manipuler ces estampilles et de les convertir en `epoch` nombre de millisecondes écoulées depuis le 1/1/1970 (`epoch`).
 
->Un document *existe* dès lorsqu'il a une date-heure de création et une version : il peut n'avoir aucun item. Les versions étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.
+>Un document *existe* dès qu'il a été enregistré avec une version : ses données d'entête existent mais il peut n'avoir aucun item. Les versions étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.
 
 >Une opération peut créer / modifier / supprimer plusieurs documents : ces documents, et leurs items, portent comme version l'estampille de validation de l'opération ce qui permet de déterminer après coup si plusieurs modifications ont été portées exactement par la même opération.
 
@@ -208,7 +208,7 @@ La classe `Stamp` dont les objets sont immuables permet de créer et manipuler c
 # Cohérence temporelle entre documents
 **Dans sa phase `work()`** une opération qui souhaite modifier un document, ou s'assurer qu'il ne changera pas au cours du traitement, le demande avec *une tolérance temporelle de 0 seconde* (l'état le plus récent possible) : 
 - ceci autorise l'opération à modifier le document, ce qu'elle n'est *pas* obligé de faire.
-- ceci garantit qu'au cours du traitement c'est exactement ce même objet document qui sera vu / modifié, même s'il est demandé plusieurs fois et que sa référence n'a pas été conservée dans des variables.
+- ceci garantit qu'au cours du traitement c'est exactement ce même objet document qui sera vu / modifié, même s'il est demandé plusieurs fois.
 
 Si l'opération demande un document avec une tolérance temporelle supérieure à 0 (1 seconde, 30 secondes, etc.) elle récupère une version (disponible le cas échéant en cache) avec une fraîcheur compatible avec l'exigence : le document est en lecture seule dans l'opération.
 
@@ -223,15 +223,22 @@ Si l'opération demande un document avec une tolérance temporelle supérieure �
 
 Ce mode de gestion *optimiste* table sur le fait que les opérations vont travailler sur peu de documents (il y a une limite autoritaire à 32). Elle optimise aussi la connaissance entre plusieurs serveurs des dernières versions des documents et rend la gestion des caches locales à chaque instance plus efficientes.
 
+##### Travail sur l'entête seule d'un document
+Quand une opération dans sa méthode `work()` demande un document, outre sa fraîcheur (0 ou N secondes), elle spécifie si elle souhaite :
+- disposer du document **réduit à ses seules données d'entête** : aucun item n'est accessible, ni en lecture ni en mise à jour.
+- disposer du document **complet avec tous ses items** qui peuvent être lus et mis à jour.
+
+Travailler sur un document réduit à son entête, pour les opérations qui s'y prêtent, présente l'avantage de ne pas faire charger en cache locale du serveur un volume souvent conséquent d'items ce qui allège notemment le traitement des cas simples agissant sur beaucoup de documents.
+
 ##### Consistance structurelle entre plusieurs documents : documents verrous
 Parfois un groupe de documents doit être considéré comme immobile dès lors qu'une opération travaille sur l'un deux :
 - par exemple pour effectuer des arrêtés comptables exactement synchronisés sur les documents du groupe et enregistrer dans un document un agrégat de décomptes provenant de documents du groupe.
-- dans ce cas il faut déterminer un document représentatif du groupe (le cas échéant avec un singleton quasi vide) et s'astreindre à le demander avec une tolérance 0 dans toutes les opérations portant sur un des documents du groupe.
+- dans ce cas il faut déterminer un document représentatif du groupe (le cas échéant sans item) et s'astreindre à le demander avec une tolérance 0 dans toutes les opérations portant sur un des documents du groupe.
 
 ### Opérations de mise à jour et synchronisations
-Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents du même groupe ou non.
+Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents et mettre à jour les données d'entête.
 
-En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une ***synchronisation*** qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session ayant émis la requête a cité *à synchroniser* (avec la version et le `dtime` détenus pour chacun).  
+En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une ***synchronisation*** qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session externe d'origine a cité *à synchroniser* (avec la version et le `dtime` détenus pour chacun).  
 Une session peut ainsi effectuer des actions de mises à jour et récupérer toutes les conséquences de ces actions sur les documents dont elle détient une copie (plus ou moins retardée).
 
 **Une opération de mise à jour doit être idempotente** : l'exécuter plusieurs fois successivement doit laisser l'ensemble des documents dans le même état qu'une exécution unique ce qui exige le cas échéant de détecter que la mise à jour a déjà été faite ou qu'elle peut être faite plusieurs fois sans dommage pour la logique métier.  
@@ -337,9 +344,9 @@ Une tâche est inscrite dans une table `TaskQueue` (*entity* en Datastore) au co
 - `toStartAt` : la date-heure de son lancement / relance au plus tôt.
 - `startTime` : la date-heure du début d'exécution de l'étape courante. `null` quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.
 - `qn` : numéro de queue : le Queue Manager a plusieurs queues numérotées de 0 à N pour des usages différents, par exemple : 
-    - 0:*rapide*, plusieurs threads pour des tâches courtes,
-    - 1:*standard*, 2 threads pour des tâches plus longues,
-    - 3:*background*, un seul thread pour des tâches peu fréquentes et peu prioritaires.
+    - 0: *rapide*, plusieurs threads pour des tâches courtes,
+    - 1: *standard*, 2 threads pour des tâches plus longues,
+    - 3: *background*, un seul thread pour des tâches peu fréquentes et peu prioritaires.
     - pour chaque code d'opération la configuration d'application définit le numéro de queue (quand il n'est pas 0).
 - `exc` : code d'exception du dernier traitement en erreur. `null` au lancement / relance.
 - `detail` : le détail de l'exception, stack etc.
@@ -351,7 +358,7 @@ C'est une opération normale. L'objet `param` et le nom de l'opération `opName`
 - elle bénéficie d'un quota de temps plus long pour son exécution.
 
 #### Exécution de plusieurs étapes successives dans la même requête
-La phase `work()` se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat obtenu par les méthodes :
+La phase `work()` se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat obtenu par les méthodes statiques suivantes de la classe `Result` *factory* d'un objet `Result` :
 - `Result taskComplete()` : tâche terminée (c'était la dernière étape). L'enregistrement est immédiatement détruit.
 - `Result taskComplete(Stamp toPurgeAt)` : indique la date-heure à laquelle il faut purger l'enregistrement de trace. 
 - `Result nextStep()` : passage à l'étape suivante dans la même requête. 
@@ -381,6 +388,21 @@ Une tâche peut *calculer* cette date-heure de prochaine relance mais peut aussi
 - `Y11100425` : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.
 
 Normalement un traitement dont la `toStartAt` a été calculée depuis son `cron` avec le paramètre `D0425` n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard.
+
+##### Date fonctionnelle
+La date *fonctionnelle* d'un traitement, 
+- annuel (Y...) est le premier jour de cette année;
+- mensuel (M...) est le premier jour de ce mois;
+- hebdomadaire (W...) est celle du lundi de la semaine.
+- journalière (D...) est celle du jour.
+
+L'heure *fonctionnelle* est toujours 00 pour les cas ci-dessus. Elle n'est l'heure réelle 040000 que le pour le cas (H...). Les minutes, secondes et millisecondes sont toujours à 0.
+
+Cette date-heure fonctionnelle est disponible à la suite du code Cron (séparée par un espace).
+- un traitement fréquent, horaire et à la limite journalier, peut avoir des sauts de date fonctionnelle : le traitement d'un 12 pouvant suivre celui du jour 10 (le traitement du jour 11 ayant sauté du fait d'incident et de relance).
+- le saut de date est assez improbable en hebdomadaire, mensuel, annuel.
+
+Dans les cas plus complexes de gestion de périodicité, c'est au traitement fonctionnel d'enregistrer dans des documents calendriers quels traitements ont été faits ou sont à rattraper.
 
 ## Administration des tâches
 Le privilège d'administration permet de joindre un Queue Manager et de lui soumettre les requêtes suivantes :
@@ -416,46 +438,6 @@ Une tâche peut être reculée :
 - en base de données le Queue Manager est notifié, en général à temps avant lancement.
 
 En Datastore c'est aussi un moyen de faire une relance de tâche après erreur quand le Datastore a renoncé aux relances.
-
-# Réplications différées d'items
-Une opération ne doit travailler que sur peu de documents : en conséquence un document A1 ayant à répliquer son état synthétique sur des dizaines / centaines d'autres documents ne peut pas le faire dans le cadre d'une opération unique. L'usage d'une tâche différée permet d'y remédier.
-
-Un cas particulièrement fréquent a toutefois fait l'objet d'un traitement générique. Exemple :
-- chaque document d'une classe *Asso* représente une association identifiée par une identification (*idAsso*) :
-    - un singleton `Sta` représente le statut général de l'association : son intitulé, son état (actif / résilié), voire quelques compteurs importants changeant peu souvent (nombre d'adhérents au premier janvier de l'année).
-    - des items `Adh` avec pour clé le numéro de l'adhérent (`numAdh`) dans l'association représente les adhérents de l'association avec un résumé simple de données changeant peu souvent : nom, état d'activité, date d'adhésion / résiliation.
-- chaque document d'une classe `GT` représente un groupe de travail réunissant quelques adhérents de multiples associations. On souhaite disposer dans un document G1 de `GT` lui-même,
-    - `Adh` : du résumé relatif à chaque adhérent : c'est la copie (faiblement désynchronisée) de l'item `Adh` de l'adhérent dans son association.
-    - `Sta` : du statut général de toutes les associations dont au moins un adhérent fait partie du groupe de travail : c'est la copie (faiblement désynchronisée) du singleton `Sta` de l'association.
-
-Dans les deux classes `Asso` et `GT` les items `Sta` et `Adh` portent le même nom, mais :
-- pour `Sta` :
-    - dans `Asso` c'est un singleton ayant une annotation :
-    `@ADifferedCopy (copyToDocs={GT.class}, separator='.')` . Il peut y avoir plusieurs classes de documents listées.
-    - dans `GT` c'est un item ayant pour clé `idAsso`.
-- pour `Adh` :
-    - dans `Asso` c'est un item de clé `numAdh` ayant une annotation :
-    `@ADifferedCopy (copyToDocs={GT.class}, separator='.')`.
-    - dans `GT` c'est un item ayant pour clé `numAdh.idAsso` : le `.` qui sépare les deux parties de la clé est le signe déclaré dans le paramètre `separator` ci-dessus.
-
-Deux index sont déclarés sur la colonne `clkey` pour les items `Sta` et `Adh` de `GT`.
-
-**A la déclaration d'une nouvelle participation** d'un adhérent `N1` d'une association `A1` à un groupe de travail `G1`, l'opération effectue :
-- la création d'un item `Adh` de clé `N1.A1` dans `G1` en y copiant le contenu courant de l'item `Adh` de clé `N1` représentant l'adhérent dans son `Asso` d'identifiant `A1`.
-- si c'est le premier participant appartenant à l'association `A1`, un item `Sta` de clé `A1` est créé dans `G1` avec une copie du singleton `Sta` de `A1`.
-
-**Au retrait de la participation** de l'adhérent `N1` de l'association `A1` du groupe de travail `G1`, l'opération effectue :
-- la suppression de l'item `Adh` de clé `N1.A1` dans `G1`.
-- si c'est le dernier participant appartenant à l'association `A1`, la suppression de l'item `Sta` de clé `A1` dans `G1`
-
-Moyennant ces contraintes, toute mise à jour de `Sta` ou d'un `Adh` dans le document d'une association `Ai` par une opération de date-heure `dh1` provoquera une réplication faiblement différée automatique :
-- dans tous les documents d'une des classes citées dans les annotations de `Sta / Adh`,
-- ayant un item de même nom de classe `Sta / Adh` et de clé `A1` (pour `Sta`) ou `xxx.A1` pour `Adh`, d'où l'importance des index sur `clkey`.
-- les items sont insérés en base *sans lecture des dossiers*.
-- chaque dossier impliqué a désormais une version `dh2` supérieure à `dh1` (chacun des dossiers ayant leur propre date-heure de mise à jour).
-- chaque item mis à jour a pour version `dh2` et pour `vop` `dh1` : il est ainsi possible de savoir de combien la réplication a été retardée.
-- comme les réplications sont désynchronisées rien n'interdirait qu'une seconde opération de date-heure `dh3` ait sa réplication doublant celle de `dh1` pour un item donné : ce dernier n'est mis à jour que si sa `vop` mémorisée est inférieure à la `vop` proposée en mise à jour, bref un état retardé n'écrase pas un état plus récent.
-- les mises à jours désynchronisées ne sont soumises à aucun contrôle fonctionnel.
 
 # Identification / authentification
 Ce service est géré au niveau de l'application : chaque requête est autonome des précédentes et il n'y a pas de concept de session dans le serveur.  

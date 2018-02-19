@@ -1281,16 +1281,26 @@
 <body>
 <!-- Content goes here. The div must have an id of "content" -->
 <div id="content"><h1>Document DB</h1>
-<p>La base du stockage persistant est de considérer des documents ayant une identification et une version.<br>
-La mise en œuvre est considérée sous deux environnements :</p>
+<p>La stockage persistant enregistre les types d'éléments :</p>
+<ul>
+<li>des <strong>documents</strong> ayant une identification et une version.</li>
+<li>des <strong>constantes</strong> ayant un identifiant et un alias unique. Après sa création une constante peut être détruite mais n'est jamais mise à jour.</li>
+<li>des <em>items statistiques</em> sur les opérations invoquées.</li>
+</ul>
+<p>La mise en œuvre est considérée sous deux environnements :</p>
 <ul>
 <li>DS/GAE : Google App Engine (servlets Java) et son datastore.</li>
-<li>PG/SQL : serveurs de servlets Java avec une base de données SQL, en l'occurrence PostgreSQL (PG).</li>
+<li>PG/SQL : serveurs de servlets Java avec une base de données SQL (en l'occurrence PostgreSQL).</li>
 </ul>
 <h1>Instances internes</h1>
-<p>Pour un serveur (ou un pool de serveurs) identifié par son URL, l'application apparaît comme N instances <strong>de logiciel identique</strong> travaillant chacune sur <strong>son propre espace de données</strong> indépendant des autres et identifié par un nom court. C'est un moyen pour héberger plusieurs organisations au sein du même serveur ou pool de serveurs, et de mutualiser les ressources.</p>
-<p>Une instance spécifique, <code>admin</code> est dédiée à la mise on/off des instances et à l'administration surveillance centralisée des tâches différées en attente (ou archivées).</p>
-<p>Le fichier de configuration général comporte, en plus de paramètres généraux, une entrée spécifique par instance. Une instance peut avoir une customisation spécifique partielle :</p>
+<p>L'URL d'accès donne ordinairement accès à un pool de serveurs qui héberge N <strong>instances</strong>  travaillant chacune sur <strong>son propre espace de données</strong> indépendant des autres et identifié par un nom court. Plusieurs organisations peuvent ainsi mutualiser des ressources et bénéficier chacune ponctuellement de pics de charge pendant le creux des autres ainsi que d'une administration technique commune.</p>
+<p>Chaque instance peut être mise <strong>on/off</strong> :</p>
+<ul>
+<li>ponctuellement par instance.</li>
+<li>globalement pour toutes les instances dans le cas d'une maintenance technique globale.</li>
+<li>c'est la fonction principale d'une instance spécifique <code>admin</code>, son autre fonction étant l'administration / surveillance centralisée des tâches différées en attente (ou archivées).</li>
+</ul>
+<p>Le fichier de configuration générale comporte, en plus de paramètres généraux, une entrée spécifique par instance qui exprime ses choix de customisation spécifique portant sur :</p>
 <ul>
 <li>des thèmes graphiques spécifiques.</li>
 <li>des libellés / traductions spécifiques pouvant se substituer à ceux généraux.</li>
@@ -1299,47 +1309,57 @@ La mise en œuvre est considérée sous deux environnements :</p>
 <li>des pages d'accueil spécifiques, voire quelques pages internes spécifiques.</li>
 </ul>
 <h4>Déploiement sur R-DBMS</h4>
-<p>Les données de chaque instance sont stockées dans des tables portant le code de l'instance. Il peut exister <strong>plusieurs bases de données</strong>, chacune hébergeant donc les tables d'une ou plusieurs instances.<br>
-<code>admin</code> ne comporte qu'une toute petite table et est hébergé par la base d'une instance.<br>
-Chaque instance peut avoir des tâches différées : une table <code>TaskQueue</code> de celles-ci permet à Queue Manager de lancer les tâches à l'heure prévue. Il n'existe au plus qu'une table <code>TaskQueue</code> par base : la configuration indique quel QueueManager gère sa <code>TaskQueue</code>, le cas échéant aggrégée à des TaskQueue d'autres instances gérée sur une autre base.</p>
+<p>Plusieurs serveurs peuvent héberger un Queue Manager :</p>
+<ul>
+<li>le code du Queue Manager hébergé figure sur la ligne de commande qui lance le serveur (<code>-Dqueuemanager=qm7</code>).</li>
+<li>le <em>front end</em> qui route les requêtes sur le pool de serveurs redirige les URLS <code>http://pool/qm7/..</code> vers le serveur du pool qui héberge <code>qm7</code>.</li>
+<li>un Queue Manager gère les tâches différées d'une ou de plusieurs bases de données.</li>
+</ul>
+<p>Il <em>peut</em> exister <strong>plusieurs bases de données</strong> :</p>
+<ul>
+<li>chacune héberge les tables <strong>d'une ou de plusieurs instances</strong>. Le nom des tables contient le code de l'instance.</li>
+<li>chacune a une table <code>TaskQueue</code> qui permet au serveur Queue Manager assigné à cette base de gérer les tâches différées de toutes les instances hébergées par cette base.</li>
+</ul>
+<p>L'instance <code>admin</code> ne comporte qu'une petite table technique et est hébergé par la base d'une instance.</p>
 <blockquote>
 <p>Synthèse :</p>
 <ul>
 <li>chaque instance a son URL qui aboutit sur le <em>front end</em> (nginx)  joue un rôle de load balancing vers les hosts du pool de serveurs. Si on souhaite spécialiser des hosts pour des instances, le load balancing redirige les URLs des instances sur le sous pool correspondant.</li>
-<li>un ou quelques hosts hébergent chacun UN Queue Manager ayant une URL locale dans le pool. Chaque QM a un nom et la configuration du <em>front end</em> renvoie exactement cette URL sur LE host unique hébergeant CE QM.</li>
-<li>chaque instance spécifie :
-<ul>
-<li>sur quelle base ses données sont hébergées, y compris la table <code>TaskQueue</code> qui gère ses tâches différées.</li>
-<li>quel QM gère ses tâches différées.</li>
-</ul>
-</li>
-<li>en conséquence un QM peut gérer les tâches de N instances et réparties sur P tables <code>TaskQueue</code> de P bases différentes (P &lt;= N).</li>
+<li>chaque host <em>peut</em> héberger un Queue Manager dont le code apparaît alors dans l'URL locale du host. Ce QM gère les tâches différées d'une ou plusieurs bases.</li>
+<li>chaque instance spécifie sur quelle base ses données sont hébergées, la table <code>TaskQueue</code> de la base contenant ses tâches différées.</li>
 </ul>
 </blockquote>
 <h5>Déploiement GAE Datastore</h5>
-<p>Chaque instance correspond à un <code>namespace</code>.<br>
-Le Datastore a son lanceur de tâches mais la table <code>TaskQueue</code> (entity TaskQueue) existe  avec les mêmes données : elle réside sous le même namespace que l'instance. Il n'y a pas de Queue Manager.</p>
-<p>Chaque instance étant étanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de <code>TaskQueue</code> (une table par base) et OnOff (une table pour toutes les instances dans une base) qui peuvent être relatives à plusieurs instances.</p>
+<p>Chaque instance correspond à un <code>namespace</code>.</p>
+<p>Le Datastore a son lanceur de tâches mais l'entity <code>TaskQueue</code> existe  avec les mêmes données : elle réside sous le même namespace que l'instance. Il n'y a pas de Queue Manager.</p>
+<p>Chaque instance étant étanche aux autres et ignorante de leur existence, tout ce qui suit se rapporte à une seule instance, à l'exception de <code>TaskQueue</code> (une table par base) et <code>OnOff</code> (une table pour toutes les instances dans une des bases) qui peuvent être relatives à plusieurs instances.</p>
+<h1>Constantes</h1>
+<p>Chaque instance peut avoir des constantes. Une constante :</p>
+<ul>
+<li>a une clé primaire String (256 caractères au plus).</li>
+<li>un alias éventuel, unique, String (256 caractères au plus).</li>
+<li>un contenu String (en général un JSON).</li>
+</ul>
+<p>Une constante peut être <strong>créée</strong>, <em>détruite</em> mais <strong>pas mise à jour</strong> ce qui optimise la gestion de cache. Du fait du phénomène de cache la destruction d'une constante ne doit pas avoir de conséquence fonctionnelle et ne doit correspondre qu'à une purge de données obsolètes inutiles.</p>
 <h1>Documents et items</h1>
 <p>Le stockage de données apparaît comme un ensemble de <strong><em>documents</em></strong> :</p>
 <ul>
 <li>un document a une <strong>classe</strong> qui en Java étend la classe <code>Document</code>.</li>
-<li>un document est <strong>identifié</strong> par un <code>String</code> nommé par la suite <code>docid</code> avec la seule contrainte d'une longueur maximale de 255.</li>
+<li>un document est <strong>identifié</strong> par un <code>String</code> nommé par la suite <code>docid</code> d'une longueur maximale de 255. Les identifiants des documents ne doivent jamais être réutilisés : <strong>un document d'identifiant donné a UNE vie</strong>. Supprimer un document et en recréer un autre avec le même identifiant créerait des troubles insurmontables dans la gestion des copies distantes.</li>
 <li>un document a une <strong>version</strong>, une date-heure en millisecondes UTC sous forme d'un <code>long</code> lisible (171128094052123) et croissante dans le temps : la version est la date-heure de la dernière opération ayant mis à jour le document.</li>
-<li>un document a une <strong>date-heure de création <code>ctime</code></strong> : un document peut être détruit et recréé plus tard avec un même <code>docid</code> : <code>ctime</code> permet à une mémoire externe retardée de savoir si elle détient une version retardée de la <em>même vie</em> du document (dont le contenu peut être valable en partie) ou une version <em>d'une vie antérieure</em> (dont le contenu est totalement obsolète).</li>
 <li>un document à une <strong><code>dtime</code></strong> qui est la date-heure au delà de laquelle le document a gardé la trace des items détruits (voir la gestion des mémoires persistante et cache).</li>
 </ul>
+<p>Une classe de document a <strong>des données qui représentent l'entête du document</strong>.</p>
 <h3>Items</h3>
-<p>Un document est un <strong><em>ensemble d'items</em></strong> chacun ayant,</p>
+<p>En plus de son entête, un document a en général un <strong><em>ensemble d'items</em></strong> chacun ayant,</p>
 <ul>
 <li>une <strong>classe</strong> d'item qui en Java correspond à une sous classe statique de la classe du document et qui étend la classe <code>Document.BItem</code> et plus spécifiquement <code>Item</code> <code>RawItem</code> <code>Singleton</code> <code>RawSingleton</code> qui étendent <code>BItem</code>.
 <ul>
 <li>un <code>Singleton</code> existe en une occurrence au plus dans son document.</li>
-<li>un <code>Item</code> existe en 0 à N occurrences identifiées par un <code>String</code> nommé par la suite <code>key</code> avec la seule contrainte d'une longueur maximale de 255.</li>
+<li>un <code>Item</code> existe en 0 à N occurrences identifiées par un <code>String</code> nommé par la suite <code>key</code> d'une longueur maximale de 255 caractères.</li>
 </ul>
 </li>
-<li>une <strong>version</strong> : date-heure de l'opération qui a <em>mis à jour le document</em>.</li>
-<li>une <strong>vop</strong> : date-heure de l'opération ayant mis à jour l'item. Pour une mise à jour non différée <code>vop</code> et <code>version</code> ont la même valeur. <code>vop</code> vaut 0 pour un item détruit.</li>
+<li>une <strong>version</strong> : c'est la date-heure de l'opération qui a <em>mis à jour l'item</em> et qui se retrouve comme version du document après validation de cette opération.</li>
 <li>un item a un <strong>contenu</strong> <code>String</code> qui peut être,
 <ul>
 <li>un JSON (<code>Singleton</code> et <code>Item</code>),</li>
@@ -1348,8 +1368,9 @@ Le Datastore a son lanceur de tâches mais la table <code>TaskQueue</code> (enti
 </li>
 <li>un <strong>contenu <code>null</code></strong> indique un item détruit (<code>vop</code> est 0), sa <em>version</em> indiquant quelle opération l'a détruit. Un item détruit peut rester connu en tant que tel pendant un certain temps afin de permettre la synchronisation rapide du contenu du document avec un contenu distant, puis être finalement physiquement purgé.</li>
 </ul>
+<p>L'entête d'un document a les mêmes contraintes qu'un item JSON : son contenu n'est toutefois jamais <code>null</code>.</p>
 <h5>Items JSON</h5>
-<p>Leurs propriétés peuvent être :</p>
+<p>Les propriétés d'un item JSON ou d'un document peuvent être :</p>
 <ul>
 <li>d'un des types primitifs : <code>long, int, double, boolean</code> ;</li>
 <li>d'une classe interne <code>?</code> ou des <code>Map&lt;String,?&gt;</code> ou des <code>Collection&lt;?&gt;</code> où les classes <code>?</code> elles-même peuvent avoir le même type de propriétés.</li>
@@ -1359,18 +1380,30 @@ Le Datastore a son lanceur de tâches mais la table <code>TaskQueue</code> (enti
 </blockquote>
 <p><strong>Sérialisation en JSON</strong> : les propriétés <code>transient</code> ne sont pas sérialisées et les propriétés ayant une valeur <code>null</code> non plus (sauf en tant que valeurs à l'intérieur d'une <code>Map</code> ou <code>Collection</code>).</p>
 <h5>Pièces jointes attachées à un document</h5>
-<p>Il est possible d'attacher à un document des pièces jointes par des items de classe prédéfinie <code>Document.P</code> mémorisant pour chaque pièce jointe (une suite d'octets) :</p>
+<p>Il est possible d'attacher à un document des pièces jointes <em>immuables</em>.</p>
 <ul>
-<li><code>key</code> : sa clé d'accès (comme pour tout item) ;</li>
-<li><code>mime</code> : son type mime (qui n'est pas contrôlé) le cas échéant comportant une extension quand le fichier a été gzippé / crypté (<code>.g</code> <code>.c</code> <code>.g</code> <code>.gc</code> ou rien);</li>
-<li><code>size</code> : sa taille en octets ;</li>
-<li><code>sha</code> : son digest <code>SHA 256</code>.</li>
+<li><strong>une pièce jointe a une clé d'accès relative à son document</strong>, typiquement le SHA de son contenu (en clair ou crypté).</li>
+<li>une pièce jointe a un <strong>contenu binaire</strong>.</li>
+<li>les clés des pièces jointes sont gérées comme des propriétés usuelles dans les items, avec en conséquence la cohérence inhérente à son document.</li>
+<li>un item à deux volumes :
+<ul>
+<li><code>v1</code> est le volume de son texte + sa clé.</li>
+<li><code>v2</code> est le volume de la ou des pièces jointes éventuelles gérées par l'item. C'est la logique applicative qui sait calculer ce volume.</li>
 </ul>
-<p>Le stockage des pièces jointes bénéficie de la même cohérence temporelle que les items avec les détails suivants :</p>
+</li>
+</ul>
+<p>Le contenu d'une pièce jointe doit être stocké avant l'enregistrement de sa référence dans son document. En conséquence il peut arriver qu'un contenu de pièce jointe soit stocké puis que finalement l'opération qui l'enregistre échoue : bref il peut exister des contenus fantômes, en trop, dans le stockage secondaire.</p>
+<p>Il est préférable de gérer la disparition des pièces jointes par un mécanisme de corbeille qui permet de disposer du contenu a minima un certain temps après sa suppression fonctionnelle :</p>
 <ul>
-<li>le volume des fichiers eux-mêmes est décompté en tant que <code>v2</code> (secondaire) et non <code>v1</code>. Selon les fournisseurs d'infrastructure le coût du stockage peut être bien inférieur en espace secondaire qu'en espace primaire.;</li>
-<li>quand des documents ont des pièces jointes ayant le même contenu (même <code>sha</code>) elles ne sont stockées qu'une fois mais décomptés en v2 autant de fois que cités dans les items P;</li>
-<li>une pièce jointe ayant été modifiée (donc ayant désormais un <code>sha</code> différent) reste accessible <em>un certain temps</em> sous son ancien <code>sha</code> (s'il est demandé par son <code>sha</code> et non sa clé).  Ceci facilite l'exportation cohérente à une version donnée d'un document et de ses pièces jointes, même quand elle est volumineuse en raison de la taille des pièces jointes. Des exportations incrémentales de documents peuvent être effectuées à coût réseau minimal en évitant le re-transfert de pièces jointes déjà détenues à distance.</li>
+<li>ça permet de ressortir des pièces jointes de la corbeille ce qui est souvent utile.</li>
+<li>ça permet de prendre un cliché instantané et cohérent d'un document tout en laissant un certain délai pour en récupérer les contenus, qui peuvent être lourds, des pièces jointes.</li>
+</ul>
+<p>Le stockage secondaire des pièces jointes offre trois fonctions instantanées (non couvertes par la cohérence de leur document) :</p>
+<ul>
+<li><strong>stockage</strong> du contenu.</li>
+<li><strong>lecture</strong> du contenu.</li>
+<li><strong>nettoyage du document</strong> en ne conservant que les pièces jointes citées : typiquement ce qui se passe au cours d'une opération <em>Vider la corbeille</em>.</li>
+<li><strong>copie / déplacement</strong> d'une pièce jointe d'un document à un autre.</li>
 </ul>
 <h3>Mémoires persistante de référence et cache</h3>
 <p>Il n'existe qu'une <strong>mémoire persistante de référence</strong> (base de données / datastore) de documents contenant pour chacun son exemplaire de référence.</p>
@@ -1385,17 +1418,12 @@ Le Datastore a son lanceur de tâches mais la table <code>TaskQueue</code> (enti
 </ul>
 </li>
 </ul>
-<p>L'objectif est de permettre de remettre à un niveau plus récent <code>vr</code> (<em>version de référence</em>, la plus récente pour simplifier) un exemplaire d'un document <code>d</code> datée <code>v</code> en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.<br>
-La mise à jour d'une mémoire cache depuis un exemplaire de référence d'un document <code>d</code> est <em>un document de mise à niveau</em> plus ou moins complet établi selon les principes suivants :</p>
-<ul>
-<li>si l'exemplaire en cache a une <code>ctime</code> inférieure à celle de référence, son contenu en cache est à remplacer en totalité totalement par le document de mise à niveau qui contient une copie complète de celui de référence (y compris des items détruits).</li>
-<li>sinon l'exemplaire en cache contient :
+<p>L'objectif est de permettre de remettre à un niveau plus récent <code>vr</code> (<em>version de référence</em>, la plus récente pour simplifier) un exemplaire d'un document <code>d</code> en minimisant le volume de données échangé et l'effort de calcul de remise à niveau.<br>
+La mise à jour d'une mémoire cache depuis un exemplaire de référence d'un document <code>d</code> est <em>un document de mise à niveau</em> plus ou moins complet établi selon les principes suivants. L'exemplaire en cache contient :</p>
 <ul>
 <li>des items inchangés, toujours existants en référence avec la même version : ils ne figurent pas dans le document de remise à niveau.</li>
 <li>des items qui ont changé, toujours existants en référence avec une version plus récente : ils figurent dans le document de remise à niveau avec leur nouveau contenu.</li>
-<li>des items qui existent en mémoire cache mais plus en référence : ils devront être détruits ou conservés avec un contenu vide (marqués détruits) dans la mémoire cache. Voir les cas 1 et 2 ci-dessous.</li>
-</ul>
-</li>
+<li>des items qui existent en mémoire cache mais plus en référence : ils devront être détruits ou conservés marqués détruits dans la mémoire cache. Voir les cas 1 et 2 ci-dessous.</li>
 </ul>
 <p>Un exemplaire dans une mémoire cache contient,</p>
 <ul>
@@ -1446,19 +1474,24 @@ Elle peut aussi être avancée entre sa nouvelle valeur et la nouvelle version <
 <li><strong>une opération peut retourner un résultat</strong> ou aucun. Ce résultat peut être :
 <ul>
 <li>n'importe quel <strong>contenu binaire</strong> ayant un type mime.</li>
-<li>le couple, a) d'un <strong>résultat structuré</strong> sous forme d'un objet JSON, b) d'une <strong>liste de synchronisations</strong> donnant tous les changements opérés depuis une version donnée sur les documents que le demandeur de l'opération avait cité à des fins de synchronisation.</li>
+<li>le couple,
+<ul>
+<li>d'un <strong>résultat structuré</strong> sous forme d'un objet JSON,</li>
+<li>d'une <strong>liste de synchronisations</strong> donnant tous les changements opérés depuis une version donnée sur les documents que le demandeur de l'opération avait cité à des fins de synchronisation.</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><strong>une opération peut se terminer prématurément en exception</strong>, technique ou métier, bug détecté ou situation inattendue ...</li>
 <li>Une opération a trois date-heures :
 <ul>
-<li>souvent mais pas toujours, une <em>date-heure d'opération</em> <code>dhop</code> qui est celle de la session ayant invoqué l'opération.</li>
+<li>souvent mais pas toujours, une <em>date-heure d'opération</em> <code>dhop</code> qui est celle de la session ayant invoqué l'opération. Quand elle est enregistrée elle permet de détecter fonctionnellement qu'une opération identifiée de manière unique par la session terminale a été faite ou non.</li>
 <li>une <em>date heure de début</em>, horloge du début du traitement. Si <code>dhop</code> existe elle doit ne pas être trop inférieure à celle-ci mais jamais supérieure. Les horloges des sessions doivent être à peu synchronisées sur celle du serveur;</li>
 <li>une <strong>date-heure de validation</strong>, non connue au cours du traitement, et qui marque la <strong>version</strong> de tous les documents et de leurs items ayant été créés, modifiés, ou détruits au cours de l'opération.</li>
 </ul>
 </li>
 </ul>
-<p>Une opération est initiée par l'arrivée d'une requête externe HTTPS le cas échéant émise par le <em>Queue Manager</em> gérant des requêtes différées mises en file d'attente.</p>
+<p>Une opération est initiée par l'arrivée d'une <strong>requête externe</strong> HTTPS le cas échéant émise par le <em>Queue Manager</em> gérant des requêtes différées mises en file d'attente.</p>
 <p>Une opération est matérialisée par un objet <code>operation</code> d'une classe étendant <code>Operation</code> et ayant deux méthodes <code>work()</code> et <code>afterwork()</code>, l'étape <em>validation</em> intervenant entre elles:</p>
 <ul>
 <li><code>work()</code> : cette méthode lit les arguments de la requête qui l'a initiée, effectue les traitements nécessaires et retourne un résultat éventuel de classe <code>Result</code>.</li>
@@ -1475,7 +1508,7 @@ Elle peut aussi être avancée entre sa nouvelle valeur et la nouvelle version <
 <p>Par exemple : <code>160714223045697</code> (le 14 juillet 2016 à 22:30:45 et 697 ms).<br>
 La classe <code>Stamp</code> dont les objets sont immuables permet de créer et manipuler ces estampilles et de les convertir en <code>epoch</code> nombre de millisecondes écoulées depuis le 1/1/1970 (<code>epoch</code>).</p>
 <blockquote>
-<p>Un document <em>existe</em> dès lorsqu'il a une date-heure de création et une version : il peut n'avoir aucun item. Les versions étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.</p>
+<p>Un document <em>existe</em> dès qu'il a été enregistré avec une version : ses données d'entête existent mais il peut n'avoir aucun item. Les versions étant attribuées à la validation d'une opération, en cours d'opération une version à 0 traduit un document créé au cours de cette opération.</p>
 </blockquote>
 <blockquote>
 <p>Une opération peut créer / modifier / supprimer plusieurs documents : ces documents, et leurs items, portent comme version l'estampille de validation de l'opération ce qui permet de déterminer après coup si plusieurs modifications ont été portées exactement par la même opération.</p>
@@ -1487,7 +1520,7 @@ La classe <code>Stamp</code> dont les objets sont immuables permet de créer et 
 <p><strong>Dans sa phase <code>work()</code></strong> une opération qui souhaite modifier un document, ou s'assurer qu'il ne changera pas au cours du traitement, le demande avec <em>une tolérance temporelle de 0 seconde</em> (l'état le plus récent possible) :</p>
 <ul>
 <li>ceci autorise l'opération à modifier le document, ce qu'elle n'est <em>pas</em> obligé de faire.</li>
-<li>ceci garantit qu'au cours du traitement c'est exactement ce même objet document qui sera vu / modifié, même s'il est demandé plusieurs fois et que sa référence n'a pas été conservée dans des variables.</li>
+<li>ceci garantit qu'au cours du traitement c'est exactement ce même objet document qui sera vu / modifié, même s'il est demandé plusieurs fois.</li>
 </ul>
 <p>Si l'opération demande un document avec une tolérance temporelle supérieure à 0 (1 seconde, 30 secondes, etc.) elle récupère une version (disponible le cas échéant en cache) avec une fraîcheur compatible avec l'exigence : le document est en lecture seule dans l'opération.</p>
 <p><strong>La validation d'une opération</strong> s'opère selon les étapes suivantes :</p>
@@ -1502,15 +1535,22 @@ La classe <code>Stamp</code> dont les objets sont immuables permet de créer et 
 Le nombre de recyclages est limité et un certain temps est laissé entre chaque cycle : in fine l'opération peut sortir définitivement en erreur du fait d'un excès de contention d'accès sur les documents persistants.</p>
 </blockquote>
 <p>Ce mode de gestion <em>optimiste</em> table sur le fait que les opérations vont travailler sur peu de documents (il y a une limite autoritaire à 32). Elle optimise aussi la connaissance entre plusieurs serveurs des dernières versions des documents et rend la gestion des caches locales à chaque instance plus efficientes.</p>
+<h5>Travail sur l'entête seule d'un document</h5>
+<p>Quand une opération dans sa méthode <code>work()</code> demande un document, outre sa fraîcheur (0 ou N secondes), elle spécifie si elle souhaite :</p>
+<ul>
+<li>disposer du document <strong>réduit à ses seules données d'entête</strong> : aucun item n'est accessible, ni en lecture ni en mise à jour.</li>
+<li>disposer du document <strong>complet avec tous ses items</strong> qui peuvent être lus et mis à jour.</li>
+</ul>
+<p>Travailler sur un document réduit à son entête, pour les opérations qui s'y prêtent, présente l'avantage de ne pas faire charger en cache locale du serveur un volume souvent conséquent d'items ce qui allège notemment le traitement des cas simples agissant sur beaucoup de documents.</p>
 <h5>Consistance structurelle entre plusieurs documents : documents verrous</h5>
 <p>Parfois un groupe de documents doit être considéré comme immobile dès lors qu'une opération travaille sur l'un deux :</p>
 <ul>
 <li>par exemple pour effectuer des arrêtés comptables exactement synchronisés sur les documents du groupe et enregistrer dans un document un agrégat de décomptes provenant de documents du groupe.</li>
-<li>dans ce cas il faut déterminer un document représentatif du groupe (le cas échéant avec un singleton quasi vide) et s'astreindre à le demander avec une tolérance 0 dans toutes les opérations portant sur un des documents du groupe.</li>
+<li>dans ce cas il faut déterminer un document représentatif du groupe (le cas échéant sans item) et s'astreindre à le demander avec une tolérance 0 dans toutes les opérations portant sur un des documents du groupe.</li>
 </ul>
 <h3>Opérations de mise à jour et synchronisations</h3>
-<p>Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents du même groupe ou non.</p>
-<p>En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une <strong><em>synchronisation</em></strong> qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session ayant émis la requête a cité <em>à synchroniser</em> (avec la version et le <code>dtime</code> détenus pour chacun).<br>
+<p>Elles ont pour objectif de mettre à jour, ajouter ou supprimer des items dans un ou plusieurs documents et mettre à jour les données d'entête.</p>
+<p>En cas de succès et si l'opération ne retourne pas de résultat ou retourne un résultat en JSON, elle est suivie d'une <strong><em>synchronisation</em></strong> qui liste (en JSON) toutes les modifications résultantes de l'opération sur tous les documents que la session externe d'origine a cité <em>à synchroniser</em> (avec la version et le <code>dtime</code> détenus pour chacun).<br>
 Une session peut ainsi effectuer des actions de mises à jour et récupérer toutes les conséquences de ces actions sur les documents dont elle détient une copie (plus ou moins retardée).</p>
 <p><strong>Une opération de mise à jour doit être idempotente</strong> : l'exécuter plusieurs fois successivement doit laisser l'ensemble des documents dans le même état qu'une exécution unique ce qui exige le cas échéant de détecter que la mise à jour a déjà été faite ou qu'elle peut être faite plusieurs fois sans dommage pour la logique métier.<br>
 L'utilisation de la date-heure d'opération <code>dhop</code> permet souvent de mémoriser qu'une opération de la session a déjà été effectuée et éviter de la refaire.</p>
@@ -1635,9 +1675,9 @@ Par ailleurs une opération <em>principale</em> peut avoir besoin d'être suivie
 <li><code>startTime</code> : la date-heure du début d'exécution de l'étape courante. <code>null</code> quand elle est en attente, sa présence indique qu'elle est en cours de traitement dans le serveur.</li>
 <li><code>qn</code> : numéro de queue : le Queue Manager a plusieurs queues numérotées de 0 à N pour des usages différents, par exemple :
 <ul>
-<li>0:<em>rapide</em>, plusieurs threads pour des tâches courtes,</li>
-<li>1:<em>standard</em>, 2 threads pour des tâches plus longues,</li>
-<li>3:<em>background</em>, un seul thread pour des tâches peu fréquentes et peu prioritaires.</li>
+<li>0: <em>rapide</em>, plusieurs threads pour des tâches courtes,</li>
+<li>1: <em>standard</em>, 2 threads pour des tâches plus longues,</li>
+<li>3: <em>background</em>, un seul thread pour des tâches peu fréquentes et peu prioritaires.</li>
 <li>pour chaque code d'opération la configuration d'application définit le numéro de queue (quand il n'est pas 0).</li>
 </ul>
 </li>
@@ -1652,7 +1692,7 @@ Par ailleurs une opération <em>principale</em> peut avoir besoin d'être suivie
 <li>elle bénéficie d'un quota de temps plus long pour son exécution.</li>
 </ul>
 <h4>Exécution de plusieurs étapes successives dans la même requête</h4>
-<p>La phase <code>work()</code> se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat obtenu par les méthodes :</p>
+<p>La phase <code>work()</code> se termine avec une indication dans son résultat de comment poursuivre / terminer la tâche avec un objet résultat obtenu par les méthodes statiques suivantes de la classe <code>Result</code> <em>factory</em> d'un objet <code>Result</code> :</p>
 <ul>
 <li><code>Result taskComplete()</code> : tâche terminée (c'était la dernière étape). L'enregistrement est immédiatement détruit.</li>
 <li><code>Result taskComplete(Stamp toPurgeAt)</code> : indique la date-heure à laquelle il faut purger l'enregistrement de trace.</li>
@@ -1685,6 +1725,21 @@ Une tâche peut <em>calculer</em> cette date-heure de prochaine relance mais peu
 <li><code>Y11100425</code> : soit le 10 novembre de cette année à 4h25 si on est avant cette date-heure, soit le 10 novembre de l'année prochaine à 4h25.</li>
 </ul>
 <p>Normalement un traitement dont la <code>toStartAt</code> a été calculée depuis son <code>cron</code> avec le paramètre <code>D0425</code> n'est PAS lancé AVANT 4h25 : en conséquence à sa validation il sera plus de 4h25 et le traitement suivant sera inscrit pour le lendemain à 4h25. Si toutefois le traitement du jour normalement prévu pour le jour J a eu beaucoup de retard au point d'être lancé / terminé à J+1 3h10, le traitement suivant s'effectuera 1h15 plus tard.</p>
+<h5>Date fonctionnelle</h5>
+<p>La date <em>fonctionnelle</em> d'un traitement,</p>
+<ul>
+<li>annuel (Y...) est le premier jour de cette année;</li>
+<li>mensuel (M...) est le premier jour de ce mois;</li>
+<li>hebdomadaire (W...) est celle du lundi de la semaine.</li>
+<li>journalière (D...) est celle du jour.</li>
+</ul>
+<p>L'heure <em>fonctionnelle</em> est toujours 00 pour les cas ci-dessus. Elle n'est l'heure réelle 040000 que le pour le cas (H...). Les minutes, secondes et millisecondes sont toujours à 0.</p>
+<p>Cette date-heure fonctionnelle est disponible à la suite du code Cron (séparée par un espace).</p>
+<ul>
+<li>un traitement fréquent, horaire et à la limite journalier, peut avoir des sauts de date fonctionnelle : le traitement d'un 12 pouvant suivre celui du jour 10 (le traitement du jour 11 ayant sauté du fait d'incident et de relance).</li>
+<li>le saut de date est assez improbable en hebdomadaire, mensuel, annuel.</li>
+</ul>
+<p>Dans les cas plus complexes de gestion de périodicité, c'est au traitement fonctionnel d'enregistrer dans des documents calendriers quels traitements ont été faits ou sont à rattraper.</p>
 <h2>Administration des tâches</h2>
 <p>Le privilège d'administration permet de joindre un Queue Manager et de lui soumettre les requêtes suivantes :</p>
 <ul>
@@ -1722,61 +1777,6 @@ Une tâche peut <em>calculer</em> cette date-heure de prochaine relance mais peu
 <li>en base de données le Queue Manager est notifié, en général à temps avant lancement.</li>
 </ul>
 <p>En Datastore c'est aussi un moyen de faire une relance de tâche après erreur quand le Datastore a renoncé aux relances.</p>
-<h1>Réplications différées d'items</h1>
-<p>Une opération ne doit travailler que sur peu de documents : en conséquence un document A1 ayant à répliquer son état synthétique sur des dizaines / centaines d'autres documents ne peut pas le faire dans le cadre d'une opération unique. L'usage d'une tâche différée permet d'y remédier.</p>
-<p>Un cas particulièrement fréquent a toutefois fait l'objet d'un traitement générique. Exemple :</p>
-<ul>
-<li>chaque document d'une classe <em>Asso</em> représente une association identifiée par une identification (<em>idAsso</em>) :
-<ul>
-<li>un singleton <code>Sta</code> représente le statut général de l'association : son intitulé, son état (actif / résilié), voire quelques compteurs importants changeant peu souvent (nombre d'adhérents au premier janvier de l'année).</li>
-<li>des items <code>Adh</code> avec pour clé le numéro de l'adhérent (<code>numAdh</code>) dans l'association représente les adhérents de l'association avec un résumé simple de données changeant peu souvent : nom, état d'activité, date d'adhésion / résiliation.</li>
-</ul>
-</li>
-<li>chaque document d'une classe <code>GT</code> représente un groupe de travail réunissant quelques adhérents de multiples associations. On souhaite disposer dans un document G1 de <code>GT</code> lui-même,
-<ul>
-<li><code>Adh</code> : du résumé relatif à chaque adhérent : c'est la copie (faiblement désynchronisée) de l'item <code>Adh</code> de l'adhérent dans son association.</li>
-<li><code>Sta</code> : du statut général de toutes les associations dont au moins un adhérent fait partie du groupe de travail : c'est la copie (faiblement désynchronisée) du singleton <code>Sta</code> de l'association.</li>
-</ul>
-</li>
-</ul>
-<p>Dans les deux classes <code>Asso</code> et <code>GT</code> les items <code>Sta</code> et <code>Adh</code> portent le même nom, mais :</p>
-<ul>
-<li>pour <code>Sta</code> :
-<ul>
-<li>dans <code>Asso</code> c'est un singleton ayant une annotation :
-<code>@ADifferedCopy (copyToDocs={GT.class}, separator='.')</code> . Il peut y avoir plusieurs classes de documents listées.</li>
-<li>dans <code>GT</code> c'est un item ayant pour clé <code>idAsso</code>.</li>
-</ul>
-</li>
-<li>pour <code>Adh</code> :
-<ul>
-<li>dans <code>Asso</code> c'est un item de clé <code>numAdh</code> ayant une annotation :
-<code>@ADifferedCopy (copyToDocs={GT.class}, separator='.')</code>.</li>
-<li>dans <code>GT</code> c'est un item ayant pour clé <code>numAdh.idAsso</code> : le <code>.</code> qui sépare les deux parties de la clé est le signe déclaré dans le paramètre <code>separator</code> ci-dessus.</li>
-</ul>
-</li>
-</ul>
-<p>Deux index sont déclarés sur la colonne <code>clkey</code> pour les items <code>Sta</code> et <code>Adh</code> de <code>GT</code>.</p>
-<p><strong>A la déclaration d'une nouvelle participation</strong> d'un adhérent <code>N1</code> d'une association <code>A1</code> à un groupe de travail <code>G1</code>, l'opération effectue :</p>
-<ul>
-<li>la création d'un item <code>Adh</code> de clé <code>N1.A1</code> dans <code>G1</code> en y copiant le contenu courant de l'item <code>Adh</code> de clé <code>N1</code> représentant l'adhérent dans son <code>Asso</code> d'identifiant <code>A1</code>.</li>
-<li>si c'est le premier participant appartenant à l'association <code>A1</code>, un item <code>Sta</code> de clé <code>A1</code> est créé dans <code>G1</code> avec une copie du singleton <code>Sta</code> de <code>A1</code>.</li>
-</ul>
-<p><strong>Au retrait de la participation</strong> de l'adhérent <code>N1</code> de l'association <code>A1</code> du groupe de travail <code>G1</code>, l'opération effectue :</p>
-<ul>
-<li>la suppression de l'item <code>Adh</code> de clé <code>N1.A1</code> dans <code>G1</code>.</li>
-<li>si c'est le dernier participant appartenant à l'association <code>A1</code>, la suppression de l'item <code>Sta</code> de clé <code>A1</code> dans <code>G1</code></li>
-</ul>
-<p>Moyennant ces contraintes, toute mise à jour de <code>Sta</code> ou d'un <code>Adh</code> dans le document d'une association <code>Ai</code> par une opération de date-heure <code>dh1</code> provoquera une réplication faiblement différée automatique :</p>
-<ul>
-<li>dans tous les documents d'une des classes citées dans les annotations de <code>Sta / Adh</code>,</li>
-<li>ayant un item de même nom de classe <code>Sta / Adh</code> et de clé <code>A1</code> (pour <code>Sta</code>) ou <code>xxx.A1</code> pour <code>Adh</code>, d'où l'importance des index sur <code>clkey</code>.</li>
-<li>les items sont insérés en base <em>sans lecture des dossiers</em>.</li>
-<li>chaque dossier impliqué a désormais une version <code>dh2</code> supérieure à <code>dh1</code> (chacun des dossiers ayant leur propre date-heure de mise à jour).</li>
-<li>chaque item mis à jour a pour version <code>dh2</code> et pour <code>vop</code> <code>dh1</code> : il est ainsi possible de savoir de combien la réplication a été retardée.</li>
-<li>comme les réplications sont désynchronisées rien n'interdirait qu'une seconde opération de date-heure <code>dh3</code> ait sa réplication doublant celle de <code>dh1</code> pour un item donné : ce dernier n'est mis à jour que si sa <code>vop</code> mémorisée est inférieure à la <code>vop</code> proposée en mise à jour, bref un état retardé n'écrase pas un état plus récent.</li>
-<li>les mises à jours désynchronisées ne sont soumises à aucun contrôle fonctionnel.</li>
-</ul>
 <h1>Identification / authentification</h1>
 <p>Ce service est géré au niveau de l'application : chaque requête est autonome des précédentes et il n'y a pas de concept de session dans le serveur.<br>
 Chaque requête peut être porteuse de propriétés, <strong><em>par exemple</em></strong> <code>account</code> <code>key</code> <code>sudo</code> où,</p>
