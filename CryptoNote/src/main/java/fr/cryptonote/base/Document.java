@@ -2,13 +2,11 @@ package fr.cryptonote.base;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 import fr.cryptonote.base.CDoc.CIAction;
 import fr.cryptonote.base.CDoc.CICounter;
 import fr.cryptonote.base.CDoc.CItem;
 import fr.cryptonote.base.CDoc.Status;
-import fr.cryptonote.base.DocumentDescr.ExportedField;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 
 public class Document {
@@ -211,22 +209,23 @@ public class Document {
 	}
 
 	/********************************************************************************/
-	public static class ExportedFields extends HashMap<String,Object> {
-		private static final long serialVersionUID = 1L;
-	}
 	
-	static class SerializedBItem {
-		private ExportedFields exportedFields;
-		private String serializedValue;
-		public ExportedFields ef() { return exportedFields; }
-		public String serializedValue() { return serializedValue; }
-		private SerializedBItem(BItem bi) { exportedFields = bi.exportFields(); serializedValue = bi.serializedValue();
-		}
-	}
+//	static class SerializedBItem {
+//		private ExportedFields exportedFields;
+//		private String serializedValue;
+//		public ExportedFields ef() { return exportedFields; }
+//		public String serializedValue() { return serializedValue; }
+//		private SerializedBItem(BItem bi) { exportedFields = bi.exportFields(); serializedValue = bi.serializedValue();
+//		}
+//	}
 	/********************************************************************************/
 	public static abstract class BItem {
-		private transient CItem _citem;
+		protected transient CItem _citem;
 		private transient Document _document;
+		
+		protected int v2;
+		
+		public int v2() { return v2; }
 
 		void _checkAttached() throws AppException {	if (_citem == null || _document == null) throw new AppException("BITEMDETACHED", getClass().getSimpleName()); }
 		void _checkDetached() throws AppException {	if (_citem != null || _document != null) throw new AppException("BITEMATTACHED", getClass().getSimpleName()); }
@@ -236,32 +235,22 @@ public class Document {
 		public Document _document() throws AppException { _checkAttached(); return _document; }
 		public ItemDescr descr() throws AppException { return _citem().descr(); }
 		public String key() throws AppException { return _citem().key(); }
-		public long version() throws AppException {	return _citem().version();	}
-		public long vop() throws AppException {	return _citem().vop();	}
-		public int v1() throws AppException{ return _citem().v1(); }
-		public int v2() throws AppException{ return _citem().v2(); }
-		public boolean toSave() throws AppException { return _citem().toSave(); }
-		public void delete() throws AppException{ _checkro(true); _citem().delete(); }
-		
-		public String cvalue() throws AppException { return _citem().cvalue(); }
-		public int nv2() throws AppException { return  _citem().nv2(); }
 		public String clkey() throws AppException { return descr().name() + (descr().isSingleton() ? "" : "." + key()); }
-		public boolean deleted() throws AppException { return  _citem().deleted(); }				// item non existant
-		public boolean toDelete() throws AppException { return  _citem().toDelete(); } 				// item à supprimer
-		public boolean created() throws AppException { return  toSave() && version() == 0; } // item créé
+		public long version() throws AppException {	return _citem().version();	}
 
-		abstract String serializedValue();
-		abstract ExportedFields exportFields();
-		void _checkro(boolean del) throws AppException {
-			if (_document == null) throw new AppException("BDOCUMENTRO", del ? "delete" : "commit", getClass().getSimpleName(), "?");
-			if (_document.isRO()) throw new AppException("BDOCUMENTRO", del ? "delete" : "commit", getClass().getSimpleName(), _document.cdoc().id().toString());
-			if (!del) {
-				Status st = _document.status();
-				if (st == Status.shortlived || st == Status.deleted)
-					throw new AppException("BDOCUMENTDEL", "commit", getClass().getSimpleName(), _document.cdoc().id().toString());
-			}
-		}
+		public int v1() throws AppException{ return _citem().v1(); }
+		public boolean deleted() throws AppException { return  _citem().isDeleted(); }			// item non existant
+		public boolean toDelete() throws AppException { return  _citem().toDelete(); } 			// item à supprimer
+		public boolean toSave() throws AppException { return _citem().toSave(); }				// item à sauver
+
+		public boolean created() throws AppException { return  toSave() && version() == 0; } 	// item créé
+
+		public void delete() throws AppException{ _citem().delete(); }
 		
+		public void commit(int v2) throws AppException{ _citem().commit(); }
+		
+		public BItem getCopy() throws AppException { return descr().newItem(_citem().cvalue(), _citem().toString()); }
+
 		void detach() {
 			_document = null;
 			if (_citem != null) {
@@ -273,38 +262,7 @@ public class Document {
 	}
 	
 	/********************************************************************************/
-	public static abstract class ItemSingleton extends BItem {
-		public String serializedValue() { return JSON.toJson(this); }
-		public void commit(int v2) throws AppException{ _checkro(false); _citem().commit(serializedValue(), v2, exportFields()); }
-		public BItem getCopy() throws AppException { return descr().newItem(_citem().cvalue(), _citem().toString()); }
-
-		public final ExportedFields exportFields() {
-			try { return exportFields(descr()); } catch (AppException e) { return null; }
-		}
-		final ExportedFields exportFields(ItemDescr descr) {
-			ExportedField[] fields = null;
-			fields = descr.exportedFields();
-			if (fields == null || fields.length == 0) return null;
-			ExportedFields val = new ExportedFields();
-			for(ExportedField f : fields) val.put(f.name(), f.value(this));
-			return val;
-		}
-	}
-
-	/********************************************************************************/
-	public static abstract class RawItemSingleton extends BItem {
-		public transient String value;
-		public String serializedValue() { return value; }
-		public void commit() throws AppException{ _checkro(false); _citem().commitRaw(serializedValue(), exportFields()); }		
-		
-		/*
-		 * Peut être surchargée
-		 */
-		public ExportedFields exportFields() { return null; }
-	}
-
-	/********************************************************************************/
-	public static abstract class Singleton extends ItemSingleton { 
+	public static abstract class Singleton extends BItem { 
 		public void replaceIn(Document d) throws AppException {
 			_checkDetached();
 			if (d == null) throw new AppException("BITEMATTACHED", getClass().getSimpleName());
@@ -312,18 +270,14 @@ public class Document {
 		}
 	}
 	
-	public static abstract class Item extends ItemSingleton { 
+	public static abstract class Item extends BItem { 
 		public void replaceIn(Document d, String key) throws AppException {
 			_checkDetached();
 			if (d == null) throw new AppException("BITEMATTACHED", getClass().getSimpleName());
 			d.set(this, key);
 		}
 	}
-	
-	public static abstract class RawSingleton extends RawItemSingleton { }
-	
-	public static abstract class RawItem extends RawItemSingleton {	}
-	
+		
 	/********************************************************************************/
 
 	public Singleton singleton(Class<?> itemClass) throws AppException { return (Singleton)bitem(itemClass, false, null); }
@@ -333,10 +287,6 @@ public class Document {
 	public Item item(Class<?> itemClass, String key) throws AppException { return (Item)bitem(itemClass, false, key); }
 
 	public Item itemOrNew(Class<?> itemClass, String key) throws AppException {	return (Item)bitem(itemClass, true, key); }
-
-	public RawItem rawItem(Class<?> itemClass, String key) throws AppException { return (RawItem)bitem(itemClass, false, key); }
-
-	public RawItem rawItemOrNew(Class<?> itemClass, String key) throws AppException { return (RawItem)bitem(itemClass, true, key); }
 
 	public String[] getKeys(Class<?> itemClass) { return cdoc.itemids(itemClass);}
 
@@ -480,28 +430,18 @@ public class Document {
 				String val = null;
 				if (fpid == FilterPolicy.Accept) {
 					if (ci.changedAfterV(version))
-						val = descr.isRaw() ? JSON.json(ci.cvalue()) : ci.cvalue();
-					else if (clk && !ci.deleted())
-							clkeys.add(ci.clkey());
+						val = JSON.json(ci.cvalue());
+					else if (clk && !ci.isDeleted())
+						clkeys.add(ci.clkey());
 				} else {
-					if (!descr.isRaw()) {
-						BItem item;
-						try { item = (BItem)JSON.fromJson(ci.cvalue(), descr.clazz()); } catch (Exception e) { continue; }
-						FilterPolicy fpit = sf == null ? FilterPolicy.Accept : filter(sf, descr, key, item);
-						if (fpit == FilterPolicy.Exclude) continue;
-						if (ci.changedAfterV(version))
-							val = fpit == FilterPolicy.Accept ? ci.cvalue() : JSON.toJson(item);
-						else if (clk && !ci.deleted())
-							clkeys.add(ci.clkey());
-					} else {
-						Text t = new Text(ci.cvalue());
-						FilterPolicy fpit = sf == null ? FilterPolicy.Accept : filter(sf, descr, key, t);
-						if (fpit == FilterPolicy.Exclude) continue;
-						if (ci.changedAfterV(version))						
-							val = fpit == FilterPolicy.Accept ? JSON.json(ci.cvalue()) : JSON.json(t.filtered);
-						else if (clk && !ci.deleted())
-							clkeys.add(ci.clkey());						
-					}
+					BItem item;
+					try { item = (BItem)JSON.fromJson(ci.cvalue(), descr.clazz()); } catch (Exception e) { continue; }
+					FilterPolicy fpit = sf == null ? FilterPolicy.Accept : filter(sf, descr, key, item);
+					if (fpit == FilterPolicy.Exclude) continue;
+					if (ci.changedAfterV(version))
+						val = fpit == FilterPolicy.Accept ? ci.cvalue() : JSON.toJson(item);
+					else if (clk && !ci.isDeleted())
+						clkeys.add(ci.clkey());
 				}
 				if (val != null) {
 					if (!pf) sb.append(",");

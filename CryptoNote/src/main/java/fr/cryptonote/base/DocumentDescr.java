@@ -64,7 +64,6 @@ public class DocumentDescr {
 		private Class<?> clazz;
 		private ExportedField[] exportedFields;
 		private Constructor<?> constructor;
-		private boolean isRaw = false;
 		private boolean isSingleton = false;
 		private Class<?>[] docclasses;
 		private char separator;
@@ -88,23 +87,16 @@ public class DocumentDescr {
 		public DocumentDescr docDescr() { return docDescr; };
 		public String name() { return name; }
 		public Class<?> clazz() { return clazz; }
-		public boolean isRaw() { return isRaw; }
 		public boolean isSingleton() { return isSingleton; }
 		
 		public BItem newItem(String json, String info) throws AppException {
-			if (isRaw() || json == null || json.length() == 0)
+			if (json == null || json.length() == 0)
 				try { 
-					BItem bi = (BItem)constructor.newInstance();
-					if (isRaw()) {
-						if (isSingleton())
-							((Document.RawSingleton)bi).value = json;
-						else
-							((Document.RawItem)bi).value = json;
-					}
-					return bi;
+					return (BItem)constructor.newInstance();
 				} catch(Exception e) { throw new AppException(e, "BDOCUMENTITEM", info); }
 			else
-				try { return (BItem)JSON.fromJson(json, clazz);
+				try { 
+					return (BItem)JSON.fromJson(json, clazz);
 				} catch (AppException e){ throw new AppException(e.cause(), "BDOCUMENTITEM", info); }
 		}
 
@@ -203,19 +195,11 @@ public class DocumentDescr {
 			ItemDescr itd = new ItemDescr();
 			itd.docDescr = dd;
 			
-			if (Document.Singleton.class.isAssignableFrom(cl)) {
+			if (Document.Singleton.class.isAssignableFrom(cl))
 				itd.isSingleton = true;
-				itd.isRaw = false;
-			} else if (Document.RawSingleton.class.isAssignableFrom(cl)) {
-				itd.isSingleton = true;
-				itd.isRaw = true;
-			} else if (Document.Item.class.isAssignableFrom(cl)) {
+			else if (Document.Item.class.isAssignableFrom(cl))
 				itd.isSingleton = false;
-				itd.isRaw = false;
-			} else if (Document.RawItem.class.isAssignableFrom(cl)) {
-				itd.isSingleton = false;
-				itd.isRaw = true;
-			} else
+			else
 				continue;
 			
 			itd.name = n;

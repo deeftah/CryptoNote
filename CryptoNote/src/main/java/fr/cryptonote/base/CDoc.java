@@ -3,10 +3,12 @@ package fr.cryptonote.base;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import fr.cryptonote.base.CDoc.Status;
 import fr.cryptonote.base.Document.BItem;
 import fr.cryptonote.base.Document.ExportedFields;
 import fr.cryptonote.base.Document.Id;
 import fr.cryptonote.base.Document.ItemId;
+import fr.cryptonote.base.DocumentDescr.ExportedField;
 import fr.cryptonote.base.DocumentDescr.ItemDescr;
 import fr.cryptonote.provider.DBProvider.DeltaDocument;
 
@@ -32,6 +34,13 @@ public class CDoc implements Comparable<CDoc> {
 	private long ctime;
 	private long dtime;
 	private Status status;
+	
+	private boolean isRO;
+	public boolean isRO() { return isRO; }
+	
+	private boolean isFull;
+	public boolean isFull() { return isFull; }
+	
 	
 	private int nbExisting = 0;
 	private int nbToSave = 0;
@@ -142,7 +151,7 @@ public class CDoc implements Comparable<CDoc> {
 				v1 += ci.v1();
 				v2 += ci.v2();
 				nbTotal++;
-				if (!ci.deleted) nbExisting++;
+				if (!ci.isDeleted()) nbExisting++;
 				if (!ci.toSave) nbToSave++;
 				if (!ci.toDelete) nbToDelete++;
 				return true;		
@@ -156,14 +165,12 @@ public class CDoc implements Comparable<CDoc> {
 	/************************************************************************************/
 	/*
 	 * Construit un CItem autonome depuis des données de DB ou d'importation
-	 * Les CItem de classe P sont désérialisés immédiatement
 	 * @param id du document
 	 * @param clazz de l'item sous forme de String
 	 * @param version de l'item
 	 * @param key de l'item
-	 * @param value json ou texte raw selon le cas
+	 * @param value json
 	 * @return null si la classe est inconnue, la value null, la clé null 
-	 * (selon que l'item est raw ou non) ou qu'un item P est mal formé
 	 */
 	public static CItem newCItem(Document.Id id, String clazz, long version, String key, String value) {
 		if (value == null) return null;
@@ -190,7 +197,6 @@ public class CDoc implements Comparable<CDoc> {
 				ci = new CItem();
 				ci.descr = descr;
 				ci.cdoc = this;
-				ci.setStatus();
 				sings.put(descr.name(), ci);
 				return ci;
 			}
@@ -204,27 +210,16 @@ public class CDoc implements Comparable<CDoc> {
 				ci.descr = descr;
 				ci.cdoc = this;
 				ci.key = key;
-				ci.setStatus();
 				cis.put(key, ci);
 				return ci;
 			}
 		}
-		// ci existait mais peut-être détruit
-		ci.setStatus();
-		if (newIfNotExisting && ci.deleted) {
-			// il est recréé (vide)
-			ci.deleted = false;
-			ci.toSave = true;
-			ci.toDelete = false;
-			ci.nvalue = ci.descr.isRaw() ? "{}" : "";
-			ci.v2 = 0;
-		}
-		return ci.deleted ? null : ci;
+		// ci existait (mais peut-être détruit)
+		return newIfNotExisting || !ci.isDeleted() ? ci : null; 
 	}
 
 	/*
 	 * Stockage d'un BItem remplaçant le cas échéant un existant.
-	 * Ne s'applique ni à un P, ni à un raw
 	 */
 	CItem citem(BItem bitem, String key) throws AppException{
 		String n = bitem.getClass().getSimpleName();
@@ -254,8 +249,7 @@ public class CDoc implements Comparable<CDoc> {
 		}
 		if (ci.bitem != null) ci.bitem.detach();
 		ci.bitem = bitem;
-		ci.nvalue = JSON.toJson(bitem);
-		ci.setStatus();
+		ci.commit();
 		return ci;
 	}
 
@@ -265,56 +259,42 @@ public class CDoc implements Comparable<CDoc> {
 		private ItemDescr descr;
 		transient BItem bitem;
 		
-		private long version;	// version d'un item qui existait avant (value != null) ou une trace de suppression (value == null)
-		private long vop;		// dans le cas d'une mise à jour différée, version de l'opération ayant déclaré cette valeur
-		private String key;		// key d'un item, null pour un singleton
-		private String value; 	// contenu avant. null pour une trace de suppression ou un item nouvellement créé
-		private String nvalue; 	// nouveau contenu. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
-		private int v2;			// taille du blob
-		private int nv2;		// taille du blob après changement
-		private ExportedFields exportedFields; // valeurs des champs exportés (extraits de BItem au commit())
-		private boolean deleted;	// item non existant
-		private boolean toSave;		// item créé / modifié à sauver
-		private boolean toDelete;	// item à supprimer
+		private long version;		// version d'un item qui existait avant (value != null) ou une trace de suppression (value == null)
+		private String key;			// key d'un item, null pour un singleton
+		private String value; 		// contenu avant. null pour une trace de suppression ou un item nouvellement créé
+		private String nvalue; 		// nouveau contenu. null si l'item était existant et inchangé ou une trace de suppression (sans recréation)
+		private HashMap<String,Object> exportedFields; // valeurs des champs exportés (extraits de BItem au commit())
 		
-		public CItem() {}
+		private boolean toSave = false;		// item créé ou modifié à sauver
+		private boolean toDelete = false;	// item qui existait et est à supprimer
 		
-		public CItem(ItemId i, long version, long vop, int v2, String value) {
-			this.descr = i.descr(); this.key = i.key(); this.version = version; this.vop = vop; this.v2 = v2;
-			if (value == null) deleted = true; else this.value = value;
+		public CItem() { }
+		
+		public CItem(ItemId i, long version, int v2, String value) {
+			this.descr = i.descr(); this.key = i.key(); this.version = version; this.value = value;
 		}
-		
+
+		int sizeInCache() { return (value != null ? value.length() : 0) + (key != null ? key.length() : 0); }
+
 		public ItemDescr descr() { return descr; }
 		public Id id() { return cdoc.id; }
 		public long version() { return version; }
-		public long vop() { return vop; }
 		public String key() { return descr().isSingleton() ? "" : key; }
 		public String cvalue() { return nvalue != null ? nvalue : (value != null ? value : null); }
-		public int nv2() { return nv2; }
 		public String clkey() { return descr.name() + (descr.isSingleton() ? "" : "." + key); }
-		int sizeInCache() { return (value != null ? value.length() : 0) + (key != null ? key.length() : 0); }
-		public boolean deleted() { return deleted; }				// item non existant
 		public boolean toSave() { return toSave; } 					// item créé / modifié à sauver
 		public boolean toDelete() { return toDelete; } 				// item à supprimer
-		public boolean created() { return toSave && version == 0; } // item créé
-		
-		void setStatus() {
-			deleted = value == null && nvalue == null;
-			toDelete = value != null && nvalue == null;
-			toSave = value != null && !value.equals(nvalue);
-		}
-				
+		public boolean isDeleted() { return value == null && nvalue == null; }	// item non existant
+						
 		public boolean changedAfterV(long v) { return version > v && toSave;}
 
 		public boolean deletedAfterV(long v) { return version > v && toDelete; }
 
-		public int v1() { return deleted ? 0 : sizeInCache(); }
-
-		public int v2() { return deleted ? 0 : (toSave ? nv2 : v2); }
+		public int v1() { return value == null && nvalue == null ? 0 : (nvalue != null ? nvalue.length() : (value != null ? value.length() : 0))  + (key != null ? key.length() : 0); }
 
 		public String toString() { return cdoc != null ? cdoc.id().toString() + "#" + clkey() : clkey(); }
 		
-		public ExportedFields exportedFields() { return exportedFields; }
+		public HashMap<String,Object> exportedFields() { return exportedFields; }
 		
 		private void purge() {
 			if (descr.isSingleton()) 
@@ -331,35 +311,43 @@ public class CDoc implements Comparable<CDoc> {
 			c.cdoc = cd;
 			c.descr = descr;
 			c.version = version;
-			c.vop = vop;
 			c.key = key;
 			c.value = value;
 			c.nvalue = nvalue;
-			c.v2 = v2;
-			c.nv2 = nv2;
-			c.deleted = deleted;
 			c.toSave = toSave;
 			c.toDelete = toDelete;
 			return c;
 		}
-						
-		void delete() throws AppException {	nvalue = null;	nv2 = 0; setStatus(); }
+				
+		void _checkro(boolean del) throws AppException {
+			if (cdoc.isRO()) throw new AppException("BDOCUMENTRO", del ? "delete" : "commit", getClass().getSimpleName(), cdoc.id().toString());
+		}
 
-		void commit(String json, int v2, ExportedFields exportedFields) throws AppException{
-			if (json == null) json = "{}";
-			this.exportedFields = exportedFields;
+		void delete() throws AppException {	
+			_checkro(true);
+			nvalue = null;	
+			toDelete = value == null;
+			toSave = false;
+		}
+
+		void commit() throws AppException{
+			_checkro(false);
+			String json = JSON.toJson(bitem);
 			nvalue = json.equals(value) ?  null : json;
-			nv2 = v2;
-			setStatus();
+			toSave = nvalue != null;
+			toDelete = false;
+			if (toSave) {
+				ExportedField[] fields = null;
+				fields = descr.exportedFields();
+				if (fields == null || fields.length == 0) 
+					exportedFields = null; 
+				else {
+					exportedFields = new HashMap<String,Object>();
+					for(ExportedField f : fields) exportedFields.put(f.name(), f.value(bitem));
+				}				
+			}
 		}
-		
-		void commitRaw(String text, ExportedFields exportedFields) throws AppException{
-			if (text == null) text = "";
-			this.exportedFields = exportedFields;
-			nvalue = text.equals(value) ? null : text;
-			setStatus();
-		}
-		
+				
 		void jsonDel(StringBuffer sb) { 
 			sb.append("\n{\"v\":").append(version).append(", \"c\":\"").append(descr.name()).append("\"");
 			if (!descr.isSingleton()) sb.append(", \"k\":").append(JSON.json(key));
